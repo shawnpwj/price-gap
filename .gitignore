@@ -1,0 +1,6 @@
+.DS_Store
+node_modules/
+
+# Generated pages — one per client / per project, rebuilt by
+# scripts/build-price-gap.mjs in a minute or two. Nothing here is source.
+/out/

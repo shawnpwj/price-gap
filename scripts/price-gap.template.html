@@ -1,0 +1,471 @@
+<title>Price Gap Analysis — Grand Dunman</title>
+<style>
+  .viz-root {
+    color-scheme: light;
+    --surface-1: #fcfcfb;
+    --surface-2: #f4f4f2;
+    --border: #e0e0dc;
+    --text-primary: #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted: #85847e;
+    --s-base: #2a78d6;
+    --s-lease: #1baf7a;
+    --s-tenure: #eb6834;
+    --s-age: #e87ba4;
+    --s-mrt: #eda100;
+    --s-harm: #008300;
+    --s-integ: #4a3aa7;
+    --s-subject: #b3261e;
+    --good: #008300;
+    --warn: #eda100;
+    --crit: #e34948;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) .viz-root {
+      color-scheme: dark;
+      --surface-1: #1a1a19; --surface-2: #232322; --border: #3a3a37;
+      --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #93928a;
+      --s-base: #3987e5; --s-lease: #199e70; --s-tenure: #d95926; --s-age: #d55181;
+      --s-mrt: #c98500; --s-harm: #008300; --s-integ: #9085e9;
+      --s-subject: #e66767; --good: #3fa93f; --warn: #c98500; --crit: #e66767;
+    }
+  }
+  :root[data-theme="dark"] .viz-root {
+    color-scheme: dark;
+    --surface-1: #1a1a19; --surface-2: #232322; --border: #3a3a37;
+    --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #93928a;
+    --s-base: #3987e5; --s-lease: #199e70; --s-tenure: #d95926; --s-age: #d55181;
+    --s-mrt: #c98500; --s-harm: #008300; --s-integ: #9085e9;
+    --s-subject: #e66767; --good: #3fa93f; --warn: #c98500; --crit: #e66767;
+  }
+
+  .viz-root {
+    background: var(--surface-1);
+    color: var(--text-primary);
+    font: 15px/1.55 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    padding: 28px 22px 60px;
+    max-width: 1080px;
+    margin: 0 auto;
+  }
+  h1 { font-size: 1.5rem; font-weight: 650; letter-spacing: -0.02em; margin: 0 0 4px; }
+  h2 { font-size: 1.02rem; font-weight: 620; letter-spacing: -0.01em; margin: 34px 0 12px; }
+  .sub { color: var(--text-secondary); font-size: 0.9rem; margin: 0 0 20px; }
+  .muted { color: var(--text-muted); }
+
+  /* filters */
+  .filters { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin: 0 0 22px; }
+  .filters .lbl { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); margin-right: 6px; }
+  .chip {
+    font: inherit; font-size: 0.86rem; padding: 5px 13px; border-radius: 999px;
+    border: 1px solid var(--border); background: var(--surface-1);
+    color: var(--text-secondary); cursor: pointer;
+  }
+  .chip:hover { border-color: var(--text-muted); color: var(--text-primary); }
+  .chip[aria-pressed="true"] { background: var(--text-primary); color: var(--surface-1); border-color: var(--text-primary); }
+
+  /* verdict */
+  .verdict { display: flex; gap: 26px; flex-wrap: wrap; align-items: baseline;
+    padding: 16px 18px; border: 1px solid var(--border); border-radius: 10px;
+    background: var(--surface-2); margin-bottom: 8px; }
+  .hero { font-size: 2.1rem; font-weight: 680; letter-spacing: -0.03em; line-height: 1.1; }
+  .hero .unit { font-size: 0.95rem; font-weight: 500; color: var(--text-secondary); }
+  .vlab { font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-muted); display: block; margin-bottom: 2px; }
+  .tag { display: inline-flex; align-items: center; gap: 6px; font-size: 0.88rem; font-weight: 600;
+    padding: 3px 11px; border-radius: 999px; border: 1px solid currentColor; }
+  .tag.under { color: var(--good); } .tag.over { color: var(--crit); } .tag.fair { color: var(--warn); }
+
+  /* chart */
+  .chart-wrap { overflow-x: auto; margin-top: 10px; }
+  svg { display: block; }
+  .grid line { stroke: var(--border); stroke-width: 1; }
+  .axis text { fill: var(--text-muted); font-size: 11px; }
+  .ref { stroke: var(--s-subject); stroke-width: 1.5; stroke-dasharray: 5 4; }
+  .reflab { fill: var(--s-subject); font-size: 11px; font-weight: 600; }
+  .seglab { font-size: 10.5px; font-weight: 600; fill: #fff; }
+  .seglab.dark { fill: #1a1a19; }
+  .totlab { font-size: 12.5px; font-weight: 680; fill: var(--text-primary); }
+  .gaplab { font-size: 11px; font-weight: 600; }
+  .namelab { font-size: 11.5px; fill: var(--text-secondary); }
+  .metalab { font-size: 10px; fill: var(--text-muted); }
+  .bar { transition: opacity .12s; }
+  g.mark:hover .bar { opacity: .82; }
+  .capline { stroke: var(--text-primary); stroke-width: 2; }
+
+  /* legend */
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; margin: 14px 0 0; font-size: 0.85rem; color: var(--text-secondary); }
+  .legend span { display: inline-flex; align-items: center; gap: 7px; }
+  .sw { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+  .sw.neg { background: repeating-linear-gradient(135deg, var(--s-tenure) 0 3px, transparent 3px 6px); border: 1px solid var(--s-tenure); }
+
+  /* tooltip */
+  #tip { position: fixed; z-index: 50; pointer-events: none; opacity: 0; transition: opacity .1s;
+    background: var(--surface-1); color: var(--text-primary); border: 1px solid var(--border);
+    border-radius: 8px; padding: 9px 11px; font-size: 0.82rem; max-width: 300px;
+    box-shadow: 0 6px 20px rgba(0,0,0,.16); }
+  #tip b { font-weight: 640; }
+  #tip .row { display: flex; justify-content: space-between; gap: 14px; }
+  #tip .note { color: var(--text-secondary); font-size: 0.78rem; margin-top: 3px; }
+
+  /* tables */
+  table { border-collapse: collapse; width: 100%; font-size: 0.86rem; }
+  th, td { text-align: right; padding: 7px 10px; border-bottom: 1px solid var(--border); }
+  th:first-child, td:first-child { text-align: left; }
+  th { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600; }
+  tbody tr:last-child td { border-bottom: none; }
+  .tbl-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; }
+  .pos { color: var(--good); } .neg { color: var(--crit); }
+
+  /* caveats */
+  .caveats { border: 1px solid var(--border); border-left: 3px solid var(--warn);
+    border-radius: 8px; padding: 14px 18px; background: var(--surface-2); }
+  .caveats ul { margin: 0; padding-left: 18px; }
+  .caveats li { margin: 7px 0; font-size: 0.875rem; color: var(--text-secondary); }
+  .caveats li strong { color: var(--text-primary); }
+  details { margin-top: 10px; font-size: 0.85rem; color: var(--text-secondary); }
+  summary { cursor: pointer; color: var(--text-secondary); }
+</style>
+
+<div class="viz-root">
+  <h1>Price Gap Analysis</h1>
+  <p class="sub" id="strap"></p>
+
+  <div class="filters" role="group" aria-label="Bedroom type">
+    <span class="lbl">Bedroom</span>
+    <button class="chip" data-bed="All">All</button>
+    <button class="chip" data-bed="1BR">1BR</button>
+    <button class="chip" data-bed="2BR">2BR</button>
+    <button class="chip" data-bed="3BR">3BR</button>
+    <button class="chip" data-bed="4BR+">4BR+</button>
+  </div>
+
+  <div class="verdict">
+    <div><span class="vlab">Subject PSF</span><span class="hero" id="v-subj"></span></div>
+    <div><span class="vlab">Comparables, median adjusted</span><span class="hero" id="v-comp"></span></div>
+    <div><span class="vlab">Price gap</span><span class="hero" id="v-gap"></span></div>
+    <div><span class="vlab">Read</span><span id="v-tag"></span></div>
+  </div>
+  <p class="sub muted" id="v-expl" style="margin-top:8px"></p>
+
+  <h2>Comparables restated on the subject's terms</h2>
+  <div class="chart-wrap"><svg id="chart" role="img" aria-labelledby="charttitle"><title id="charttitle"></title></svg></div>
+  <div class="legend" id="legend"></div>
+
+  <h2>The adjustment stack</h2>
+  <div class="tbl-wrap"><table id="steps-tbl"></table></div>
+
+  <h2>What you actually get for the money</h2>
+  <p class="sub" id="layout-note"></p>
+  <div class="tbl-wrap"><table id="layout-tbl"></table></div>
+
+  <h2>Read this before you use the number</h2>
+  <div class="caveats"><ul id="caveats"></ul></div>
+
+  <details>
+    <summary id="rej-sum"></summary>
+    <div id="rej-body" style="margin-top:8px"></div>
+  </details>
+</div>
+<div id="tip" role="tooltip"></div>
+
+<script>
+const DATA = __DATA__;
+
+const COLORS = { "Base PSF":"--s-base", "Lease":"--s-lease", "Tenure":"--s-tenure",
+                 "Age (TOP)":"--s-age", "MRT access":"--s-mrt", "Harmonisation":"--s-harm",
+                 "Integrated":"--s-integ" };
+// Fills these hues carry white labels; the yellow needs dark ink to stay legible.
+const DARK_INK = new Set(["MRT access"]);
+const cssv = (n) => getComputedStyle(document.querySelector(".viz-root")).getPropertyValue(n).trim();
+const money = (n) => "$" + Math.round(n).toLocaleString();
+const nf = (n) => Math.round(n).toLocaleString();
+
+let bed = "3BR";
+
+function render() {
+  const d = DATA[bed];
+  const S = d.subject, comps = d.comps, R = d.result;
+
+  document.getElementById("strap").innerHTML =
+    `<b>${S.name}</b> — ${S.tenure.raw} · ${S.mrt.minutes} min to ${S.mrt.station} · district ${S.district} ${S.region}. ` +
+    `Base PSF from <b>${S.psfSource}</b> caveats over the ${d.window}.`;
+
+  document.getElementById("v-subj").innerHTML = money(S.psf.psf) + ' <span class="unit">psf</span>';
+  document.getElementById("v-comp").innerHTML = money(R.medianAdjusted) +
+    ' <span class="unit">psf' + (R.meanAdjusted !== R.medianAdjusted ? ` · mean ${money(R.meanAdjusted)}` : "") + '</span>';
+  const gapEl = document.getElementById("v-gap");
+  gapEl.innerHTML = (R.gap > 0 ? "+" : "−") + money(Math.abs(R.gap)).slice(1) + ' <span class="unit">psf &nbsp;' + (R.gapPct*100).toFixed(1) + '%</span>';
+  gapEl.style.color = R.gap > 0 ? cssv("--good") : R.gap < 0 ? cssv("--crit") : cssv("--warn");
+
+  const cls = R.verdict === "undervalued" ? "under" : R.verdict === "overvalued" ? "over" : "fair";
+  document.getElementById("v-tag").innerHTML = `<span class="tag ${cls}">${R.verdict.toUpperCase()}</span>`;
+  document.getElementById("v-expl").textContent =
+    R.gap > 0
+      ? `The MEDIAN comparable, once restated on ${S.name}'s lease, tenure, age and MRT terms, is worth ${money(Math.abs(R.gap))} psf MORE than ${S.name} transacts at — the subject looks cheap for what it is.`
+      : R.gap < 0
+      ? `The MEDIAN comparable, once restated on ${S.name}'s lease, tenure, age and MRT terms, is worth ${money(Math.abs(R.gap))} psf LESS than ${S.name} transacts at — the subject carries a premium over its neighbours.`
+      : `The comparables land within 3% of ${S.name} once restated — no meaningful gap either way.`;
+
+  drawChart(S, comps, R);
+  drawSteps(S, comps);
+  drawLayout(d);
+  drawCaveats(d);
+  drawRejected(d);
+}
+
+function drawChart(S, comps, R) {
+  const svg = document.getElementById("chart");
+  svg.innerHTML = '<title id="charttitle">Adjusted PSF of comparables versus ' + S.name + '</title>';
+  const NS = "http://www.w3.org/2000/svg";
+  const el = (t, a) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); return e; };
+
+  const barW = 100, gapW = 66, padL = 62, padR = 26, padT = 54, padB = 92;
+  const n = comps.length + 1;
+  const W = padL + n * barW + (n - 1) * gapW + padR;
+  const H = 430, plotH = H - padT - padB;
+
+  // Scale spans zero to the tallest thing drawn (a bar's pre-deduction peak).
+  let peak = S.psf.psf;
+  for (const c of comps) {
+    let run = c.psf.psf; peak = Math.max(peak, run, c.adjusted);
+    for (const s of c.steps) { run += s.delta; peak = Math.max(peak, run); }
+  }
+  const maxY = Math.ceil(peak * 1.12 / 250) * 250;
+  const y = (v) => padT + plotH - (v / maxY) * plotH;
+
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  svg.setAttribute("width", W); svg.setAttribute("height", H);
+
+  // grid
+  const g = el("g", { class: "grid" });
+  const ax = el("g", { class: "axis" });
+  for (let v = 0; v <= maxY; v += 500) {
+    g.appendChild(el("line", { x1: padL - 10, x2: W - padR, y1: y(v), y2: y(v) }));
+    const t = el("text", { x: padL - 16, y: y(v) + 4, "text-anchor": "end" });
+    t.textContent = nf(v); ax.appendChild(t);
+  }
+  svg.appendChild(g); svg.appendChild(ax);
+
+  const xAt = (i) => padL + i * (barW + gapW);
+  const GAP = 2; // surface gap between stacked segments
+
+  // ── subject bar
+  const sx = xAt(0);
+  const sg = el("g", { class: "mark" });
+  const sr = el("rect", { class: "bar", x: sx, y: y(S.psf.psf), width: barW,
+    height: plotH + padT - y(S.psf.psf), fill: cssv("--s-subject"), rx: 4 });
+  sg.appendChild(sr);
+  tip(sg, () => `<b>${S.name}</b><div class="row"><span>Transacted PSF</span><b>${money(S.psf.psf)}</b></div>` +
+    `<div class="note">${S.psf.months} month(s) of ${S.psfSource} caveats${S.psf.fellBack ? " · ALL-bedroom fallback" : ""}</div>`);
+  svg.appendChild(sg);
+  const st = el("text", { class: "totlab", x: sx + barW / 2, y: y(S.psf.psf) - 9, "text-anchor": "middle" });
+  st.textContent = money(S.psf.psf); svg.appendChild(st);
+
+  // reference line at the subject's PSF
+  svg.appendChild(el("line", { class: "ref", x1: sx, x2: W - padR, y1: y(S.psf.psf), y2: y(S.psf.psf) }));
+
+  // ── comparable bars
+  comps.forEach((c, i) => {
+    const x = xAt(i + 1);
+    let run = c.psf.psf;
+
+    const seg = (lo, hi, label, negative, payload) => {
+      const h = Math.max(0, y(lo) - y(hi) - GAP);
+      if (h <= 0) return;
+      const grp = el("g", { class: "mark" });
+      const col = cssv(COLORS[label] || "--s-base");
+      const r = el("rect", { class: "bar", x, y: y(hi), width: barW, height: h, rx: 4,
+        fill: negative ? `url(#hatch-${i})` : col, stroke: negative ? col : "none", "stroke-width": negative ? 1.5 : 0 });
+      grp.appendChild(r);
+      tip(grp, payload);
+      svg.appendChild(grp);
+      if (h >= 15) {
+        const t = el("text", { class: "seglab" + (DARK_INK.has(label) || negative ? " dark" : ""),
+          x: x + barW / 2, y: y(hi) + h / 2 + 4, "text-anchor": "middle" });
+        t.textContent = (negative ? "−" : label === "Base PSF" ? "" : "+") +
+          nf(Math.abs(hi - lo));
+        if (negative) t.setAttribute("fill", col);
+        svg.appendChild(t);
+      }
+    };
+
+    // hatch pattern for deductions, tinted to this bar's deduction hue
+    const defs = el("defs", {});
+    const pat = el("pattern", { id: `hatch-${i}`, width: 6, height: 6, patternUnits: "userSpaceOnUse", patternTransform: "rotate(135)" });
+    pat.appendChild(el("rect", { width: 6, height: 6, fill: cssv("--surface-1") }));
+    pat.appendChild(el("line", { x1: 0, y1: 0, x2: 0, y2: 6, stroke: cssv("--s-tenure"), "stroke-width": 2.5 }));
+    defs.appendChild(pat); svg.appendChild(defs);
+
+    seg(0, run, "Base PSF", false,
+      `<b>${c.name}</b><div class="row"><span>Transacted PSF</span><b>${money(c.psf.psf)}</b></div>` +
+      `<div class="note">${c.psf.months} month(s) of caveats${c.psf.fellBack ? " · ALL-bedroom fallback" : ""} · ${c.units} units · ${c.dist}m away</div>`);
+
+    for (const s of c.steps) {
+      const from = run, to = run + s.delta;
+      seg(Math.min(from, to), Math.max(from, to), s.label, s.delta < 0,
+        `<b>${s.label}</b><div class="row"><span>Adjustment</span><b class="${s.delta>0?'pos':'neg'}">${s.delta > 0 ? "+" : "−"}${money(Math.abs(s.delta)).slice(1)} psf</b></div>` +
+        `<div class="note">${s.note}</div>`);
+      run = to;
+    }
+
+    // cap at the adjusted value; labels ride above the bar's VISUAL peak, which on a
+    // bar carrying a deduction sits higher than the adjusted total.
+    svg.appendChild(el("line", { class: "capline", x1: x, x2: x + barW, y1: y(c.adjusted), y2: y(c.adjusted) }));
+    let barPeak = Math.max(c.psf.psf, c.adjusted);
+    let r2 = c.psf.psf;
+    for (const s of c.steps) { r2 += s.delta; barPeak = Math.max(barPeak, r2); }
+
+    const tt = el("text", { class: "totlab", x: x + barW / 2, y: y(barPeak) - 9, "text-anchor": "middle" });
+    tt.textContent = money(c.adjusted); svg.appendChild(tt);
+
+    const gl = el("text", { class: "gaplab", x: x + barW / 2, y: y(barPeak) - 25, "text-anchor": "middle",
+      fill: c.gap > 0 ? cssv("--good") : cssv("--crit") });
+    gl.textContent = (c.gap > 0 ? "+" : "−") + money(Math.abs(c.gap)).slice(1) + " vs subject";
+    svg.appendChild(gl);
+  });
+
+  // x labels — name wraps, then meta on its own two short lines beneath it. Meta is
+  // split rather than run together because a single line overflows the column width
+  // and collides with the neighbouring bar's label.
+  const shortTen = (t) => t.raw.replace(/(\d+) yrs lease commencing from (\d+)/, "$1yr LH '$2");
+  const labels = [
+    { name: S.name, meta: [shortTen(S.tenure), `TOP ${S.top ? S.top.year + (S.top.estimated ? "e" : "") : "?"} · ${S.mrt.minutes}min to MRT`] },
+    ...comps.map((c) => ({ name: c.name, meta: [`${c.dist}m · ${shortTen(c.tenure)}`,
+      `TOP ${c.top ? c.top.year : "?"} · ${c.mrt.minutes}min to MRT`] })),
+  ];
+  labels.forEach((l, i) => {
+    const x = xAt(i) + barW / 2;
+    const used = wrap(svg, el, l.name, x, padT + plotH + 20, barW + gapW - 14, "namelab");
+    l.meta.forEach((mt, j) => {
+      const m = el("text", { class: "metalab", x, y: padT + plotH + 20 + used * 13 + 3 + j * 12, "text-anchor": "middle" });
+      m.textContent = mt; svg.appendChild(m);
+    });
+  });
+
+  // Reference-line label, parked ABOVE the plot rather than on the line itself: sitting
+  // at the line's height it collided with the total label of whichever bar reached a
+  // similar value (Katong Regency at $2,116 vs the $2,491 line).
+  const rl = el("text", { class: "reflab", x: W - padR, y: padT - 14, "text-anchor": "end" });
+  rl.textContent = `— — subject reference · ${S.name} ${money(S.psf.psf)}`; svg.appendChild(rl);
+
+  // legend
+  const used = new Set(["Base PSF"]);
+  let anyNeg = false;
+  comps.forEach((c) => c.steps.forEach((s) => { used.add(s.label); if (s.delta < 0) anyNeg = true; }));
+  document.getElementById("legend").innerHTML =
+    [...used].map((k) => `<span><i class="sw" style="background:${cssv(COLORS[k])}"></i>${k}</span>`).join("") +
+    (anyNeg ? `<span><i class="sw neg"></i>Deduction (hatched)</span>` : "") +
+    `<span><i class="sw" style="background:${cssv("--s-subject")}"></i>Subject &amp; reference line</span>`;
+}
+
+function wrap(svg, el, text, x, y0, maxW, cls) {
+  const words = text.split(" ");
+  const perLine = maxW / 6.2;
+  const lines = []; let cur = "";
+  for (const w of words) {
+    if ((cur + " " + w).trim().length > perLine && cur) { lines.push(cur); cur = w; }
+    else cur = (cur + " " + w).trim();
+  }
+  if (cur) lines.push(cur);
+  lines.forEach((ln, i) => {
+    const t = el("text", { class: cls, x, y: y0 + i * 13, "text-anchor": "middle" });
+    t.textContent = ln; svg.appendChild(t);
+  });
+  return lines.length;
+}
+
+const tipEl = document.getElementById("tip");
+function tip(node, html) {
+  node.style.cursor = "default";
+  node.addEventListener("mousemove", (e) => {
+    tipEl.innerHTML = typeof html === "function" ? html() : html;
+    tipEl.style.opacity = 1;
+    const r = tipEl.getBoundingClientRect();
+    tipEl.style.left = Math.min(e.clientX + 14, innerWidth - r.width - 10) + "px";
+    tipEl.style.top = Math.max(8, e.clientY - r.height - 12) + "px";
+  });
+  node.addEventListener("mouseleave", () => { tipEl.style.opacity = 0; });
+}
+
+function drawSteps(S, comps) {
+  const keys = ["Lease", "Tenure", "Age (TOP)", "MRT access", "Harmonisation", "Integrated"];
+  const rows = comps.map((c) => {
+    const m = Object.fromEntries(c.steps.map((s) => [s.label, s.delta]));
+    const cells = keys.map((k) => m[k] == null ? '<td class="muted">—</td>'
+      : `<td class="${m[k] > 0 ? "pos" : "neg"}">${m[k] > 0 ? "+" : "−"}${nf(Math.abs(m[k]))}</td>`).join("");
+    return `<tr><td><b>${c.name}</b><br><span class="muted" style="font-size:.8rem">${c.dist}m · ${c.units} units · ${c.tenure.raw}${c.top ? ` · TOP ${c.top.year}` : ""}</span></td>` +
+      `<td>${money(c.psf.psf)}${c.psf.fellBack ? '<br><span class="muted" style="font-size:.75rem">all-bed</span>' : ""}</td>${cells}` +
+      `<td><b>${money(c.adjusted)}</b></td><td class="${c.gap > 0 ? "pos" : "neg"}"><b>${c.gap > 0 ? "+" : "−"}${nf(Math.abs(c.gap))}</b></td></tr>`;
+  }).join("");
+  document.getElementById("steps-tbl").innerHTML =
+    `<thead><tr><th>Comparable</th><th>Base PSF</th>${keys.map((k) => `<th>${k}</th>`).join("")}<th>Adjusted</th><th>Gap</th></tr></thead>` +
+    `<tbody>${rows}<tr><td><b>Subject — ${S.name}</b></td><td colspan="${keys.length + 1}" class="muted">reference, not adjusted</td>` +
+    `<td><b>${money(S.psf.psf)}</b></td><td class="muted">—</td></tr></tbody>`;
+}
+
+function drawLayout(d) {
+  const L = d.layout;
+  const note = document.getElementById("layout-note");
+  if (!L.length) {
+    note.textContent = "No transacted size data available for this bedroom type.";
+    document.getElementById("layout-tbl").innerHTML = ""; return;
+  }
+  note.innerHTML = `PSF is a rate, not a price. Two projects at the same PSF cost different amounts if their units are different sizes — ` +
+    `this is the <b>${L[0].bed}</b> comparison, using each comparable's <i>adjusted</i> PSF. ` +
+    `Sizes are the median of real transactions where available; where a project has not transacted that bedroom type the ` +
+    `midpoint of its published range is used instead and marked <i>range</i> — a much weaker number.`;
+  // Size provenance is shown per row: a range midpoint can sit outside the bedroom band
+  // entirely, so presenting it as a "median" would overstate what is known.
+  const src = (source, n) => source === "transacted"
+    ? `<span class="muted" style="font-size:.75rem">median of ${n}</span>`
+    : `<span class="neg" style="font-size:.75rem">range midpoint</span>`;
+  document.getElementById("layout-tbl").innerHTML =
+    `<thead><tr><th>Project</th><th>Typical ${L[0].bed} size</th><th>Basis</th><th>vs subject</th><th>PSF used</th><th>Implied quantum</th></tr></thead><tbody>` +
+    `<tr><td><b>${d.subject.name}</b> <span class="muted">(subject)</span></td><td>${nf(L[0].subjectSqft)} sqft</td>` +
+    `<td>${src(L[0].subjectSizeSource, L[0].subjectSizeN)}</td><td class="muted">—</td>` +
+    `<td>${money(d.subject.psf.psf)}</td><td><b>$${(L[0].subjectQuantum / 1e6).toFixed(2)}M</b></td></tr>` +
+    L.map((l) => {
+      const c = d.comps.find((x) => x.name === l.name);
+      return `<tr><td>${l.name}</td><td>${nf(l.compSqft)} sqft</td><td>${src(l.compSizeSource, l.compSizeN)}</td>` +
+        `<td class="${l.deltaSqft > 0 ? "pos" : "neg"}">${l.deltaSqft > 0 ? "+" : "−"}${nf(Math.abs(l.deltaSqft))} sqft</td>` +
+        `<td>${money(c.adjusted)}</td><td><b>$${(l.compQuantum / 1e6).toFixed(2)}M</b></td></tr>`;
+    }).join("") + "</tbody>";
+}
+
+function drawCaveats(d) {
+  const extra = [
+    "<strong>Layout efficiency is not adjusted for.</strong> A developer building larger units shows a cheaper PSF while asking a bigger cheque for the same usable space — always sanity-check quantum and useable area, not just the rate.",
+    "<strong>Facing, floor level and stack are not adjusted for.</strong> Within one project a low floor facing a road and a high floor facing water can differ 15–20%. This analysis cannot see that; a unit-level review must follow.",
+  ];
+  const seen = new Set();
+  const all = [...d.caveats, ...extra].filter((c) => { const k = c.slice(0, 40); if (seen.has(k)) return false; seen.add(k); return true; });
+  document.getElementById("caveats").innerHTML = all.map((c) => `<li>${c}</li>`).join("");
+}
+
+function drawRejected(d) {
+  const aged = d.ageExcluded || [], band = d.bandExcluded || [], A = d.assumptions;
+  document.getElementById("rej-sum").textContent =
+    `Why these ${d.comps.length} comparables? — ${d.rejected.length} screened out on data quality` +
+    (aged.length ? `, ${aged.length} as too old` : "") +
+    (band.length ? `, ${band.length} as not comparable` : "");
+  const rows = (list, kind) => list.map((r) =>
+    `<tr><td>${r.name}</td><td>${r.dist}m</td><td class="muted">${kind}</td><td class="muted">${r.why.join("; ")}</td></tr>`).join("");
+  document.getElementById("rej-body").innerHTML =
+    `<p class="muted" style="font-size:.85rem;margin:0 0 8px">Candidates are taken nearest-first within ${A.maxRadiusM}m and must clear ${A.minUnits}+ units, a known tenure, and at least 2 months of caveats in the window. ` +
+    `A freehold more than ${A.ageExcludeYears} years older than the subject is then dropped, and finally anything still more than ${Math.round(A.outlierBand * 100)}% from the subject <i>after</i> adjustment. ` +
+    `Neither of the last two fires unless at least ${A.minComps} comparables survive it.</p>` +
+    `<div class="tbl-wrap"><table><thead><tr><th>Screened out</th><th>Distance</th><th>Screen</th><th>Reason</th></tr></thead><tbody>` +
+    rows(band, "not comparable") + rows(aged, "age") + rows(d.rejected, "data") +
+    `</tbody></table></div>`;
+}
+
+document.querySelectorAll(".chip").forEach((b) => {
+  b.addEventListener("click", () => {
+    bed = b.dataset.bed;
+    document.querySelectorAll(".chip").forEach((x) => x.setAttribute("aria-pressed", x === b));
+    render();
+  });
+});
+document.querySelector('.chip[data-bed="3BR"]').setAttribute("aria-pressed", "true");
+render();
+addEventListener("resize", render);
+</script>

@@ -28,17 +28,34 @@ is the market's price for a year of lease.
                                             Each pair carries its size delta so the residual
                                             can be checked against it.)
 
-  TWO ESTIMATORS, reported side by side
-    fitted    sum(psf difference) / sum(lease gap)  -- each pair weighted by the lease
-              separation it actually contains. The HEADLINE.
-    mean      average of each pair's own $/yr       -- every pair equal. Broken out by
-              gap band, because that is the "does the rate narrow or widen with a wider
-              gap" question.
-    Both are also computed in PERCENT per year, because a flat $ figure cannot hold in
-    both an OCR pair at $1,300 psf and a CCR pair at $2,800 psf.
+  THE ESTIMATOR -- A CURVE, NOT A CONSTANT  (Shawn, 2026-09-06)
+    The rate is not one number and it is not two bands. It rises smoothly with vintage:
 
-  WINDOWS  12 and 24 months, side by side. 12 is the cleaner price basis; 24 is the only
-           one with enough 1BR and 4BR+ cells to read a bedroom pattern at all.
+        rate($/yr) = a + b * (midpoint of the two lease starts - 2000)
+
+    Fitted as  diff = gap * (a + b*(mid-2000)), ordinary least squares, no intercept.
+    That form IS the blend: if the rate rises smoothly, the total difference across an
+    interval equals the gap times the rate at its midpoint. So a pair straddling any
+    cut-over needs no special handling -- which is the whole reason for this shape.
+    It beats a flat rate and a two-band step on 5-fold cross-validation.
+
+    NO GAP SCREEN. Earlier passes dropped pairs under 5 years of lease separation. That
+    screen existed for the per-pair MEAN, which divides each difference by its own gap
+    and so multiplies a short pair's noise. This estimator fits the DIFFERENCE against
+    the gap, so a 3-year pair carries 3 years of leverage and cannot shout. Removing the
+    screen leaves a and b flat (a 20.7-21.1, b 1.25-1.44 across every threshold), TIGHTENS
+    the slope CI, and nearly triples the sample: 97 cells -> 273, 71 pairs -> 168.
+
+  BEDROOM IS THE MATCH, NOT THE ANSWER. It does not appear in the equation. It is the
+    stratum that holds size constant, and it is the finest size resolution the data has.
+    The pooled alternative -- one transaction-weighted PSF per project, matched on pooled
+    median size -- is computed here as a diagnostic. It LOSES pairs (119 vs 168; matching
+    a whole sales mix within 20% is harder than matching one bedroom) and lets mix leak:
+    its residual tracks the unmatched size difference at about -$214 psf per 100% of size.
+
+  WINDOWS  24 months is the headline. 12 is a FRESHNESS CHECK, not a second reading --
+           54 of the 56 clean 12m cells sit inside the 24m set, so the two must never be
+           averaged. That would count the last year twice.
 
 Read-only consumer of ../../property-analyzer/data/. Run:
     python3 lease-pairs.py
@@ -171,6 +188,55 @@ def summarise(rows, label):
             f'{st.median([r["per_yr"] for r in rows]):>+8.1f} '
             f'{st.mean([r["per_yr"] for r in rows]):>+8.1f} {len(rows):>5d}')
 
+def curve(rows):
+    """rate = a + b*(mid-2000), fitted as diff = gap*(a + b*(mid-2000)). Pure-python 2x2."""
+    s11 = s12 = s22 = t1 = t2 = 0.0
+    for r in rows:
+        x1 = r['gap']; x2 = r['gap'] * ((r['ls_old'] + r['ls_new']) / 2 - 2000)
+        s11 += x1*x1; s12 += x1*x2; s22 += x2*x2; t1 += x1*r['diff']; t2 += x2*r['diff']
+    det = s11*s22 - s12*s12
+    if not det: return None, None
+    return (s22*t1 - s12*t2)/det, (s11*t2 - s12*t1)/det
+
+def curve_ci(rows, B=2000, seed=17):
+    import random as _r
+    g = _r.Random(seed); n = len(rows); A = []; Bs = []
+    for _ in range(B):
+        a, b = curve([rows[g.randrange(n)] for _ in range(n)])
+        if a is not None: A.append(a); Bs.append(b)
+    A.sort(); Bs.sort(); lo, hi = int(.025*len(A)), int(.975*len(A)) - 1
+    return (A[lo], A[hi]), (Bs[lo], Bs[hi])
+
+def pooled_cell(name, cut):
+    """One PSF for a whole project: every bedroom's monthly medians, weighted by the
+    transactions behind them. The diagnostic for 'why not just match on size'."""
+    sp, q = psf.get(name, {}), qh.get(name, {})
+    obs = [(sp[bd][m], q[bd][m][1], q[bd][m][2])
+           for bd in sp if bd in q for m in sp[bd] if cut <= m <= LAST and m in q[bd]]
+    if not obs: return None
+    n = sum(o[2] for o in obs)
+    if n < MIN_N: return None
+    return dict(psf=sum(o[0]*o[2] for o in obs)/n, sqft=sum(o[1]*o[2] for o in obs)/n, n=n)
+
+def build_pooled(window):
+    cut = months_back(LAST, window - 1); rows = []
+    for a, b in itertools.combinations(list(P), 2):
+        A, B = P[a], P[b]
+        if abs(A['ls'] - B['ls']) < MIN_GAP_YEARS: continue
+        if hav(A['lat'], A['lng'], B['lat'], B['lng']) > RADIUS_M: continue
+        if A['station'] != B['station'] or A['band'] != B['band']: continue
+        if A['schools'] != B['schools']: continue
+        old, new = (A, B) if A['ls'] < B['ls'] else (B, A)
+        co, cn = pooled_cell(old['name'], cut), pooled_cell(new['name'], cut)
+        if not co or not cn: continue
+        if abs(co['sqft'] - cn['sqft']) / max(co['sqft'], cn['sqft']) > SIZE_TOL: continue
+        rows.append(dict(older=old['name'], newer=new['name'], region=A['region'],
+                         ls_old=old['ls'], ls_new=new['ls'], gap=new['ls'] - old['ls'],
+                         psf_old=co['psf'], psf_new=cn['psf'], diff=cn['psf'] - co['psf'],
+                         sqft_old=co['sqft'], sqft_new=cn['sqft'],
+                         n_old=co['n'], n_new=cn['n']))
+    return rows
+
 HEAD = f'{"":28s} {"fitted":>7s} {"fitted%":>8s} {"median":>8s} {"mean":>8s} {"cells":>5s}'
 
 if __name__ == '__main__':
@@ -198,6 +264,27 @@ if __name__ == '__main__':
         for lo, hi, nm in ((1, 4, '1-4 yrs'), (5, 9, '5-9 yrs'), (10, 14, '10-14 yrs'),
                            (15, 19, '15-19 yrs'), (20, 99, '20+ yrs')):
             print(summarise([r for r in rows if lo <= r['gap'] <= hi], f'    {nm}'))
+    # ── the answer: the curve, on the full 24m sample with NO gap screen ────────
+    full = out[24]
+    a, b = curve(full); (alo, ahi), (blo, bhi) = curve_ci(full)
+    print(f'\n{"="*86}\nTHE CURVE   rate($/yr) = a + b x (midpoint of the two lease starts - 2000)\n{"="*86}')
+    print(f'  a = {a:+7.2f}   95% [{alo:+.2f}, {ahi:+.2f}]')
+    print(f'  b = {b:+7.2f}   95% [{blo:+.2f}, {bhi:+.2f}]   per year of vintage')
+    print(f'  on {len(full)} cells across {len({(r["older"],r["newer"]) for r in full})} pairs, no gap screen')
+    print('  lookup:  ' + '   '.join(f'{m}:${a+b*(m-2000):.0f}' for m in range(1995, 2021, 5)))
+    print('\n  stability against the retired gap screen:')
+    for mg in (1, 2, 3, 5, 8):
+        rs = [r for r in full if r['gap'] >= mg]
+        ca, cb = curve(rs)
+        print(f'    gap >= {mg}   a {ca:+6.2f}  b {cb:+5.2f}   {len(rs):3d} cells')
+
+    pooled = build_pooled(24)
+    pa, pb = curve(pooled)
+    print(f'\n  POOLED DIAGNOSTIC (one PSF per project, matched on pooled size — NOT the method):')
+    print(f'    {len(pooled)} pairs vs {len({(r["older"],r["newer"]) for r in full})} bedroom-matched'
+          f'   a {pa:+.2f}  b {pb:+.2f}')
+
     d = os.path.dirname(os.path.abspath(__file__))
-    json.dump({str(w): out[w] for w in WINDOWS}, open(os.path.join(d, 'lease-pairs.json'), 'w'), indent=1)
+    json.dump({**{str(w): out[w] for w in WINDOWS}, 'pooled24': pooled},
+              open(os.path.join(d, 'lease-pairs.json'), 'w'), indent=1)
     print(f'\nwrote lease-pairs.json')

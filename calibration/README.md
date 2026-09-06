@@ -62,19 +62,43 @@ Every one of these is a ruling he gave, not a default. Do not quietly change one
 | bands | **by lease START only** | ruled 2026-09-06. Bedroom and region were tested and neither moves the number; they stay on the page behind an explain mark, never on its face |
 | scale | **dollars, never a percentage** | ruled 2026-09-06. Across base-PSF bands the $/yr holds at $26–30 while the %/yr falls away. The dollar is the invariant; the percentage is what made region look like a real split |
 
-### How pairs combine — the one thing to understand
+### The estimator — a CURVE, not a constant (Shawn, 2026-09-06)
 
-Two estimators, both reported:
+```
+rate($/yr) = a + b x (midpoint of the two lease starts - 2000)
+```
 
-* **fitted** = `sum(psf difference) / sum(lease gap)`. Each pair weighted by the lease
-  separation it actually contains — a 20-year pair carries 20 years of evidence, a 3-year
-  pair carries 3. **This is the headline.**
-* **mean** = average of each pair's own $/yr. Every pair equal. Kept because the gap-band
-  breakdown is what answers "does the rate change as the gap widens".
+Fitted as `diff = gap * (a + b*(mid-2000))`, least squares, no intercept.
+**Measured: a = $20.9 [18.2, 23.3], b = $1.40 [0.99, 1.80], on 273 cells across 168 pairs.**
 
-They differ because a short-gap pair divides *every* difference between two projects — a
-better developer, a better site, a better facing — by a small number, so noise arrives
-multiplied.
+**This form IS the blend.** If the rate rises smoothly with vintage, the total difference
+across an interval is exactly the gap times the rate at its midpoint — so a pair straddling
+any cut-over needs no special handling. That is the whole reason for the shape. Shawn found
+the seam by asking what to use for a 2005-vs-2025 pair: a two-band step has to pick a side
+and is wrong either way. Beats a flat rate, a step, and a curve keyed on the older project
+on 5-fold cross-validation.
+
+**NO MINIMUM LEASE GAP — the 5-year screen was retired.** It protected the per-pair MEAN,
+which divides each difference by its own gap and so multiplies a short pair's noise. This
+estimator fits the DIFFERENCE against the gap, so a 3-year pair carries 3 years of leverage
+and cannot shout. Refitting at every threshold leaves a at 20.7–21.1 and b at 1.25–1.44, and
+the slope interval is TIGHTER without the screen. It cost two thirds of the evidence:
+97 cells -> 273, 71 pairs -> 168, and 2010s-older pairs 8 -> 71.
+
+**BEDROOM IS THE MATCH, NOT THE ANSWER.** It is not in the equation; it is the stratum that
+holds size constant, and the finest size resolution the data has. The pooled alternative —
+one transaction-weighted PSF per project, matched on pooled median size — is computed by
+`build_pooled()` as a diagnostic. It LOSES pairs (119 vs 168: matching a whole sales mix
+within 20% is harder than matching one bedroom) and lets mix leak, its residual tracking the
+unmatched size difference at about -$214 psf per 100% of size. That drags its slope down a
+third, to a $26.2 / b $0.91.
+
+**THE KNOWN DEFECT — a straight line runs low at BOTH ends.** Midpoint 1990-99 reads $11.5/yr
+above the line [3.0, 22.3] and 2015+ reads $10.8 above [3.7, 18.3]; the middle is followed
+closely. Both are real. A quadratic gains 2% on held-out error and is not worth the term.
+The old end is probably the lease-decay knee (the 2026-07-27 study's 60-65y mark) showing
+through, which would mean the fix is the decay curve itself — the lease/tenure collapse this
+workstream exists to test. **Open, and on the page behind an explain mark.**
 
 ---
 

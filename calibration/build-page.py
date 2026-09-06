@@ -291,15 +291,16 @@ letter-spacing:.01em;margin:52px 0 10px}
    it stays reachable at any scroll depth, which is the point of splitting the page up. */
 .terms{display:flex;flex-wrap:wrap;gap:0;border-top:1px solid var(--ink);
 max-width:1180px;margin:0 auto;padding:0 24px}
-.terms button{flex:1 1 auto;min-width:148px;padding:11px 14px 10px;text-align:left;
+.terms button{flex:1 1 auto;min-width:158px;padding:13px 17px 12px;text-align:left;
 background:none;border:0;border-right:1px solid var(--ink);cursor:pointer;font:inherit;
 color:inherit;position:relative;
 transition:background .18s cubic-bezier(.22,1,.36,1),color .18s cubic-bezier(.22,1,.36,1)}
 .terms button:last-child{border-right:0}
 .terms button:hover{background:var(--navy-850)}
 .terms button:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
-.terms .tn{display:block;font:600 13px/1.25 Optima,Candara,sans-serif;color:var(--slate-400)}
-.terms .ts{display:block;margin-top:3px;font-size:10px;letter-spacing:.16em;
+.terms .tn{display:block;font:600 14.5px/1.25 Optima,Candara,sans-serif;
+color:var(--slate-400);letter-spacing:.005em}
+.terms .ts{display:block;margin-top:4px;font-size:9.5px;letter-spacing:.2em;
 text-transform:uppercase;color:var(--slate-600)}
 .terms button.done .ts{color:rgba(201,169,106,.75)}
 .terms button[aria-current="true"]{background:var(--navy-850)}
@@ -326,6 +327,19 @@ box-shadow:0 10px 40px -12px rgba(0,0,0,.55);padding:26px 28px}
 .vcell .val.is{color:var(--gold)}
 .vcell .sub{font-size:12px;color:var(--slate-500);margin-top:6px}
 .arrow{font-size:26px;color:var(--slate-600);padding-bottom:8px}
+/* THE ANSWER BLOCK. Shawn, 2026-09-06: the measured figure is the only thing he should have
+   to find on a panel, and the number of developments behind it comes second — big enough to
+   read as the credential it is, never big enough to compete with the answer. */
+.answers{display:flex;gap:34px;flex-wrap:wrap;align-items:flex-end}
+.ans .n{font:600 clamp(40px,5.2vw,56px)/.95 Optima,Candara,sans-serif;color:var(--gold);
+white-space:nowrap;letter-spacing:-.012em}
+.ans .w{font-size:11.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--slate-400);
+margin-top:10px}
+.ans .g{font:600 18px/1.15 Optima,Candara,sans-serif;color:var(--slate-200);margin-top:8px}
+.ans .g span{font:400 10px/1 -apple-system,Segoe UI,sans-serif;letter-spacing:.16em;
+text-transform:uppercase;color:var(--slate-600);display:block;margin-top:3px}
+.vcell.grow{flex:1 1 340px}
+@media (max-width:640px){.answers{gap:22px}.ans .n{font-size:36px}}
 .verdict .call{margin-top:22px;padding-top:18px;border-top:1px solid var(--ink);
 font-size:15px;color:var(--slate-300);max-width:72ch}
 .verdict .call b{color:var(--gold-soft);font-weight:600}
@@ -507,6 +521,21 @@ def mrt_table():
     r.append('</tbody></table>')
     return ''.join(r)
 
+def hero(was, was_sub, answers, call):
+    """The verdict block every panel opens with. `answers` is a list of
+    (figure, what it is, how many developments)."""
+    cells = ''.join(
+        '<div class="ans"><div class="n">' + a + '</div><div class="w">' + w + '</div>'
+        + ('<div class="g">' + str(d) + '<span>developments</span></div>' if d else '')
+        + '</div>' for a, w, d in answers)
+    return ('<div class="verdict"><div class="vgrid">'
+            '<div class="vcell"><div class="lab">Engine constant</div>'
+            '<div class="val was">' + was + '</div><div class="sub">' + was_sub + '</div></div>'
+            '<div class="arrow">&rarr;</div>'
+            '<div class="vcell grow"><div class="lab">Measured</div>'
+            '<div class="answers">' + cells + '</div></div></div>'
+            '<p class="call">' + call + '</p></div>')
+
 def nice(n):
     """Title-case a project name without destroying acronyms. PLQ is not Plq."""
     keep = {'PLQ', 'NV', 'EC', 'CBD'}
@@ -585,24 +614,12 @@ BODY = f"""
 <p class="lede">The engine restates every comparable using constants set by judgement. This is
 the first one measured against the market.</p>
 
-<div class="verdict">
-  <div class="vgrid">
-    <div class="vcell"><div class="lab">Engine constant</div>
-      <div class="val was">$40</div><div class="sub">flat, every comparable</div></div>
-    <div class="arrow">&rarr;</div>
-    <div class="vcell grow"><div class="lab">Measured</div>
-      <div class="two">
-        <div><div class="n">${BANDR[OLD_NM]:,.0f}</div><div class="w">{OLD_NM}</div>
-          <div class="g">{ndev(rows_in(OLD_NM))} developments</div></div>
-        <div><div class="n">${BANDR[NEW_NM]:,.0f}</div><div class="w">{NEW_NM}</div>
-          <div class="g">{ndev(rows_in(NEW_NM))} developments</div></div>
-      </div></div>
-  </div>
-  <p class="call"><b>The call.</b> Two rates, not one, chosen by the <b>midpoint of the two lease
-  starts</b>. The engine's flat $40 charges an old pair
-  {40/BANDR[OLD_NM]:.1f} times what the market pays and short-changes a new one.
-  Leave the engine alone until this is audited.</p>
-</div>
+{hero('$40', 'flat, every comparable',
+      [(f'${BANDR[OLD_NM]:,.0f}', OLD_NM, ndev(rows_in(OLD_NM))),
+       (f'${BANDR[NEW_NM]:,.0f}', NEW_NM, ndev(rows_in(NEW_NM)))],
+      f"<b>The call.</b> Two rates, not one, chosen by the <b>midpoint of the two lease starts</b>. "
+      f"The engine's flat $40 charges an old pair {40/BANDR[OLD_NM]:.1f} times what the market pays "
+      f"and short-changes a new one. Leave the engine alone until this is audited.")}
 
 <section>
   <div class="sechead"><h2 class="disp">How to use it</h2></div>
@@ -719,9 +736,18 @@ the first one measured against the market.</p>
 
 <div class="panel" data-p="mrt" hidden>
 <h1 class="disp">What the market pays for the walk to the station</h1>
-<p class="lede"><b>{M['devs']} developments</b>, each paired with a leasehold neighbour on the
-same nearest station, over the same 24 months. The lease difference between them is removed at
-the measured lease rate, so what is left is the walk.</p>
+<p class="lede">Each development paired with a leasehold neighbour on the same nearest station,
+over the same 24 months. The lease difference between them is removed at the measured lease rate,
+so what is left is the walk.</p>
+
+{hero(' / '.join(f"${M['engine'][b['key']]}" for b in M['bands']), 'three fixed band steps',
+      [(f"+${M['bands'][0]['adj']:,.0f}", 'under 5 vs 5-10 min', M['bands'][0]['devs']),
+       (f"+${M['bands'][1]['adj']:,.0f}", '5-10 vs over 10 min', M['bands'][1]['devs']),
+       (f"+${M['bands'][2]['adj']:,.0f}", 'under 5 vs over 10 min', M['bands'][2]['devs'])],
+      f"<b>The call.</b> Quote <b>${M['slope100']:.0f} psf per extra 100 m</b> &mdash; it holds "
+      f"whatever the band lines do, and the three figures above all agree on it. Of the engine's "
+      f"three steps only <b>${M['engine']['mid|far']}</b> is wrong; the other two sit inside the "
+      f"measured intervals.")}
 
 <section>
   <div class="scroll">{mrt_table()}</div>
@@ -814,6 +840,15 @@ the measured lease rate, so what is left is the walk.</p>
 the walking difference at the measured ${G['slope']:.0f} per 100 m. What is left is the building
 sitting on the station.</p>
 
+{hero('+5%', 'never actually fired',
+      [(f"+${G['cuts'][3]['adj']:,.0f}", '10 yr gap, within 400 m', G['cuts'][3]['devs']),
+       (f"+${G['cuts'][2]['adj']:,.0f}", '5 yr lease gap', G['cuts'][2]['devs'])],
+      f"<b>The call.</b> A <b>range, not a figure</b>: ${G['cuts'][3]['adj']:,.0f} to "
+      f"${G['cuts'][2]['adj']:,.0f} psf, roughly "
+      f"{min(c['pct'] for c in G['cuts'][1:]):.0f}&ndash;{max(c['pct'] for c in G['cuts'][1:]):.0f}%. "
+      f"The engine's +5% sits at or below the bottom of it, so on this evidence it is more likely "
+      f"too low than too high &mdash; and it has never fired on a single comparable.")}
+
 <section>
   <div class="scroll">{int_table()}</div>
 
@@ -867,8 +902,14 @@ sitting on the station.</p>
 
 <div class="panel" data-p="judgement" hidden>
 <h1 class="disp">Still on judgement</h1>
-<p class="lede">One constant is still unmeasured, and it is next: tenure, freehold against
-leasehold. It is also the biggest sample still available.</p>
+<p class="lede">The last constant still on judgement, and the next one to measure.</p>
+
+{hero('&divide; 1.15', 'freehold over leasehold',
+      [('&mdash;', 'not measured yet', None)],
+      "<b>The call.</b> Nothing to quote yet. It is also the biggest sample left: of the "
+      "1,844 developments in the index, <b>1,255 are freehold</b> and cannot pair on lease "
+      "start at all &mdash; which is the real ceiling on this whole workstream, not the "
+      "pair screens.")}
 
 <section>
   <table class="fig"><thead><tr><th>Term</th><th class="num">Constant</th><th>Status</th></tr></thead><tbody>
@@ -901,13 +942,13 @@ HTML = f"""<!doctype html>
   </div>
   <nav class="terms" aria-label="The constants">
     <button type="button" class="done" data-go="lease" aria-current="true">
-      <span class="tn">Lease / vintage</span><span class="ts">Measured</span></button>
+      <span class="tn">Lease Difference</span><span class="ts">Measured</span></button>
     <button type="button" class="done" data-go="mrt">
-      <span class="tn">MRT walk band</span><span class="ts">Measured</span></button>
-    <button type="button" data-go="judgement">
-      <span class="tn">Tenure</span><span class="ts">Next</span></button>
+      <span class="tn">MRT Distance</span><span class="ts">Measured</span></button>
     <button type="button" class="done" data-go="integrated">
       <span class="tn">Integrated</span><span class="ts">Measured</span></button>
+    <button type="button" data-go="judgement">
+      <span class="tn">FH vs LH</span><span class="ts">Next</span></button>
   </nav>
 </header>
 <div class="wrap">

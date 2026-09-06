@@ -74,6 +74,27 @@ P_ROLD = perm(RCR_OLD, OCR_OLD)
 P_RNEW = perm(RCR_NEW, OCR_NEW)
 CCR    = [r for r in ALL if r['region'] == 'CCR']
 
+# ── the SIZE story, computed (Shawn, 2026-09-06) ─────────────────────────────
+# The psf gap read as DOLLARS PER HOME. Same estimator, each cell's psf difference
+# valued at the pair's own mean size. This is what makes the gap legible to a layman:
+# part of the per-foot jump is simply that the newer box is smaller.
+qfit = lambda rs: (sum(r['diff'] * (r['sqft_old'] + r['sqft_new']) / 2 for r in rs)
+                   / sum(r['gap'] for r in rs)) if rs else None
+BANDQ = {nm: qfit(rows_in(nm)) for _, _, nm in BANDS}
+
+def sizes_by_vintage(bed):
+    """Median size of that bedroom type, split on each PROJECT's OWN lease start —
+    not on the pair midpoint, which would mix a pre-2011 block into the newer band."""
+    old, new = [], []
+    for r in ALL:
+        if r['bed'] != bed: continue
+        for ls, sq in ((r['ls_old'], r['sqft_old']), (r['ls_new'], r['sqft_new'])):
+            (old if ls <= 2010 else new).append(sq)
+    return (st.median(old) if old else None), (st.median(new) if new else None)
+
+SQ3_OLD, SQ3_NEW = sizes_by_vintage('3BR')
+SHRINK3 = 1 - SQ3_NEW / SQ3_OLD
+
 def pooled_size_leak():
     """How much of the pooled method's answer is really unmatched size. Pure-python OLS."""
     if not POOL: return None, None
@@ -472,26 +493,18 @@ This is the first one measured against the market.</p>
 
 <section>
   <div class="sechead"><h2 class="disp">The measurement</h2>
-  <p>{NDEV} developments, paired with a leasehold neighbour and compared bedroom by bedroom.
-  Twenty-four months of resale and sub-sale to {LW[1]}.</p></div>
+  <p><b>{NDEV} developments.</b> Each paired with a leasehold neighbour and compared bedroom by
+  bedroom, across 24 months of resale and sub-sale to {LW[1]}.</p></div>
   <div class="scroll">{answer_table()}</div>
 
-  <p class="expl" style="margin-top:18px"><b>What these two numbers say, in words.</b> Take two
-  condominiums next door to each other, one with a lease starting a few years after the other.
-  The figure is <b>how much more per square foot the newer one fetches, for each year of that
-  difference</b>. Among pairs centred before 2011 it is ${BANDR[OLD_NM]:,.0f} a year. Among pairs
-  centred from 2011 it is ${BANDR[NEW_NM]:,.0f} &mdash; <b>being newer is worth nearly twice as
-  much in the newer cohort</b>. Nothing here is stagnant, and the newer band is the steeper one,
-  not the flatter one.</p>
-  <p class="expl">The likeliest reason is that through the 2010s each successive launch in the same
-  spot came out materially dearer than the one before it, so two neighbours three years apart now
-  differ by more than two neighbours three years apart did in the 2000s. This study measures the
-  size of that effect; it does not prove the cause.</p>
-  <div class="caveat"><b>The newer figure is a floor.</b> It rests on
-  {ndev(rows_in(NEW_NM))} developments, and it runs hotter in the RCR
-  (${fit(RCR_NEW):,.0f}) than the OCR (${fit(OCR_NEW):,.0f}) &mdash; a real split, and the reason
-  its interval is wide. Young stock has barely resold, so quote ${BANDR[NEW_NM]:,.0f} as the least
-  it can be.</div>
+  <p class="expl" style="margin-top:18px">Two condominiums next door, one leased a few years after
+  the other. The figure is <b>how much more per square foot the newer one fetches, for each year
+  between them</b>.</p>
+  <p class="expl"><b>The newer band is the steeper one.</b> Being newer pays nearly twice as much
+  in stock from 2011 as it does in older stock.</p>
+  <div class="caveat"><b>Treat the newer figure as a floor.</b> It rests on
+  {ndev(rows_in(NEW_NM))} developments and runs hotter in the RCR (${fit(RCR_NEW):,.0f}) than the
+  OCR (${fit(OCR_NEW):,.0f}). Young stock has barely resold yet.</div>
 </section>
 
 <section>
@@ -499,67 +512,47 @@ This is the first one measured against the market.</p>
   <p>Four questions, answered once each.</p></div>
 
   <details><summary>Do the bands move as the stock ages?</summary>
-    <p class="expl"><b>No. They are fixed calendar years.</b> The obvious worry is that this is
-    really an age effect &mdash; that a 2011 project is dear because it is {NOW-2011} years old,
-    so next year the boundary should slide. It does not. Running the identical method on sales
-    from {EW[0]}&ndash;{EW[1]}, three years earlier, puts the jump at the same calendar band, with
+    <p class="expl"><b>No. They are fixed calendar years.</b> If this were really an age effect,
+    the boundary would slide forward every year. Run the identical method on sales from
+    {EW[0]}&ndash;{EW[1]}, three years earlier, and the jump lands on the same calendar band with
     the stock three years younger.</p>
     <div class="scroll">{vintage_table()}</div>
-    <p class="expl">Read the age columns: the {AGE_SLICES[3][0]}&ndash;{AGE_SLICES[3][1]-1} band was
-    {st.median([EARLY_NOW - r['ls_old'] for r in EARLY if AGE_SLICES[3][0] <= mid(r) < AGE_SLICES[3][1]]):.0f}
-    years old in the early run and
-    {st.median([NOW - r['ls_old'] for r in ALL if AGE_SLICES[3][0] <= mid(r) < AGE_SLICES[3][1]]):.0f}
-    now. It aged four years and kept paying the high rate. <b>What is being measured is the vintage
-    of the stock, not its age</b> &mdash; projects launched from about 2012 sold into a much steeper
-    pricing era and have carried it ever since.</p>
-    <p class="expl">So the bands stay put. What will eventually change the answer is different:
-    <b>lease decay</b>. That bites on how much lease is <em>left</em>, and the market's knee is
-    60&ndash;65 years remaining. In this sample the older side has a median
-    {st.median([r['ls_old'] + 99 - NOW for r in rows_in(OLD_NM)]):.0f} years left, and only
-    {sum(1 for r in ALL if r['ls_old'] + 99 - NOW < 65)} of {len(ALL)} cells are below the knee at
-    all &mdash; so decay is almost absent here, and the gradient in fact runs the <em>other</em> way,
-    with the stock that has more lease left paying more. Decay will arrive as the oldest band
-    steepening, around the end of this decade. Re-run then, and it will show up as a new figure
-    for old stock, not as the boundary sliding.</p>
+    <p class="expl">The {AGE_SLICES[3][0]}&ndash;{AGE_SLICES[3][1]-1} band aged four years and kept
+    paying the high rate. <b>This is the vintage of the stock, not its age</b> &mdash; projects
+    launched from about 2012 sold into a much steeper pricing era and have carried it since.</p>
+    <p class="expl">What will eventually move the answer is <b>lease decay</b>, which bites on the
+    lease <em>left</em>, below 60&ndash;65 years. Only
+    {sum(1 for r in ALL if r['ls_old'] + 99 - NOW < 65)} of {len(ALL)} cells sit down there today,
+    so it is almost absent. Expect it around the end of this decade &mdash; as the oldest band
+    steepening, not as the boundary sliding.</p>
   </details>
 
   <details><summary>Why the newer band is nearly double</summary>
-    <p class="expl">The test is simple. <b>If something other than vintage explained the jump from
-    ${BANDR[OLD_NM]:,.0f} to ${BANDR[NEW_NM]:,.0f}, then looking only at pairs that are alike in
-    that respect would make the jump shrink.</b> So: look only at small units, and the jump should
-    go away. Look only at large ones, same. Watch the last column.</p>
+    <p class="expl"><b>Part of it is simply a smaller box.</b> Read in dollars instead of dollars
+    per square foot, a year of newness costs about ${BANDQ[OLD_NM]:,.0f} on older stock and about
+    ${BANDQ[NEW_NM]:,.0f} on stock from 2011. Newer three-bedrooms are about {SHRINK3:.0%} smaller
+    &mdash; {SQ3_NEW:,.0f} sq ft against {SQ3_OLD:,.0f} &mdash; so the same money spreads over less
+    floor, and the per-foot figure rises.</p>
+    <p class="expl"><b>The rest is real.</b> Size cannot be the whole answer. The two sides of a
+    pair must already be within 20% of each other on size before the pair is used at all, and the
+    jump survives every slice below.</p>
     <div class="scroll">{why_table()}</div>
-    <p class="expl"><b>The jump is still there in every row.</b> It does not matter whether you
-    look at small flats or large ones, or at pairs a couple of years apart or twenty. That rules
-    out unit size &mdash; the suggestion that older blocks are simply bigger, so their price per
-    square foot moves less &mdash; and it rules out the lease gap. Size is controlled inside each
-    pair anyway: the two sides must be within 20% of each other on median size before the pair is
-    used at all.</p>
-    <p class="expl">Two more candidates, ruled out the same way.
-    <b>A higher base price</b> &mdash; newer projects simply cost more per foot, so a fixed
-    percentage is more dollars. Read the same figures as percentages and the jump narrows from
-    {fpct(rows_in(OLD_NM)):+.2%} to {fpct(rows_in(NEW_NM)):+.2%} a year, so this explains part of
-    it, but nowhere near all.
-    <b>Lease decay</b> &mdash; ruled out twice over. The older band has a median
-    {st.median([r['ls_old'] + 99 - NOW for r in rows_in(OLD_NM)]):.0f} years of lease left and the
-    newer {st.median([r['ls_old'] + 99 - NOW for r in rows_in(NEW_NM)]):.0f}, decay does not bite
-    until 60&ndash;65, and only {sum(1 for r in ALL if r['ls_old'] + 99 - NOW < 65)} of {len(ALL)}
-    cells are down there. It also points the wrong way: the band with <b>more</b> lease left is
-    the one paying more.</p>
-    <p class="expl">What survives is the vintage of the stock itself &mdash; and the
-    {EW[0][:4]}&ndash;{EW[1][:4]} rerun above shows that vintage stays attached to the calendar
-    year, not to how old the buildings have since become.</p>
+    <p class="expl">Small flats, large flats, pairs two years apart or twenty &mdash; the jump is
+    in every row. A higher base price explains some of it, narrowing the gap from
+    {fpct(rows_in(OLD_NM)):+.2%} to {fpct(rows_in(NEW_NM)):+.2%} a year, but nowhere near all.</p>
+    <p class="expl">What is left is vintage: through the 2010s each successive launch in the same
+    spot came out dearer than the last. This measures the size of that effect, not its cause.</p>
   </details>
 
   <details><summary>What was tested and what it changed</summary>
-    <p class="expl">Every cut and every alternative method, with the figure it produced.
+    <p class="expl">Every cut and every alternative method, with what it produced.
     &ldquo;Held-out error&rdquo; means fitted on four fifths of the pairs and scored on the fifth
     it never saw &mdash; lower is better.</p>
     <div class="scroll">{tested_table()}</div>
-    <p class="expl">Three words are used throughout and count different things. A
-    <b>development</b> is one condominium ({NDEV} appear). A <b>pair</b> is two neighbouring
-    developments compared ({npairs(ALL)}). A <b>cell</b> is one pair read at one bedroom type,
-    one to four per pair ({len(ALL)}) &mdash; the unit every figure is computed on.</p>
+    <p class="expl"><b>{NDEV} developments</b> &mdash; one condominium each. They form
+    <b>{npairs(ALL)} pairs</b>, two neighbours compared. Each pair is read at one to four bedroom
+    types, giving <b>{len(ALL)} cells</b> &mdash; the unit every figure on this page is computed
+    on.</p>
   </details>
 
   <details><summary>How a pair is built, and every pair</summary>

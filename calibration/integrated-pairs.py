@@ -151,13 +151,22 @@ def build(kind):
 prs = lambda g: len({(x['a'], x['b']) for x in g})
 dvs = lambda g: len({y for x in g for y in (x['a'], x['b'])})
 
-def boot(g, B=4000, seed=17):
+def boot(g, B=4000, seed=17, pct=False):
+    """Cluster bootstrap by PAIR. `pct` resamples the RATIO, so the percentage carries its own
+    interval rather than borrowing the dollar one — the two are not interchangeable, because
+    the base PSF differs between cuts.
+
+    REPORTED IN PERCENT, which is a deliberate exception to the dollars-never-percent rule
+    that governs the lease study (Shawn, 2026-09-06). It applies here because the ENGINE'S
+    CONSTANT IS ITSELF A PERCENTAGE (+5%): a dollar figure cannot be compared with it without
+    a base, and the base moves from cut to cut. The dollars stay on the page beside it."""
     r = random.Random(seed); d = {}
     for x in g: d.setdefault((x['a'], x['b']), []).append(x)
     k = list(d); o = []
     for _ in range(B):
-        s = [c for kk in (r.choice(k) for _ in k) for c in d[kk]]
-        o.append(st.mean([x['adj'] for x in s]))
+        smp = [c for kk in (r.choice(k) for _ in k) for c in d[kk]]
+        o.append(100 * st.mean([x['adj'] for x in smp]) / st.mean([x['base'] for x in smp])
+                 if pct else st.mean([x['adj'] for x in smp]))
     o.sort(); return o[int(.025*B)], o[int(.975*B)]
 
 def summary():
@@ -168,14 +177,17 @@ def summary():
     for lgmax, dgmax, lab in CUTS:
         g = [r for r in T if abs(r['lg']) <= lgmax and abs(r['dg']) <= dgmax]
         if prs(g) < 3: continue
-        lo, hi = boot(g)
+        lo, hi = boot(g); plo, phi = boot(g, pct=True)
         out['cuts'].append(dict(label=lab, adj=st.mean([r['adj'] for r in g]), lo=lo, hi=hi,
                                 pct=100*st.mean([r['adj'] for r in g])/st.mean([r['base'] for r in g]),
+                                pct_lo=plo, pct_hi=phi,
                                 load=st.mean([abs(r['lease'])+abs(r['dist']) for r in g]),
                                 cells=len(g), pairs=prs(g), devs=dvs(g)))
     pl = [r for r in PL if abs(r['lg']) <= 5 and abs(r['dg']) <= 400]
-    plo, phi = boot(pl)
+    plo, phi = boot(pl); ppl, pph = boot(pl, pct=True)
     out['placebo'] = dict(adj=st.mean([r['adj'] for r in pl]), lo=plo, hi=phi,
+                          pct=100*st.mean([r['adj'] for r in pl])/st.mean([r['base'] for r in pl]),
+                          pct_lo=ppl, pct_hi=pph,
                           cells=len(pl), pairs=prs(pl),
                           load=st.mean([abs(r['lease'])+abs(r['dist']) for r in pl]))
     out['confound'] = dict(treat_gap=st.mean([r['lg'] for r in T]),
@@ -200,8 +212,8 @@ if __name__ == '__main__':
     print('%d integrated developments produced pairs\n' % S['n_integrated'])
     print('  %-36s %5s %5s %8s %s' % ('', 'cells', 'prs', 'adj load', 'answer'))
     for c in S['cuts']:
-        print('  %-36s %5d %5d %8.0f  %+5.0f [%+.0f, %+.0f]  %+.1f%%'
-              % (c['label'], c['cells'], c['pairs'], c['load'], c['adj'], c['lo'], c['hi'], c['pct']))
+        print('  %-36s %5d %5d %8.0f  %+5.1f%% [%+.1f, %+.1f]   (%+.0f psf)'
+              % (c['label'], c['cells'], c['pairs'], c['load'], c['pct'], c['pct_lo'], c['pct_hi'], c['adj']))
     p = S['placebo']
     print('  %-36s %5d %5d %8.0f  %+5.1f [%+.0f, %+.0f]  PLACEBO'
           % ('plain vs plain, tightest cut', p['cells'], p['pairs'], p['load'], p['adj'], p['lo'], p['hi']))

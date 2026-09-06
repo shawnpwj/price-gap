@@ -366,17 +366,36 @@ judgement, not a datum.** Excluded by his ruling: Marina One Residences and both
 all CCR. Excluded as not actually integrated: The Tre Ver, One-North Residences, The Clement
 Canopy, City Gate.
 
-| reading only pairs where… | measured | 95% | as a % | pairs | adjustment carried |
+| reading only pairs where… | premium | 95% | pairs | adjustment carried | in psf |
 |---|---|---|---|---|---|
-| every pair | +$91 | +42 to +142 | +6.0% | 42 | $485 |
-| lease gap ≤ 10 yrs | +$120 | +73 to +174 | +7.5% | 26 | $400 |
-| **lease gap ≤ 5 yrs** | **+$180** | +132 to +233 | +9.9% | 11 | $172 |
-| lease ≤ 10, within 400 m | +$119 | +65 to +179 | +6.5% | 13 | $223 |
-| **lease ≤ 5, within 400 m** | **+$128** | +93 to +165 | +6.7% | 7 | $118 |
-| plain vs plain, tightest cut | −$17 | −35 to +1 | — | 240 | $111 |
+| every pair | +6.0% | +2.7 to +9.5 | 42 | $485 | +$91 |
+| lease gap ≤ 10 yrs | +7.5% | +4.5 to +11.0 | 26 | $400 | +$120 |
+| **lease gap ≤ 5 yrs** | **+9.9%** | +6.8 to +13.9 | 11 | $172 | +$180 |
+| lease ≤ 10, within 400 m | **+6.5%** | +3.6 to +9.9 | 13 | $223 | +$119 |
+| lease ≤ 5, within 400 m | +6.7% | +4.5 to +9.1 | 7 | $118 | +$128 |
 
-**REPORT A RANGE, NEVER A FIGURE: $119 to $180, roughly 6.5% to 10%.** The engine's +5% sits at or
-below the bottom — **more likely too low than too high.**
+**REPORT A RANGE, NEVER A FIGURE: +6.5% to +9.9%.** The engine's +5% sits at or below the bottom —
+**more likely too low than too high.**
+
+**REPORTED IN PERCENT — a deliberate exception to the dollars-never-percent rule** (Shawn,
+2026-09-06). It applies here and nowhere else because **the engine's constant is itself a
+percentage**: a dollar figure cannot be set against +5% without a base, and the base moves between
+cuts. The dollars stay on the page in the last column.
+
+**THE PLACEBO IS OFF THE FACE AND BEHIND AN EXPLAIN MARK** (his ruling) — plain vs plain reads
+−1.1% across 240 pairs, interval covering zero, leaning very slightly negative, which if anything
+makes the figures above conservative. It is not deleted; a page may not show a number it cannot
+explain.
+
+### THE SAMPLE CANNOT MEANINGFULLY GROW — tested 2026-09-06
+
+Shawn asked. Loosening every screen barely moves it and **the ≤5-year cut stays at 11 pairs under
+all of them**: pair cap 1500→2000 or →3000 (11), transactions 3→2 (11), size 20%→30% (11), adding
+the All-bedrooms bucket (11). The binding constraint is not a screen — **there are simply few
+MRT-integrated condos in Singapore with resale volume.** The only lever is extending the
+classification, and a sweep of every unflagged development within 200 m of its station turned up
+just two defensible additions: **ARTRA** (Redhill) and **CANNINGHILL PIERS** (Fort Canning, CCR,
+one partner). Neither has been added; both need his audit first.
 
 ### THE CONFOUND — the reason this is a range
 

@@ -547,25 +547,23 @@ def nice(n):
     return ' '.join(out)
 
 def int_table():
+    """PERCENT LEADS HERE, not dollars. The engine's constant is itself a percentage, so a
+    dollar figure cannot be set against it without a base — and the base moves between cuts.
+    The dollars stay in the last column. (Shawn, 2026-09-06; a deliberate exception to the
+    dollars-never-percent rule that governs the lease study.)"""
     if not G: return ''
     r = ['<table class="fig look"><thead><tr><th>Reading only pairs where&hellip;</th>'
-         '<th class="num">measured</th><th class="num">95% interval</th>'
-         '<th class="num">as a %</th><th class="num">pairs</th>'
-         '<th class="num">adjustment carried</th></tr></thead><tbody>']
+         '<th class="num">premium</th><th class="num">95% interval</th>'
+         '<th class="num">pairs</th><th class="num">adjustment carried</th>'
+         '<th class="num">in psf</th></tr></thead><tbody>']
     for c in G['cuts']:
-        big = 'big' if c['label'].startswith('lease gap 5') else 'quiet'
+        big = 'big' if c['label'].startswith(('lease gap 5 yrs', 'lease gap 5 or')) else 'quiet'
         r.append(f'<tr><th>{c["label"]}</th>'
-                 f'<td class="num {big}">+${c["adj"]:,.0f}</td>'
-                 f'<td class="num quiet">+${c["lo"]:,.0f} to +${c["hi"]:,.0f}</td>'
-                 f'<td class="num quiet">+{c["pct"]:.1f}%</td>'
+                 f'<td class="num {big}">+{c["pct"]:.1f}%</td>'
+                 f'<td class="num quiet">+{c["pct_lo"]:.1f}% to +{c["pct_hi"]:.1f}%</td>'
                  f'<td class="num quiet">{c["pairs"]}</td>'
-                 f'<td class="num quiet">${c["load"]:,.0f}</td></tr>')
-    p = G['placebo']
-    r.append(f'<tr class="dim"><th>plain vs plain, tightest cut</th>'
-             f'<td class="num">${p["adj"]:,.1f}</td>'
-             f'<td class="num">${p["lo"]:,.0f} to +${p["hi"]:,.0f}</td>'
-             f'<td class="num">&mdash;</td><td class="num">{p["pairs"]}</td>'
-             f'<td class="num">${p["load"]:,.0f}</td></tr>')
+                 f'<td class="num quiet">${c["load"]:,.0f}</td>'
+                 f'<td class="num quiet">+${c["adj"]:,.0f}</td></tr>')
     return ''.join(r) + '</tbody></table>'
 
 def int_devs():
@@ -841,11 +839,11 @@ the walking difference at the measured ${G['slope']:.0f} per 100 m. What is left
 sitting on the station.</p>
 
 {hero('+5%', 'never actually fired',
-      [(f"+${G['cuts'][3]['adj']:,.0f}", '10 yr gap, within 400 m', G['cuts'][3]['devs']),
-       (f"+${G['cuts'][2]['adj']:,.0f}", '5 yr lease gap', G['cuts'][2]['devs'])],
-      f"<b>The call.</b> A <b>range, not a figure</b>: ${G['cuts'][3]['adj']:,.0f} to "
-      f"${G['cuts'][2]['adj']:,.0f} psf, roughly "
-      f"{min(c['pct'] for c in G['cuts'][1:]):.0f}&ndash;{max(c['pct'] for c in G['cuts'][1:]):.0f}%. "
+      [(f"+{G['cuts'][3]['pct']:.1f}%", '10 yr gap, within 400 m', G['cuts'][3]['devs']),
+       (f"+{G['cuts'][2]['pct']:.1f}%", '5 yr lease gap', G['cuts'][2]['devs'])],
+      f"<b>The call.</b> A <b>range, not a figure</b>: "
+      f"<b>+{G['cuts'][3]['pct']:.1f}% to +{G['cuts'][2]['pct']:.1f}%</b>, or "
+      f"${G['cuts'][3]['adj']:,.0f} to ${G['cuts'][2]['adj']:,.0f} psf at these price levels. "
       f"The engine's +5% sits at or below the bottom of it, so on this evidence it is more likely "
       f"too low than too high &mdash; and it has never fired on a single comparable.")}
 
@@ -870,6 +868,15 @@ sitting on the station.</p>
   file that flags nothing, so every development is treated as not integrated and the &plusmn;5%
   has never applied to a single comparable. The {G['n_integrated']} developments below are a
   classification made for this study and audited by hand &mdash; a judgement, not a datum.</div>
+
+  <details><summary>The check that the adjustments are working</summary>
+    <p class="expl">The same method run on <b>plain against plain</b> at the same station, under
+    the identical lease and distance corrections. Nothing separates those pairs, so the answer
+    should be zero. Across <b>{G['placebo']['pairs']} pairs</b> it reads
+    <b>{G['placebo']['pct']:+.1f}%</b> ({G['placebo']['adj']:+,.0f} psf), with an interval of
+    {G['placebo']['pct_lo']:+.1f}% to {G['placebo']['pct_hi']:+.1f}% that covers zero. It leans
+    very slightly negative, which if anything makes the integrated figures above conservative.</p>
+  </details>
 
   <details><summary>Every development, and what each one reads</summary>
     <div class="scroll">{int_devs()}</div>
@@ -921,7 +928,7 @@ sitting on the station.</p>
     <td>measured &mdash; +${M['bands'][0]['adj']:,.0f} / +${M['bands'][1]['adj']:,.0f} /
     +${M['bands'][2]['adj']:,.0f}, or ${M['slope100']:.0f} per 100 m</td></tr>
     <tr><th>Integrated development</th><td class="num big">+5%</td>
-    <td>measured &mdash; +${G['cuts'][3]['adj']:,.0f} to ${G['cuts'][2]['adj']:,.0f} psf</td></tr>
+    <td>measured &mdash; +{G['cuts'][3]['pct']:.1f}% to +{G['cuts'][2]['pct']:.1f}%</td></tr>
   </tbody></table>
 </section>
 </div>

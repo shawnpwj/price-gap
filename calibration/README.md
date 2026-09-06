@@ -62,14 +62,40 @@ Every one of these is a ruling he gave, not a default. Do not quietly change one
 | bands | **by lease START only** | ruled 2026-09-06. Bedroom and region were tested and neither moves the number; they stay on the page behind an explain mark, never on its face |
 | scale | **dollars, never a percentage** | ruled 2026-09-06. Across base-PSF bands the $/yr holds at $26–30 while the %/yr falls away. The dollar is the invariant; the percentage is what made region look like a real split |
 
-### The estimator — a CURVE, not a constant (Shawn, 2026-09-06)
+### The estimator — FLAT, THEN RISING (Shawn, 2026-09-06)
 
 ```
-rate($/yr) = a + b x (midpoint of the two lease starts - 2000)
+rate($/yr) = c + d x max(0, midpoint of the two lease starts - K)
 ```
 
-Fitted as `diff = gap * (a + b*(mid-2000))`, least squares, no intercept.
-**Measured: a = $20.9 [18.2, 23.3], b = $1.40 [0.99, 1.80], on 273 cells across 168 pairs.**
+Fitted as `diff = gap * rate(midpoint)`, least squares, no intercept. The knee K is FITTED —
+every year 2000–2014 ranked on held-out error, not assumed.
+
+**Measured: flat at $25.3 [22.9, 27.6] for every pair centred up to K = 2008 [2002, 2008],
+then rising $3.57 [2.81, 4.42] per further year. 273 cells across 168 pairs.**
+
+| midpoint | 1995 | 2000 | 2005 | 2010 | 2015 | 2020 |
+|---|---|---|---|---|---|---|
+| $/yr | 25 | 25 | 25 | 32 | 50 | 68 |
+
+**A straight line was tried first and RAN LOW AT BOTH ENDS.** Shawn found it by asking what
+rate a 1995 midpoint should use. Midpoint 1990–99 paid $11.5/yr more than the line predicted
+[+3.0, +22.3]; 2015+ paid $10.8 more [+3.7, +18.3]; the middle was followed closely. Both
+intervals clear zero, so it was a real U — the line was averaging a flat old segment against a
+steep new one and missing both. The old reading is **not** an outlier artefact: the 1990s
+bucket reads +28.4 whole, +27.1 less its largest pair, +24.8 less its second, +26.2 on wide
+gaps only. Held-out error: flat 21.1k · two-band step 19.4k · line 18.9k · quadratic 18.4k ·
+**hinge 18.3k**. Under the hinge the retired gap screen matters even less than before — flat
+level 25.1–25.6 and slope 3.29–4.09 across every threshold.
+
+The flat segment recovers the same **$25** the very first two-band pass found. That pass had
+the level right and only the shape wrong.
+
+**REJECTED — the lease-decay knee.** A 1990s-centred pair has ~65 years left, which is the
+2026-07-27 study's knee, so decay was the obvious suspect for the old end. It is not:
+refitting on the older project's REMAINING lease is worse on held-out error (19.4k), adding
+it alongside vintage is worse (19.1k), and a term for years below 65 remaining earns nothing.
+**The turn is in the vintage of the stock, not the lease left on it.** Do not re-run this.
 
 **This form IS the blend.** If the rate rises smoothly with vintage, the total difference
 across an interval is exactly the gap times the rate at its midpoint — so a pair straddling

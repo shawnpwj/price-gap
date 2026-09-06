@@ -44,7 +44,35 @@ def curve(rows):
     return ((s22*t1 - s12*t2)/det, (s11*t2 - s12*t1)/det) if det else (None, None)
 
 def mid(r):   return (r['ls_old'] + r['ls_new']) / 2
-def rate(m):  return A + B * (m - 2000)
+def rate(m):  return C + Dd * max(0.0, m - KNEE)
+
+def hinge(rows, K):
+    """rate = c + d*max(0, mid - K). Flat until the knee year, rising after it.
+    Fitted the same way as everything else here: diff = gap * rate(midpoint)."""
+    s11 = s12 = s22 = t1 = t2 = 0.0
+    for r in rows:
+        x1 = r['gap']; x2 = r['gap'] * max(0.0, mid(r) - K)
+        s11 += x1*x1; s12 += x1*x2; s22 += x2*x2; t1 += x1*r['diff']; t2 += x2*r['diff']
+    det = s11*s22 - s12*s12
+    if not det: return None, None
+    return (s22*t1 - s12*t2)/det, (s11*t2 - s12*t1)/det
+
+def hinge_rss(rows, K):
+    c, d = hinge(rows, K)
+    return sum((r['diff'] - r['gap']*(c + d*max(0.0, mid(r)-K)))**2 for r in rows)
+
+def pick_knee(rows, lo=2000, hi=2014):
+    return min(range(lo, hi+1), key=lambda K: hinge_rss(rows, K))
+
+def hinge_ci(rows, K, N=1500, seed=29):
+    g = random.Random(seed); n = len(rows); CC = []; DD = []; KK = []
+    for _ in range(N):
+        s = [rows[g.randrange(n)] for _ in range(n)]
+        k = pick_knee(s); c, d = hinge(s, K)
+        KK.append(k); CC.append(c); DD.append(d)
+    CC.sort(); DD.sort(); KK.sort()
+    q = lambda v, p: v[min(int(p*len(v)), len(v)-1)]
+    return (q(CC,.025), q(CC,.975)), (q(DD,.025), q(DD,.975)), (q(KK,.025), q(KK,.975))
 def fit(r):   return sum(x['diff'] for x in r) / sum(x['gap'] for x in r) if r else None
 def money(v): return '—' if v is None else f'{v:+,.0f}'
 def npairs(r):return len({(x['older'], x['newer']) for x in r})
@@ -56,6 +84,19 @@ def curve_ci(rows, N=2000, seed=17):
         if a is not None: AA.append(a); BB.append(b)
     AA.sort(); BB.sort(); lo, hi = int(.025*len(AA)), int(.975*len(AA)) - 1
     return (AA[lo], AA[hi]), (BB[lo], BB[hi])
+
+def _solve(S, T):
+    """Tiny Gaussian elimination, so the page needs no numpy."""
+    n = len(T); M = [row[:] + [T[i]] for i, row in enumerate(S)]
+    for i in range(n):
+        p = max(range(i, n), key=lambda r: abs(M[r][i])); M[i], M[p] = M[p], M[i]
+        for r in range(i+1, n):
+            f = M[r][i]/M[i][i]
+            for c_ in range(i, n+1): M[r][c_] -= f*M[i][c_]
+    x = [0.0]*n
+    for i in range(n-1, -1, -1):
+        x[i] = (M[i][n] - sum(M[i][j]*x[j] for j in range(i+1, n)))/M[i][i]
+    return x
 
 def cv(rows, model, folds=5, reps=20, seed=23):
     """Held-out squared error per cell. The only honest way to rank shapes that carry
@@ -79,13 +120,30 @@ def cv(rows, model, folds=5, reps=20, seed=23):
                     s11+=x1*x1; s12+=x1*x2; s22+=x2*x2; t1+=x1*x['diff']; t2+=x2*x['diff']
                 d_=s11*s22-s12*s12; a=(s22*t1-s12*t2)/d_; b=(s11*t2-s12*t1)/d_
                 pr = [x['gap']*(a+b*(x['ls_old']-2000)) for x in ts]
+            elif model == 'quad':
+                import itertools as _it
+                n_ = 3
+                S = [[0.0]*n_ for _ in range(n_)]; T = [0.0]*n_
+                for x in tr:
+                    v = [x['gap'], x['gap']*(mid(x)-2000), x['gap']*(mid(x)-2000)**2]
+                    for i in range(n_):
+                        T[i] += v[i]*x['diff']
+                        for j in range(n_): S[i][j] += v[i]*v[j]
+                co = _solve(S, T)
+                pr = [x['gap']*(co[0]+co[1]*(mid(x)-2000)+co[2]*(mid(x)-2000)**2) for x in ts]
+            elif model == 'hinge':
+                k = pick_knee(tr); a, b = hinge(tr, k)
+                pr = [x['gap']*(a+b*max(0.0, mid(x)-k)) for x in ts]
             else:
                 a, b = curve(tr); pr = [x['gap']*(a+b*(mid(x)-2000)) for x in ts]
             err += [(x['diff']-q)**2 for x, q in zip(ts, pr)]
     return sum(err)/len(err)
 
 ALL   = D['24']                      # NO gap screen — see the docstring in lease-pairs.py
-A, B  = curve(ALL)
+KNEE  = pick_knee(ALL)               # where the flat old segment turns up
+C, Dd = hinge(ALL, KNEE)
+(CLO, CHI), (DLO, DHI), (KLO, KHI) = hinge_ci(ALL, KNEE)
+A, B  = curve(ALL)                   # the straight line, kept only as the comparison
 (ALO, AHI), (BLO, BHI) = curve_ci(ALL)
 POOL  = D.get('pooled24', [])
 PA, PB = curve(POOL) if POOL else (None, None)
@@ -111,8 +169,9 @@ def lookup():
     h = ['<table class="fig look"><thead><tr><th>Midpoint of the two lease starts</th>'
          '<th class="num">$ psf per year</th><th></th></tr></thead><tbody>']
     for m in range(1995, 2026, 5):
-        out = '' if MID_LO <= m <= MID_HI else 'outside the sample — extrapolation'
-        h.append(f'<tr{" class=dim" if out else ""}><th>{m}</th>'
+        out = ('outside the sample — extrapolation' if not (MID_LO <= m <= MID_HI)
+               else ('the flat segment' if m <= KNEE else ''))
+        h.append(f'<tr{" class=dim" if not (MID_LO <= m <= MID_HI) else ""}><th>{m}</th>'
                  f'<td class="num big">${rate(m):,.0f}</td><td class="note">{out}</td></tr>')
     return ''.join(h) + '</tbody></table>'
 
@@ -131,7 +190,7 @@ def observed():
     return ''.join(h) + '</tbody></table>'
 
 def residuals():
-    """Where the straight line does not follow the market. Bootstrapped, because two of
+    """Where the fitted shape does not follow the market. Bootstrapped, because two of
     these buckets are small and a residual that cannot be told from zero is not a finding."""
     g = random.Random(41)
     h = ['<table class="fig"><thead><tr><th>Midpoint</th><th class="num">the curve runs</th>'
@@ -148,16 +207,16 @@ def residuals():
                  f'<td class="num big">{v:+,.1f}</td>'
                  f'<td class="num quiet">{blo:+,.1f} to {bhi:+,.1f}</td>'
                  f'<td class="num quiet">{len(s_)}</td>'
-                 f'<td class="note">{"low — the market paid more than the line" if real else "no difference from the line"}</td></tr>')
+                 f'<td class="note">{"the shape misses this bucket" if real else "no difference from the fitted shape"}</td></tr>')
     return ''.join(h) + '</tbody></table>'
 
 def gapstability():
-    h = ['<table class="fig"><thead><tr><th>Minimum lease gap</th><th class="num">a</th>'
-         '<th class="num">b</th><th class="num">cells</th><th class="num">pairs</th></tr>'
-         '</thead><tbody>']
+    h = ['<table class="fig"><thead><tr><th>Minimum lease gap</th>'
+         '<th class="num">flat level</th><th class="num">slope after the knee</th>'
+         '<th class="num">cells</th><th class="num">pairs</th></tr></thead><tbody>']
     for mg in (1, 2, 3, 5, 8):
         s = [r for r in ALL if r['gap'] >= mg]
-        a, b = curve(s)
+        a, b = hinge(s, KNEE)
         lab = f'{mg} years' if mg > 1 else 'none — the method'
         h.append(f'<tr{"" if mg==1 else " class=dim"}><th>{lab}</th><td class="num big">${a:,.1f}</td>'
                  f'<td class="num big">${b:,.2f}</td><td class="num quiet">{len(s)}</td>'
@@ -168,9 +227,11 @@ def models():
     h = ['<table class="fig"><thead><tr><th>Shape</th><th class="num">held-out error</th>'
          '<th></th></tr></thead><tbody>']
     for nm, k, note in [('One flat rate', 'flat', 'the engine today'),
-                        ('Two bands, stepped on the older project', 'step', 'the previous version of this page'),
+                        ('Two bands, stepped on the older project', 'step', 'an earlier version of this page'),
                         ('A curve keyed on the older project', 'old', ''),
-                        ('<b>A curve keyed on the pair midpoint</b>', 'mid', 'the method — it is the blend')]:
+                        ('A straight line on the pair midpoint', 'mid', 'ran low at both ends'),
+                        ('A quadratic on the pair midpoint', 'quad', 'better, but hard to explain and to extend'),
+                        (f'<b>Flat, then rising from {KNEE}</b>', 'hinge', 'the method')]:
         v = cv(ALL, k)
         h.append(f'<tr><th>{nm}</th><td class="num big">{v/1000:,.1f}k</td>'
                  f'<td class="note">{note}</td></tr>')
@@ -368,24 +429,34 @@ width:130px;font-variant-numeric:tabular-nums}
 .crow.big b{color:var(--gold);font:600 21px/1 Optima,Candara,sans-serif}
 .chint{color:var(--slate-500);font-size:12px;margin-top:10px}
 .cwarn{color:var(--warn);font-size:12px;margin-top:8px}
+.crow i.cflat{font-style:normal;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+color:var(--gold);border:1px solid rgba(201,169,106,.4);border-radius:999px;padding:2px 9px;
+margin-left:10px;align-self:center}
+.crow{align-items:center}
 """
 JS = """
 (function(){
-  var A=%A%, B=%B%, LO=%LO%, HI=%HI%;
+  var C=%C%, D=%D%, K=%K%, LO=%LO%, HI=%HI%;
   function n(id){return parseFloat(document.getElementById(id).value);}
   function go(){
     var a=n('lsA'), b=n('lsB'), o=document.getElementById('calcOut');
     if(!a||!b||a<1960||b<1960||a>2040||b>2040){o.className='cout bad';
       o.innerHTML='Enter two lease start years.';return;}
     if(a===b){o.className='cout bad';o.innerHTML='Same lease start — no adjustment.';return;}
-    var mid=(a+b)/2, rate=A+B*(mid-2000), gap=b-a, adj=rate*gap;
-    var warn = (mid<LO||mid>HI) ? '<p class="cwarn">Midpoint '+mid.toFixed(1)+
-      ' is outside the measured range ('+LO.toFixed(0)+'–'+HI.toFixed(0)+
-      '). This is extrapolation — treat it as indicative.</p>' : '';
+    var mid=(a+b)/2, rate=C+D*Math.max(0,mid-K), gap=b-a, adj=rate*gap;
+    var warn='';
+    if(mid>HI) warn='<p class="cwarn">Midpoint '+mid.toFixed(1)+
+      ' is past the measured range (ends '+HI.toFixed(0)+') and the slope is steep here. '+
+      'This is a projection — say so when you use it.</p>';
+    else if(mid<LO) warn='<p class="chint">Midpoint '+mid.toFixed(1)+
+      ' is below the bulk of the sample (starts '+LO.toFixed(0)+
+      '), but it sits on the flat segment, which the whole pre-'+K+' sample supports. '+
+      'The rate does not change going further back.</p>';
     o.className='cout';
     o.innerHTML =
       '<div class="crow"><span>Midpoint</span><b>'+mid.toFixed(1)+'</b></div>'+
-      '<div class="crow"><span>Rate at that midpoint</span><b>$'+rate.toFixed(1)+' psf / yr</b></div>'+
+      '<div class="crow"><span>Rate at that midpoint</span><b>$'+rate.toFixed(1)+' psf / yr</b>'+
+        (mid<=K?'<i class="cflat">flat segment</i>':'')+'</div>'+
       '<div class="crow"><span>Lease gap</span><b>'+Math.abs(gap)+' years</b></div>'+
       '<div class="crow big"><span>Adjustment</span><b>'+(adj>=0?'+':'')+'$'+
         Math.round(adj).toLocaleString()+' psf</b></div>'+
@@ -413,16 +484,16 @@ constants. All five were set by judgement. This measures the first of them again
       <div class="val was">$40</div><div class="sub">psf per year, flat · set 2026-07-20</div></div>
     <div class="arrow">&rarr;</div>
     <div class="vcell grow"><div class="lab">Measured</div>
-      <div class="formula">${A:,.1f} <span>+</span> ${B:,.2f} <span>&times;</span>
-        <em>(midpoint &minus; 2000)</em></div>
-      <div class="sub">dollars psf per year · midpoint of the two lease starts ·
+      <div class="formula">${C:,.1f} <span>then</span> <span>+</span>${Dd:,.2f}
+        <em>a year past {KNEE}</em></div>
+      <div class="sub">dollars psf per year · read at the midpoint of the two lease starts ·
         {len(ALL)} cells across {npairs(ALL)} pairs</div></div>
   </div>
-  <p class="call"><b>The call.</b> The constant is not a constant. What the market pays for a year
-  of lease rises steadily with vintage — about <b>${B:,.2f} more per year for every year newer the
-  pair is</b> — so a single figure is wrong at both ends at once. The engine's $40 is not hot or
-  cold so much as anchored in the wrong place: it is roughly right for a pair centred on
-  {2000 + (40 - A) / B:.0f} and badly wrong for anything older.
+  <p class="call"><b>The call.</b> The rate is <b>flat at ${C:,.1f} a year for every pair centred
+  up to {KNEE}</b>, and rises steeply after it — about ${Dd:,.2f} more for each further year of
+  vintage. So the answer is a level for older stock and a slope for newer, not one number and not
+  a straight line through both. The engine's flat $40 over-adjusts an old pair by about
+  {40/C:.1f} times and under-adjusts a new one.
   Bedroom and region were both tested and neither moves it. Leave the engine untouched until this
   is audited.</p>
 </div>
@@ -438,7 +509,8 @@ constants. All five were set by judgement. This measures the first of them again
     <div class="step"><span class="sn">2</span>
       <p>Average them. That is the <b>midpoint</b>.</p></div>
     <div class="step"><span class="sn">3</span>
-      <p>Read the rate: <b>${A:,.1f} + ${B:,.2f} &times; (midpoint &minus; 2000)</b>.</p></div>
+      <p>Read the rate. Midpoint <b>{KNEE} or earlier &rarr; ${C:,.1f}</b>. Later &rarr;
+      <b>${C:,.1f} + ${Dd:,.2f} &times; (midpoint &minus; {KNEE})</b>.</p></div>
     <div class="step"><span class="sn">4</span>
       <p>Multiply by the <b>lease gap</b>, and add it to the comparable's PSF.</p></div>
   </div>
@@ -448,16 +520,16 @@ constants. All five were set by judgement. This measures the first of them again
     <table class="fig wk"><tbody>
       <tr><th>Lease starts</th><td>{EX_A} and {EX_B}</td></tr>
       <tr><th>Midpoint</th><td>({EX_A} + {EX_B}) &divide; 2 = <b>{EX_MID:,.0f}</b></td></tr>
-      <tr><th>Rate</th><td>${A:,.1f} + ${B:,.2f} &times; ({EX_MID:,.0f} &minus; 2000)
+      <tr><th>Rate</th><td>${C:,.1f} + ${Dd:,.2f} &times; ({EX_MID:,.0f} &minus; {KNEE})
         = <b>${rate(EX_MID):,.0f} psf per year</b></td></tr>
       <tr><th>Lease gap</th><td>{EX_B} &minus; {EX_A} = <b>{EX_B-EX_A} years</b></td></tr>
       <tr class="tot"><th>Adjustment</th><td>${rate(EX_MID):,.0f} &times; {EX_B-EX_A}
         = <b>+${rate(EX_MID)*(EX_B-EX_A):,.0f} psf</b> onto the {EX_A} comparable</td></tr>
     </tbody></table>
-    <p class="expl">Note what a flat constant would have done here. At $40 it would read
-    +${40*(EX_B-EX_A):,.0f}; on an old pair centred on 2000 it would read
-    +${40*10:,.0f} against a measured ${rate(2000)*10:,.0f} over ten years — more than
-    {40/rate(2000):.1f} times the truth.</p>
+    <p class="expl">Note what a flat constant would have done here. At $40 it reads
+    +${40*(EX_B-EX_A):,.0f} against a measured ${rate(EX_MID)*(EX_B-EX_A):,.0f}. Run it the other
+    way — an old pair centred on 1995 — and $40 reads +${40*10:,.0f} over ten years against a
+    measured ${rate(1995)*10:,.0f}, which is {40/rate(1995):.1f} times too much.</p>
   </div>
 
   <div class="calc">
@@ -484,37 +556,53 @@ constants. All five were set by judgement. This measures the first of them again
 
   <table class="fig"><thead><tr><th></th><th class="num">estimate</th>
     <th class="num">95% interval</th><th></th></tr></thead><tbody>
-    <tr><th>a — the rate at a 2000 midpoint</th><td class="num big">${A:,.1f}</td>
-      <td class="num quiet">${ALO:,.1f} to ${AHI:,.1f}</td><td class="note">psf per year</td></tr>
-    <tr><th>b — how much that rises per year of vintage</th><td class="num big">${B:,.2f}</td>
-      <td class="num quiet">${BLO:,.2f} to ${BHI:,.2f}</td>
-      <td class="note">positive in every bootstrap draw</td></tr>
+    <tr><th>the flat level, up to a {KNEE} midpoint</th><td class="num big">${C:,.1f}</td>
+      <td class="num quiet">${CLO:,.1f} to ${CHI:,.1f}</td>
+      <td class="note">psf per year · {sum(1 for r in ALL if mid(r) <= KNEE)} cells sit here</td></tr>
+    <tr><th>the slope after it</th><td class="num big">${Dd:,.2f}</td>
+      <td class="num quiet">${DLO:,.2f} to ${DHI:,.2f}</td>
+      <td class="note">per further year of vintage</td></tr>
+    <tr><th>where it turns</th><td class="num big">{KNEE}</td>
+      <td class="num quiet">{KLO} to {KHI}</td>
+      <td class="note">the knee, chosen by held-out error</td></tr>
   </tbody></table>
 
   <h3 style="margin-top:26px">The curve against what the market actually did</h3>
   <div class="scroll">{observed()}</div>
 
-  <div class="caveat"><b>A straight line runs low at both ends.</b> The middle of the range is
-  followed closely, but the oldest and newest buckets both paid about $11 a year more than the line
-  says, and neither gap can be explained away as thin data. <b>Where it matters: a pair centred
-  before 2000 is under-adjusted by roughly a third.</b> The shape of the fix is an open question —
-  see below.</div>
+  <div class="caveat"><b>The newest end is the thin end.</b> Midpoints past 2016 leave the sample,
+  and the slope is steep there — ${Dd:,.2f} a year compounds fast, so a midpoint of 2020 reads
+  ${rate(2020):,.0f} against ${rate(2016):,.0f} four years earlier. Inside the measured range the
+  shape is well supported; past it, the level is a projection and should be said to be one.</div>
 
-  <details><summary>Where the line does not follow the market</summary>
-    <p class="expl">The residual, expressed in the same units as the rate itself, so it reads as
-    "the curve is $x per year low here". Bootstrapped, because two of these buckets are small and
-    a residual that cannot be told from zero is not a finding.</p>
+  <details><summary>How the knee was found, and why not a straight line</summary>
+    <p class="expl">A straight line through the midpoint was the first shape tried and it
+    <b>ran low at both ends</b>: midpoint 1990–99 paid $11.5 a year more than the line said
+    [+3.0, +22.3] and 2015+ paid $10.8 more [+3.7, +18.3], with the middle followed closely.
+    Both intervals clear zero, so it was a real U and not noise — a straight line was averaging a
+    flat old segment against a steep new one and missing both.</p>
+    <p class="expl">The old reading survives its outliers, which is what makes it a finding rather
+    than an accident: the 1990s bucket reads +28.4 whole, +27.1 without its largest pair, +24.8
+    without its second, and +26.2 if only wide-gap pairs are kept. It is a level of about $25, not
+    the $14 a line through 1995 predicts.</p>
+    <p class="expl">So the knee was fitted rather than assumed — every year from 2000 to 2014 tried,
+    ranked on held-out error. It lands on <b>{KNEE}</b>, and lands there in more than half of
+    bootstrap draws (95% interval {KLO}–{KHI}). The flat segment then recovers the same $25 the very
+    first two-band pass found, which is the reassuring part: that pass was not wrong about the
+    level, only about calling it a band.</p>
     <div class="scroll">{residuals()}</div>
-    <p class="expl">Both ends are real and both point the same way, which is a U and not a slope
-    error. A quadratic fits marginally better on held-out error ({cv(ALL,'mid')/1000:,.1f}k for the
-    straight line against about 18.4k) but that is a 2% gain bought with a term that is hard to
-    explain and dangerous to extend past its evidence, so <b>this page stays on the straight line
-    until Shawn rules on it</b>.</p>
-    <p class="expl">The old end is the more interesting of the two. A pair centred in the 1990s
-    has a lease running down toward the 60–65 year mark, which is where the 2026-07-27 decay study
-    found the market's knee. If that is what this is, the right fix is not a bent line through
-    vintage but the decay curve itself — the same collapse of the lease and tenure terms into one
-    curve that this workstream was set up to test.</p>
+    <p class="expl">Residuals against the fitted shape, in the same units as the rate. Every bucket
+    now sits within its interval of zero.</p>
+  </details>
+
+  <details><summary>One hypothesis tested and rejected — the lease-decay knee</summary>
+    <p class="expl">A pair centred in the 1990s has a lease running down toward the 60–65 year
+    mark, which is where the 2026-07-27 decay study found the market's knee, so the obvious
+    suspicion was that the old end is decay showing through rather than vintage. <b>It is not.</b>
+    Refitting on the remaining lease of the older project instead of vintage is worse on held-out
+    error (19.4k against {cv(ALL,'hinge')/1000:,.1f}k), adding it alongside vintage is worse
+    (19.1k), and a term for years below a 65-year remaining lease earns nothing it does not already
+    have. The turn is in the vintage of the stock, not in how much lease is left on it.</p>
   </details>
 
   <details><summary>Why a curve, and not one number or two bands</summary>
@@ -677,11 +765,15 @@ HTML = f"""<!doctype html>
   <span>price-gap/calibration/lease-pairs.py · regenerate with build-page.py</span>
 </footer>
 </div>
-<script>{JS.replace('%A%', f'{A}').replace('%B%', f'{B}').replace('%LO%', f'{MID_LO}').replace('%HI%', f'{MID_HI}')}</script>
+<script>{JS.replace('%C%', f'{C}').replace('%D%', f'{Dd}').replace('%K%', f'{KNEE}').replace('%LO%', f'{MID_LO}').replace('%HI%', f'{MID_HI}')}</script>
 </body></html>
 """
 
 open(OUT, 'w').write(HTML)
 print(f'wrote {os.path.relpath(OUT, HERE)}  ({len(HTML)//1024} KB)')
-print(f'  curve  a={A:+.2f} [{ALO:+.2f},{AHI:+.2f}]   b={B:+.2f} [{BLO:+.2f},{BHI:+.2f}]')
+print(f'  hinge  flat ${C:,.1f} [{CLO:,.1f},{CHI:,.1f}] up to {KNEE} [{KLO},{KHI}], '
+      f'then +${Dd:,.2f}/yr [{DLO:,.2f},{DHI:,.2f}]')
 print(f'  on {len(ALL)} cells / {npairs(ALL)} pairs, no gap screen')
+print(f'  lookup  ' + '  '.join(f'{m}:${rate(m):.0f}' for m in range(1995, 2021, 5)))
+print(f'  held-out: flat {cv(ALL,"flat")/1000:.1f}k · line {cv(ALL,"mid")/1000:.1f}k · '
+      f'quad {cv(ALL,"quad")/1000:.1f}k · hinge {cv(ALL,"hinge")/1000:.1f}k')

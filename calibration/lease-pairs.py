@@ -28,10 +28,29 @@ is the market's price for a year of lease.
                                             Each pair carries its size delta so the residual
                                             can be checked against it.)
 
-  THE ESTIMATOR -- A CURVE, NOT A CONSTANT  (Shawn, 2026-09-06)
-    The rate is not one number and it is not two bands. It rises smoothly with vintage:
+  THE ESTIMATOR -- FLAT, THEN RISING  (Shawn, 2026-09-06)
+    The rate is not one number, not two bands, and not a straight line:
 
-        rate($/yr) = a + b * (midpoint of the two lease starts - 2000)
+        rate($/yr) = c + d * max(0, midpoint of the two lease starts - K)
+
+    MEASURED: flat at $25.3 [22.9, 27.6] for every pair centred up to K = 2008 [2002, 2008],
+    then rising $3.57 [2.81, 4.42] for each further year of vintage.
+
+    A straight line was tried first and ran LOW AT BOTH ENDS -- midpoint 1990-99 paid $11.5/yr
+    more than it predicted [+3.0, +22.3], 2015+ paid $10.8 more [+3.7, +18.3], middle followed
+    closely. It was averaging a flat old segment against a steep new one. The old reading is not
+    an outlier artefact: the 1990s bucket reads +28.4 whole, +27.1 less its largest pair, +24.8
+    less its second, +26.2 on wide gaps only. The knee is FITTED, every year 2000-2014 ranked on
+    held-out error. Held-out: flat 21.1k, step 19.4k, line 18.9k, quadratic 18.4k, HINGE 18.3k.
+    The flat segment recovers the same $25 the first two-band pass found -- that pass had the
+    level right and only the shape wrong.
+
+    REJECTED: the lease-decay knee. A 1990s-centred pair has ~65 yrs left, the 2026-07-27 study's
+    knee, so decay was the obvious suspect. Refitting on the older project's REMAINING lease is
+    worse (19.4k), adding it alongside vintage is worse (19.1k), and a below-65-years term earns
+    nothing. The turn is in the VINTAGE of the stock, not the lease left on it.
+
+    Still read at the MIDPOINT, which is what lets one curve handle a pair straddling the knee:
 
     Fitted as  diff = gap * (a + b*(mid-2000)), ordinary least squares, no intercept.
     That form IS the blend: if the rate rises smoothly, the total difference across an
@@ -198,6 +217,16 @@ def curve(rows):
     if not det: return None, None
     return (s22*t1 - s12*t2)/det, (s11*t2 - s12*t1)/det
 
+def hinge(rows, K):
+    """rate = c + d*max(0, mid - K). Flat until the knee year, rising after it."""
+    s11 = s12 = s22 = t1 = t2 = 0.0
+    for r in rows:
+        x1 = r['gap']; x2 = r['gap'] * max(0.0, (r['ls_old'] + r['ls_new'])/2 - K)
+        s11 += x1*x1; s12 += x1*x2; s22 += x2*x2; t1 += x1*r['diff']; t2 += x2*r['diff']
+    det = s11*s22 - s12*s12
+    if not det: return 0.0, 0.0
+    return (s22*t1 - s12*t2)/det, (s11*t2 - s12*t1)/det
+
 def curve_ci(rows, B=2000, seed=17):
     import random as _r
     g = _r.Random(seed); n = len(rows); A = []; Bs = []
@@ -267,7 +296,14 @@ if __name__ == '__main__':
     # ── the answer: the curve, on the full 24m sample with NO gap screen ────────
     full = out[24]
     a, b = curve(full); (alo, ahi), (blo, bhi) = curve_ci(full)
-    print(f'\n{"="*86}\nTHE CURVE   rate($/yr) = a + b x (midpoint of the two lease starts - 2000)\n{"="*86}')
+    K = min(range(2000, 2015),
+            key=lambda k: sum((r['diff'] - r['gap']*sum(x*y for x, y in zip(
+                hinge(full, k), (1, max(0.0, (r['ls_old']+r['ls_new'])/2 - k)))))**2 for r in full))
+    c, d = hinge(full, K)
+    print(f'\n{"="*86}\nTHE SHAPE   rate($/yr) = c + d x max(0, midpoint - K)\n{"="*86}')
+    print(f'  flat at ${c:,.2f} up to a midpoint of {K}, then +${d:,.2f} per further year')
+    print(f'  lookup:  ' + '   '.join(f'{m}:${c + d*max(0.0, m-K):.0f}' for m in range(1995, 2021, 5)))
+    print(f'\n  the straight line it replaced (ran low at both ends):')
     print(f'  a = {a:+7.2f}   95% [{alo:+.2f}, {ahi:+.2f}]')
     print(f'  b = {b:+7.2f}   95% [{blo:+.2f}, {bhi:+.2f}]   per year of vintage')
     print(f'  on {len(full)} cells across {len({(r["older"],r["newer"]) for r in full})} pairs, no gap screen')
@@ -275,8 +311,8 @@ if __name__ == '__main__':
     print('\n  stability against the retired gap screen:')
     for mg in (1, 2, 3, 5, 8):
         rs = [r for r in full if r['gap'] >= mg]
-        ca, cb = curve(rs)
-        print(f'    gap >= {mg}   a {ca:+6.2f}  b {cb:+5.2f}   {len(rs):3d} cells')
+        hc, hd = hinge(rs, K)
+        print(f'    gap >= {mg}   flat ${hc:6.2f}  slope ${hd:5.2f}   {len(rs):3d} cells')
 
     pooled = build_pooled(24)
     pa, pb = curve(pooled)

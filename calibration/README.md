@@ -98,6 +98,27 @@ cells are below the knee, so decay is nearly absent. And the gradient runs the O
 stock with MORE lease left (2011+, ~85 years) pays MORE, not less. Decay will arrive around the end
 of this decade as the OLDEST band steepening — a new figure for old stock, not a sliding boundary.
 
+### WHAT THE TWO NUMBERS MEAN — say it this way, he got it backwards once
+
+Two condos next door, one leased a few years after the other. **The figure is how much more per
+square foot the newer one fetches, for each year of that difference.** $25/yr among pairs centred
+before 2011; $44/yr among pairs centred from 2011.
+
+**THE NEWER BAND IS THE STEEPER ONE, NOT THE FLATTER ONE.** Shawn read it on 2026-09-06 as "2011
+onwards stay rather stagnant" — that is the opposite. Being newer is worth nearly TWICE as much
+inside the newer cohort. Nothing is stagnant.
+
+**His size hypothesis was tested and rejected.** He suggested older stock is bigger, dragging its
+$/yr down. The band gap survives inside BOTH size groups — small units read $18 → $43, large units
+$26 → $45 — and sizes are matched within 20% inside each pair anyway. Same for short-vs-long lease
+gaps ($26/$25 → $44/$44), and a higher base price explains only part of it (1.61% → 2.45%: the gap
+narrows in percent but does not close).
+
+**LIKELIEST CAUSE (stated as a likelihood on the page, not a finding):** through the 2010s each
+successive launch in the same location came out materially dearer than the last, so two neighbours
+three years apart now differ by more than two neighbours three years apart did in the 2000s.
+The study measures the size of the effect, not the cause.
+
 ### What was tested (all recomputed 2026-09-06 — earlier literals had gone stale)
 
 | tested | reads | verdict |

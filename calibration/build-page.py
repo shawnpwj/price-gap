@@ -193,6 +193,42 @@ def tested_table():
                 'It protected an estimator this page does not use. Removing it roughly tripled the sample.'))
     return ''.join(h) + '</tbody></table>'
 
+def why_table():
+    """The three explanations that do NOT survive, each with the figure that kills it."""
+    def band(lo, hi, f=lambda r: True):
+        return [r for r in ALL if lo <= mid(r) < hi and f(r)]
+    O, N = (1900, 2011), (2011, 3000)
+    h = ['<table class="fig"><thead><tr><th>Could it be&hellip;</th>'
+         f'<th class="num">{OLD_NM}</th><th class="num">{NEW_NM}</th>'
+         '<th>what it shows</th></tr></thead><tbody>']
+    def r_(q, a, b, note):
+        return (f'<tr><th>{q}</th><td class="num big">{a}</td><td class="num big">{b}</td>'
+                f'<td class="note wide">{note}</td></tr>')
+    sm_o, sm_n = band(*O, lambda r: r['sqft_old'] < 900), band(*N, lambda r: r['sqft_old'] < 900)
+    lg_o, lg_n = band(*O, lambda r: r['sqft_old'] >= 900), band(*N, lambda r: r['sqft_old'] >= 900)
+    h.append(r_('&hellip;that older stock is simply bigger?',
+                f'${fit(sm_o):,.0f} &middot; ${fit(lg_o):,.0f}', f'${fit(sm_n):,.0f} &middot; ${fit(lg_n):,.0f}',
+                'Small units then large. The gap between the bands survives inside <b>both</b> size '
+                'groups, so size is not the mechanism. Sizes are already matched within 20% inside '
+                'each pair in any case.'))
+    h.append(r_('&hellip;that newer pairs sit closer together in lease start?',
+                f'${fit(band(*O, lambda r: r["gap"] <= 4)):,.0f} &middot; ${fit(band(*O, lambda r: r["gap"] > 4)):,.0f}',
+                f'${fit(band(*N, lambda r: r["gap"] <= 4)):,.0f} &middot; ${fit(band(*N, lambda r: r["gap"] > 4)):,.0f}',
+                'Short gaps then long. The gap between the bands holds at every lease separation.'))
+    h.append(r_('&hellip;just a higher base price?',
+                f'{fpct(rows_in(OLD_NM)):+.2%}', f'{fpct(rows_in(NEW_NM)):+.2%}',
+                'The same figures as a percentage of the older project&rsquo;s price. The gap '
+                'narrows &mdash; newer stock is dearer to start with &mdash; but it does not close, '
+                'so a higher base explains only part of it.'))
+    h.append(r_('&hellip;lease decay?',
+                f'{st.median([r["ls_old"] + 99 - NOW for r in rows_in(OLD_NM)]):.0f} yrs left',
+                f'{st.median([r["ls_old"] + 99 - NOW for r in rows_in(NEW_NM)]):.0f} yrs left',
+                f'Decay bites below 60&ndash;65 years remaining and only '
+                f'{sum(1 for r in ALL if r["ls_old"] + 99 - NOW < 65)} of {len(ALL)} cells are there. '
+                'It also runs the <b>wrong way</b>: the band with <b>more</b> lease left is the one '
+                'paying more.'))
+    return ''.join(h) + '</tbody></table>'
+
 def pairtable():
     rows = sorted(ALL, key=lambda r: (-r['gap'], r['older']))
     h = ['<table class="fig pairs"><thead><tr><th>older</th><th class="num">lease</th>'
@@ -450,6 +486,18 @@ This is the first one measured against the market.</p>
   <p>{NDEV} developments, paired with a leasehold neighbour and compared bedroom by bedroom.
   Twenty-four months of resale and sub-sale to {LW[1]}.</p></div>
   <div class="scroll">{answer_table()}</div>
+
+  <p class="expl" style="margin-top:18px"><b>What these two numbers say, in words.</b> Take two
+  condominiums next door to each other, one with a lease starting a few years after the other.
+  The figure is <b>how much more per square foot the newer one fetches, for each year of that
+  difference</b>. Among pairs centred before 2011 it is ${BANDR[OLD_NM]:,.0f} a year. Among pairs
+  centred from 2011 it is ${BANDR[NEW_NM]:,.0f} &mdash; <b>being newer is worth nearly twice as
+  much in the newer cohort</b>. Nothing here is stagnant, and the newer band is the steeper one,
+  not the flatter one.</p>
+  <p class="expl">The likeliest reason is that through the 2010s each successive launch in the same
+  spot came out materially dearer than the one before it, so two neighbours three years apart now
+  differ by more than two neighbours three years apart did in the 2000s. This study measures the
+  size of that effect; it does not prove the cause.</p>
   <div class="caveat"><b>The newer figure is a floor.</b> It rests on
   {ndev(rows_in(NEW_NM))} developments, and it runs hotter in the RCR
   (${fit(RCR_NEW):,.0f}) than the OCR (${fit(OCR_NEW):,.0f}) &mdash; a real split, and the reason
@@ -459,7 +507,7 @@ This is the first one measured against the market.</p>
 
 <section>
   <div class="sechead"><h2 class="disp">Behind it</h2>
-  <p>Three questions, answered once each.</p></div>
+  <p>Four questions, answered once each.</p></div>
 
   <details><summary>Do the bands move as the stock ages?</summary>
     <p class="expl"><b>No. They are fixed calendar years.</b> The obvious worry is that this is
@@ -484,6 +532,14 @@ This is the first one measured against the market.</p>
     with the stock that has more lease left paying more. Decay will arrive as the oldest band
     steepening, around the end of this decade. Re-run then, and it will show up as a new figure
     for old stock, not as the boundary sliding.</p>
+  </details>
+
+  <details><summary>Why the newer band is nearly double</summary>
+    <p class="expl">Three ordinary explanations, and the figures that rule each of them out.</p>
+    <div class="scroll">{why_table()}</div>
+    <p class="expl">What is left is the vintage of the stock itself &mdash; and the
+    {EW[0][:4]}&ndash;{EW[1][:4]} rerun above shows that vintage stays attached to the calendar
+    year, not to the age.</p>
   </details>
 
   <details><summary>What was tested and what it changed</summary>

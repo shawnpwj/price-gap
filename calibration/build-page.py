@@ -535,8 +535,8 @@ A1, A2 = age_label(OLD_NM); B1, B2 = age_label(NEW_NM)
 BODY = f"""
 <div class="panel" data-p="lease">
 <h1 class="disp">What the market pays for a year of lease</h1>
-<p class="lede">The engine restates every comparable using five constants, all set by judgement.
-This is the first one measured against the market.</p>
+<p class="lede">The engine restates every comparable using constants set by judgement. This is
+the first one measured against the market.</p>
 
 <div class="verdict">
   <div class="vgrid">
@@ -762,8 +762,8 @@ the measured lease rate, so what is left is the walk.</p>
 
 <div class="panel" data-p="judgement" hidden>
 <h1 class="disp">Still on judgement</h1>
-<p class="lede">Three of the five constants have not been measured. Tenure is next, and it is the
-biggest sample still available.</p>
+<p class="lede">Two constants are still unmeasured. Tenure is next, and it is the biggest sample
+still available.</p>
 
 <section>
   <table class="fig"><thead><tr><th>Term</th><th class="num">Constant</th><th>Status</th></tr></thead><tbody>
@@ -774,8 +774,7 @@ biggest sample still available.</p>
   <tr><th>MRT walk band</th><td class="num big">$50 / $200 / $250</td>
     <td>measured &mdash; +${M['bands'][0]['adj']:,.0f} / +${M['bands'][1]['adj']:,.0f} /
     +${M['bands'][2]['adj']:,.0f}, or ${M['slope100']:.0f} per 100 m</td></tr>
-  <tr><th>GFA harmonisation</th><td class="num big">+7%</td><td class="nil">not measured</td></tr>
-  <tr><th>Integrated development</th><td class="num big">+5%</td><td class="nil">not measured</td></tr>
+    <tr><th>Integrated development</th><td class="num big">+5%</td><td class="nil">not measured</td></tr>
   </tbody></table>
 </section>
 </div>
@@ -794,15 +793,13 @@ HTML = f"""<!doctype html>
       <div><p>KYA REAL ESTATE</p><p>Private Client Advisory</p></div></div>
     <span class="chip"><b></b> Internal — Constant Calibration</span>
   </div>
-  <nav class="terms" aria-label="The five constants">
+  <nav class="terms" aria-label="The constants">
     <button type="button" class="done" data-go="lease" aria-current="true">
       <span class="tn">Lease / vintage</span><span class="ts">Measured</span></button>
     <button type="button" class="done" data-go="mrt">
       <span class="tn">MRT walk band</span><span class="ts">Measured</span></button>
     <button type="button" data-go="judgement">
       <span class="tn">Tenure</span><span class="ts">Next</span></button>
-    <button type="button" data-go="judgement">
-      <span class="tn">GFA harmonisation</span><span class="ts">On judgement</span></button>
     <button type="button" data-go="judgement">
       <span class="tn">Integrated</span><span class="ts">On judgement</span></button>
   </nav>

@@ -1,11 +1,22 @@
-# Lease-term calibration — TAKEOVER
+# Price Gap constant calibration — TAKEOVER
 
-**Read this file, then `lease-pairs.py`'s docstring, then the page it builds. That is the
-whole workstream.** Everything below is either a ruling Shawn gave or a result measured
-against the market. Nothing here is a default.
+**Read this file first, then the docstring of whichever script you are touching, then the page
+they build.** Everything below is either a ruling Shawn gave or a result measured against the
+market. Nothing here is a default.
 
-Last worked: **2026-09-06**. Commits `price-gap 2ba534b`, `kya-maps-calculator 938568b`,
-both on main and pushed. Page live on offline staging.
+Last worked **2026-09-06**. Commits `price-gap 5561e54`, `kya-maps-calculator d2e5c20`, both on
+main and pushed. Page live on offline staging, hidden behind a double-click on the Live Data chip.
+
+**THREE OF THE FOUR CONSTANTS ARE MEASURED. TENURE IS NEXT — see §9.**
+
+| constant | engine says | measured | where |
+|---|---|---|---|
+| Lease difference | $40 flat | **$25 / $43** by midpoint | §3 |
+| MRT distance | $50 / $200 / $250 | **+$66 / +$156 / +$243**, or **$23 per 100 m** | §11 |
+| Integrated | +5% | **+6.7%** (4.5–9.1), which CONTAINS the +5% | §12 |
+| Tenure · FH vs LH | ÷1.15 | — **next** | §10 |
+
+GFA harmonisation (+7%) was **dropped from the study entirely** on his ruling, 2026-09-06.
 
 ---
 
@@ -14,9 +25,9 @@ both on main and pushed. Page live on offline staging.
 | | |
 |---|---|
 | **Lease / vintage term** | **MEASURED AND SHIPPED.** See §3. |
-| **Integrated development (+5%)** | **MEASURED AND SHIPPED.** See §11. |
-| **MRT walk band ($50/$200/$250)** | **MEASURED AND SHIPPED.** See §10. |
-| Tenure · FH vs LH (÷1.15) | judgement only — **next**, see §9 |
+| **Integrated development (+5%)** | **MEASURED AND SHIPPED.** See §12. |
+| **MRT walk band ($50/$200/$250)** | **MEASURED AND SHIPPED.** See §11. |
+| Tenure · FH vs LH (÷1.15) | judgement only — **next**, see §10 |
 
 **NOTHING HAS BEEN WRITTEN BACK TO `../scripts/price-gap.ts` AND NOTHING MAY BE** until
 Shawn audits. This folder is a validation table that sits BESIDE the constants. That is
@@ -26,11 +37,22 @@ framing ruling 3 and it is the one that matters most.
 
 ## 2. RUN IT
 
+**THE ORDER IS MANDATORY.** Each script consumes the one before it: `mrt-pairs.py` reads the
+lease bands out of `lease-pairs.json`, and `integrated-pairs.py` reads both the lease bands and
+the $/100 m slope out of `mrt-pairs.json`. Run them out of order and you will silently calibrate
+against stale inputs.
+
 ```bash
-python3 lease-pairs.py     # -> lease-pairs.json, prints every cut to stdout
-python3 build-page.py      # -> ../../kya-maps-calculator/calibration.html
+python3 lease-pairs.py        # -> lease-pairs.json
+python3 mrt-pairs.py          # -> mrt-pairs.json        (needs lease-pairs.json)
+python3 integrated-pairs.py   # -> integrated-pairs.json (needs both of the above)
+python3 build-page.py         # -> ../../kya-maps-calculator/calibration.html
 cd ../../property-analyzer && npm run maps:deploy
 ```
+
+**No constant is ever hardcoded across scripts.** An earlier version copied 25/44 into
+`mrt-pairs.py` as literals and they went stale the moment `lease-pairs.py` was re-run. If you
+need a measured figure in another script, DERIVE IT from that script's JSON.
 
 Then commit both repos. Every change ends with a staging deploy AND a commit+push —
 standing rule, not optional. Report it in one line: the link and the hash.
@@ -213,6 +235,26 @@ A higher base price explains only part (1.61% → 2.45%: narrows in percent, doe
    what the engine's term does, so it is a valid like-for-like validation. It is **not** a
    decomposition into lease and bricks.
 
+
+### TRAPS ADDED 2026-09-06 (the MRT and integrated passes)
+
+* **DO NOT HARDCODE A MEASURED FIGURE INTO ANOTHER SCRIPT.** 25/44 was copied into
+  `mrt-pairs.py` and went stale the moment `lease-pairs.py` was re-run. Derive from the JSON.
+* **RUN THE SCRIPTS IN ORDER** — lease → mrt → integrated → build-page. See §2.
+* **THE PLACEBO DECIDES THE SCREENS, NOT JUDGEMENT.** Every screen ruling on the MRT and
+  integrated passes was settled by what the placebo did. A relaxation that buys pairs and breaks
+  the placebo is buying bias. Dropping the school screen (−6.9), size 20%→30% (−9.0) and
+  same-station (−1.7 → **+26.8**) were all rejected on that basis alone.
+* **DO NOT BUILD A RANGE OUT OF THE THINNEST CELL.** The integrated premium was published as
+  "+6.5% to +9.9%"; the upper bound came from an 8-pair cell in a non-monotonic column that drops
+  2.1 points when three pairs are added. Shawn caught it. It is now a single figure with an
+  interval.
+* **CHECK WHETHER A FLAG IS ACTUALLY POPULATED BEFORE MEASURING WHAT IT CONTROLS.** The engine's
+  `integrated` flag reads from an override file that flags nothing, so its ±5% has never fired on
+  a single comparable. That was worth more than the measurement.
+* **THE PAGE IS GENERATED AND IT IS CLICK-THROUGH.** Four panels, hash-linkable, term bar in the
+  sticky header. Never hand-edit `calibration.html`.
+
 ## 9. WHERE THE DATA COMES FROM
 
 Everything needed was already on disk. The non-obvious parts, which cost time to find:
@@ -235,30 +277,31 @@ the pattern is `property-analyzer/scripts/fetch-demand-ura.ts`, 60-month serving
 
 ---
 
-## 10. NEXT, IN HIS PRIORITY ORDER
+## 10. NEXT — TENURE, FREEHOLD vs LEASEHOLD
 
-1. **Tenure (÷1.15).** Framing ruling 2 says lease and tenure are ONE curve, not two terms —
-   at the far end of a lease the freehold gap IS the lease gap, and the engine double-counts.
-   Use leasehold-vs-freehold neighbour pairs under the §4 screens. The test that matters: does
-   the lease figure, extended, land on the freehold gap? If it does, the double-count is proven.
-   **This is also the biggest available win on sample size: of 1,844 developments in
-   `dsi-index.json`, 1,255 are FREEHOLD and structurally cannot pair on lease start.** That is
-   the real ceiling on this whole workstream, not the screens.
-2. **Pure building age.** Freehold-vs-freehold neighbour pairs. Validates `AGE_PSF_PER_YEAR = 10`
-   for free, and is the only way to decompose the blended vintage figure in §8.6.
-3. **Study premium.** RealSmart carries labelled types ("2BR" vs "2BR + Study") with size bands.
-   456 project × bedroom cells have both; 211 have bands disjoint enough to assign cleanly. The
-   real question is whether a study earns PSF *after controlling for size* — a study unit is
-   mostly just a bigger unit.
-4. **Bedroom step.** Median 3BR minus median 2BR **within the same project and window**, matched
-   pairs. Report as **quantum, not psf**, never as differenced medians across projects.
-5. **MRT bands, harmonisation, integrated.** Not scoped.
+**The only constant left, and the biggest sample available.** Of the 1,844 developments in
+`dsi-index.json`, **1,255 are FREEHOLD** and structurally cannot pair on lease start — which is
+the real ceiling on this whole workstream, not the pair screens.
 
-Only after he audits does anything reach `price-gap.ts`.
+**THE PRIZE IS NOT THE CONSTANT, IT IS THE DOUBLE-COUNT.** Framing ruling 2: *lease and tenure
+are ONE curve, not two terms* — at the far end of a lease the freehold gap IS the lease gap, so
+the engine may be charging for the same thing twice. **The test is whether the lease slope
+extrapolates onto the freehold gap.** If it does, the double-count is proven and that matters
+more than the ÷1.15.
 
----
+**THE METHOD IS ALREADY BUILT.** Copy `mrt-pairs.py`'s shape: neighbour pairs at the same station,
+one FH and one LH, with the lease difference removed at the measured two-band rate and the
+walking difference at the measured $/100 m. Both inputs come out of the JSON, never as literals.
+**Build the placebo first** — FH-vs-FH and LH-vs-LH pairs under the same corrections must read
+zero — because on this study the placebo has decided every screen ruling.
 
-## 10. MRT WALK BAND — MEASURED
+**BUILDING AGE IS THE CONFOUND TO WATCH.** It is not measured, and an FH-vs-LH pair can differ on
+it freely. `AGE_PSF_PER_YEAR = 10` in the engine is also unvalidated. FH-vs-FH pairs decompose it
+for free (~555 available) and would validate that constant as a by-product.
+
+After tenure: the study premium, then the bedroom step as QUANTUM matched within project.
+
+## 11. MRT WALK BAND — MEASURED
 
 `mrt-pairs.py` → `mrt-pairs.json` → `build-page.py`. **The lease study inverted:** station held
 constant, walk band varies, lease removed at the MEASURED $25/$43 midpoint rate — never the flat $40.
@@ -352,7 +395,7 @@ Fix: OneMap routing + exit locations (`fetch-area.ts` already calls OneMap). ~a 
 
 ---
 
-## 11. INTEGRATED DEVELOPMENT — MEASURED
+## 12. INTEGRATED DEVELOPMENT — MEASURED
 
 `integrated-pairs.py` → `integrated-pairs.json` → `build-page.py`. An integrated development against
 a plain condo at the **same nearest station**; the lease difference removed at the measured

@@ -557,13 +557,34 @@ def int_table():
          '<th class="num">pairs</th><th class="num">adjustment carried</th>'
          '<th class="num">in psf</th></tr></thead><tbody>']
     for c in G['cuts']:
-        big = 'big' if c['label'].startswith(('lease gap 5 yrs', 'lease gap 5 or')) else 'quiet'
+        big = 'big' if 'within 400' in c['label'] or c['label'] == '&lt;5 yr lease gap' else 'quiet'
         r.append(f'<tr><th>{c["label"]}</th>'
                  f'<td class="num {big}">+{c["pct"]:.1f}%</td>'
                  f'<td class="num quiet">+{c["pct_lo"]:.1f}% to +{c["pct_hi"]:.1f}%</td>'
                  f'<td class="num quiet">{c["pairs"]}</td>'
                  f'<td class="num quiet">${c["load"]:,.0f}</td>'
                  f'<td class="num quiet">+${c["adj"]:,.0f}</td></tr>')
+    return ''.join(r) + '</tbody></table>'
+
+def dsweep_table():
+    if not G or not G.get('dsweep'): return ''
+    r = ['<table class="fig"><thead><tr><th>The two may sit&hellip;</th>'
+         '<th class="num">&lt;10 yr gap</th><th class="num">pairs</th>'
+         '<th class="num">&lt;5 yr gap</th><th class="num">pairs</th>'
+         '<th class="num">placebo</th></tr></thead><tbody>']
+    a = {x['dg']: x for x in G['dsweep'][0]['rows']}
+    b = {x['dg']: x for x in G['dsweep'][1]['rows']}
+    for dg in sorted(set(a) | set(b)):
+        lab = 'anywhere' if dg > 9999 else f'within {dg:,} m'
+        A, B = a.get(dg), b.get(dg)
+        r.append(f'<tr><th>{lab}</th>'
+                 + (f'<td class="num quiet">+{A["pct"]:.1f}%</td><td class="num quiet">{A["pairs"]}</td>'
+                    if A else '<td class="num quiet">&mdash;</td><td class="num quiet">&mdash;</td>')
+                 + (f'<td class="num big">+{B["pct"]:.1f}%</td><td class="num quiet">{B["pairs"]}</td>'
+                    f'<td class="num quiet">{B["placebo"]:+.1f}%</td>'
+                    if B else '<td class="num quiet">&mdash;</td><td class="num quiet">&mdash;</td>'
+                             '<td class="num quiet">&mdash;</td>'))
+        r.append('</tr>')
     return ''.join(r) + '</tbody></table>'
 
 def int_devs():
@@ -868,6 +889,18 @@ sitting on the station.</p>
   file that flags nothing, so every development is treated as not integrated and the &plusmn;5%
   has never applied to a single comparable. The {G['n_integrated']} developments below are a
   classification made for this study and audited by hand &mdash; a judgement, not a datum.</div>
+
+  <details><summary>Does it matter how far apart the two sit?</summary>
+    <p class="expl">The pairs are not all the same distance from their station, so some carry a
+    bigger walking correction than others. Holding the lease gap fixed and sweeping that limit:</p>
+    <div class="scroll">{dsweep_table()}</div>
+    <p class="expl"><b>It is not neutral.</b> Inside the tight lease-gap column the premium climbs
+    from +{G['dsweep'][1]['rows'][0]['pct']:.1f}% to +{G['dsweep'][1]['rows'][-1]['pct']:.1f}% as
+    the limit loosens, while the placebo beside it stays flat. That is what unremoved walking
+    effect leaking into the answer would look like &mdash; the further apart the two sit, the more
+    of the gap between them is the walk rather than the building. <b>The tighter rows are the
+    conservative ones</b>, and they sit near +7%.</p>
+  </details>
 
   <details><summary>The check that the adjustments are working</summary>
     <p class="expl">The same method run on <b>plain against plain</b> at the same station, under

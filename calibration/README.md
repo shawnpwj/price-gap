@@ -369,10 +369,10 @@ Canopy, City Gate.
 | reading only pairs where… | premium | 95% | pairs | adjustment carried | in psf |
 |---|---|---|---|---|---|
 | every pair | +6.0% | +2.7 to +9.5 | 42 | $485 | +$91 |
-| lease gap ≤ 10 yrs | +7.5% | +4.5 to +11.0 | 26 | $400 | +$120 |
-| **lease gap ≤ 5 yrs** | **+9.9%** | +6.8 to +13.9 | 11 | $172 | +$180 |
-| lease ≤ 10, within 400 m | **+6.5%** | +3.6 to +9.9 | 13 | $223 | +$119 |
-| lease ≤ 5, within 400 m | +6.7% | +4.5 to +9.1 | 7 | $118 | +$128 |
+| <10 yr lease gap | +7.5% | +4.5 to +11.0 | 26 | $400 | +$120 |
+| **<5 yr lease gap** | **+9.9%** | +6.8 to +13.9 | 11 | $172 | +$180 |
+| <10 yr gap, within 400 m | **+6.5%** | +3.6 to +9.9 | 13 | $223 | +$119 |
+| <5 yr gap, within 400 m | +6.7% | +4.5 to +9.1 | 7 | $118 | +$128 |
 
 **REPORT A RANGE, NEVER A FIGURE: +6.5% to +9.9%.** The engine's +5% sits at or below the bottom —
 **more likely too low than too high.**
@@ -386,6 +386,24 @@ cuts. The dollars stay on the page in the last column.
 −1.1% across 240 pairs, interval covering zero, leaning very slightly negative, which if anything
 makes the figures above conservative. It is not deleted; a page may not show a number it cannot
 explain.
+
+### THE DISTANCE CUT IS NOT NEUTRAL — swept 2026-09-06 because Shawn asked
+
+Holding the lease gap fixed and sweeping how far apart the two may sit in station-distance:
+
+| the two may sit… | <10 yr gap | prs | <5 yr gap | prs | placebo |
+|---|---|---|---|---|---|
+| within 150 m | +7.7% | 8 | +6.6% | 6 | −1.4% |
+| within 200 m | +5.6% | 11 | +6.7% | 7 | −1.2% |
+| within 400 m | +6.5% | 13 | **+6.7%** | 7 | −1.1% |
+| within 600 m | +7.8% | 15 | +8.6% | 9 | −0.7% |
+| anywhere | +7.5% | 26 | **+9.9%** | 11 | −0.6% |
+
+**Inside the tight lease-gap column the premium climbs 6.6% → 9.9% as the limit loosens, while
+the placebo beside it stays flat.** That is what UNREMOVED WALKING EFFECT LEAKING INTO THE ANSWER
+looks like: the further apart the two sit, the more of the gap between them is the walk and not
+the building. **THE TIGHT ROWS ARE THE CONSERVATIVE ONES and they sit near +7%.** The 400 m cut is
+not special — anything from 150 to 400 m reads the same ~6.7%.
 
 ### THE SAMPLE CANNOT MEANINGFULLY GROW — tested 2026-09-06
 

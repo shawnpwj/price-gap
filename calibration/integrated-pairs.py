@@ -54,9 +54,10 @@ INTEGRATED = {
 
 MIN_UNITS, MIN_N, SIZE_TOL, PAIR_CAP = 200, 3, 0.20, 1500
 EC_PRIVATISE, BEDS = 5, ['1BR', '2BR', '3BR', '4BR+']
-CUTS = [(99, 99999, 'every pair'), (10, 99999, 'lease gap 10 yrs or less'),
-        (5, 99999, 'lease gap 5 yrs or less'), (10, 400, 'lease gap 10 or less, within 400 m'),
-        (5, 400, 'lease gap 5 or less, within 400 m')]
+CUTS = [(99, 99999, 'every pair'), (10, 99999, '&lt;10 yr lease gap'),
+        (5, 99999, '&lt;5 yr lease gap'), (10, 400, '&lt;10 yr gap, within 400 m'),
+        (5, 400, '&lt;5 yr gap, within 400 m')]
+DSWEEP = [150, 200, 300, 400, 500, 600, 800, 99999]
 
 R = 6371000
 def hav(a, b, c, d):
@@ -194,6 +195,24 @@ def summary():
                            placebo_gap=st.mean([r['lg'] for r in PL]),
                            treat_load=st.mean([abs(r['lease'])+abs(r['dist']) for r in T]),
                            placebo_load=st.mean([abs(r['lease'])+abs(r['dist']) for r in PL]))
+    # DOES IT MATTER HOW FAR APART THE TWO SIT? (Shawn asked, 2026-09-06.) Sweep the distance
+    # cut at a fixed lease gap. It is NOT neutral: inside the tight lease-gap family the
+    # premium climbs as the distance cut loosens, which is what unremoved distance effect
+    # leaking into the residual would look like. The tightest cuts are the conservative ones.
+    out['dsweep'] = []
+    for lg in (10, 5):
+        row = []
+        for dg in DSWEEP:
+            g = [r for r in T if abs(r['lg']) <= lg and abs(r['dg']) <= dg]
+            if prs(g) < 3: continue
+            lo, hi = boot(g, pct=True)
+            pl = [r for r in PL if abs(r['lg']) <= lg and abs(r['dg']) <= dg]
+            row.append(dict(dg=dg, pairs=prs(g), load=st.mean([abs(r['lease'])+abs(r['dist']) for r in g]),
+                            pct=100*st.mean([r['adj'] for r in g])/st.mean([r['base'] for r in g]),
+                            lo=lo, hi=hi,
+                            placebo=100*st.mean([r['adj'] for r in pl])/st.mean([r['base'] for r in pl])))
+        out['dsweep'].append(dict(lg=lg, rows=row))
+
     byd = {}
     for r in T: byd.setdefault(r['a'], []).append(r)
     out['devs'] = sorted(({'name': k, 'station': g[0]['station'], 'm_i': g[0]['m_i'],

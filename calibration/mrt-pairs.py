@@ -27,9 +27,8 @@ vintage figure, so what is left is purely distance to the MRT.
     OPERATIONAL STATIONS ONLY. 37 of 223 in mrt-stations.json are under construction.
       An unbuilt station is not a walk to anything over a 2024-26 transaction window.
       (NOTE: lease-pairs.py does NOT apply this filter. See §NOTE at the bottom.)
-    SAME TENURE TYPE. A freehold-vs-leasehold pair would need the tenure constant,
-      which is not measured yet, so it cannot be adjusted out. LH-LH and FH-FH are
-      built and reported separately.
+    LEASEHOLD ONLY (Shawn, 2026-09-06). Freehold was built and dropped: 7-13 pairs a
+      cell, reading -$17 / +$47 / +$100, incoherent and not worth quoting.
     DIFFERENT WALK BANDS -- that is the treatment. Same-band pairs are built too and
       kept as a PLACEBO: after the lease adjustment they should read about zero.
     both >= 200 units, identical top-26 primary schools within 1 km, within RADIUS_M
@@ -74,9 +73,13 @@ FAR_M  = 10 * MPM / CIRCUITY     # 615.4 m
 
 MIN_UNITS, MIN_N, SIZE_TOL = 200, 5, 0.20
 SCHOOL_KM, EC_PRIVATISE = 1000, 5
-AGE_TOL_YEARS = 8                # FH-FH only: age is not measured, so screen it
 BEDS = ['1BR', '2BR', '3BR', '4BR+']
-RADII = [500, 800, 1000, 1200, 1500]
+CATCHMENT = 2000          # max metres from the SHARED station -- his screen
+PAIR_CAP  = 1200          # max metres BETWEEN the two projects. Not a guess: the placebo
+                          # (same band, within 50 m of each other in station-distance, so it
+                          # should read zero) stays clean at +1.7 psf out to 1200 m and
+                          # degrades to +8.6 at 1800 m. The cap is set where the placebo breaks.
+CATCHMENTS = [CATCHMENT]
 WINDOW = 24
 
 def lease_rate(mid):
@@ -113,8 +116,8 @@ for p in projs:
     if not b: rej['no tenure record'] += 1; continue
     ten = b.get('tenure') or {}
     ttype = ten.get('type')
-    if ttype not in ('LH', 'FH'): rej['tenure not LH/FH'] += 1; continue
-    if ttype == 'LH' and not ten.get('leaseStart'): rej['LH with no lease start'] += 1; continue
+    if ttype != 'LH': rej['not leasehold'] += 1; continue
+    if not ten.get('leaseStart'): rej['LH with no lease start'] += 1; continue
     d = det.get(n) or {}
     if (d.get('totalUnits') or 0) < MIN_UNITS: rej[f'under {MIN_UNITS} units'] += 1; continue
     if d.get('projectType') == 'Executive Condominium':
@@ -140,30 +143,33 @@ def cell(name, bed):
     if n < MIN_N: return None
     return dict(psf=st.median([s[m] for m in ms]), n=n, sqft=st.median([q[m][1] for m in ms]))
 
-def build(radius):
-    """Every qualifying cell. `adj` is the lease-adjusted PSF advantage of the CLOSER side."""
+def build(catchment):
+    """Every qualifying cell. `adj` is the lease-adjusted PSF advantage of the CLOSER side.
+
+    THE SCREEN IS THE STATION'S CATCHMENT, NOT THE DISTANCE BETWEEN THE PAIR (Shawn,
+    2026-09-06). An earlier pass required the two projects to sit within 500 m of each
+    other, carried over from the lease study where holding location constant was the
+    whole point. Here it is self-defeating: two projects can differ in walking distance
+    by at most the distance between them, so that screen mechanically caps the very
+    thing being measured and made an under-5 vs over-10 pair almost impossible.
+    They only need to share the station. His example: THE TRILINQ (577 m, 9.4 min)
+    against CLAVON (710 m, 11.5 min), both nearest Clementi."""
     rows = []
     for a, b in itertools.combinations(list(P), 2):
         A, B = P[a], P[b]
-        if A['tenure'] != B['tenure']: continue
         if A['station'] != B['station']: continue
+        if A['metres'] > catchment or B['metres'] > catchment: continue
+        if hav(A['lat'], A['lng'], B['lat'], B['lng']) > PAIR_CAP: continue
         if A['schools'] != B['schools']: continue
-        if hav(A['lat'], A['lng'], B['lat'], B['lng']) > radius: continue
-        if A['tenure'] == 'FH':
-            if not A['top'] or not B['top']: continue
-            if abs(A['top'] - B['top']) > AGE_TOL_YEARS: continue
         near, far = (A, B) if A['metres'] < B['metres'] else (B, A)
         for bd in BEDS:
             cn, cf = cell(near['name'], bd), cell(far['name'], bd)
             if not cn or not cf: continue
             if abs(cn['sqft'] - cf['sqft']) / max(cn['sqft'], cf['sqft']) > SIZE_TOL: continue
-            raw = cn['psf'] - cf['psf']
-            if A['tenure'] == 'LH':
-                mid  = (near['ls'] + far['ls']) / 2
-                adj  = raw - lease_rate(mid) * (near['ls'] - far['ls'])
-                lgap = near['ls'] - far['ls']
-            else:
-                adj, lgap, mid = raw, 0, None
+            raw  = cn['psf'] - cf['psf']
+            mid  = (near['ls'] + far['ls']) / 2
+            lgap = near['ls'] - far['ls']
+            adj  = raw - lease_rate(mid) * lgap
             rows.append(dict(closer=near['name'], further=far['name'], tenure=A['tenure'],
                              region=A['region'], station=A['station'], bed=bd,
                              apart=round(hav(A['lat'], A['lng'], B['lat'], B['lng'])),
@@ -183,24 +189,30 @@ def pair_count(rows):
     return len({(r['closer'], r['further']) for r in rows})
 
 if __name__ == '__main__':
-    print(f'window {CUT}..{LAST}   bands: near <{NEAR_M:.0f}m  mid {NEAR_M:.0f}-{FAR_M:.0f}m  far >{FAR_M:.0f}m')
-    print(f'eligible universe: {len(P)} developments '
-          f'({sum(1 for v in P.values() if v["tenure"]=="LH")} LH, '
-          f'{sum(1 for v in P.values() if v["tenure"]=="FH")} FH)')
-    print('top rejections:', dict(rej.most_common(5)))
+    print('window %s..%s   near <%.0fm  mid %.0f-%.0fm  far >%.0fm' % (CUT, LAST, NEAR_M, NEAR_M, FAR_M, FAR_M))
+    print('eligible universe: %d leasehold developments' % len(P))
     print()
-    for radius in RADII:
-        rows = build(radius)
-        print(f'=== radius {radius} m ===  {len(rows)} cells · {pair_count(rows)} pairs · {dev_count(rows)} devs')
-        for ten in ('LH', 'FH'):
-            sub = [r for r in rows if r['tenure'] == ten]
-            if not sub: continue
-            print(f'  {ten}:')
-            for key in ['near|mid', 'mid|far', 'near|far',
-                        'near|near', 'mid|mid', 'far|far']:
-                g = [r for r in sub if r['pairkey'] == key]
-                if not g: continue
-                tag = 'PLACEBO' if key.split('|')[0] == key.split('|')[1] else ''
-                print(f'    {key:10s} {len(g):4d} cells  {pair_count(g):3d} pairs  {dev_count(g):3d} devs '
-                      f' raw {st.mean([r["raw"] for r in g]):+8.1f}  adj {st.mean([r["adj"] for r in g]):+8.1f}  {tag}')
+    for cm in CATCHMENTS:
+        rows = build(cm)
+        print('=== catchment %d m from the shared station ===  %d cells / %d pairs / %d devs'
+              % (cm, len(rows), pair_count(rows), dev_count(rows)))
+        for key in ['near|mid', 'mid|far', 'near|far']:
+            g = [r for r in rows if r['pairkey'] == key]
+            if not g: continue
+            print('    %-9s %4d cells %4d pairs %4d devs   adj %+7.0f' %
+                  (key, len(g), pair_count(g), dev_count(g), st.mean([r['adj'] for r in g])))
+        tp = [r for r in rows if r['b_close'] == r['b_far'] and (r['m_far'] - r['m_close']) < 50]
+        if tp:
+            print('    %-9s %4d cells %4d pairs %4d devs   adj %+7.1f   (should be 0)' %
+                  ('PLACEBO', len(tp), pair_count(tp), dev_count(tp), st.mean([r['adj'] for r in tp])))
         print()
+    # his example
+    rows = build(1500)
+    ex = [r for r in rows if 'TRILINQ' in r['closer'].upper() + r['further'].upper()
+          and 'CLAVON' in r['closer'].upper() + r['further'].upper()]
+    print('HIS EXAMPLE — THE TRILINQ vs CLAVON, both nearest Clementi:')
+    for r in ex:
+        print('   %-5s closer %-14s %4dm (%s)  further %-14s %4dm (%s)  ls %d vs %d  raw %+6.0f  lease-adj %+6.0f'
+              % (r['bed'], r['closer'][:14], r['m_close'], r['b_close'], r['further'][:14],
+                 r['m_far'], r['b_far'], r['ls_close'], r['ls_far'], r['raw'], r['adj']))
+    if not ex: print('   (no qualifying cell)')

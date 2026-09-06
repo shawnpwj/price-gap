@@ -71,14 +71,19 @@ CIRCUITY, MPM = 1.3, 80          # from price-gap.ts — keep the study and engi
 NEAR_M = 5  * MPM / CIRCUITY     # 307.7 m
 FAR_M  = 10 * MPM / CIRCUITY     # 615.4 m
 
-MIN_UNITS, MIN_N, SIZE_TOL = 200, 5, 0.20
+MIN_UNITS, MIN_N, SIZE_TOL = 200, 3, 0.20
+# MIN_N 3, not the lease study's 5, and PAIR_CAP 1500, not 1200 (Shawn asked for a laxer
+# screen, 2026-09-06). Both were chosen ON THE PLACEBO, which is the only honest criterion
+# here: it stays clean at -1.7 psf under both. The relaxations that were REJECTED all
+# degraded it -- dropping the school screen -6.9, widening the size match to 30% -9.0,
+# doing both -14.0. A screen that breaks the placebo is buying pairs with bias.
 SCHOOL_KM, EC_PRIVATISE = 1000, 5
 BEDS = ['1BR', '2BR', '3BR', '4BR+']
 CATCHMENT = 2000          # max metres from the SHARED station -- his screen
-PAIR_CAP  = 1200          # max metres BETWEEN the two projects. Not a guess: the placebo
+PAIR_CAP  = 1500          # max metres BETWEEN the two projects. Not a guess: the placebo
                           # (same band, within 50 m of each other in station-distance, so it
-                          # should read zero) stays clean at +1.7 psf out to 1200 m and
-                          # degrades to +8.6 at 1800 m. The cap is set where the placebo breaks.
+                          # should read zero) stays clean out to 1500 m and degrades to +8.6 at
+                          # 1800 m. The cap is set where the placebo breaks.
 CATCHMENTS = [CATCHMENT]
 WINDOW = 24
 
@@ -222,6 +227,21 @@ def summary():
                           cells=len(tp), pairs=pair_count(tp), devs=dev_count(tp))
     xs = [r['m_far'] - r['m_close'] for r in rows]; ys = [r['adj'] for r in rows]
     out['slope100'] = sum(x*y for x, y in zip(xs, ys)) / sum(x*x for x in xs) * 100
+    # WHY THE HEADLINE under-5-vs-over-10 FIGURE UNDERSTATES THE CONTRAST PEOPLE PICTURE.
+    # Most such pairs barely straddle the line -- the far side sits just past 615 m -- so the
+    # band average is diluted. Split them by the walking they actually span. (Shawn asked
+    # 2026-09-06 why $122 looked low. It is low because the pairs are not the extreme he
+    # had in mind, and the pairs that ARE read far higher.)
+    nf = [r for r in rows if r['pairkey'] == 'near|far']
+    out['nf_split'] = []
+    for lo, hi, lab in ((0, 500, 'under 500 m'), (500, 700, '500-700 m'), (700, 9999, 'over 700 m')):
+        g = [r for r in nf if lo <= r['m_far'] - r['m_close'] < hi]
+        if len(g) < 4: continue
+        w = st.mean([r['m_far'] - r['m_close'] for r in g]); a = st.mean([r['adj'] for r in g])
+        out['nf_split'].append(dict(label=lab, adj=a, walk=w, per100=a/w*100,
+                                    pairs=pair_count(g), devs=dev_count(g)))
+    out['nf_close'] = st.median([r['m_close'] for r in nf])
+    out['nf_far']   = st.median([r['m_far'] for r in nf])
     out['rows'] = rows
     return out
 

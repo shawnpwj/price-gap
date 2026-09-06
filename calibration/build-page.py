@@ -284,20 +284,29 @@ letter-spacing:.18em;text-transform:uppercase;color:var(--slate-500);white-space
 h1{font:600 clamp(28px,4vw,36px)/1.15 Optima,Candara,sans-serif;color:var(--slate-100);
 letter-spacing:.01em;margin:52px 0 10px}
 .kicker{font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--gold);margin-top:52px}
-/* THE TERM BAR. Five constants, one row, each its own destination. It replaces the old
-   single-term kicker: this page is no longer about the lease alone. */
-.terms{display:flex;flex-wrap:wrap;gap:0;margin:44px 0 0;border-top:1px solid var(--ink);
-border-bottom:1px solid var(--ink)}
-.terms a{flex:1 1 auto;min-width:150px;padding:13px 16px 12px;text-decoration:none;
-border-right:1px solid var(--ink);transition:background .18s cubic-bezier(.22,1,.36,1)}
-.terms a:last-child{border-right:0}
-.terms a:hover,.terms a:focus-visible{background:var(--navy-850)}
-.terms .tn{display:block;font:600 13.5px/1.25 Optima,Candara,sans-serif;color:var(--slate-100)}
-.terms .ts{display:block;margin-top:4px;font-size:10.5px;letter-spacing:.16em;
-text-transform:uppercase;color:var(--slate-500)}
-.terms a.done .ts{color:var(--gold)}
-.terms a.done .tn::after{content:"";display:inline-block;width:5px;height:5px;border-radius:50%;
-background:var(--gold);margin-left:7px;vertical-align:middle}
+/* THE TERM BAR. Five constants, one row, each its own view. It replaces the old single-term
+   kicker: this page is no longer about the lease alone. It rides inside the sticky header so
+   it stays reachable at any scroll depth, which is the point of splitting the page up. */
+.terms{display:flex;flex-wrap:wrap;gap:0;border-top:1px solid var(--ink);
+max-width:1180px;margin:0 auto;padding:0 24px}
+.terms button{flex:1 1 auto;min-width:148px;padding:11px 14px 10px;text-align:left;
+background:none;border:0;border-right:1px solid var(--ink);cursor:pointer;font:inherit;
+color:inherit;position:relative;
+transition:background .18s cubic-bezier(.22,1,.36,1),color .18s cubic-bezier(.22,1,.36,1)}
+.terms button:last-child{border-right:0}
+.terms button:hover{background:var(--navy-850)}
+.terms button:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
+.terms .tn{display:block;font:600 13px/1.25 Optima,Candara,sans-serif;color:var(--slate-400)}
+.terms .ts{display:block;margin-top:3px;font-size:10px;letter-spacing:.16em;
+text-transform:uppercase;color:var(--slate-600)}
+.terms button.done .ts{color:rgba(201,169,106,.75)}
+.terms button[aria-current="true"]{background:var(--navy-850)}
+.terms button[aria-current="true"] .tn{color:var(--slate-100)}
+.terms button[aria-current="true"] .ts{color:var(--gold)}
+.terms button[aria-current="true"]::after{content:"";position:absolute;left:0;right:0;bottom:-1px;
+height:2px;background:var(--gold)}
+.panel>h1{margin-top:46px}
+@media (max-width:760px){.terms{padding:0 16px}.terms button{min-width:130px}}
 .lede{font-size:15px;color:var(--slate-400);max-width:64ch;margin-bottom:14px}
 h2{font:600 20px/1.3 Optima,Candara,sans-serif;color:var(--slate-100);margin:0 0 6px}
 h3{font:600 15px/1.3 Optima,Candara,sans-serif;color:var(--gold-soft);letter-spacing:.02em}
@@ -453,30 +462,70 @@ JS = """
   ['lsA','lsB'].forEach(function(id){document.getElementById(id).addEventListener('input',go);});
   go();
 })();
+
+/* THE TERM TABS. One constant on screen at a time; the bar stays in the sticky header so
+   switching never means scrolling back up. The hash keeps a view linkable and survives a
+   reload, which matters because this is a working document people send each other. */
+(function(){
+  var btns=[].slice.call(document.querySelectorAll('.terms button')),
+      panels=[].slice.call(document.querySelectorAll('.panel'));
+  function show(name,push){
+    var found=false;
+    panels.forEach(function(p){
+      var on=p.getAttribute('data-p')===name; p.hidden=!on; if(on)found=true;
+    });
+    if(!found){show('lease',push);return;}
+    btns.forEach(function(b){
+      if(b.getAttribute('data-go')===name)b.setAttribute('aria-current','true');
+      else b.removeAttribute('aria-current');
+    });
+    if(push&&location.hash!=='#'+name)history.replaceState(null,'','#'+name);
+    window.scrollTo(0,0);
+  }
+  btns.forEach(function(b){
+    b.addEventListener('click',function(){show(b.getAttribute('data-go'),true);});
+  });
+  window.addEventListener('hashchange',function(){show(location.hash.slice(1),false);});
+  show((location.hash||'#lease').slice(1),false);
+})();
 """
 def mrt_table():
     if not M: return ''
-    r = ['<table><thead><tr><th>Walk to the nearest station</th><th class="num">Measured</th>'
-         '<th class="num">95% interval</th><th class="num">Developments</th>'
-         '<th class="num">Pairs</th><th class="num">Engine</th></tr></thead><tbody>']
+    r = ['<table class="fig look"><thead><tr><th>Walk to the nearest station</th>'
+         '<th class="num">measured</th><th class="num">95% interval</th>'
+         '<th class="num">developments</th><th class="num">pairs</th>'
+         '<th class="num">engine</th></tr></thead><tbody>']
     for b in M['bands']:
-        r.append(f'<tr><td>{b["label"]}</td>'
-                 f'<td class="num"><b>+${b["adj"]:,.0f}</b></td>'
-                 f'<td class="num">+${b["lo"]:,.0f} to +${b["hi"]:,.0f}</td>'
-                 f'<td class="num">{b["devs"]}</td><td class="num">{b["pairs"]}</td>'
-                 f'<td class="num">${M["engine"][b["key"]]}</td></tr>')
+        r.append(f'<tr><th>{b["label"]}</th>'
+                 f'<td class="num big">+${b["adj"]:,.0f}</td>'
+                 f'<td class="num quiet">+${b["lo"]:,.0f} to +${b["hi"]:,.0f}</td>'
+                 f'<td class="num quiet">{b["devs"]}</td>'
+                 f'<td class="num quiet">{b["pairs"]}</td>'
+                 f'<td class="num quiet">${M["engine"][b["key"]]}</td></tr>')
+    r.append('</tbody></table>')
+    return ''.join(r)
+
+def mrt_split():
+    if not M or not M.get('nf_split'): return ''
+    r = ['<table class="fig"><thead><tr><th>Pairs whose walk differs by&hellip;</th>'
+         '<th class="num">measured</th><th class="num">per 100 m</th>'
+         '<th class="num">pairs</th></tr></thead><tbody>']
+    for x in M['nf_split']:
+        r.append(f'<tr><th>{x["label"]}</th><td class="num big">+${x["adj"]:,.0f}</td>'
+                 f'<td class="num quiet">${x["per100"]:.1f}</td>'
+                 f'<td class="num quiet">{x["pairs"]}</td></tr>')
     r.append('</tbody></table>')
     return ''.join(r)
 
 def mrt_per100():
     if not M: return ''
-    r = ['<table><thead><tr><th>Walk to the nearest station</th>'
-         '<th class="num">Extra walking</th><th class="num">Measured</th>'
-         '<th class="num">Per 100 m</th></tr></thead><tbody>']
+    r = ['<table class="fig"><thead><tr><th>Walk to the nearest station</th>'
+         '<th class="num">extra walking</th><th class="num">measured</th>'
+         '<th class="num">per 100 m</th></tr></thead><tbody>']
     for b in M['bands']:
-        r.append(f'<tr><td>{b["label"]}</td><td class="num">{b["walk"]:,.0f} m</td>'
-                 f'<td class="num">+${b["adj"]:,.0f}</td>'
-                 f'<td class="num"><b>${b["per100"]:.1f}</b></td></tr>')
+        r.append(f'<tr><th>{b["label"]}</th><td class="num quiet">{b["walk"]:,.0f} m</td>'
+                 f'<td class="num quiet">+${b["adj"]:,.0f}</td>'
+                 f'<td class="num big">${b["per100"]:.1f}</td></tr>')
     r.append('</tbody></table>')
     return ''.join(r)
 
@@ -484,18 +533,8 @@ BANDS_JS = '[' + ','.join(f'[{hi},{BANDR[nm]:.2f},"{nm}"]' for _, hi, nm in BAND
 A1, A2 = age_label(OLD_NM); B1, B2 = age_label(NEW_NM)
 
 BODY = f"""
-<nav class="terms" aria-label="The five constants">
-  <a class="done" href="#lease"><span class="tn">Lease / vintage</span>
-    <span class="ts">Measured</span></a>
-  <a class="done" href="#mrt"><span class="tn">MRT walk band</span>
-    <span class="ts">Measured</span></a>
-  <a href="#judgement"><span class="tn">Tenure</span><span class="ts">Next</span></a>
-  <a href="#judgement"><span class="tn">GFA harmonisation</span>
-    <span class="ts">On judgement</span></a>
-  <a href="#judgement"><span class="tn">Integrated</span>
-    <span class="ts">On judgement</span></a>
-</nav>
-<h1 class="disp" id="lease">What the market pays for a year of lease</h1>
+<div class="panel" data-p="lease">
+<h1 class="disp">What the market pays for a year of lease</h1>
 <p class="lede">The engine restates every comparable using five constants, all set by judgement.
 This is the first one measured against the market.</p>
 
@@ -629,11 +668,15 @@ This is the first one measured against the market.</p>
   </details>
 </section>
 
-<section id="mrt">
-  <div class="sechead"><h2 class="disp">What the market pays for the walk to the station</h2>
-  <p><b>{M['devs']} developments</b>, each paired with a leasehold neighbour on the same nearest
-  station, over the same 24 months. The lease difference between them is removed at the measured
-  rate above, so what is left is the walk.</p></div>
+</div>
+
+<div class="panel" data-p="mrt" hidden>
+<h1 class="disp">What the market pays for the walk to the station</h1>
+<p class="lede"><b>{M['devs']} developments</b>, each paired with a leasehold neighbour on the
+same nearest station, over the same 24 months. The lease difference between them is removed at
+the measured lease rate, so what is left is the walk.</p>
+
+<section>
   <div class="scroll">{mrt_table()}</div>
 
   <p class="expl" style="margin-top:18px"><b>Your $50 is right. The other two are not.</b> The
@@ -647,6 +690,19 @@ This is the first one measured against the market.</p>
   <p class="expl"><b>${M['slope100']:.0f} psf for every extra 100 m</b> is the figure to quote. It
   does not depend on where the band lines are drawn, and the three rows agree on it within
   ${max(b['per100'] for b in M['bands'])-min(b['per100'] for b in M['bands']):.0f}.</p>
+
+  <details><summary>Why the bottom row understates the contrast you are picturing</summary>
+    <p class="expl"><b>Most &ldquo;under 5 vs over 10&rdquo; pairs barely straddle the line.</b> The
+    typical one is {M['nf_close']:,.0f} m against {M['nf_far']:,.0f} m &mdash; not a doorstep
+    against a fifteen-minute walk. So the band average is diluted by pairs that only just qualify.
+    Split them by the walking they actually span and the effect is plainly there:</p>
+    <div class="scroll">{mrt_split()}</div>
+    <p class="expl">Pairs separated by more than 700 m read
+    <b>+${[x for x in M['nf_split'] if x['label'].startswith('over')][0]['adj']:,.0f}</b>. The band
+    figure is right for the pairs it contains; it is the wrong number to reach for when the two
+    homes you are comparing are further apart than that. <b>Use the per-100 m rate and multiply
+    by the actual difference in walking.</b></p>
+  </details>
 
   <details><summary>How the lease is taken out, and the check that it worked</summary>
     <p class="expl">Each pair shares its nearest station but sits at a different distance from it.
@@ -693,8 +749,14 @@ This is the first one measured against the market.</p>
   </details>
 </section>
 
-<section id="judgement">
-  <div class="sechead"><h2 class="disp">Still on judgement</h2></div>
+</div>
+
+<div class="panel" data-p="judgement" hidden>
+<h1 class="disp">Still on judgement</h1>
+<p class="lede">Three of the five constants have not been measured. Tenure is next, and it is the
+biggest sample still available.</p>
+
+<section>
   <table class="fig"><thead><tr><th>Term</th><th class="num">Constant</th><th>Status</th></tr></thead><tbody>
   <tr><th>Lease / vintage</th><td class="num big">$40 psf / yr</td>
     <td style="color:var(--gold-soft)">measured &mdash; ${BANDR[OLD_NM]:,.0f} and ${BANDR[NEW_NM]:,.0f}</td></tr>
@@ -707,6 +769,7 @@ This is the first one measured against the market.</p>
   <tr><th>Integrated development</th><td class="num big">+5%</td><td class="nil">not measured</td></tr>
   </tbody></table>
 </section>
+</div>
 """
 
 HTML = f"""<!doctype html>
@@ -716,11 +779,25 @@ HTML = f"""<!doctype html>
 <meta name="theme-color" content="#101727">
 <title>Constant Calibration — KYA</title>
 <style>{CSS}</style></head><body>
-<header><div class="hin">
-  <div class="brand"><div class="mark">K</div>
-    <div><p>KYA REAL ESTATE</p><p>Private Client Advisory</p></div></div>
-  <span class="chip"><b></b> Internal — Constant Calibration</span>
-</div></header>
+<header>
+  <div class="hin">
+    <div class="brand"><div class="mark">K</div>
+      <div><p>KYA REAL ESTATE</p><p>Private Client Advisory</p></div></div>
+    <span class="chip"><b></b> Internal — Constant Calibration</span>
+  </div>
+  <nav class="terms" aria-label="The five constants">
+    <button type="button" class="done" data-go="lease" aria-current="true">
+      <span class="tn">Lease / vintage</span><span class="ts">Measured</span></button>
+    <button type="button" class="done" data-go="mrt">
+      <span class="tn">MRT walk band</span><span class="ts">Measured</span></button>
+    <button type="button" data-go="judgement">
+      <span class="tn">Tenure</span><span class="ts">Next</span></button>
+    <button type="button" data-go="judgement">
+      <span class="tn">GFA harmonisation</span><span class="ts">On judgement</span></button>
+    <button type="button" data-go="judgement">
+      <span class="tn">Integrated</span><span class="ts">On judgement</span></button>
+  </nav>
+</header>
 <div class="wrap">
 {BODY}
 <footer>

@@ -28,6 +28,8 @@ OUT  = os.path.join(HERE, '..', '..', 'kya-maps-calculator', 'calibration.html')
 D    = json.load(open(os.path.join(HERE, 'lease-pairs.json')))
 MRTP = os.path.join(HERE, 'mrt-pairs.json')
 M    = json.load(open(MRTP)) if os.path.exists(MRTP) else None
+INTP = os.path.join(HERE, 'integrated-pairs.json')
+G    = json.load(open(INTP)) if os.path.exists(INTP) else None
 ALL  = D['24']                       # 24 months. No gap screen.
 POOL = D.get('pooled24', [])
 
@@ -505,6 +507,51 @@ def mrt_table():
     r.append('</tbody></table>')
     return ''.join(r)
 
+def nice(n):
+    """Title-case a project name without destroying acronyms. PLQ is not Plq."""
+    keep = {'PLQ', 'NV', 'EC', 'CBD'}
+    out = []
+    for w in n.split():
+        if w in keep: out.append(w)
+        elif w.lower() in ('at', 'the', 'of', 'on') and out: out.append(w.lower())
+        else: out.append(w.capitalize())
+    return ' '.join(out)
+
+def int_table():
+    if not G: return ''
+    r = ['<table class="fig look"><thead><tr><th>Reading only pairs where&hellip;</th>'
+         '<th class="num">measured</th><th class="num">95% interval</th>'
+         '<th class="num">as a %</th><th class="num">pairs</th>'
+         '<th class="num">adjustment carried</th></tr></thead><tbody>']
+    for c in G['cuts']:
+        big = 'big' if c['label'].startswith('lease gap 5') else 'quiet'
+        r.append(f'<tr><th>{c["label"]}</th>'
+                 f'<td class="num {big}">+${c["adj"]:,.0f}</td>'
+                 f'<td class="num quiet">+${c["lo"]:,.0f} to +${c["hi"]:,.0f}</td>'
+                 f'<td class="num quiet">+{c["pct"]:.1f}%</td>'
+                 f'<td class="num quiet">{c["pairs"]}</td>'
+                 f'<td class="num quiet">${c["load"]:,.0f}</td></tr>')
+    p = G['placebo']
+    r.append(f'<tr class="dim"><th>plain vs plain, tightest cut</th>'
+             f'<td class="num">${p["adj"]:,.1f}</td>'
+             f'<td class="num">${p["lo"]:,.0f} to +${p["hi"]:,.0f}</td>'
+             f'<td class="num">&mdash;</td><td class="num">{p["pairs"]}</td>'
+             f'<td class="num">${p["load"]:,.0f}</td></tr>')
+    return ''.join(r) + '</tbody></table>'
+
+def int_devs():
+    if not G: return ''
+    r = ['<table class="fig"><thead><tr><th>Development</th><th>Station</th>'
+         '<th class="num">metres out</th><th class="num">lease gap</th>'
+         '<th class="num">premium</th><th class="num">pairs</th></tr></thead><tbody>']
+    for d in G['devs']:
+        r.append(f'<tr><th>{nice(d["name"])}</th><td>{d["station"]}</td>'
+                 f'<td class="num quiet">{d["m_i"]:,.0f} m</td>'
+                 f'<td class="num quiet">{d["lg"]:+.0f} yrs</td>'
+                 f'<td class="num big">{d["adj"]:+,.0f}</td>'
+                 f'<td class="num quiet">{d["pairs"]}</td></tr>')
+    return ''.join(r) + '</tbody></table>'
+
 def mrt_split():
     if not M or not M.get('nf_split'): return ''
     r = ['<table class="fig"><thead><tr><th>Pairs whose walk differs by&hellip;</th>'
@@ -760,10 +807,68 @@ the measured lease rate, so what is left is the walk.</p>
 
 </div>
 
+<div class="panel" data-p="integrated" hidden>
+<h1 class="disp">What the market pays for being on top of the station</h1>
+<p class="lede">An integrated development against an ordinary condo a short walk away at the
+<b>same station</b>. The lease difference between them is removed at the measured lease rate, and
+the walking difference at the measured ${G['slope']:.0f} per 100 m. What is left is the building
+sitting on the station.</p>
+
+<section>
+  <div class="scroll">{int_table()}</div>
+
+  <div class="caveat"><b>This one is a range, not a figure.</b> Integrated developments are
+  systematically newer than their neighbours &mdash; {G['confound']['treat_gap']:+.0f} years of
+  lease apart against {G['confound']['placebo_gap']:+.0f} for the plain-vs-plain pairs. So they
+  carry about ${G['confound']['treat_load']:,.0f} of adjustment each, roughly double the placebo's
+  ${G['confound']['placebo_load']:,.0f}, and the answer is what survives a large subtraction.
+  Read down the table: <b>the less adjustment a cut carries, the higher and tighter the answer
+  gets.</b> That is the signature of a diluted estimate, not an absent effect.</div>
+
+  <p class="expl" style="margin-top:18px"><b>Call it ${G['cuts'][3]['adj']:,.0f} to
+  ${G['cuts'][2]['adj']:,.0f} psf, or roughly {min(c['pct'] for c in G['cuts'][1:]):.0f} to
+  {max(c['pct'] for c in G['cuts'][1:]):.0f}%.</b> The engine assumes <b>+5%</b>, which sits at
+  or below the bottom of that range &mdash; on this evidence it is more likely too low than too
+  high. It is also the only constant here that has never actually fired.</p>
+
+  <div class="caveat"><b>The engine's integrated flag is inert.</b> It reads from an override
+  file that flags nothing, so every development is treated as not integrated and the &plusmn;5%
+  has never applied to a single comparable. The {G['n_integrated']} developments below are a
+  classification made for this study and audited by hand &mdash; a judgement, not a datum.</div>
+
+  <details><summary>Every development, and what each one reads</summary>
+    <div class="scroll">{int_devs()}</div>
+    <p class="expl"><b>Read the lease-gap column before the premium column.</b> The three that
+    read low or negative are the three with the widest lease gaps, and their answers are
+    dominated by the correction rather than by the building. Pasir Ris 8 carries more pairs than
+    any other &mdash; a 2021 lease set against neighbours from 1996 to 2013 &mdash; and its
+    individual answers run from &minus;$424 to +$306. That is noise around a large subtraction,
+    which is why it is not evidence that being on the station is worth nothing.</p>
+  </details>
+
+  <details><summary>How a pair is built</summary>
+    <div class="cards" style="margin-top:6px">
+      <div class="card"><h4>Held constant</h4><ul>
+        <li>same <b>nearest station</b>, nearest for both</li>
+        <li>within <b>{G['pair_cap']:,} m</b> of each other</li>
+        <li>median sizes within <b>20%</b>, bedroom by bedroom</li></ul></div>
+      <div class="card"><h4>Adjusted out</h4><ul>
+        <li><b>lease</b>, at ${G['lease_old']:,.0f} / ${G['lease_new']:,.0f} by midpoint</li>
+        <li><b>walking distance</b>, at ${G['slope']:.0f} per 100 m</li>
+        <li>both measured here, neither assumed</li></ul></div>
+      <div class="card"><h4>Not controlled</h4><ul>
+        <li><b>floor</b> and <b>facing</b></li>
+        <li>the quality of the mall attached</li>
+        <li>whether the plain neighbour is itself mixed-use</li></ul></div>
+    </div>
+  </details>
+</section>
+</div>
+
 <div class="panel" data-p="judgement" hidden>
 <h1 class="disp">Still on judgement</h1>
-<p class="lede">Two constants are still unmeasured. Tenure is next, and it is the biggest sample
-still available.</p>
+<p class="lede">One constant is still unmeasured, and it is next: tenure, freehold against
+leasehold. It is also the biggest sample still available.</p>
 
 <section>
   <table class="fig"><thead><tr><th>Term</th><th class="num">Constant</th><th>Status</th></tr></thead><tbody>
@@ -774,7 +879,8 @@ still available.</p>
   <tr><th>MRT walk band</th><td class="num big">$50 / $200 / $250</td>
     <td>measured &mdash; +${M['bands'][0]['adj']:,.0f} / +${M['bands'][1]['adj']:,.0f} /
     +${M['bands'][2]['adj']:,.0f}, or ${M['slope100']:.0f} per 100 m</td></tr>
-    <tr><th>Integrated development</th><td class="num big">+5%</td><td class="nil">not measured</td></tr>
+    <tr><th>Integrated development</th><td class="num big">+5%</td>
+    <td>measured &mdash; +${G['cuts'][3]['adj']:,.0f} to ${G['cuts'][2]['adj']:,.0f} psf</td></tr>
   </tbody></table>
 </section>
 </div>
@@ -800,8 +906,8 @@ HTML = f"""<!doctype html>
       <span class="tn">MRT walk band</span><span class="ts">Measured</span></button>
     <button type="button" data-go="judgement">
       <span class="tn">Tenure</span><span class="ts">Next</span></button>
-    <button type="button" data-go="judgement">
-      <span class="tn">Integrated</span><span class="ts">On judgement</span></button>
+    <button type="button" class="done" data-go="integrated">
+      <span class="tn">Integrated</span><span class="ts">Measured</span></button>
   </nav>
 </header>
 <div class="wrap">

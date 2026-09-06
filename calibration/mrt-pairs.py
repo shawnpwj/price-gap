@@ -105,9 +105,23 @@ PAIR_CAP  = 1500          # max metres BETWEEN the two projects. Not a guess: th
 CATCHMENTS = [CATCHMENT]
 WINDOW = 24
 
+# The MEASURED vintage figure, two bands read at the midpoint, taken STRAIGHT FROM the lease
+# study's own output rather than copied as a literal. An earlier version hardcoded 25/44 and
+# went stale the moment lease-pairs.py was re-run. If you add a constant here, derive it.
+def _lease_bands():
+    lp = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                     'lease-pairs.json')))['24']
+    mid = lambda r: (r['ls_old'] + r['ls_new']) / 2
+    out = {}
+    for lo, hi, nm in ((0, 2011, 'old'), (2011, 9999, 'new')):
+        rs = [r for r in lp if lo <= mid(r) < hi]
+        out[nm] = sum(r['diff'] for r in rs) / sum(r['gap'] for r in rs)
+    return out
+
+LEASE = _lease_bands()
+
 def lease_rate(mid):
-    """The MEASURED vintage figure, two bands read at the midpoint (lease study, 2026-09-06)."""
-    return 25.0 if mid <= 2010.5 else 44.0
+    return LEASE['old'] if mid <= 2010.5 else LEASE['new']
 
 R = 6371000
 def hav(a, b, c, d):

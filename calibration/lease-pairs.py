@@ -29,42 +29,32 @@ is the market's price for a year of lease.
                                             Each pair carries its size delta so the residual
                                             can be checked against it.)
 
-  THE ESTIMATOR -- FLAT, THEN RISING  (Shawn, 2026-09-06)
-    The rate is not one number, not two bands, and not a straight line:
+  THE ESTIMATOR -- TWO BANDS, READ AT THE MIDPOINT  (Shawn, 2026-09-06)
 
-        rate($/yr) = c + d * max(0, midpoint of the two lease starts - K)
+    rate = $25/yr for a pair centred up to 2010, $44/yr from 2011. Held-out error:
+    flat 24.0k, THREE bands 20.9k, TWO BANDS 20.7k. Two beats three and is simpler.
 
-    MEASURED: flat at $25.3 [22.9, 27.6] for every pair centred up to K = 2008 [2002, 2008],
-    then rising $3.57 [2.81, 4.42] for each further year of vintage.
+    READ AT THE MIDPOINT of the two lease starts. That form IS the blend, so a pair
+    straddling the boundary needs no special handling -- which is the whole reason for it.
+    NEVER band on ls_old.
 
-    A straight line was tried first and ran LOW AT BOTH ENDS -- midpoint 1990-99 paid $11.5/yr
-    more than it predicted [+3.0, +22.3], 2015+ paid $10.8 more [+3.7, +18.3], middle followed
-    closely. It was averaging a flat old segment against a steep new one. The old reading is not
-    an outlier artefact: the 1990s bucket reads +28.4 whole, +27.1 less its largest pair, +24.8
-    less its second, +26.2 on wide gaps only. The knee is FITTED, every year 2000-2014 ranked on
-    held-out error. Held-out: flat 21.1k, step 19.4k, line 18.9k, quadratic 18.4k, HINGE 18.3k.
-    The flat segment recovers the same $25 the first two-band pass found -- that pass had the
-    level right and only the shape wrong.
+    FOUR SHAPES DIED AND MUST NOT BE RESURRECTED: a flat rate (the engine's $40, which
+    charges an old pair 1.6x what the market pays); two bands on ls_old; a straight line on
+    the midpoint (ran low at BOTH ends); and A FITTED KNEE -- which this docstring described
+    as the answer until 2026-09-06 and which is DEAD. The knee moved when the screen widened
+    from 168 to 231 pairs; the best knee is now anywhere in 1998-2008 and the fit changes
+    under 2% across that span. THE KNEE IS NOT IDENTIFIED. Do not report a fitted year and
+    slope. The LEVEL (~$25) is the robust finding; the tail is not.
 
-    REJECTED: the lease-decay knee. A 1990s-centred pair has ~65 yrs left, the 2026-07-27 study's
-    knee, so decay was the obvious suspect. Refitting on the older project's REMAINING lease is
-    worse (19.4k), adding it alongside vintage is worse (19.1k), and a below-65-years term earns
+    REJECTED: the lease-decay knee. A 1990s-centred pair has ~65 yrs left, the 2026-07-27
+    study's knee, so decay was the obvious suspect. Refitting on the older project's REMAINING
+    lease is worse, adding it alongside vintage is worse, and a below-65-years term earns
     nothing. The turn is in the VINTAGE of the stock, not the lease left on it.
 
-    Still read at the MIDPOINT, which is what lets one curve handle a pair straddling the knee:
-
-    Fitted as  diff = gap * (a + b*(mid-2000)), ordinary least squares, no intercept.
-    That form IS the blend: if the rate rises smoothly, the total difference across an
-    interval equals the gap times the rate at its midpoint. So a pair straddling any
-    cut-over needs no special handling -- which is the whole reason for this shape.
-    It beats a flat rate and a two-band step on 5-fold cross-validation.
-
-    NO GAP SCREEN. Earlier passes dropped pairs under 5 years of lease separation. That
-    screen existed for the per-pair MEAN, which divides each difference by its own gap
-    and so multiplies a short pair's noise. This estimator fits the DIFFERENCE against
-    the gap, so a 3-year pair carries 3 years of leverage and cannot shout. Removing the
-    screen leaves a and b flat (a 20.7-21.1, b 1.25-1.44 across every threshold), TIGHTENS
-    the slope CI, and nearly triples the sample: 97 cells -> 273, 71 pairs -> 168.
+    NO GAP SCREEN. Earlier passes dropped pairs under 5 years of lease separation. That screen
+    existed for the per-pair MEAN, which divides each difference by its own gap and so
+    multiplies a short pair's noise. This estimator fits the DIFFERENCE against the gap, so a
+    3-year pair carries 3 years of leverage and cannot shout.
 
   BEDROOM IS THE MATCH, NOT THE ANSWER. It does not appear in the equation. It is the
     stratum that holds size constant, and it is the finest size resolution the data has.
@@ -122,7 +112,12 @@ base    = J('pricegap-base.json')['projects']
 det     = J('pg-project-details.json')['projects']
 psf     = J('psf-history.json')['projects']
 qh      = J('quantum-history.json')['projects']
-mrt     = J('mrt-stations.json')['stations']
+# OPERATIONAL STATIONS ONLY. 37 of the 223 in mrt-stations.json are under construction, and an
+# unbuilt station is not a walk to anything over a 2024-26 transaction window. Counting them
+# changes the nearest station for 88 of 1,844 developments, and the nearest station is a PAIR
+# SCREEN here -- so each one silently makes or breaks a pair. (Found via mrt-pairs.py, fixed
+# 2026-09-06.)
+mrt     = [s for s in J('mrt-stations.json')['stations'] if s.get('status') == 'operational']
 
 LAST = max(m for p in psf.values() for b in p.values() for m in b)
 def months_back(mo, n):

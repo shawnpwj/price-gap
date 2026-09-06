@@ -14,10 +14,9 @@ both on main and pushed. Page live on offline staging.
 | | |
 |---|---|
 | **Lease / vintage term** | **MEASURED AND SHIPPED.** See §3. |
+| **Integrated development (+5%)** | **MEASURED AND SHIPPED.** See §11. |
 | **MRT walk band ($50/$200/$250)** | **MEASURED AND SHIPPED.** See §10. |
 | Tenure · FH vs LH (÷1.15) | judgement only — **next**, see §9 |
-| GFA harmonisation (+7%) | judgement only |
-| Integrated development (+5%) | judgement only |
 
 **NOTHING HAS BEEN WRITTEN BACK TO `../scripts/price-gap.ts` AND NOTHING MAY BE** until
 Shawn audits. This folder is a validation table that sits BESIDE the constants. That is
@@ -53,12 +52,12 @@ in neither nav. A working document, never a client view.
 
 ## 3. THE ANSWER
 
-**226 developments · 231 pairs · 382 cells.** 24 months of resale and sub-sale.
+**234 developments · 249 pairs · 416 cells.** 24 months of resale and sub-sale.
 
 | midpoint of the two lease starts | $ psf / yr | 95% | devs | pairs |
 |---|---|---|---|---|
-| up to 2010 | **$25** | 22.1–27.5 | 154 | 136 |
-| 2011 onward | **$44** (a FLOOR) | 38.6–49.8 | 103 | 95 |
+| up to 2010 | **$25** | 22.1–27.4 | 160 | 143 |
+| 2011 onward | **$43** (a FLOOR) | 37.8–47.9 | 106 | 106 |
 
 Against an engine constant of a flat **$40**, which charges an old pair 1.6× what the market
 pays and short-changes a new one. Held-out error: flat 24.0k · **two bands 20.7k** · three
@@ -185,7 +184,7 @@ A higher base price explains only part (1.61% → 2.45%: narrows in percent, doe
 
 1. **Flat $40** (the engine). Wrong at both ends at once.
 2. **Two bands on `ls_old`** ($25 pre-2010 / $44 2010s). Killed by the straddle question in §3.
-   **Note the coincidence:** the current answer is also $25/$44 but banded on the MIDPOINT,
+   **Note the coincidence:** the current answer is also $25/$43 but banded on the MIDPOINT,
    which is a different and correct thing. Do not confuse them.
 3. **A straight line on the midpoint.** Ran low at BOTH ends.
 4. **A fitted knee** (flat, then rising). Fixed the line on 168 pairs — then MOVED when the
@@ -262,7 +261,7 @@ Only after he audits does anything reach `price-gap.ts`.
 ## 10. MRT WALK BAND — MEASURED
 
 `mrt-pairs.py` → `mrt-pairs.json` → `build-page.py`. **The lease study inverted:** station held
-constant, walk band varies, lease removed at the MEASURED $25/$44 midpoint rate — never the flat $40.
+constant, walk band varies, lease removed at the MEASURED $25/$43 midpoint rate — never the flat $40.
 
 **290 developments · 450 pairs · 716 cells.**
 
@@ -350,3 +349,50 @@ Fix: OneMap routing + exit locations (`fetch-area.ts` already calls OneMap). ~a 
   filters to operational. May move a few lease pairs. Unfixed.
 * **`lease-pairs.py`'s docstring is STALE** — it still describes the fitted-hinge shape
   ($25.3 flat then +$3.57/yr) that §7 records as dead and not identified.
+
+---
+
+## 11. INTEGRATED DEVELOPMENT — MEASURED
+
+`integrated-pairs.py` → `integrated-pairs.json` → `build-page.py`. An integrated development against
+a plain condo at the **same nearest station**; the lease difference removed at the measured
+two-band rate and the walking difference at the measured $/100 m. Both inputs are measured here,
+neither assumed.
+
+**THE ENGINE'S FLAG IS INERT.** `price-gap.ts` reads `integrated: ov.integrated ?? false` from
+`pricegap-overrides.json`, which carries two entries and flags NEITHER. The ±5% has never fired on
+a single comparable. **The list of 14 is a classification Shawn audited on 2026-09-06 — a
+judgement, not a datum.** Excluded by his ruling: Marina One Residences and both Midtown entries,
+all CCR. Excluded as not actually integrated: The Tre Ver, One-North Residences, The Clement
+Canopy, City Gate.
+
+| reading only pairs where… | measured | 95% | as a % | pairs | adjustment carried |
+|---|---|---|---|---|---|
+| every pair | +$91 | +42 to +142 | +6.0% | 42 | $485 |
+| lease gap ≤ 10 yrs | +$120 | +73 to +174 | +7.5% | 26 | $400 |
+| **lease gap ≤ 5 yrs** | **+$180** | +132 to +233 | +9.9% | 11 | $172 |
+| lease ≤ 10, within 400 m | +$119 | +65 to +179 | +6.5% | 13 | $223 |
+| **lease ≤ 5, within 400 m** | **+$128** | +93 to +165 | +6.7% | 7 | $118 |
+| plain vs plain, tightest cut | −$17 | −35 to +1 | — | 240 | $111 |
+
+**REPORT A RANGE, NEVER A FIGURE: $119 to $180, roughly 6.5% to 10%.** The engine's +5% sits at or
+below the bottom — **more likely too low than too high.**
+
+### THE CONFOUND — the reason this is a range
+
+**Integrated developments are systematically NEWER than their neighbours: +9.0 years of lease gap
+against −0.5 for the placebo pairs.** So they carry ~$485 of adjustment each, roughly double the
+placebo's, and the answer is what survives a large subtraction. **The less adjustment a cut
+carries, the higher and tighter the answer** — the signature of a diluted estimate, not an absent
+effect.
+
+**PASIR RIS 8 is the case to understand** (Shawn found this by asking what it was being compared
+against). A 2021 lease against neighbours from 1996–2013; its individual answers run **−$424 (vs
+Coco Palms) to +$306 (vs Eastvale)**. It carries more pairs than any other integrated development
+and reads about zero. **That is noise around a large correction, not evidence that being on the
+station is worth nothing.** The same applies to Sengkang Grand and Compass Heights.
+
+### OPEN
+
+* **Populate `pricegap-overrides.json`** so the flag stops being inert. Not done — it writes to a
+  file the engine reads, and framing ruling 3 says nothing is written back until Shawn audits.

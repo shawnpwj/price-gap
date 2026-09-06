@@ -333,12 +333,8 @@ box-shadow:0 10px 40px -12px rgba(0,0,0,.55);padding:26px 28px}
 .answers{display:flex;gap:34px;flex-wrap:wrap;align-items:flex-end}
 .ans .n{font:600 clamp(40px,5.2vw,56px)/.95 Optima,Candara,sans-serif;color:var(--gold);
 white-space:nowrap;letter-spacing:-.012em}
-.ans .ci{font:400 13px/1.2 -apple-system,Segoe UI,sans-serif;color:var(--gold-soft);
-opacity:.72;margin-top:9px;font-variant-numeric:tabular-nums}
-.ans .ci span{font:400 9.5px/1 -apple-system,Segoe UI,sans-serif;letter-spacing:.16em;
-text-transform:uppercase;color:var(--slate-600);display:block;margin-top:2px}
 .ans .w{font-size:11.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--slate-400);
-margin-top:12px}
+margin-top:10px}
 .ans .g{font:600 18px/1.15 Optima,Candara,sans-serif;color:var(--slate-200);margin-top:8px}
 .ans .g span{font:400 10px/1 -apple-system,Segoe UI,sans-serif;letter-spacing:.16em;
 text-transform:uppercase;color:var(--slate-600);display:block;margin-top:3px}
@@ -535,18 +531,15 @@ def mrt_table():
 
 def hero(was, was_sub, answers, call):
     """The verdict block every panel opens with. `answers` is a list of
-    (figure, what it is, how many developments, the 95% interval) — the interval optional,
-    and sitting directly under the figure because it qualifies THAT number and nothing else.
-    (Shawn, 2026-09-06: he wants the interval on the face, not only in the table.)"""
-    cells = ''
-    for a in answers:
-        fig, w, d = a[0], a[1], a[2]
-        ci = a[3] if len(a) > 3 else None
-        cells += ('<div class="ans"><div class="n">' + fig + '</div>'
-                  + ('<div class="ci">' + ci + '<span>95% interval</span></div>' if ci else '')
-                  + '<div class="w">' + w + '</div>'
-                  + ('<div class="g">' + str(d) + '<span>developments</span></div>' if d else '')
-                  + '</div>')
+    (figure, what it is, how many developments).
+
+    NO INTERVALS HERE. They were added to the face on 2026-09-06 and taken off again the same
+    day at Shawn's word: the face carries the answer and the count behind it, and the interval
+    lives one row down in the table. Do not put it back without asking."""
+    cells = ''.join(
+        '<div class="ans"><div class="n">' + a[0] + '</div><div class="w">' + a[1] + '</div>'
+        + ('<div class="g">' + str(a[2]) + '<span>developments</span></div>' if a[2] else '')
+        + '</div>' for a in answers)
     return ('<div class="verdict"><div class="vgrid">'
             '<div class="vcell"><div class="lab">Engine constant</div>'
             '<div class="val was">' + was + '</div><div class="sub">' + was_sub + '</div></div>'
@@ -653,10 +646,8 @@ BODY = f"""
 the first one measured against the market.</p>
 
 {hero('$40', 'flat, every comparable',
-      [(f'${BANDR[OLD_NM]:,.0f}', OLD_NM, ndev(rows_in(OLD_NM)),
-        f'${BANDCI[OLD_NM][0]:,.0f} &ndash; ${BANDCI[OLD_NM][1]:,.0f}'),
-       (f'${BANDR[NEW_NM]:,.0f}', NEW_NM, ndev(rows_in(NEW_NM)),
-        f'${BANDCI[NEW_NM][0]:,.0f} &ndash; ${BANDCI[NEW_NM][1]:,.0f}')],
+      [(f'${BANDR[OLD_NM]:,.0f}', OLD_NM, ndev(rows_in(OLD_NM))),
+       (f'${BANDR[NEW_NM]:,.0f}', NEW_NM, ndev(rows_in(NEW_NM)))],
       f"<b>The call.</b> Two rates, not one, chosen by the <b>midpoint of the two lease starts</b>. "
       f"The engine's flat $40 charges an old pair {40/BANDR[OLD_NM]:.1f} times what the market pays "
       f"and short-changes a new one. Leave the engine alone until this is audited.")}
@@ -781,7 +772,7 @@ over the same 24 months. The lease difference between them is removed at the mea
 so what is left is the walk.</p>
 
 {hero(' / '.join(f"${M['engine'][b['key']]}" for b in M['bands']), 'three fixed band steps',
-      [(f"+${b['adj']:,.0f}", lab, b['devs'], f"${b['lo']:,.0f} &ndash; ${b['hi']:,.0f}")
+      [(f"+${b['adj']:,.0f}", lab, b['devs'])
        for b, lab in zip(M['bands'], ('under 5 vs 5-10 min', '5-10 vs over 10 min',
                                       'under 5 vs over 10 min'))],
       f"<b>The call.</b> Quote <b>${M['slope100']:.0f} psf per extra 100 m</b> &mdash; it holds "
@@ -881,10 +872,8 @@ the walking difference at the measured ${G['slope']:.0f} per 100 m. What is left
 sitting on the station.</p>
 
 {hero('+5%', 'never actually fired',
-      [(f"+{G['cuts'][4]['pct']:.1f}%", '&lt;5 yr gap, within 400 m', G['cuts'][4]['devs'],
-        f"{G['cuts'][4]['pct_lo']:.1f}% &ndash; {G['cuts'][4]['pct_hi']:.1f}%"),
-       (f"+{G['cuts'][0]['pct']:.1f}%", 'every pair', G['cuts'][0]['devs'],
-        f"{G['cuts'][0]['pct_lo']:.1f}% &ndash; {G['cuts'][0]['pct_hi']:.1f}%")],
+      [(f"+{G['cuts'][4]['pct']:.1f}%", '&lt;5 yr gap, within 400 m', G['cuts'][4]['devs']),
+       (f"+{G['cuts'][0]['pct']:.1f}%", 'every pair', G['cuts'][0]['devs'])],
       f"<b>The call. About +{G['cuts'][4]['pct']:.1f}%</b>, or roughly "
       f"${G['cuts'][4]['adj']:,.0f} psf at these price levels &mdash; the cut that carries the "
       f"least correction of anything here, and the broadest cut of all {G['cuts'][0]['pairs']} "

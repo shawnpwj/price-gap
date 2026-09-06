@@ -374,8 +374,17 @@ Canopy, City Gate.
 | <10 yr gap, within 400 m | **+6.5%** | +3.6 to +9.9 | 13 | $223 | +$119 |
 | <5 yr gap, within 400 m | +6.7% | +4.5 to +9.1 | 7 | $118 | +$128 |
 
-**REPORT A RANGE, NEVER A FIGURE: +6.5% to +9.9%.** The engine's +5% sits at or below the bottom —
-**more likely too low than too high.**
+**THE ANSWER IS +6.7%, interval +4.5% to +9.1%** — the `<5 yr gap, within 400 m` cut. It carries
+the least correction of anything here ($118), it sits in the flat 150–400 m zone where the answer
+does not move, and **the broadest cut of all 42 pairs lands beside it at +6.0%.** The two ends of
+the reliability range converge on 6–7%; only the unrestricted-distance cuts read higher, and the
+sweep below shows why.
+
+**THE ENGINE'S +5% FALLS INSIDE THAT INTERVAL — it is at the low end but NOT demonstrably wrong.**
+An earlier version of this page claimed it was "more likely too low than too high" on the strength
+of a +6.5% to +9.9% range. That range was built on the unrestricted-distance cuts, which are
+inflated by the very leak documented below, and its upper bound came from an 8-pair cell that
+moves 2.1 points when three pairs are added. **Do not rebuild a range that way.**
 
 **REPORTED IN PERCENT — a deliberate exception to the dollars-never-percent rule** (Shawn,
 2026-09-06). It applies here and nowhere else because **the engine's constant is itself a

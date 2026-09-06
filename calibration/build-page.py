@@ -557,7 +557,7 @@ def int_table():
          '<th class="num">pairs</th><th class="num">adjustment carried</th>'
          '<th class="num">in psf</th></tr></thead><tbody>']
     for c in G['cuts']:
-        big = 'big' if 'within 400' in c['label'] or c['label'] == '&lt;5 yr lease gap' else 'quiet'
+        big = 'big' if c['label'] == '&lt;5 yr gap, within 400 m' else 'quiet'
         r.append(f'<tr><th>{c["label"]}</th>'
                  f'<td class="num {big}">+{c["pct"]:.1f}%</td>'
                  f'<td class="num quiet">+{c["pct_lo"]:.1f}% to +{c["pct_hi"]:.1f}%</td>'
@@ -860,24 +860,27 @@ the walking difference at the measured ${G['slope']:.0f} per 100 m. What is left
 sitting on the station.</p>
 
 {hero('+5%', 'never actually fired',
-      [(f"+{G['cuts'][3]['pct']:.1f}%", '10 yr gap, within 400 m', G['cuts'][3]['devs']),
-       (f"+{G['cuts'][2]['pct']:.1f}%", '5 yr lease gap', G['cuts'][2]['devs'])],
-      f"<b>The call.</b> A <b>range, not a figure</b>: "
-      f"<b>+{G['cuts'][3]['pct']:.1f}% to +{G['cuts'][2]['pct']:.1f}%</b>, or "
-      f"${G['cuts'][3]['adj']:,.0f} to ${G['cuts'][2]['adj']:,.0f} psf at these price levels. "
-      f"The engine's +5% sits at or below the bottom of it, so on this evidence it is more likely "
-      f"too low than too high &mdash; and it has never fired on a single comparable.")}
+      [(f"+{G['cuts'][4]['pct']:.1f}%", 'best controlled', G['cuts'][4]['devs']),
+       (f"+{G['cuts'][0]['pct']:.1f}%", 'every pair', G['cuts'][0]['devs'])],
+      f"<b>The call. About +{G['cuts'][4]['pct']:.1f}%</b>, or roughly "
+      f"${G['cuts'][4]['adj']:,.0f} psf at these price levels &mdash; the cut that carries the "
+      f"least correction of anything here, and the broadest cut of all {G['cuts'][0]['pairs']} "
+      f"pairs lands beside it at +{G['cuts'][0]['pct']:.1f}%. "
+      f"<b>The engine's +5% falls inside the interval</b> "
+      f"({G['cuts'][4]['pct_lo']:.1f}% to {G['cuts'][4]['pct_hi']:.1f}%), so it sits at the low "
+      f"end but is not demonstrably wrong. It has, however, never fired on a single comparable.")}
 
 <section>
   <div class="scroll">{int_table()}</div>
 
-  <div class="caveat"><b>This one is a range, not a figure.</b> Integrated developments are
+  <div class="caveat"><b>Read the adjustment column with the answer.</b> Integrated developments are
   systematically newer than their neighbours &mdash; {G['confound']['treat_gap']:+.0f} years of
   lease apart against {G['confound']['placebo_gap']:+.0f} for the plain-vs-plain pairs. So they
   carry about ${G['confound']['treat_load']:,.0f} of adjustment each, roughly double the placebo's
   ${G['confound']['placebo_load']:,.0f}, and the answer is what survives a large subtraction.
-  Read down the table: <b>the less adjustment a cut carries, the higher and tighter the answer
-  gets.</b> That is the signature of a diluted estimate, not an absent effect.</div>
+  <b>The bolded row carries the least correction of any cut here, which is why it is the one to
+  quote.</b> The rows reading higher are the ones that let the two sit further apart, and the
+  sweep below shows that is walking effect leaking in, not a bigger building premium.</div>
 
   <p class="expl" style="margin-top:18px"><b>Call it ${G['cuts'][3]['adj']:,.0f} to
   ${G['cuts'][2]['adj']:,.0f} psf, or roughly {min(c['pct'] for c in G['cuts'][1:]):.0f} to
@@ -961,7 +964,8 @@ sitting on the station.</p>
     <td>measured &mdash; +${M['bands'][0]['adj']:,.0f} / +${M['bands'][1]['adj']:,.0f} /
     +${M['bands'][2]['adj']:,.0f}, or ${M['slope100']:.0f} per 100 m</td></tr>
     <tr><th>Integrated development</th><td class="num big">+5%</td>
-    <td>measured &mdash; +{G['cuts'][3]['pct']:.1f}% to +{G['cuts'][2]['pct']:.1f}%</td></tr>
+    <td>measured &mdash; +{G['cuts'][4]['pct']:.1f}% ({G['cuts'][4]['pct_lo']:.1f} to
+    {G['cuts'][4]['pct_hi']:.1f}), which contains the +5%</td></tr>
   </tbody></table>
 </section>
 </div>

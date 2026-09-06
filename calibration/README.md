@@ -159,6 +159,7 @@ figure for old stock, never a sliding boundary. Re-run then.
 | matching on size not bedroom | 159 pairs vs 231, mix leaks −$249 psf per 100% size | bedroom is the better control |
 | minimum lease gap | no change at any threshold | retired; it protected an estimator this page does not use. Removing it roughly tripled the sample |
 | walk-band match | cost 20 new-end pairs at 258–414 m | retired |
+| **unit sizes shrank, so psf overstates it** | raised again 2026-09-06 and re-tested in DOLLARS, not psf. Sizes did shrink at the same 2011 break (3BR 1,245 → 1,014 sqft, 2BR ~900 → 714), but priced per home the gap is $27,052 vs $39,525 a year — +46% against +78% in psf. Size closes about 40% of it | **REJECTED as the explanation, twice.** Pairs are already size-matched within 20% bedroom-by-bedroom, so the rate carries no size contamination: 3BR alone reads $27.5 → $42.1. **Shawn ruled 2026-09-06 that none of this goes on the page — psf figures, nothing else.** Do not raise it a third time |
 
 ### Why the newer band is nearly double — and HOW to show it
 The test: if something other than vintage explained the jump, then looking only at pairs alike

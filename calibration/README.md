@@ -14,8 +14,8 @@ both on main and pushed. Page live on offline staging.
 | | |
 |---|---|
 | **Lease / vintage term** | **MEASURED AND SHIPPED.** See §3. |
+| **MRT walk band ($50/$200/$250)** | **MEASURED AND SHIPPED.** See §10. |
 | Tenure · FH vs LH (÷1.15) | judgement only — **next**, see §9 |
-| MRT walk band ($50/$200/$250) | judgement only |
 | GFA harmonisation (+7%) | judgement only |
 | Integrated development (+5%) | judgement only |
 
@@ -256,3 +256,58 @@ the pattern is `property-analyzer/scripts/fetch-demand-ura.ts`, 60-month serving
 5. **MRT bands, harmonisation, integrated.** Not scoped.
 
 Only after he audits does anything reach `price-gap.ts`.
+
+---
+
+## 10. MRT WALK BAND — MEASURED
+
+`mrt-pairs.py` → `mrt-pairs.json` → `build-page.py`. **The lease study inverted:** station held
+constant, walk band varies, lease removed at the MEASURED $25/$44 midpoint rate — never the flat $40.
+
+**290 developments · 450 pairs · 716 cells.**
+
+| walk to the nearest station | measured | 95% | devs | engine |
+|---|---|---|---|---|
+| under 5 min vs 5–10 min | **+$49** | +16 to +84 | 100 | $50 — right |
+| 5–10 min vs over 10 min | **+$111** | +67 to +153 | 78 | $200 |
+| under 5 min vs over 10 min | **+$122** | +56 to +195 | 33 | $250 |
+
+**QUOTE $21 PSF PER EXTRA 100 M.** Independent of where the band lines fall. Placebo **+$1.7**.
+
+### The screen is the STATION'S CATCHMENT, not the distance between the pair
+
+Shawn's correction. Requiring the projects within 500 m of *each other* is self-defeating here:
+they differ in walking distance by at most the distance between them, so it caps the measurement.
+The under-5-vs-over-10 row had **3 pairs** under that screen and **25** under this one.
+Catchment 2000 m; **pair cap 1200 m, set where the PLACEBO breaks** (+1.7 at 1200 m, +8.6 at 1800).
+Leasehold only — freehold was built and dropped, 7–13 pairs a cell and incoherent.
+
+### THE BANDS CANNOT BE ADDED — and this is the question he asked
+
+$49 + $111 = $160 but the direct pair reads $122. The rows span **different walking**: 231 m,
+438 m, 567 m. Scale for it — 160 × (567/670) = $136 vs $122 measured, inside the interval.
+**Per 100 m all three agree: 21.4 · 25.3 · 21.6.**
+
+**PER-100M COHERENCE PICKS THE THRESHOLDS, NOT ADDITIVITY.** A +15% threshold set (354/708 m)
+looks additive but reads 15.4 / 31.3 / 33.1 per 100 m — a factor of two on one quantity. The
+as-built lines spread 3.9. Additivity can be satisfied by accident; per-metre consistency cannot.
+
+### THE MINUTES ARE NOT RELIABLE. THE METRES ARE.
+
+CityLife@Tampines reads 14.1 min against a real 10-min / 700 m Google route. A station is ONE
+POINT when Tampines (DT32+EW2) spans hundreds of metres; some geocodes are ~100 m off. **The tell:
+the straight line (869 m) exceeded the actual route (700 m), which is impossible.** Both sides of
+a pair are measured to the SAME point, so the error largely cancels in the difference — which is
+why the metres hold and the minutes do not. **Band names label the metres, not walking times.**
+Fix: OneMap routing + exit locations (`fetch-area.ts` already calls OneMap). ~a day, still unruled.
+
+### OPEN
+
+* **The school screen.** It kills THE TRILINQ vs CLAVON — a genuine mid-vs-far pair on Clementi —
+  because Trilinq has Nan Hua Primary within 1 km and Clavon has none. Relax it for MRT or keep it?
+  Unruled. Keeping it is the recommendation: it is most of what holds location constant now that
+  pairs can sit 1200 m apart.
+* **`lease-pairs.py` counts all 223 stations, including the 37 under construction.** `mrt-pairs.py`
+  filters to operational. May move a few lease pairs. Unfixed.
+* **`lease-pairs.py`'s docstring is STALE** — it still describes the fitted-hinge shape
+  ($25.3 flat then +$3.57/yr) that §7 records as dead and not identified.

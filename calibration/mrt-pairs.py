@@ -67,9 +67,27 @@ DATA = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                     '..', '..', 'property-analyzer', 'data')
 J = lambda f: json.load(open(os.path.join(DATA, f)))
 
-CIRCUITY, MPM = 1.3, 80          # from price-gap.ts — keep the study and engine aligned
-NEAR_M = 5  * MPM / CIRCUITY     # 307.7 m
-FAR_M  = 10 * MPM / CIRCUITY     # 615.4 m
+MPM    = 80                      # metres a minute, the standard planning pace
+NEAR_M = 5  * MPM                # 400 m
+FAR_M  = 10 * MPM                # 800 m
+# THE LINES ARE 400 / 800, APPLIED STRAIGHT TO THE MAP DISTANCE (Shawn ruled 2026-09-06).
+# price-gap.ts inflates every distance by a CIRCUITY of 1.3 before converting to minutes,
+# which drags the 5-minute bar in to 308 m. That is too strict, on three independent counts:
+#
+#   1. FACE VALIDITY. At 308 m the bar puts J GATEWAY (308 m, beside JEM at Jurong East)
+#      and BARTLEY RIDGE (315 m, on top of Bartley station) in the 5-to-10-minute bucket.
+#      Anyone who has stood there knows that is wrong.
+#   2. GROUND TRUTH. CityLife@Tampines measures 869 m here against a real Google walking
+#      route of 700 m / 10 min — so these straight-line metres already run about 1.24x the
+#      real route, and applying a further 1.3 circuity DOUBLE-COUNTS. Ten real minutes is
+#      ~868 m in this study's units, not 615.
+#   3. COHERENCE. Per-100 m rates across the three rows spread only 6.0 at 400/800, the
+#      tightest of every placement tested (308/615 -> 6.5, 354/708 -> 19.0, 434/868 -> 10.9).
+#
+# THE COST, and it is real: the placebo weakens from -1.7 to -10.1 psf (still inside its own
+# interval, but worse), and across defensible placements the under-5-vs-over-10 figure runs
+# $162 to $304. THAT SPREAD IS THE HONEST UNCERTAINTY and it is wider than any confidence
+# interval this study reports. Only real walking routes (OneMap) close it.
 
 MIN_UNITS, MIN_N, SIZE_TOL = 200, 3, 0.20
 # MIN_N 3, not the lease study's 5, and PAIR_CAP 1500, not 1200 (Shawn asked for a laxer

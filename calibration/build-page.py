@@ -679,9 +679,11 @@ the measured lease rate, so what is left is the walk.</p>
 <section>
   <div class="scroll">{mrt_table()}</div>
 
-  <p class="expl" style="margin-top:18px"><b>Your $50 is right. The other two are not.</b> The
-  engine charges ${M['engine']['mid|far']} and ${M['engine']['near|far']} where the market pays
-  ${M['bands'][1]['adj']:,.0f} and ${M['bands'][2]['adj']:,.0f}.</p>
+  <p class="expl" style="margin-top:18px"><b>Two of the three hold up.</b> The engine's
+  ${M['engine']['near|mid']} and ${M['engine']['near|far']} both sit inside the measured intervals.
+  Its ${M['engine']['mid|far']} for the middle step does not &mdash; the market pays
+  <b>${M['bands'][1]['adj']:,.0f}</b>, and the interval tops out at
+  ${M['bands'][1]['hi']:,.0f}.</p>
 
   <div class="caveat"><b>The bands cannot be added together.</b> Each spans a different amount of
   walking, so the first two do not sum to the third. Read them per 100 m instead and all three say
@@ -715,17 +717,24 @@ the measured lease rate, so what is left is the walk.</p>
     left is the walk.</p>
   </details>
 
-  <details><summary>Why the minutes are approximate, and the metres are not</summary>
-    <p class="expl">Distance is measured in a straight line to the nearest operational station and
-    converted to minutes at the engine's own pace. That conversion is <b>not reliable</b>: a
-    station is held as a single point when a large interchange spans several hundred metres, and
-    some geocodes sit about 100 m off. CityLife@Tampines reads 14 minutes here against a real
-    walking route of 10.</p>
-    <p class="expl">The metres survive this and the minutes do not. Both sides of a pair are
-    measured to the <b>same</b> station point, so an error in that point largely cancels in the
-    difference between them &mdash; which is why the three rows agree per 100 m. A minute
-    threshold applied to each project on its own gets no such cancellation. <b>Treat the band
-    names as labels for the metres, not as walking times.</b> Real routes would fix this.</p>
+  <details><summary>Where the 5 and 10 minute lines are drawn, and what it costs</summary>
+    <p class="expl"><b>Under 400 m &middot; 400 to 800 m &middot; over 800 m.</b> People walk about
+    80 metres a minute, so five minutes is 400 m and ten is 800. Distance is measured straight
+    across the map to the nearest operational station.</p>
+    <p class="expl">The engine draws them tighter &mdash; it inflates every distance by 30% before
+    converting, which pulls the five-minute bar in to 308 m. That is too strict. At 308 m it files
+    <b>J Gateway</b>, standing beside JEM at Jurong East, as a five-to-ten-minute walk.</p>
+    <p class="expl"><b>The lines are the weak part of this measurement.</b> A station is held as a
+    single point when a large interchange spans hundreds of metres, and some geocodes sit about
+    100 m off &mdash; CityLife@Tampines measures 869 m here against a real 700 m walking route.
+    Across defensible placements of the two lines the bottom row runs <b>$162 to $304</b>. That
+    spread is wider than any interval in the table above and it is the honest uncertainty on the
+    figure.</p>
+    <p class="expl">What survives it: both sides of a pair are measured to the <b>same</b> station
+    point, so an error in that point largely cancels in the difference between them. That is why
+    the three rows agree per 100 m, and why <b>${M['slope100']:.0f} psf per 100 m</b> is the
+    figure to reach for whenever the two homes being compared are not a typical band pair. Real
+    walking routes would close the rest.</p>
   </details>
 
   <details><summary>How a pair is built</summary>

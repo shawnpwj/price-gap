@@ -266,21 +266,60 @@ constant, walk band varies, lease removed at the MEASURED $25/$44 midpoint rate 
 
 **290 developments · 450 pairs · 716 cells.**
 
+**THE LINES ARE 400 m AND 800 m**, applied straight to the map distance — 80 m a minute, five
+minutes and ten. **NOT** the engine's 308/615, which inflates every distance by a 1.3 circuity
+first. See "the lines" below.
+
 | walk to the nearest station | measured | 95% | devs | engine |
 |---|---|---|---|---|
-| under 5 min vs 5–10 min | **+$49** | +16 to +84 | 100 | $50 — right |
-| 5–10 min vs over 10 min | **+$111** | +67 to +153 | 78 | $200 |
-| under 5 min vs over 10 min | **+$122** | +56 to +195 | 33 | $250 |
+| under 5 min vs 5–10 min | **+$65** | +38 to +94 | 125 | $50 — inside the interval |
+| 5–10 min vs over 10 min | **+$157** | +120 to +194 | 77 | $200 — OUTSIDE it |
+| under 5 min vs over 10 min | **+$239** | +182 to +296 | 30 | $250 — inside the interval |
 
-**QUOTE $21 PSF PER EXTRA 100 M.** Independent of where the band lines fall. Placebo **+$1.7**.
+**Only the middle constant is wrong.** Quote **$23 psf per extra 100 m** whenever the two homes
+are not a typical band pair. Placebo **−$10.1**.
+
+### THE LINES ARE THE WEAK PART — and this is the honest uncertainty
+
+Three independent things put them at 400/800 rather than 308/615:
+
+1. **FACE VALIDITY.** At 308 m the bar files **J GATEWAY** (308 m, beside JEM) and **BARTLEY
+   RIDGE** (315 m, on top of Bartley station) as five-to-ten-minute walks. That is plainly wrong.
+2. **GROUND TRUTH.** CityLife@Tampines measures 869 m here against a real Google route of
+   700 m / 10 min — these metres already run ~1.24× the real route, so a further 1.3 circuity
+   DOUBLE-COUNTS. Ten real minutes is ~868 m in this study's units.
+3. **COHERENCE.** Per-100 m spread across the three rows: **400/800 → 6.0** (tightest tested),
+   308/615 → 6.5, 434/868 → 10.9, 354/708 → 19.0.
+
+**THE COST:** the placebo weakens from −1.7 to −10.1 (still inside its own interval). And across
+defensible placements the bottom row runs **$162 to $304** — wider than any interval reported.
+**That spread, not the confidence intervals, is the real uncertainty.** Only OneMap closes it.
+
+### WHY THE BOTTOM ROW LOOKED LOW AT THE OLD LINES
+
+Most under-5-vs-over-10 pairs barely straddle the line — median 143 m against 712 m, not a
+doorstep against a fifteen-minute walk — so the band average was diluted. Split by the walking a
+pair actually spans: under 500 m reads −$19, 500–700 m reads +$99, **over 700 m reads +$323.**
 
 ### The screen is the STATION'S CATCHMENT, not the distance between the pair
 
 Shawn's correction. Requiring the projects within 500 m of *each other* is self-defeating here:
 they differ in walking distance by at most the distance between them, so it caps the measurement.
 The under-5-vs-over-10 row had **3 pairs** under that screen and **25** under this one.
-Catchment 2000 m; **pair cap 1200 m, set where the PLACEBO breaks** (+1.7 at 1200 m, +8.6 at 1800).
+Catchment 2000 m; **pair cap 1500 m, set where the PLACEBO breaks** (clean to 1500, +8.6 at 1800).
 Leasehold only — freehold was built and dropped, 7–13 pairs a cell and incoherent.
+
+**SAME NEAREST STATION STAYS — tested and confirmed 2026-09-06.** Shawn asked whether the pair
+really needs to share a station. Dropping it doubles the sample (509 → 1118 pairs) and **wrecks
+the placebo: −1.7 → +26.8.** It is also what makes the metres usable at all, since both sides are
+measured to the SAME point and the error cancels. And it does not rescue his Tampines example
+anyway: under an any-station rule Treasure sits 654 m from Simei while Citylife sits 869 m from
+Tampines, so all three land in the same far band with no contrast to measure.
+
+**RELAXATIONS RULED ON THE PLACEBO, nothing else.** Adopted: pair cap 1200 → 1500 m, transactions
+5 → 3, both keeping it clean. **Rejected because they broke it:** dropping the school screen
+(−6.9), size match 20% → 30% (−9.0), both together (−14.0). A screen that breaks the placebo is
+buying pairs with bias.
 
 ### THE BANDS CANNOT BE ADDED — and this is the question he asked
 

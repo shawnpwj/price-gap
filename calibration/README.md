@@ -1,116 +1,168 @@
-# Constant Calibration — takeover
+# Lease-term calibration — TAKEOVER
 
-Measuring the Price Gap engine's adjustment constants against market data, instead of
-leaving them on judgement. Started 2026-09-06 at Shawn's request.
+**Read this file, then `lease-pairs.py`'s docstring, then the page it builds. That is the
+whole workstream.** Everything below is either a ruling Shawn gave or a result measured
+against the market. Nothing here is a default.
 
-Read this file, then `lease-pairs.py`'s header, then the page it produces. That is the
-whole workstream.
-
----
-
-## Why this exists
-
-`../scripts/price-gap.ts` restates every comparable onto the subject's terms using five
-constants. **Every one of them was set by Shawn's judgement and none had ever been measured.**
-
-| term | constant | set | status |
-|---|---|---|---|
-| Lease / vintage | $40 psf per year | 2026-07-20 | **MEASURED — $27–28/yr, and it should be split by age band** |
-| Tenure · FH vs LH | ÷ 1.15 | 2026-07-20 | judgement only |
-| MRT walk band | $50 / $200 / $250 | 2026-07-19 | judgement only |
-| GFA harmonisation | +7% | 2026-07-19 | judgement only |
-| Integrated development | +5% | 2026-07-19 | judgement only |
-| Study vs no study | — | — | not in the engine; measurable, see below |
-| One bedroom fewer | — | — | not in the engine; read as QUANTUM, not psf |
-
-Shawn also flagged a real problem in the engine that this work should eventually resolve:
-**the $40/yr lease term and the ÷1.15 tenure term double-count.** At the far end of a lease
-the freehold gap *is* the lease gap. He ruled they are ONE curve, measured together — not two
-independent terms.
+Last worked: **2026-09-06**. Commits `price-gap 2ba534b`, `kya-maps-calculator 938568b`,
+both on main and pushed. Page live on offline staging.
 
 ---
 
-## The three framing rulings (Shawn, 2026-09-06)
+## 1. STATUS
 
-1. **Measure all of them.** "The wider the scope the better."
-2. **Lease and tenure are the same thing.** One curve, not two terms.
-3. **Validation BESIDE the constants, never replacing them.** Nothing in this folder writes
-   back to `price-gap.ts`. Measured numbers silently replacing his rulings is the trap this
-   rule exists to stop. **Do not change the engine without his explicit audit.**
+| | |
+|---|---|
+| **Lease / vintage term** | **MEASURED AND SHIPPED.** See §3. |
+| Tenure · FH vs LH (÷1.15) | judgement only — **next**, see §9 |
+| MRT walk band ($50/$200/$250) | judgement only |
+| GFA harmonisation (+7%) | judgement only |
+| Integrated development (+5%) | judgement only |
+
+**NOTHING HAS BEEN WRITTEN BACK TO `../scripts/price-gap.ts` AND NOTHING MAY BE** until
+Shawn audits. This folder is a validation table that sits BESIDE the constants. That is
+framing ruling 3 and it is the one that matters most.
 
 ---
 
-## Method rulings — the pair screen
+## 2. RUN IT
 
-His method, his words: *find projects exactly next to each other with all else constant, where
-the only difference is the lease start year; then compare average PSF bedroom against bedroom.*
+```bash
+python3 lease-pairs.py     # -> lease-pairs.json, prints every cut to stdout
+python3 build-page.py      # -> ../../kya-maps-calculator/calibration.html
+cd ../../property-analyzer && npm run maps:deploy
+```
 
-Every one of these is a ruling he gave, not a default. Do not quietly change one.
+Then commit both repos. Every change ends with a staging deploy AND a commit+push —
+standing rule, not optional. Report it in one line: the link and the hash.
 
-| screen | value | why |
-|---|---|---|
-| distance apart | **500 m** | pair quality holds out to 800m; 500 is where he stopped |
-| MRT | **same nearest station AND same walk band** | two projects 400m apart can feed different stations on different lines |
-| schools | **identical set of top-26 primary schools within 1 km** | the 1km catchment is all-or-nothing. Costs only ~22 of 211 pairs |
-| units | **200+ both sides** | "because I want good volume" — a boutique block's PSF is one odd sale |
-| transactions | **5+ each side, in window** | |
-| size match | **within 20%** | 15% cost 44% of the sample for less bias than it removed |
-| EC | **allowed once privatised, TOP + 5** | before that it prices like subsidised stock |
-| lease gap | **no minimum** | explicitly ruled: "I don't need the lease gap to be a certain amount." The gap band is an OUTPUT, not a screen |
-| window | **24 months is the headline; 12 is a freshness check** | ruled 2026-09-06. They are NOT independent — 54 of the 56 clean 12m cells sit inside the 24m set, so 24m IS the combined figure. **Never average them**, that counts the last year twice |
-| floor | **not controlled** | ruled: "accept the noise". The PSF series carries no floor |
-| bands | **by lease START only** | ruled 2026-09-06. Bedroom and region were tested and neither moves the number; they stay on the page behind an explain mark, never on its face |
-| scale | **dollars, never a percentage** | ruled 2026-09-06. Across base-PSF bands the $/yr holds at $26–30 while the %/yr falls away. The dollar is the invariant; the percentage is what made region look like a real split |
+`lease-pairs.py` is a **read-only** consumer of `../../property-analyzer/data/`, the same
+arrangement as the engine and `enbloc-analyzer`. It writes nothing upstream. If a run looks
+stale, refresh upstream first (`npm run maps:refresh`) — nothing here regenerates those files.
 
-### The answer — TWO bands, read at the MIDPOINT
+### The page
+`calibration.html` is **hidden**: the only way in is a **double-click on the Live Data chip**
+at the top right of the calculator (`kya-maps-calculator/index.html`, `#liveDataChip`). It is
+in neither nav. A working document, never a client view.
+
+* **It is GENERATED. Never hand-edit the HTML** — `build-page.py` overwrites it.
+* It is in the `FILES` allowlist in `property-analyzer/scripts/deploy-maps.mjs`. That list is
+  explicit; a site file missing from it deploys as a dead link.
+
+---
+
+## 3. THE ANSWER
 
 **226 developments · 231 pairs · 382 cells.** 24 months of resale and sub-sale.
 
 | midpoint of the two lease starts | $ psf / yr | 95% | devs | pairs |
 |---|---|---|---|---|
 | up to 2010 | **$25** | 22.1–27.5 | 154 | 136 |
-| 2011 onward | **$44** (a floor) | 38.6–49.8 | 103 | 95 |
+| 2011 onward | **$44** (a FLOOR) | 38.6–49.8 | 103 | 95 |
 
-Held-out error: flat 24.0k · **two bands 20.7k** · three bands 20.9k.
+Against an engine constant of a flat **$40**, which charges an old pair 1.6× what the market
+pays and short-changes a new one. Held-out error: flat 24.0k · **two bands 20.7k** · three
+bands 20.9k.
 
-**COUNTING WORDS.** *Development* = one condo. *Pair* = two neighbours compared. *Cell* = one pair
-at one bedroom, 1–4 per pair — the unit every figure is computed on. He asked for this explicitly;
-always report developments alongside pairs.
+### Say what the figure IS before quoting it
 
-**READ AT THE MIDPOINT.** He broke lease-start banding in one question: *what do I use for a
-2005-vs-2025 pair?* The midpoint form IS the blend, so a straddling pair needs no decision.
-**Never band on `ls_old` again.**
+Two condos next door, one leased a few years after the other. **The figure is how much more
+per square foot the newer one fetches, FOR EACH YEAR of that difference.**
 
-### THE BANDS DO NOT MOVE AS THE STOCK AGES — tested, 2026-09-06
+**THE NEWER BAND IS THE STEEPER ONE.** Shawn read it back as *"2011 onwards stay rather
+stagnant"* — the opposite of the finding. Being newer is worth nearly TWICE as much inside
+the newer cohort. Lead with the plain-English meaning; bare figures invite this misreading.
 
-He asked whether the ranges should slide forward each year, on the theory that this is really age
-and that lease decay will drag PSF down. **Ran the identical method on 2021-08..2023-07 sales,
-three years earlier (`build_between()`, stored as `early24`). The jump sits at the SAME CALENDAR
-BAND in both runs.** The 2012–2014 band read +$43 when its stock was 11 years old and +$49 now
-that it is 14. It aged four years and kept paying the high rate.
+**Likeliest cause, stated as a likelihood and never as a finding:** through the 2010s each
+successive launch in the same location came out materially dearer than the last. This study
+measures the SIZE of the effect, not the cause.
 
-**So this is CALENDAR VINTAGE, not age.** Projects launched from about 2012 sold into a much
-steeper pricing era and have carried it since. The bands stay put; do not re-cut them by age.
+### READ AT THE MIDPOINT — the load-bearing idea
 
-**On decay — he is right about the mechanism and wrong about this gradient.** Decay bites on lease
-REMAINING, knee at 60–65 years. Here the older side has a median 74 years left and only 16 of 382
-cells are below the knee, so decay is nearly absent. And the gradient runs the OTHER way: the
-stock with MORE lease left (2011+, ~85 years) pays MORE, not less. Decay will arrive around the end
-of this decade as the OLDEST band steepening — a new figure for old stock, not a sliding boundary.
+Shawn broke an earlier lease-start banding in one question: *what do I use for a 2005-vs-2025
+pair?* If the rate varies with vintage, the whole difference across an interval is the gap
+times the rate at its MIDPOINT — so the midpoint form **is** the blend and a pair straddling
+any boundary needs no decision. **Never band on `ls_old` again.**
 
-### WHAT THE TWO NUMBERS MEAN — say it this way, he got it backwards once
+---
 
-Two condos next door, one leased a few years after the other. **The figure is how much more per
-square foot the newer one fetches, for each year of that difference.** $25/yr among pairs centred
-before 2011; $44/yr among pairs centred from 2011.
+## 4. THE SCREENS — every one is a ruling
 
-**THE NEWER BAND IS THE STEEPER ONE, NOT THE FLATTER ONE.** Shawn read it on 2026-09-06 as "2011
-onwards stay rather stagnant" — that is the opposite. Being newer is worth nearly TWICE as much
-inside the newer cohort. Nothing is stagnant.
+His method, his words: *find projects exactly next to each other with all else constant, where
+the only difference is the lease start year; then compare average PSF bedroom against bedroom.*
 
-**His size hypothesis was tested and rejected — and HOW IT IS SHOWN matters.** He suggested older
-stock is bigger, dragging its $/yr down. The test: if something other than vintage explained the
-jump, then looking only at pairs alike in that respect would make the jump SHRINK. It does not.
+| screen | value | why |
+|---|---|---|
+| distance apart | **500 m** | quality holds to 800m; 500 is where he stopped |
+| MRT | **same nearest station** | two projects 400m apart can feed different stations on different lines |
+| walk band | **NOT screened** | RETIRED 2026-09-06 — see §6 |
+| schools | **identical top-26 primary schools within 1 km** | the 1km catchment is all-or-nothing |
+| units | **200+ both sides** | "because I want good volume". Re-tested 2026-09-06 and his ruling holds — see §6 |
+| transactions | **5+ each side, in window** | |
+| size match | **within 20%**, bedroom by bedroom | 15% cost 44% of the sample for less bias than it removed |
+| EC | **allowed once privatised, TOP + 5** | before that it prices like subsidised stock |
+| lease gap | **NO MINIMUM** | "I don't need the lease gap to be a certain amount." The old 5-yr screen is retired — see §6 |
+| window | **24 months.** 12 is a freshness check only | NOT independent: 54 of 56 clean 12m cells sit inside the 24m set. 24m IS the combined figure. **Never average them** |
+| floor, facing | **not controlled** | ruled: "accept the noise". The PSF series carries no floor |
+| bands | **on the MIDPOINT, fixed calendar years** | see §3 and §5 |
+| scale | **dollars, never a percentage** | quantum only, his ruling |
+
+### Bedroom is the MATCH, not the answer
+It is not in the equation. It is the stratum that holds size constant, and the finest size
+resolution the data has — PSF is stored project × bedroom × month and there is nothing below
+it. Shawn asked whether size alone would do: tested, and pooling to one PSF per project matched
+on pooled size **LOSES** pairs (159 vs 231 — matching a whole sales mix within 20% is harder
+than matching one bedroom) and lets mix leak at ~−$249 psf per 100% of unmatched size.
+`build_pooled()` keeps it as a diagnostic.
+
+---
+
+## 5. THE BANDS DO NOT MOVE AS THE STOCK AGES
+
+Shawn asked whether the ranges should slide forward each year, on the theory that this is
+really age and that lease decay will eventually drag PSF down.
+
+**Tested.** `build_between()` runs the identical method on 2021-08..2023-07 sales, three years
+earlier (stored in `lease-pairs.json` as `early24`). **The jump sits at the same CALENDAR band
+in both runs.**
+
+| midpoint | 2021–23 sales | age then | 2024–26 sales | age now |
+|---|---|---|---|---|
+| up to 2005 | +$24 | 26 yrs | +$25 | 30 yrs |
+| 2006–2008 | +$28 | 18 yrs | +$20 | 21 yrs |
+| 2009–2011 | +$26 | 13 yrs | +$25 | 16 yrs |
+| **2012–2014** | **+$43** | 11 yrs | **+$49** | 14 yrs |
+| 2015+ | +$73 | 8 yrs | +$51 | 12 yrs |
+
+The 2012–2014 band aged four years and kept paying the high rate. If it were age, the high band
+would have slid ~3 years later. **This is calendar vintage. Do not re-cut the bands by age.**
+Age ranges may be shown in brackets as description only.
+
+**On decay — right mechanism, wrong gradient.** Decay bites on lease REMAINING, knee at 60–65
+years. Here the older side has a median 74 years left and only **16 of 382 cells** are below the
+knee, so decay is nearly absent. And it runs the OTHER way: the band with MORE lease left pays
+MORE. Decay will arrive around the end of this decade as the OLDEST band steepening — a new
+figure for old stock, never a sliding boundary. Re-run then.
+
+---
+
+## 6. WHAT WAS TESTED — all recomputed 2026-09-06
+
+| tested | reads | verdict |
+|---|---|---|
+| bedroom, 2BR vs 3BR | $0.2 apart, p=0.95 | no difference |
+| region, up to 2010 | RCR $26 · OCR $27, p=0.89 | no difference |
+| **region, 2011 onward** | **RCR $62 · OCR $37, p<0.001** | **REAL** — why that band's interval is wide. Splitting does not predict better (27 RCR pairs), so one figure, disclosed on the page |
+| the CCR | 19 cells | not measurable — all Marina Bay / Sentosa. A submarket, not a region |
+| fitted curve or knee | moved with the sample | **NOT identified — do not report one.** See §7 |
+| dropping the 200-unit floor | added pairs read $33, no gradient | floor stays; his original ruling holds |
+| matching on size not bedroom | 159 pairs vs 231, mix leaks −$249 psf per 100% size | bedroom is the better control |
+| minimum lease gap | no change at any threshold | retired; it protected an estimator this page does not use. Removing it roughly tripled the sample |
+| walk-band match | cost 20 new-end pairs at 258–414 m | retired |
+
+### Why the newer band is nearly double — and HOW to show it
+The test: if something other than vintage explained the jump, then looking only at pairs alike
+in that respect would make the jump SHRINK. It does not.
 
 | looking only at… | up to 2010 | 2011 onward | the jump |
 |---|---|---|---|
@@ -120,71 +172,48 @@ jump, then looking only at pairs alike in that respect would make the jump SHRIN
 | close lease gaps, 1–4 yrs | $26 | $44 | **+$18** |
 | wide lease gaps, 5 yrs+ | $25 | $44 | **+$20** |
 
-**The last column is the whole argument** and the table must be built so it is readable at a
-glance. An earlier version packed two figures into one cell as "$18 · $26" with the key in prose
-("small units then large") — Shawn could not read it and said so. One row per split, one number
-per cell, and a jump column. Sizes are matched within 20% inside each pair before it is used at all.
+**The last column is the whole argument and the table must read at a glance.** An earlier
+version packed two figures into one cell as "$18 · $26" with the key in prose — Shawn could not
+read it and said so. One row per split, one number per cell, a jump column.
 
 A higher base price explains only part (1.61% → 2.45%: narrows in percent, does not close).
 
-**LIKELIEST CAUSE (stated as a likelihood on the page, not a finding):** through the 2010s each
-successive launch in the same location came out materially dearer than the last, so two neighbours
-three years apart now differ by more than two neighbours three years apart did in the 2000s.
-The study measures the size of the effect, not the cause.
+---
 
-### What was tested (all recomputed 2026-09-06 — earlier literals had gone stale)
+## 7. FOUR SHAPES DIED. DO NOT RESURRECT ANY OF THEM.
 
-| tested | reads | verdict |
-|---|---|---|
-| bedroom, 2BR vs 3BR | $0.2 apart, p=0.95 | no difference |
-| region, up to 2010 | RCR $26 · OCR $27, p=0.89 | no difference |
-| **region, 2011 onward** | **RCR $62 · OCR $37, p<0.001** | **REAL** — why that band's interval is wide. Splitting does not predict better (27 RCR pairs), so one figure, disclosed |
-| the CCR | 19 cells | not measurable — all Marina Bay / Sentosa |
-| fitted curve or knee | moved with the sample | a line ran low at both ends; a knee then moved when the screen widened. **The knee is NOT identified — do not report one** |
-| dropping the 200-unit floor | added pairs read $33, no gradient | floor stays; his original ruling holds |
-| matching on size not bedroom | 159 pairs vs 231, mix leaks −$249 psf per 100% size | bedroom is the better control |
-| minimum lease gap | no change | retired; it protected an estimator this page does not use |
-| walk-band match | cost 20 new-end pairs at 258–414 m | retired |
+1. **Flat $40** (the engine). Wrong at both ends at once.
+2. **Two bands on `ls_old`** ($25 pre-2010 / $44 2010s). Killed by the straddle question in §3.
+   **Note the coincidence:** the current answer is also $25/$44 but banded on the MIDPOINT,
+   which is a different and correct thing. Do not confuse them.
+3. **A straight line on the midpoint.** Ran low at BOTH ends.
+4. **A fitted knee** (flat, then rising). Fixed the line on 168 pairs — then MOVED when the
+   screen widened to 231. The best knee is now anywhere in 1998–2008 and the fit changes under
+   2% across that whole span.
 
-**THE REAL CEILING IS FREEHOLD.** Of 1,844 developments in `dsi-index.json`, **1,255 are freehold**
-and structurally cannot pair on lease start. That is what the tenure pass unlocks.
-
-**NOTHING IN THE PAGE PROSE IS HARDCODED.** An earlier version carried p-values and coefficients
-as literals and every one of them went stale the moment the pair screen changed — two were still
-being displayed as fact after they had flipped. If you add a claim to `build-page.py`, compute it.
-
-## Run it
-
-```bash
-python3 lease-pairs.py     # -> lease-pairs.json, and prints every cut to stdout
-python3 build-page.py      # -> ../../kya-maps-calculator/calibration.html
-```
-
-Then deploy and commit, per the standing rule:
-
-```bash
-cd ../../property-analyzer && npm run maps:deploy
-```
-
-`lease-pairs.py` is a read-only consumer of `../../property-analyzer/data/`, the same
-arrangement as the engine and `enbloc-analyzer`. It writes nothing upstream. If a run looks
-stale, refresh upstream first (`npm run maps:refresh`) — nothing here can regenerate those files.
-
-### The page
-
-`calibration.html` is **hidden**: the only way in is a **double-click on the Live Data chip**
-at the top right of the calculator. It is in neither nav and nothing else links to it, because
-it is a working document and never a client view. See `../../kya-maps-calculator/index.html`,
-`#liveDataChip`.
-
-Two traps around it:
-* **It is generated. Never hand-edit the HTML** — `build-page.py` overwrites it.
-* **It had to be added to the `FILES` allowlist in `property-analyzer/scripts/deploy-maps.mjs`.**
-  That list is explicit; a site file missing from it deploys as a dead link.
+**The LEVEL (~$25) is the robust finding; a fitted tail is not.** The slope moved 1.40 → 3.57 →
+1.67 across three sample changes. That instability is itself the result. Report measured bands.
 
 ---
 
-## Where the data comes from
+## 8. TRAPS
+
+1. **NOTHING IN THE PAGE PROSE MAY BE HARDCODED.** An earlier build carried p-values and
+   coefficients as literals; two went stale AND FLIPPED and were still displayed as fact after
+   the screen changed. Every figure is now computed in `build-page.py`. **If you add a claim,
+   compute it.**
+2. **The page is generated.** Never hand-edit `calibration.html`.
+3. **Do not quietly change a screen in §4.** Every value is a ruling. Changing one silently
+   throws away an audit he already gave.
+4. **`lease-pairs.py` is read-only** on `property-analyzer/data/`.
+5. **New sale is excluded** from `psf-history.json` by his 2026-07-14 ruling. This is why young
+   stock is thin — it has barely resold.
+6. **The honest limit:** in a leasehold-vs-leasehold pair, lease start and building age are
+   perfectly confounded. What is measured is the **blended vintage** effect — which is exactly
+   what the engine's term does, so it is a valid like-for-like validation. It is **not** a
+   decomposition into lease and bricks.
+
+## 9. WHERE THE DATA COMES FROM
 
 Everything needed was already on disk. The non-obvious parts, which cost time to find:
 
@@ -206,76 +235,23 @@ the pattern is `property-analyzer/scripts/fetch-demand-ura.ts`, 60-month serving
 
 ---
 
-## What the lease pass found
+## 10. NEXT, IN HIS PRIORITY ORDER
 
-**$27 psf per year on the 24-month window, not $40.**
-
-**Correction, 2026-09-06 — the windows are not independent.** An earlier version of this file
-called the 12m/24m agreement "two independent windows". It is not: **54 of the 56 clean 12-month
-cells are inside the 24-month set.** The 24m window CONTAINS the 12m one, so it is the combined
-figure and the two must never be pooled or averaged. What the agreement is actually worth is
-narrower but real — adding the 41 older cells moves the answer $28.5 → $27.3, so the extra depth
-does not drag it. Report 24m as the headline, 12m as a freshness check.
-
-**But a single number is the wrong shape. It tracks the AGE of the stock:**
-
-| older project's lease start | $/yr | %/yr |
-|---|---|---|
-| pre-2010 | **+$25** | +1.6% |
-| 2010s | **+$44** | +2.6% |
-
-Established by cross-tabbing gap band against lease-start band. Read **down** a column (gap
-fixed, age varying) and the rate climbs; read **across** a row (age fixed, gap varying) and
-there is no trend past four years. So it is age, and the answer slices by lease-start band.
-
-Not a price-level artefact: base PSF rises only 19% across those bands while the rate rises 63%.
-Consistent with the 2026-07-27 decay study — this pool all sits ABOVE the 60–65y remaining knee,
-where decay is mild.
-
-### Three findings that will bite anyone who re-runs this
-
-1. **1–4 year gaps read high. They are excluded from every headline.** THE BAYSHORE vs COSTA
-   DEL SOL reads +$142/yr off a 4-year gap — that is Costa Del Sol being a different class of
-   development, not lease. Diagnostic only.
-2. **The 2BR/3BR split collapses once those are removed** — 2BR $28.5, 3BR $27.8, permutation
-   **p = 0.83**. The first pass showed 2BR well above 3BR and that was short-gap noise.
-   **Bedroom does not move the lease rate.** Do not re-report the split without the short gaps
-   removed. 1BR (7 cells) and 4BR+ (4 cells) are unreadable at any window.
-3. **Region does not move it either — in dollars.** RCR $31.8 vs OCR $28.9, permutation
-   **p = 0.30**. In PERCENT they separate (2.02% vs 1.56%, p = 0.006) and that separation is fake:
-   splitting by the base PSF of the older project shows $/yr flat at $26 / $30 / $30 across the
-   three readable price bands while %/yr falls 2.11 → 1.96 → 1.50. **The dollar is the invariant.**
-   Region was price level wearing a region's name. This is why the page carries no percentages.
-4. **The CCR is not measurable this way and Shawn ruled it stays that way.** Every qualifying
-   pair is Marina Bay or Sentosa Cove, one negative. That is a submarket, not a region. A CCR
-   figure has to come from somewhere other than neighbour pairs.
-
-### The honest limit
-
-In a leasehold-vs-leasehold pair, **lease start and building age are perfectly confounded** — a
-2010 lease is also a newer building. What is measured is the *blended vintage* effect, which is
-exactly what the engine's term does, so it is a valid like-for-like validation of that constant.
-It is **not** a decomposition into lease and bricks. Separating them needs freehold-vs-freehold
-pairs, which are abundant (~555 at 400m) and have not been run.
-
-Also uncontrolled, by ruling: floor, facing, and development quality beyond size and unit count.
-
----
-
-## Next, in order
-
-1. **Tenure (÷1.15).** Same curve extended, per ruling 2. Use leasehold-vs-freehold neighbour
-   pairs (~284 at 400m / 100+ units). The test that matters: does the lease slope, extrapolated,
-   land on the freehold gap? If it does, the two terms collapse into one and the engine's
-   double-count is proven.
+1. **Tenure (÷1.15).** Framing ruling 2 says lease and tenure are ONE curve, not two terms —
+   at the far end of a lease the freehold gap IS the lease gap, and the engine double-counts.
+   Use leasehold-vs-freehold neighbour pairs under the §4 screens. The test that matters: does
+   the lease figure, extended, land on the freehold gap? If it does, the double-count is proven.
+   **This is also the biggest available win on sample size: of 1,844 developments in
+   `dsi-index.json`, 1,255 are FREEHOLD and structurally cannot pair on lease start.** That is
+   the real ceiling on this whole workstream, not the screens.
 2. **Pure building age.** Freehold-vs-freehold neighbour pairs. Validates `AGE_PSF_PER_YEAR = 10`
-   for free, and is the only way to decompose the blended vintage figure above.
+   for free, and is the only way to decompose the blended vintage figure in §8.6.
 3. **Study premium.** RealSmart carries labelled types ("2BR" vs "2BR + Study") with size bands.
-   **456** project × bedroom cells have both; **211** have bands disjoint enough to assign a
-   caveat cleanly. The real question is whether a study earns PSF *after controlling for size* —
-   a study unit is mostly just a bigger unit.
+   456 project × bedroom cells have both; 211 have bands disjoint enough to assign cleanly. The
+   real question is whether a study earns PSF *after controlling for size* — a study unit is
+   mostly just a bigger unit.
 4. **Bedroom step.** Median 3BR minus median 2BR **within the same project and window**, matched
-   pairs. Report as **quantum, not psf**, and never as differenced medians across projects.
-5. **MRT bands, harmonisation, integrated.** Not scoped yet.
+   pairs. Report as **quantum, not psf**, never as differenced medians across projects.
+5. **MRT bands, harmonisation, integrated.** Not scoped.
 
-Only after he audits all of it does anything reach `price-gap.ts`.
+Only after he audits does anything reach `price-gap.ts`.

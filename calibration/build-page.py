@@ -194,39 +194,26 @@ def tested_table():
     return ''.join(h) + '</tbody></table>'
 
 def why_table():
-    """The three explanations that do NOT survive, each with the figure that kills it."""
-    def band(lo, hi, f=lambda r: True):
-        return [r for r in ALL if lo <= mid(r) < hi and f(r)]
+    """One row per way of splitting the pairs. The LAST column is the argument: if the
+    thing being split on explained the jump, the jump would shrink. It does not."""
     O, N = (1900, 2011), (2011, 3000)
-    h = ['<table class="fig"><thead><tr><th>Could it be&hellip;</th>'
+    def g(lo, hi, f): return [r for r in ALL if lo <= mid(r) < hi and f(r)]
+    SPLITS = [('All pairs', lambda r: True, True),
+              ('Only small units, under 900 sqft', lambda r: r['sqft_old'] < 900, False),
+              ('Only large units, 900 sqft and over', lambda r: r['sqft_old'] >= 900, False),
+              ('Only close lease gaps, 1&ndash;4 years', lambda r: r['gap'] <= 4, False),
+              ('Only wide lease gaps, 5 years and over', lambda r: r['gap'] > 4, False)]
+    h = ['<table class="fig"><thead><tr><th>Looking only at&hellip;</th>'
          f'<th class="num">{OLD_NM}</th><th class="num">{NEW_NM}</th>'
-         '<th>what it shows</th></tr></thead><tbody>']
-    def r_(q, a, b, note):
-        return (f'<tr><th>{q}</th><td class="num big">{a}</td><td class="num big">{b}</td>'
-                f'<td class="note wide">{note}</td></tr>')
-    sm_o, sm_n = band(*O, lambda r: r['sqft_old'] < 900), band(*N, lambda r: r['sqft_old'] < 900)
-    lg_o, lg_n = band(*O, lambda r: r['sqft_old'] >= 900), band(*N, lambda r: r['sqft_old'] >= 900)
-    h.append(r_('&hellip;that older stock is simply bigger?',
-                f'${fit(sm_o):,.0f} &middot; ${fit(lg_o):,.0f}', f'${fit(sm_n):,.0f} &middot; ${fit(lg_n):,.0f}',
-                'Small units then large. The gap between the bands survives inside <b>both</b> size '
-                'groups, so size is not the mechanism. Sizes are already matched within 20% inside '
-                'each pair in any case.'))
-    h.append(r_('&hellip;that newer pairs sit closer together in lease start?',
-                f'${fit(band(*O, lambda r: r["gap"] <= 4)):,.0f} &middot; ${fit(band(*O, lambda r: r["gap"] > 4)):,.0f}',
-                f'${fit(band(*N, lambda r: r["gap"] <= 4)):,.0f} &middot; ${fit(band(*N, lambda r: r["gap"] > 4)):,.0f}',
-                'Short gaps then long. The gap between the bands holds at every lease separation.'))
-    h.append(r_('&hellip;just a higher base price?',
-                f'{fpct(rows_in(OLD_NM)):+.2%}', f'{fpct(rows_in(NEW_NM)):+.2%}',
-                'The same figures as a percentage of the older project&rsquo;s price. The gap '
-                'narrows &mdash; newer stock is dearer to start with &mdash; but it does not close, '
-                'so a higher base explains only part of it.'))
-    h.append(r_('&hellip;lease decay?',
-                f'{st.median([r["ls_old"] + 99 - NOW for r in rows_in(OLD_NM)]):.0f} yrs left',
-                f'{st.median([r["ls_old"] + 99 - NOW for r in rows_in(NEW_NM)]):.0f} yrs left',
-                f'Decay bites below 60&ndash;65 years remaining and only '
-                f'{sum(1 for r in ALL if r["ls_old"] + 99 - NOW < 65)} of {len(ALL)} cells are there. '
-                'It also runs the <b>wrong way</b>: the band with <b>more</b> lease left is the one '
-                'paying more.'))
+         '<th class="num">the jump</th><th class="num">pairs</th></tr></thead><tbody>']
+    for lab, f, head in SPLITS:
+        a, b = g(*O, f), g(*N, f)
+        if len(a) < 10 or len(b) < 10: continue
+        jump = fit(b) - fit(a)
+        h.append(f'<tr{" class=head" if head else ""}><th>{"<b>" if head else ""}{lab}{"</b>" if head else ""}</th>'
+                 f'<td class="num">${fit(a):,.0f}</td><td class="num">${fit(b):,.0f}</td>'
+                 f'<td class="num big">+${jump:,.0f}</td>'
+                 f'<td class="num quiet">{npairs(a)+npairs(b)}</td></tr>')
     return ''.join(h) + '</tbody></table>'
 
 def pairtable():
@@ -368,6 +355,8 @@ color:var(--gold);display:grid;place-items:center;font:600 11px/1 Optima,Candara
 .look td.big{color:var(--gold-soft)}
 i.age{font-style:normal;font-size:11px;color:var(--slate-600);margin-left:9px;white-space:nowrap}
 tr.flag td.big,tr.flag th{color:var(--warn)}
+tr.head th,tr.head td{border-bottom:1px solid var(--ink);padding-bottom:11px}
+tr.head td.big{color:var(--gold)}
 .note.wide{width:52%;font-size:12px}
 @media (max-width:900px){.note.wide{display:none}}
 .expl{color:var(--slate-400);max-width:78ch;margin:10px 0 14px;font-size:13px}
@@ -535,11 +524,31 @@ This is the first one measured against the market.</p>
   </details>
 
   <details><summary>Why the newer band is nearly double</summary>
-    <p class="expl">Three ordinary explanations, and the figures that rule each of them out.</p>
+    <p class="expl">The test is simple. <b>If something other than vintage explained the jump from
+    ${BANDR[OLD_NM]:,.0f} to ${BANDR[NEW_NM]:,.0f}, then looking only at pairs that are alike in
+    that respect would make the jump shrink.</b> So: look only at small units, and the jump should
+    go away. Look only at large ones, same. Watch the last column.</p>
     <div class="scroll">{why_table()}</div>
-    <p class="expl">What is left is the vintage of the stock itself &mdash; and the
+    <p class="expl"><b>The jump is still there in every row.</b> It does not matter whether you
+    look at small flats or large ones, or at pairs a couple of years apart or twenty. That rules
+    out unit size &mdash; the suggestion that older blocks are simply bigger, so their price per
+    square foot moves less &mdash; and it rules out the lease gap. Size is controlled inside each
+    pair anyway: the two sides must be within 20% of each other on median size before the pair is
+    used at all.</p>
+    <p class="expl">Two more candidates, ruled out the same way.
+    <b>A higher base price</b> &mdash; newer projects simply cost more per foot, so a fixed
+    percentage is more dollars. Read the same figures as percentages and the jump narrows from
+    {fpct(rows_in(OLD_NM)):+.2%} to {fpct(rows_in(NEW_NM)):+.2%} a year, so this explains part of
+    it, but nowhere near all.
+    <b>Lease decay</b> &mdash; ruled out twice over. The older band has a median
+    {st.median([r['ls_old'] + 99 - NOW for r in rows_in(OLD_NM)]):.0f} years of lease left and the
+    newer {st.median([r['ls_old'] + 99 - NOW for r in rows_in(NEW_NM)]):.0f}, decay does not bite
+    until 60&ndash;65, and only {sum(1 for r in ALL if r['ls_old'] + 99 - NOW < 65)} of {len(ALL)}
+    cells are down there. It also points the wrong way: the band with <b>more</b> lease left is
+    the one paying more.</p>
+    <p class="expl">What survives is the vintage of the stock itself &mdash; and the
     {EW[0][:4]}&ndash;{EW[1][:4]} rerun above shows that vintage stays attached to the calendar
-    year, not to the age.</p>
+    year, not to how old the buildings have since become.</p>
   </details>
 
   <details><summary>What was tested and what it changed</summary>

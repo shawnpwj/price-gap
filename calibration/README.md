@@ -108,11 +108,24 @@ before 2011; $44/yr among pairs centred from 2011.
 onwards stay rather stagnant" — that is the opposite. Being newer is worth nearly TWICE as much
 inside the newer cohort. Nothing is stagnant.
 
-**His size hypothesis was tested and rejected.** He suggested older stock is bigger, dragging its
-$/yr down. The band gap survives inside BOTH size groups — small units read $18 → $43, large units
-$26 → $45 — and sizes are matched within 20% inside each pair anyway. Same for short-vs-long lease
-gaps ($26/$25 → $44/$44), and a higher base price explains only part of it (1.61% → 2.45%: the gap
-narrows in percent but does not close).
+**His size hypothesis was tested and rejected — and HOW IT IS SHOWN matters.** He suggested older
+stock is bigger, dragging its $/yr down. The test: if something other than vintage explained the
+jump, then looking only at pairs alike in that respect would make the jump SHRINK. It does not.
+
+| looking only at… | up to 2010 | 2011 onward | the jump |
+|---|---|---|---|
+| all pairs | $25 | $44 | **+$19** |
+| small units, under 900 sqft | $18 | $43 | **+$25** |
+| large units, 900 sqft+ | $26 | $45 | **+$19** |
+| close lease gaps, 1–4 yrs | $26 | $44 | **+$18** |
+| wide lease gaps, 5 yrs+ | $25 | $44 | **+$20** |
+
+**The last column is the whole argument** and the table must be built so it is readable at a
+glance. An earlier version packed two figures into one cell as "$18 · $26" with the key in prose
+("small units then large") — Shawn could not read it and said so. One row per split, one number
+per cell, and a jump column. Sizes are matched within 20% inside each pair before it is used at all.
+
+A higher base price explains only part (1.61% → 2.45%: narrows in percent, does not close).
 
 **LIKELIEST CAUSE (stated as a likelihood on the page, not a finding):** through the 2010s each
 successive launch in the same location came out materially dearer than the last, so two neighbours

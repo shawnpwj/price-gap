@@ -44,7 +44,15 @@ def curve(rows):
     return ((s22*t1 - s12*t2)/det, (s11*t2 - s12*t1)/det) if det else (None, None)
 
 def mid(r):   return (r['ls_old'] + r['ls_new']) / 2
-def rate(m):  return C + Dd * max(0.0, m - KNEE)
+
+# THE ANSWER IS THREE MEASURED BANDS, read at the MIDPOINT of the two lease starts.
+# Not a fitted curve: the tail slope is not identified by this data (see the page).
+BANDS = [(1900, 2011, 'up to 2010'), (2011, 2014, '2011–2013'), (2014, 2030, '2014 onward')]
+
+def band_of(m):
+    return next(n for lo, hi, n in BANDS if lo <= m < hi)
+
+def rate(m):  return BANDR[band_of(m)]
 
 def hinge(rows, K):
     """rate = c + d*max(0, mid - K). Flat until the knee year, rising after it.
@@ -131,6 +139,12 @@ def cv(rows, model, folds=5, reps=20, seed=23):
                         for j in range(n_): S[i][j] += v[i]*v[j]
                 co = _solve(S, T)
                 pr = [x['gap']*(co[0]+co[1]*(mid(x)-2000)+co[2]*(mid(x)-2000)**2) for x in ts]
+            elif model == 'band':
+                rt = {}
+                for lo, hi, nm in BANDS:
+                    b = [x for x in tr if lo <= mid(x) < hi]
+                    rt[nm] = fit(b) if b else fit(tr)
+                pr = [rt[band_of(mid(x))]*x['gap'] for x in ts]
             elif model == 'hinge':
                 k = pick_knee(tr); a, b = hinge(tr, k)
                 pr = [x['gap']*(a+b*max(0.0, mid(x)-k)) for x in ts]
@@ -140,11 +154,26 @@ def cv(rows, model, folds=5, reps=20, seed=23):
     return sum(err)/len(err)
 
 ALL   = D['24']                      # NO gap screen — see the docstring in lease-pairs.py
-KNEE  = pick_knee(ALL)               # where the flat old segment turns up
+BANDR = {}                           # filled below, once fit() exists
+KNEE  = pick_knee(ALL)               # kept only for the rejected-shapes section
 C, Dd = hinge(ALL, KNEE)
 (CLO, CHI), (DLO, DHI), (KLO, KHI) = hinge_ci(ALL, KNEE)
 A, B  = curve(ALL)                   # the straight line, kept only as the comparison
 (ALO, AHI), (BLO, BHI) = curve_ci(ALL)
+
+def band_rows(nm):
+    return [r for r in ALL if band_of(mid(r)) == nm]
+
+def band_ci(nm, N=3000, seed=3):
+    g = random.Random(seed); rs = band_rows(nm)
+    v = sorted(fit([rs[g.randrange(len(rs))] for _ in rs]) for _ in range(N))
+    return v[int(.025*N)], v[int(.975*N)-1]
+
+for _lo, _hi, _nm in BANDS:
+    BANDR[_nm] = fit([r for r in ALL if _lo <= mid(r) < _hi])
+BANDCI = {nm: band_ci(nm) for _, _, nm in BANDS}
+NDEV   = len({x for r in ALL for x in (r['older'], r['newer'])})
+ndev   = lambda rs: len({x for r in rs for x in (r['older'], r['newer'])})
 POOL  = D.get('pooled24', [])
 PA, PB = curve(POOL) if POOL else (None, None)
 MIDS  = sorted(mid(r) for r in ALL)
@@ -167,26 +196,30 @@ def row(label, rows, note=''):
 
 def lookup():
     h = ['<table class="fig look"><thead><tr><th>Midpoint of the two lease starts</th>'
-         '<th class="num">$ psf per year</th><th></th></tr></thead><tbody>']
-    for m in range(1995, 2026, 5):
-        out = ('outside the sample — extrapolation' if not (MID_LO <= m <= MID_HI)
-               else ('the flat segment' if m <= KNEE else ''))
-        h.append(f'<tr{" class=dim" if not (MID_LO <= m <= MID_HI) else ""}><th>{m}</th>'
-                 f'<td class="num big">${rate(m):,.0f}</td><td class="note">{out}</td></tr>')
+         '<th class="num">$ psf per year</th><th class="num">95% interval</th>'
+         '<th class="num">developments</th><th class="num">pairs</th></tr></thead><tbody>']
+    for lo, hi, nm in BANDS:
+        rs = band_rows(nm); cl, ch = BANDCI[nm]
+        h.append(f'<tr><th>{nm}</th><td class="num big">${BANDR[nm]:,.0f}</td>'
+                 f'<td class="num quiet">${cl:,.0f} to ${ch:,.0f}</td>'
+                 f'<td class="num quiet">{ndev(rs)}</td><td class="num quiet">{npairs(rs)}</td></tr>')
     return ''.join(h) + '</tbody></table>'
 
 def observed():
-    """The curve against what the market actually did, bucketed by midpoint."""
-    h = ['<table class="fig"><thead><tr><th>Midpoint</th><th class="num">observed</th>'
-         '<th class="num">the curve</th><th class="num">cells</th>'
-         '<th class="num">pairs</th></tr></thead><tbody>']
-    for lo, hi in [(1990,2000),(2000,2005),(2005,2010),(2010,2015),(2015,2030)]:
-        s = [r for r in ALL if lo <= mid(r) < hi]
-        if not s: continue
-        mm = sum(mid(r)*r['gap'] for r in s)/sum(r['gap'] for r in s)
-        h.append(f'<tr><th>{lo}–{min(hi-1,2025)}</th><td class="num big">{money(fit(s))}</td>'
-                 f'<td class="num quiet">${rate(mm):,.0f}</td>'
-                 f'<td class="num quiet">{len(s)}</td><td class="num quiet">{npairs(s)}</td></tr>')
+    """Finer slices than the bands, so the reader can see where the turn actually is."""
+    g = random.Random(7)
+    h = ['<table class="fig"><thead><tr><th>Midpoint</th><th class="num">$ psf / yr</th>'
+         '<th class="num">95% interval</th><th class="num">developments</th>'
+         '<th class="num">pairs</th><th class="num">cells</th></tr></thead><tbody>']
+    for lo, hi in [(1990,2000),(2000,2005),(2005,2008),(2008,2011),(2011,2014),(2014,2030)]:
+        s_ = [r for r in ALL if lo <= mid(r) < hi]
+        if len(s_) < 8: continue
+        v = sorted(fit([s_[g.randrange(len(s_))] for _ in s_]) for _ in range(2000))
+        turn = ' class="flag"' if lo >= 2011 else ''
+        h.append(f'<tr{turn}><th>{lo}–{min(hi-1,2025)}</th><td class="num big">{fit(s_):+,.0f}</td>'
+                 f'<td class="num quiet">{v[50]:+,.0f} to {v[1949]:+,.0f}</td>'
+                 f'<td class="num quiet">{ndev(s_)}</td><td class="num quiet">{npairs(s_)}</td>'
+                 f'<td class="num quiet">{len(s_)}</td></tr>')
     return ''.join(h) + '</tbody></table>'
 
 def residuals():
@@ -212,15 +245,17 @@ def residuals():
 
 def gapstability():
     h = ['<table class="fig"><thead><tr><th>Minimum lease gap</th>'
-         '<th class="num">flat level</th><th class="num">slope after the knee</th>'
-         '<th class="num">cells</th><th class="num">pairs</th></tr></thead><tbody>']
+         + ''.join(f'<th class="num">{nm}</th>' for _, _, nm in BANDS)
+         + '<th class="num">cells</th><th class="num">pairs</th></tr></thead><tbody>']
     for mg in (1, 2, 3, 5, 8):
-        s = [r for r in ALL if r['gap'] >= mg]
-        a, b = hinge(s, KNEE)
+        rs = [r for r in ALL if r['gap'] >= mg]
+        cells = ''
+        for lo, hi, nm in BANDS:
+            b = [r for r in rs if lo <= mid(r) < hi]
+            cells += f'<td class="num big">${fit(b):,.0f}</td>' if b else '<td class="num nil">—</td>'
         lab = f'{mg} years' if mg > 1 else 'none — the method'
-        h.append(f'<tr{"" if mg==1 else " class=dim"}><th>{lab}</th><td class="num big">${a:,.1f}</td>'
-                 f'<td class="num big">${b:,.2f}</td><td class="num quiet">{len(s)}</td>'
-                 f'<td class="num quiet">{npairs(s)}</td></tr>')
+        h.append(f'<tr{"" if mg==1 else " class=dim"}><th>{lab}</th>{cells}'
+                 f'<td class="num quiet">{len(rs)}</td><td class="num quiet">{npairs(rs)}</td></tr>')
     return ''.join(h) + '</tbody></table>'
 
 def models():
@@ -231,7 +266,8 @@ def models():
                         ('A curve keyed on the older project', 'old', ''),
                         ('A straight line on the pair midpoint', 'mid', 'ran low at both ends'),
                         ('A quadratic on the pair midpoint', 'quad', 'better, but hard to explain and to extend'),
-                        (f'<b>Flat, then rising from {KNEE}</b>', 'hinge', 'the method')]:
+                        (f'A fitted knee at {KNEE}', 'hinge', 'the knee is not identified — see below'),
+                        ('<b>Three measured bands</b>', 'band', 'the method')]:
         v = cv(ALL, k)
         h.append(f'<tr><th>{nm}</th><td class="num big">{v/1000:,.1f}k</td>'
                  f'<td class="note">{note}</td></tr>')
@@ -436,27 +472,28 @@ margin-left:10px;align-self:center}
 """
 JS = """
 (function(){
-  var C=%C%, D=%D%, K=%K%, LO=%LO%, HI=%HI%;
+  var BANDS=%BANDS%, LO=%LO%, HI=%HI%;
+  function bandFor(m){for(var i=0;i<BANDS.length;i++){if(m<BANDS[i][0])return BANDS[i];}
+    return BANDS[BANDS.length-1];}
   function n(id){return parseFloat(document.getElementById(id).value);}
   function go(){
     var a=n('lsA'), b=n('lsB'), o=document.getElementById('calcOut');
     if(!a||!b||a<1960||b<1960||a>2040||b>2040){o.className='cout bad';
       o.innerHTML='Enter two lease start years.';return;}
     if(a===b){o.className='cout bad';o.innerHTML='Same lease start — no adjustment.';return;}
-    var mid=(a+b)/2, rate=C+D*Math.max(0,mid-K), gap=b-a, adj=rate*gap;
+    var mid=(a+b)/2, bd=bandFor(mid), rate=bd[1], gap=b-a, adj=rate*gap;
     var warn='';
-    if(mid>HI) warn='<p class="cwarn">Midpoint '+mid.toFixed(1)+
-      ' is past the measured range (ends '+HI.toFixed(0)+') and the slope is steep here. '+
-      'This is a projection — say so when you use it.</p>';
-    else if(mid<LO) warn='<p class="chint">Midpoint '+mid.toFixed(1)+
-      ' is below the bulk of the sample (starts '+LO.toFixed(0)+
-      '), but it sits on the flat segment, which the whole pre-'+K+' sample supports. '+
-      'The rate does not change going further back.</p>';
+    if(mid>HI) warn='<p class="cwarn">Midpoint '+mid.toFixed(1)+' is past the measured range '+
+      '(ends '+HI.toFixed(0)+'). The newest band is the thinnest and the rate was still climbing '+
+      'when the evidence ran out, so treat this as a floor rather than a figure.</p>';
+    else if(mid<LO) warn='<p class="chint">Midpoint '+mid.toFixed(1)+' is below the bulk of the '+
+      'sample (starts '+LO.toFixed(0)+'), but it sits in the oldest band, which is flat and rests '+
+      'on more evidence than the other two together. The rate does not change going further back.</p>';
     o.className='cout';
     o.innerHTML =
       '<div class="crow"><span>Midpoint</span><b>'+mid.toFixed(1)+'</b></div>'+
       '<div class="crow"><span>Rate at that midpoint</span><b>$'+rate.toFixed(1)+' psf / yr</b>'+
-        (mid<=K?'<i class="cflat">flat segment</i>':'')+'</div>'+
+        '<i class="cflat">'+bd[2]+'</i></div>'+
       '<div class="crow"><span>Lease gap</span><b>'+Math.abs(gap)+' years</b></div>'+
       '<div class="crow big"><span>Adjustment</span><b>'+(adj>=0?'+':'')+'$'+
         Math.round(adj).toLocaleString()+' psf</b></div>'+
@@ -468,6 +505,8 @@ JS = """
   go();
 })();
 """
+
+BANDS_JS = '[' + ','.join(f'[{hi},{BANDR[nm]:.2f},"{nm}"]' for _, hi, nm in BANDS) + ']'
 
 EX_A, EX_B = 2005, 2025
 EX_MID = (EX_A + EX_B) / 2
@@ -484,24 +523,43 @@ constants. All five were set by judgement. This measures the first of them again
       <div class="val was">$40</div><div class="sub">psf per year, flat · set 2026-07-20</div></div>
     <div class="arrow">&rarr;</div>
     <div class="vcell grow"><div class="lab">Measured</div>
-      <div class="formula">${C:,.1f} <span>then</span> <span>+</span>${Dd:,.2f}
-        <em>a year past {KNEE}</em></div>
-      <div class="sub">dollars psf per year · read at the midpoint of the two lease starts ·
-        {len(ALL)} cells across {npairs(ALL)} pairs</div></div>
+      <div class="formula">${BANDR['up to 2010']:,.0f} <span>·</span> ${BANDR['2011–2013']:,.0f}
+        <span>·</span> ${BANDR['2014 onward']:,.0f}</div>
+      <div class="sub">dollars psf per year · by the midpoint of the two lease starts ·
+        {NDEV} developments, {npairs(ALL)} pairs</div></div>
   </div>
-  <p class="call"><b>The call.</b> The rate is <b>flat at ${C:,.1f} a year for every pair centred
-  up to {KNEE}</b>, and rises steeply after it — about ${Dd:,.2f} more for each further year of
-  vintage. So the answer is a level for older stock and a slope for newer, not one number and not
-  a straight line through both. The engine's flat $40 over-adjusts an old pair by about
-  {40/C:.1f} times and under-adjusts a new one.
-  Bedroom and region were both tested and neither moves it. Leave the engine untouched until this
-  is audited.</p>
+  <p class="call"><b>The call.</b> The rate is <b>flat at ${BANDR['up to 2010']:,.0f} a year</b> for
+  every pair centred up to 2010 — that band alone rests on {ndev(band_rows('up to 2010'))} developments
+  and holds whatever else is varied — and then <b>steps up sharply</b>, to
+  ${BANDR['2011–2013']:,.0f} and then ${BANDR['2014 onward']:,.0f}. The engine's flat $40
+  over-adjusts an old pair by more than half and under-adjusts a new one.
+  Bedroom and region were both tested and neither moves it.
+  <b>Read at the midpoint</b>, which is what lets one table price a pair straddling any boundary.
+  Leave the engine untouched until this is audited.</p>
 </div>
 
 <section>
+  <div class="sechead"><h2 class="disp">What is being counted</h2>
+  <p>Three words appear throughout and they count different things.</p></div>
+  <div class="steps">
+    <div class="step"><span class="sn">1</span>
+      <p><b>Development</b> — one condominium. {NDEV} of them appear somewhere in this study.</p></div>
+    <div class="step"><span class="sn">2</span>
+      <p><b>Pair</b> — two neighbouring developments compared against each other.
+      {npairs(ALL)} of them.</p></div>
+    <div class="step"><span class="sn">3</span>
+      <p><b>Cell</b> — one pair read at one bedroom type. A pair yields one to four.
+      {len(ALL)} of them, and this is the unit the figures are computed on.</p></div>
+  </div>
+  <p class="expl">So {NDEV} developments produce {npairs(ALL)} pairs and {len(ALL)} cells. The
+  development count is the smaller number because most developments sit in more than one pair —
+  a block with three leasehold neighbours appears three times.</p>
+</section>
+
+<section>
   <div class="sechead"><h2 class="disp">How to calculate it</h2>
-  <p>Four steps. The midpoint is the whole trick: it is what lets one curve handle a pair that
-  straddles any vintage you might otherwise have to split on.</p></div>
+  <p>Four steps. The midpoint is the whole trick: it is what lets one table handle a pair that
+  straddles a band boundary, instead of having to decide which side it belongs to.</p></div>
 
   <div class="steps">
     <div class="step"><span class="sn">1</span>
@@ -509,8 +567,10 @@ constants. All five were set by judgement. This measures the first of them again
     <div class="step"><span class="sn">2</span>
       <p>Average them. That is the <b>midpoint</b>.</p></div>
     <div class="step"><span class="sn">3</span>
-      <p>Read the rate. Midpoint <b>{KNEE} or earlier &rarr; ${C:,.1f}</b>. Later &rarr;
-      <b>${C:,.1f} + ${Dd:,.2f} &times; (midpoint &minus; {KNEE})</b>.</p></div>
+      <p>Read the rate off the band the midpoint falls in:
+      <b>up to 2010 &rarr; ${BANDR['up to 2010']:,.0f}</b>,
+      2011&ndash;13 &rarr; ${BANDR['2011–2013']:,.0f},
+      2014 on &rarr; ${BANDR['2014 onward']:,.0f}.</p></div>
     <div class="step"><span class="sn">4</span>
       <p>Multiply by the <b>lease gap</b>, and add it to the comparable's PSF.</p></div>
   </div>
@@ -520,7 +580,7 @@ constants. All five were set by judgement. This measures the first of them again
     <table class="fig wk"><tbody>
       <tr><th>Lease starts</th><td>{EX_A} and {EX_B}</td></tr>
       <tr><th>Midpoint</th><td>({EX_A} + {EX_B}) &divide; 2 = <b>{EX_MID:,.0f}</b></td></tr>
-      <tr><th>Rate</th><td>${C:,.1f} + ${Dd:,.2f} &times; ({EX_MID:,.0f} &minus; {KNEE})
+      <tr><th>Rate</th><td>midpoint {EX_MID:,.0f} falls in the <b>{band_of(EX_MID)}</b> band
         = <b>${rate(EX_MID):,.0f} psf per year</b></td></tr>
       <tr><th>Lease gap</th><td>{EX_B} &minus; {EX_A} = <b>{EX_B-EX_A} years</b></td></tr>
       <tr class="tot"><th>Adjustment</th><td>${rate(EX_MID):,.0f} &times; {EX_B-EX_A}
@@ -529,7 +589,8 @@ constants. All five were set by judgement. This measures the first of them again
     <p class="expl">Note what a flat constant would have done here. At $40 it reads
     +${40*(EX_B-EX_A):,.0f} against a measured ${rate(EX_MID)*(EX_B-EX_A):,.0f}. Run it the other
     way — an old pair centred on 1995 — and $40 reads +${40*10:,.0f} over ten years against a
-    measured ${rate(1995)*10:,.0f}, which is {40/rate(1995):.1f} times too much.</p>
+    measured ${rate(1995)*10:,.0f}, which is {40/rate(1995):.1f} times too much. One number cannot
+    be right at both ends.</p>
   </div>
 
   <div class="calc">
@@ -554,45 +615,28 @@ constants. All five were set by judgement. This measures the first of them again
   <p>{npairs(ALL)} matched neighbour pairs, {len(ALL)} bedroom cells, twenty-four months.
   Dollars per square foot per year of lease start — never a percentage, for the reason below.</p></div>
 
-  <table class="fig"><thead><tr><th></th><th class="num">estimate</th>
-    <th class="num">95% interval</th><th></th></tr></thead><tbody>
-    <tr><th>the flat level, up to a {KNEE} midpoint</th><td class="num big">${C:,.1f}</td>
-      <td class="num quiet">${CLO:,.1f} to ${CHI:,.1f}</td>
-      <td class="note">psf per year · {sum(1 for r in ALL if mid(r) <= KNEE)} cells sit here</td></tr>
-    <tr><th>the slope after it</th><td class="num big">${Dd:,.2f}</td>
-      <td class="num quiet">${DLO:,.2f} to ${DHI:,.2f}</td>
-      <td class="note">per further year of vintage</td></tr>
-    <tr><th>where it turns</th><td class="num big">{KNEE}</td>
-      <td class="num quiet">{KLO} to {KHI}</td>
-      <td class="note">the knee, chosen by held-out error</td></tr>
-  </tbody></table>
-
-  <h3 style="margin-top:26px">The curve against what the market actually did</h3>
+  <h3>Finer than the bands, to show where the turn is</h3>
   <div class="scroll">{observed()}</div>
 
-  <div class="caveat"><b>The newest end is the thin end.</b> Midpoints past 2016 leave the sample,
-  and the slope is steep there — ${Dd:,.2f} a year compounds fast, so a midpoint of 2020 reads
-  ${rate(2020):,.0f} against ${rate(2016):,.0f} four years earlier. Inside the measured range the
-  shape is well supported; past it, the level is a projection and should be said to be one.</div>
+  <div class="caveat"><b>The newest band is a floor, not a ceiling.</b> It rests on
+  {ndev(band_rows('2014 onward'))} developments and {npairs(band_rows('2014 onward'))} pairs, and the
+  rate was <b>still climbing when the evidence ran out</b> — young leasehold stock has barely
+  resold, and new sale is excluded by ruling. Quote ${BANDR['2014 onward']:,.0f} as the least it
+  can be, not as the answer.</div>
 
-  <details><summary>How the knee was found, and why not a straight line</summary>
-    <p class="expl">A straight line through the midpoint was the first shape tried and it
-    <b>ran low at both ends</b>: midpoint 1990–99 paid $11.5 a year more than the line said
-    [+3.0, +22.3] and 2015+ paid $10.8 more [+3.7, +18.3], with the middle followed closely.
-    Both intervals clear zero, so it was a real U and not noise — a straight line was averaging a
-    flat old segment against a steep new one and missing both.</p>
-    <p class="expl">The old reading survives its outliers, which is what makes it a finding rather
-    than an accident: the 1990s bucket reads +28.4 whole, +27.1 without its largest pair, +24.8
-    without its second, and +26.2 if only wide-gap pairs are kept. It is a level of about $25, not
-    the $14 a line through 1995 predicts.</p>
-    <p class="expl">So the knee was fitted rather than assumed — every year from 2000 to 2014 tried,
-    ranked on held-out error. It lands on <b>{KNEE}</b>, and lands there in more than half of
-    bootstrap draws (95% interval {KLO}–{KHI}). The flat segment then recovers the same $25 the very
-    first two-band pass found, which is the reassuring part: that pass was not wrong about the
-    level, only about calling it a band.</p>
+  <details><summary>Why three measured bands and not a fitted curve</summary>
+    <p class="expl">Two fitted shapes were tried before this one and <b>both were beaten by the
+    sample they were fitted on</b>. A straight line through the midpoint ran low at both ends. A
+    knee — flat, then rising — fitted that better, until the pair screen was widened and it moved:
+    the best knee is now anywhere from 1998 to 2008, and across that whole span the fit changes by
+    less than 2%. <b>The knee is not identified by this data.</b> Reporting a fitted year and slope
+    would be claiming a precision the pairs do not carry.</p>
+    <p class="expl">What <em>is</em> stable is the band-by-band reading above: it barely moves when
+    the screens change, its intervals are tight, and it holds up on held-out error as well as any
+    fitted shape. So the page reports what was measured and stops there.</p>
     <div class="scroll">{residuals()}</div>
-    <p class="expl">Residuals against the fitted shape, in the same units as the rate. Every bucket
-    now sits within its interval of zero.</p>
+    <p class="expl">Residuals against the bands, in the same units as the rate. Every slice sits
+    within its interval of zero.</p>
   </details>
 
   <details><summary>One hypothesis tested and rejected — the lease-decay knee</summary>
@@ -765,15 +809,17 @@ HTML = f"""<!doctype html>
   <span>price-gap/calibration/lease-pairs.py · regenerate with build-page.py</span>
 </footer>
 </div>
-<script>{JS.replace('%C%', f'{C}').replace('%D%', f'{Dd}').replace('%K%', f'{KNEE}').replace('%LO%', f'{MID_LO}').replace('%HI%', f'{MID_HI}')}</script>
+<script>{JS.replace('%BANDS%', BANDS_JS).replace('%LO%', f'{MID_LO}').replace('%HI%', f'{MID_HI}')}</script>
 </body></html>
 """
 
 open(OUT, 'w').write(HTML)
 print(f'wrote {os.path.relpath(OUT, HERE)}  ({len(HTML)//1024} KB)')
-print(f'  hinge  flat ${C:,.1f} [{CLO:,.1f},{CHI:,.1f}] up to {KNEE} [{KLO},{KHI}], '
-      f'then +${Dd:,.2f}/yr [{DLO:,.2f},{DHI:,.2f}]')
-print(f'  on {len(ALL)} cells / {npairs(ALL)} pairs, no gap screen')
-print(f'  lookup  ' + '  '.join(f'{m}:${rate(m):.0f}' for m in range(1995, 2021, 5)))
+print(f'  {NDEV} developments · {npairs(ALL)} pairs · {len(ALL)} cells, no gap screen')
+for _l, _h, _n in BANDS:
+    _r = band_rows(_n); _c = BANDCI[_n]
+    print(f'    {_n:14s} ${BANDR[_n]:5.1f}/yr  95% [{_c[0]:.1f}, {_c[1]:.1f}]  '
+          f'{ndev(_r):3d} devs {npairs(_r):3d} pairs')
 print(f'  held-out: flat {cv(ALL,"flat")/1000:.1f}k · line {cv(ALL,"mid")/1000:.1f}k · '
-      f'quad {cv(ALL,"quad")/1000:.1f}k · hinge {cv(ALL,"hinge")/1000:.1f}k')
+      f'quad {cv(ALL,"quad")/1000:.1f}k · knee {cv(ALL,"hinge")/1000:.1f}k · '
+      f'BANDS {cv(ALL,"band")/1000:.1f}k')

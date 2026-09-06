@@ -14,7 +14,8 @@ is the market's price for a year of lease.
   PAIR SCREEN
     both leasehold, both >= 200 units      (volume: a boutique block is one odd sale)
     within 500 m of each other
-    same nearest MRT station AND same walk band
+    same nearest MRT station             (NOT the same walk band -- retired 2026-09-06, see
+                                          below. Distance is already screened at 500 m.)
     identical set of TOP-26 primary schools within 1 km   (the 1 km cliff is absolute)
     lease-start gap >= 1 yr                (NO minimum -- the gap-band table is an output,
                                             not a screen. Shawn: "I don't need the lease
@@ -71,6 +72,14 @@ is the market's price for a year of lease.
     median size -- is computed here as a diagnostic. It LOSES pairs (119 vs 168; matching
     a whole sales mix within 20% is harder than matching one bedroom) and lets mix leak:
     its residual tracks the unmatched size difference at about -$214 psf per 100% of size.
+
+  THE WALK-BAND SCREEN IS RETIRED (Shawn, 2026-09-06). It required both sides of a pair to sit
+    in the same 5/10-minute walk band of their shared station. With distance ALREADY screened at
+    500 m that is redundant, and it cut arbitrarily: it was throwing out pairs 258-414 m apart on
+    the same station purely because one sat at 640 m from the MRT and the other at 900 m, opposite
+    sides of a 5-minute line. It cost 20 pairs at the newer end alone -- The Trilinq/Parc Clematis
+    at 258 m, Oue Twin Peaks/Irwell Hill at 329 m, Queens Peak/Stirling at 387 m. 500 m, the same
+    station, the school set and the 200-unit floor all stay: he ruled only the band out.
 
   WINDOWS  24 months is the headline. 12 is a FRESHNESS CHECK, not a second reading --
            54 of the 56 clean 12m cells sit inside the 24m set, so the two must never be
@@ -169,7 +178,7 @@ def build(window):
         if abs(A['ls'] - B['ls']) < MIN_GAP_YEARS: continue
         d = hav(A['lat'], A['lng'], B['lat'], B['lng'])
         if d > RADIUS_M: continue
-        if A['station'] != B['station'] or A['band'] != B['band']: continue
+        if A['station'] != B['station']: continue
         if A['schools'] != B['schools']: continue
         old, new = (A, B) if A['ls'] < B['ls'] else (B, A)
         gap = new['ls'] - old['ls']
@@ -253,7 +262,7 @@ def build_pooled(window):
         A, B = P[a], P[b]
         if abs(A['ls'] - B['ls']) < MIN_GAP_YEARS: continue
         if hav(A['lat'], A['lng'], B['lat'], B['lng']) > RADIUS_M: continue
-        if A['station'] != B['station'] or A['band'] != B['band']: continue
+        if A['station'] != B['station']: continue
         if A['schools'] != B['schools']: continue
         old, new = (A, B) if A['ls'] < B['ls'] else (B, A)
         co, cn = pooled_cell(old['name'], cut), pooled_cell(new['name'], cut)

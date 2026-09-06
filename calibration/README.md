@@ -62,71 +62,60 @@ Every one of these is a ruling he gave, not a default. Do not quietly change one
 | bands | **by lease START only** | ruled 2026-09-06. Bedroom and region were tested and neither moves the number; they stay on the page behind an explain mark, never on its face |
 | scale | **dollars, never a percentage** | ruled 2026-09-06. Across base-PSF bands the $/yr holds at $26–30 while the %/yr falls away. The dollar is the invariant; the percentage is what made region look like a real split |
 
-### The estimator — FLAT, THEN RISING (Shawn, 2026-09-06)
+### The estimator — THREE MEASURED BANDS, read at the midpoint
 
-```
-rate($/yr) = c + d x max(0, midpoint of the two lease starts - K)
-```
+**226 developments · 231 pairs · 382 cells.** Read at the MIDPOINT of the two lease starts.
 
-Fitted as `diff = gap * rate(midpoint)`, least squares, no intercept. The knee K is FITTED —
-every year 2000–2014 ranked on held-out error, not assumed.
+| midpoint of the two lease starts | $ psf / yr | 95% | devs | pairs |
+|---|---|---|---|---|
+| up to 2010 | **$25** | 22.1–27.5 | 154 | 136 |
+| 2011–2013 | **$40** | 28.2–50.6 | 64 | 57 |
+| 2014 onward | **$47** | 40.8–52.8 | 56 | 38 |
 
-**Measured: flat at $25.3 [22.9, 27.6] for every pair centred up to K = 2008 [2002, 2008],
-then rising $3.57 [2.81, 4.42] per further year. 273 cells across 168 pairs.**
+**COUNTING WORDS — get these right.** *Development* = one condo (226 appear). *Pair* = two
+neighbouring developments compared (231). *Cell* = one pair at one bedroom type, 1–4 per pair
+(382) — this is the unit the figures are computed on.
 
-| midpoint | 1995 | 2000 | 2005 | 2010 | 2015 | 2020 |
-|---|---|---|---|---|---|---|
-| $/yr | 25 | 25 | 25 | 32 | 50 | 68 |
+**READ AT THE MIDPOINT.** Shawn broke the earlier lease-start bands in one question: *what do I
+use for a 2005-vs-2025 pair?* If the rate varies with vintage, the whole difference across an
+interval is the gap times the rate at its midpoint — so the midpoint form IS the blend, and a
+pair straddling any boundary needs no special handling. Do not go back to banding on `ls_old`.
 
-**A straight line was tried first and RAN LOW AT BOTH ENDS.** Shawn found it by asking what
-rate a 1995 midpoint should use. Midpoint 1990–99 paid $11.5/yr more than the line predicted
-[+3.0, +22.3]; 2015+ paid $10.8 more [+3.7, +18.3]; the middle was followed closely. Both
-intervals clear zero, so it was a real U — the line was averaging a flat old segment against a
-steep new one and missing both. The old reading is **not** an outlier artefact: the 1990s
-bucket reads +28.4 whole, +27.1 less its largest pair, +24.8 less its second, +26.2 on wide
-gaps only. Held-out error: flat 21.1k · two-band step 19.4k · line 18.9k · quadratic 18.4k ·
-**hinge 18.3k**. Under the hinge the retired gap screen matters even less than before — flat
-level 25.1–25.6 and slope 3.29–4.09 across every threshold.
+**TWO FITTED SHAPES DIED. DO NOT RESURRECT THEM.**
+A straight line on the midpoint ($20.9 + $1.40) ran low at both ends. A fitted knee (flat, then
+rising) fixed that on 168 pairs — and then MOVED when the screen widened to 231. The best knee is
+now anywhere in 1998–2008 and the fit changes under 2% across that whole span: **the knee is not
+identified.** Held-out error: flat 24.0k · line 21.4k · quadratic 20.2k · knee 20.7k · **bands
+20.9k**. The bands tie the fitted shapes and claim nothing the pairs cannot carry.
 
-The flat segment recovers the same **$25** the very first two-band pass found. That pass had
-the level right and only the shape wrong.
+**THE NEWEST BAND IS A FLOOR, NOT A FIGURE.** 56 developments, 38 pairs, and the rate was still
+climbing when the evidence ran out. Quote $47 as the least it can be.
 
-**REJECTED — the lease-decay knee.** A 1990s-centred pair has ~65 years left, which is the
-2026-07-27 study's knee, so decay was the obvious suspect for the old end. It is not:
-refitting on the older project's REMAINING lease is worse on held-out error (19.4k), adding
-it alongside vintage is worse (19.1k), and a term for years below 65 remaining earns nothing.
-**The turn is in the vintage of the stock, not the lease left on it.** Do not re-run this.
+**NO MINIMUM LEASE GAP.** The old 5-year screen protected the per-pair MEAN, which divides each
+difference by its own gap. The fitted estimator weights by gap instead, so a 3-year pair carries
+3 years of leverage. Band rates are flat across every threshold. Do not put it back.
 
-**This form IS the blend.** If the rate rises smoothly with vintage, the total difference
-across an interval is exactly the gap times the rate at its midpoint — so a pair straddling
-any cut-over needs no special handling. That is the whole reason for the shape. Shawn found
-the seam by asking what to use for a 2005-vs-2025 pair: a two-band step has to pick a side
-and is wrong either way. Beats a flat rate, a step, and a curve keyed on the older project
-on 5-fold cross-validation.
+**BEDROOM IS THE MATCH, NOT THE ANSWER.** Not in the equation — it is the stratum holding size
+constant, and the finest size resolution the data has. Pooling to one PSF per project matched on
+pooled size LOSES pairs (159 vs 231) and lets mix leak at ~-$214 psf per 100% of size.
+`build_pooled()` keeps it as a diagnostic.
 
-**NO MINIMUM LEASE GAP — the 5-year screen was retired.** It protected the per-pair MEAN,
-which divides each difference by its own gap and so multiplies a short pair's noise. This
-estimator fits the DIFFERENCE against the gap, so a 3-year pair carries 3 years of leverage
-and cannot shout. Refitting at every threshold leaves a at 20.7–21.1 and b at 1.25–1.44, and
-the slope interval is TIGHTER without the screen. It cost two thirds of the evidence:
-97 cells -> 273, 71 pairs -> 168, and 2010s-older pairs 8 -> 71.
+### The screens, and what widening them does
 
-**BEDROOM IS THE MATCH, NOT THE ANSWER.** It is not in the equation; it is the stratum that
-holds size constant, and the finest size resolution the data has. The pooled alternative —
-one transaction-weighted PSF per project, matched on pooled median size — is computed by
-`build_pooled()` as a diagnostic. It LOSES pairs (119 vs 168: matching a whole sales mix
-within 20% is harder than matching one bedroom) and lets mix leak, its residual tracking the
-unmatched size difference at about -$214 psf per 100% of size. That drags its slope down a
-third, to a $26.2 / b $0.91.
+**WALK BAND RETIRED (Shawn, 2026-09-06).** It required both sides in the same 5/10-minute walk
+band of their shared station. With distance already screened at 500 m that is redundant, and it
+cut arbitrarily — throwing out pairs 258–414 m apart on the same station because one sat at 640 m
+from the MRT and the other at 900 m. Cost 20 pairs at the new end alone (The Trilinq/Parc Clematis
+258 m, Oue Twin Peaks/Irwell Hill 329 m, Queens Peak/Stirling 387 m). 168 → 231 pairs.
 
-**THE KNOWN DEFECT — a straight line runs low at BOTH ends.** Midpoint 1990-99 reads $11.5/yr
-above the line [3.0, 22.3] and 2015+ reads $10.8 above [3.7, 18.3]; the middle is followed
-closely. Both are real. A quadratic gains 2% on held-out error and is not worth the term.
-The old end is probably the lease-decay knee (the 2026-07-27 study's 60-65y mark) showing
-through, which would mean the fix is the decay curve itself — the lease/tenure collapse this
-workstream exists to test. **Open, and on the page behind an explain mark.**
+**THE 200-UNIT FLOOR STAYS, AND THE DATA BACKS HIS ORIGINAL RULING.** Lowering it to 100 adds 33
+pairs, and those added pairs fitted alone read **$32.9 with a slope of $0.11** — a high, flat,
+directionless reading. Exactly the "a boutique block's PSF is one odd sale" problem he named on
+2026-09-06. Below 100 units nothing further arrives; they have no transaction depth.
 
----
+**THE REAL CEILING IS FREEHOLD, NOT THE SCREENS.** Of 1,844 developments in `dsi-index.json`,
+**1,255 are freehold** and structurally cannot pair on lease start. 446 are eligible leasehold at
+the 200-unit floor. That is what the tenure pass unlocks, and it is the reason it is next.
 
 ## Run it
 

@@ -57,9 +57,10 @@ Every one of these is a ruling he gave, not a default. Do not quietly change one
 | size match | **within 20%** | 15% cost 44% of the sample for less bias than it removed |
 | EC | **allowed once privatised, TOP + 5** | before that it prices like subsidised stock |
 | lease gap | **no minimum** | explicitly ruled: "I don't need the lease gap to be a certain amount." The gap band is an OUTPUT, not a screen |
-| window | **12 and 24 months, side by side** | 12 is the cleaner price basis; 24 is the only one deep enough to read 1BR and 4BR+ at all |
+| window | **24 months is the headline; 12 is a freshness check** | ruled 2026-09-06. They are NOT independent — 54 of the 56 clean 12m cells sit inside the 24m set, so 24m IS the combined figure. **Never average them**, that counts the last year twice |
 | floor | **not controlled** | ruled: "accept the noise". The PSF series carries no floor |
-| bands | **by lease START, and by region** | |
+| bands | **by lease START only** | ruled 2026-09-06. Bedroom and region were tested and neither moves the number; they stay on the page behind an explain mark, never on its face |
+| scale | **dollars, never a percentage** | ruled 2026-09-06. Across base-PSF bands the $/yr holds at $26–30 while the %/yr falls away. The dollar is the invariant; the percentage is what made region look like a real split |
 
 ### How pairs combine — the one thing to understand
 
@@ -132,8 +133,14 @@ the pattern is `property-analyzer/scripts/fetch-demand-ura.ts`, 60-month serving
 
 ## What the lease pass found
 
-**$27–28 psf per year, not $40.** The constant runs 25–30% hot. 12-month window gives $28.5,
-24-month gives $27.3 — two independent windows agreeing is the validation.
+**$27 psf per year on the 24-month window, not $40.**
+
+**Correction, 2026-09-06 — the windows are not independent.** An earlier version of this file
+called the 12m/24m agreement "two independent windows". It is not: **54 of the 56 clean 12-month
+cells are inside the 24-month set.** The 24m window CONTAINS the 12m one, so it is the combined
+figure and the two must never be pooled or averaged. What the agreement is actually worth is
+narrower but real — adding the 41 older cells moves the answer $28.5 → $27.3, so the extra depth
+does not drag it. Report 24m as the headline, 12m as a freshness check.
 
 **But a single number is the wrong shape. It tracks the AGE of the stock:**
 
@@ -155,10 +162,16 @@ where decay is mild.
 1. **1–4 year gaps read high. They are excluded from every headline.** THE BAYSHORE vs COSTA
    DEL SOL reads +$142/yr off a 4-year gap — that is Costa Del Sol being a different class of
    development, not lease. Diagnostic only.
-2. **The 2BR/3BR split collapses once those are removed** — 2BR $28.5, 3BR $27.8. The first pass
-   showed 2BR well above 3BR and that was short-gap noise. **Bedroom does not move the lease
-   rate.** Do not re-report the split without the short gaps removed.
-3. **The CCR is not measurable this way and Shawn ruled it stays that way.** Every qualifying
+2. **The 2BR/3BR split collapses once those are removed** — 2BR $28.5, 3BR $27.8, permutation
+   **p = 0.83**. The first pass showed 2BR well above 3BR and that was short-gap noise.
+   **Bedroom does not move the lease rate.** Do not re-report the split without the short gaps
+   removed. 1BR (7 cells) and 4BR+ (4 cells) are unreadable at any window.
+3. **Region does not move it either — in dollars.** RCR $31.8 vs OCR $28.9, permutation
+   **p = 0.30**. In PERCENT they separate (2.02% vs 1.56%, p = 0.006) and that separation is fake:
+   splitting by the base PSF of the older project shows $/yr flat at $26 / $30 / $30 across the
+   three readable price bands while %/yr falls 2.11 → 1.96 → 1.50. **The dollar is the invariant.**
+   Region was price level wearing a region's name. This is why the page carries no percentages.
+4. **The CCR is not measurable this way and Shawn ruled it stays that way.** Every qualifying
    pair is Marina Bay or Sentosa Cove, one negative. That is a submarket, not a region. A CCR
    figure has to come from somewhere other than neighbour pairs.
 

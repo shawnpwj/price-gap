@@ -10,9 +10,20 @@ Self-contained, no Tailwind: the main page's CDN dependency is a known offline
 defect and this page must not inherit it. Tokens copied from index.html so the
 navy-and-gold identity holds.
 
+SHAPE (Shawn, 2026-09-06, two rulings):
+  * QUANTUM ONLY. Every percentage is removed. A flat dollar figure is the invariant
+    here and the percentage is the artefact: across base-PSF bands the $/yr holds at
+    $26-30 while the %/yr falls 2.11 -> 1.96 -> 1.50. The percentage made region look
+    like a real split when it is a price-level effect.
+  * THE FACE OF THE PAGE CARRIES THE ANSWER ONLY. The 24-month window, and the two
+    lease-start bands. Bedroom, region, the 12-month window and the gap cross-tab were
+    all tested and none of them moves the number, so they come off the face -- but they
+    go BEHIND EXPLAIN MARKS, not into the bin. A page may not show a number it cannot
+    explain.
+
     python3 lease-pairs.py && python3 build-page.py
 """
-import json, math, os, html, statistics as st, datetime
+import json, os, html, statistics as st, datetime
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT  = os.path.join(HERE, '..', '..', 'kya-maps-calculator', 'calibration.html')
@@ -21,15 +32,13 @@ D    = json.load(open(os.path.join(HERE, 'lease-pairs.json')))
 SHORT_GAP = 5   # pairs under this many years of lease separation are diagnostic only
 
 def fit(r):  return sum(x['diff'] for x in r) / sum(x['gap'] for x in r) if r else None
-def fitp(r):
-    if not r: return None
-    return math.exp(sum(math.log(x['psf_new'] / x['psf_old']) for x in r) / sum(x['gap'] for x in r)) - 1
 def clean(w):  return [r for r in D[w] if r['gap'] >= SHORT_GAP]
 def money(v):  return '—' if v is None else f'{v:+,.0f}'
-def pct(v):    return '—' if v is None else f'{v:+.2f}%'.replace('+', '+') if False else ('—' if v is None else f'{v*100:+.2f}%')
 def npairs(r): return len({(x['older'], x['newer']) for x in r})
 
-AGES  = [(1990, 1999, '1990s'), (2000, 2009, '2000s'), (2010, 2019, '2010s')]
+ANSWER_AGES = [(0, 2009, 'pre-2010 lease'), (2010, 2019, '2010s lease')]
+FINE_AGES   = [(1990, 1999, '1990s'), (2000, 2009, '2000s'), (2010, 2019, '2010s')]
+AGES  = FINE_AGES
 GAPS  = [(1, 4, '1–4 yrs'), (5, 9, '5–9 yrs'), (10, 14, '10–14 yrs'), (15, 99, '15 yrs +')]
 BEDS  = ['1BR', '2BR', '3BR', '4BR+']
 REGS  = ['CCR', 'RCR', 'OCR']
@@ -38,30 +47,61 @@ def row(label, rows, note=''):
     if not rows:
         return f'<tr><th>{label}</th><td colspan="4" class="nil">not measurable</td></tr>'
     return (f'<tr><th>{label}</th><td class="num big">{money(fit(rows))}</td>'
-            f'<td class="num">{pct(fitp(rows))}</td>'
-            f'<td class="num quiet">{len(rows)}</td><td class="note">{note}</td></tr>')
+            f'<td class="num quiet">{len(rows)}</td>'
+            f'<td class="num quiet">{npairs(rows)}</td><td class="note">{note}</td></tr>')
 
-def block(w):
-    rows, all_rows = clean(w), D[w]
-    months = sorted({r['ls_old'] for r in all_rows})
-    h = [f'<div class="win" id="win{w}"><div class="winhead"><h3>{w}-month window</h3>'
-         f'<p class="quiet">{npairs(rows)} pairs · {len(rows)} bedroom cells · '
-         f'lease gaps of {SHORT_GAP} years and over</p></div><div class="scroll">']
-    h.append('<table class="fig"><thead><tr><th></th><th class="num">$ psf / yr</th>'
-             '<th class="num">% / yr</th><th class="num">cells</th><th></th></tr></thead><tbody>')
-    h.append(row('<b>All pairs</b>', rows, 'the headline'))
+THEAD = ('<table class="fig"><thead><tr><th></th><th class="num">$ psf / yr</th>'
+         '<th class="num">cells</th><th class="num">pairs</th><th></th></tr></thead><tbody>')
+
+def answer(w):
+    """The face of the page: the headline and the two lease-start bands. Nothing else."""
+    rows = clean(w)
+    h = [THEAD, row('<b>All pairs</b>', rows, 'the headline')]
     h.append('<tr class="sep"><th colspan="5">By lease start of the older project</th></tr>')
-    for lo, hi, nm in AGES:
-        h.append(row(nm, [r for r in rows if lo <= r['ls_old'] <= hi]))
-    h.append('<tr class="sep"><th colspan="5">By bedroom</th></tr>')
+    for lo, hi, nm in ANSWER_AGES:
+        s_ = [r for r in rows if lo <= r['ls_old'] <= hi]
+        h.append(row(nm, s_, 'the constant to use' if s_ else ''))
+    h.append('</tbody></table>')
+    return ''.join(h)
+
+def nulls(w):
+    """Behind the explain mark: the cuts that were tested and moved nothing."""
+    rows = clean(w)
+    h = [THEAD, '<tr class="sep"><th colspan="5">By bedroom — no difference</th></tr>']
     for bd in BEDS:
-        s = [r for r in rows if r['bed'] == bd]
-        h.append(row(bd, s, '' if len(s) >= 20 else 'thin' if s else ''))
-    h.append('<tr class="sep"><th colspan="5">By region</th></tr>')
+        s_ = [r for r in rows if r['bed'] == bd]
+        h.append(row(bd, s_, 'too thin to read' if 0 < len(s_) < 20 else ''))
+    h.append('<tr class="sep"><th colspan="5">By region — no difference in dollars</th></tr>')
     for rg in REGS:
-        s = [r for r in rows if r['region'] == rg]
-        h.append(row(rg, s, 'Marina Bay and Sentosa only — not the CCR' if rg == 'CCR' else ''))
-    h.append('</tbody></table></div></div>')
+        s_ = [r for r in rows if r['region'] == rg]
+        h.append(row(rg, s_, 'Marina Bay and Sentosa only — not the CCR' if rg == 'CCR' else ''))
+    h.append('<tr class="sep"><th colspan="5">By lease start, finer bands</th></tr>')
+    for lo, hi, nm in FINE_AGES:
+        h.append(row(nm, [r for r in rows if lo <= r['ls_old'] <= hi]))
+    h.append('</tbody></table>')
+    return ''.join(h)
+
+PBANDS = [(0, 1200, 'under $1,200'), (1200, 1600, '$1,200 – $1,600'),
+          (1600, 2000, '$1,600 – $2,000'), (2000, 99999, '$2,000 and over')]
+
+def pricebands(w='24'):
+    """The scale test. Splits the sample by the base PSF of the older project: the $/yr
+    holds across the readable bands, which is why this page is in dollars."""
+    rows = clean(w)
+    h = ['<table class="fig"><thead><tr><th>Base PSF of the older project</th>'
+         '<th class="num">$ psf / yr</th><th class="num">cells</th>'
+         '<th class="num">median base psf</th><th></th></tr></thead><tbody>']
+    for lo, hi, nm in PBANDS:
+        b = [r for r in rows if lo <= r['psf_old'] < hi]
+        if not b:
+            h.append(f'<tr><th>{nm}</th><td colspan="4" class="nil">no cells</td></tr>'); continue
+        thin = len(b) < 15
+        h.append(f'<tr{" class=dim" if thin else ""}><th>{nm}</th>'
+                 f'<td class="num big">{money(fit(b))}</td>'
+                 f'<td class="num quiet">{len(b)}</td>'
+                 f'<td class="num quiet">${st.median([r["psf_old"] for r in b]):,.0f}</td>'
+                 f'<td class="note">{"the CCR pairs — the sample that is not measurable" if thin else ""}</td></tr>')
+    h.append('</tbody></table>')
     return ''.join(h)
 
 def crosstab(w):
@@ -107,9 +147,11 @@ def pairtable(w):
     return ''.join(h)
 
 c12, c24 = clean('12'), clean('24')
-LO, HI = sorted([fit(c12), fit(c24)])
-OLD  = fit([r for r in c24 if r['ls_old'] < 2010])
-NEW  = fit([r for r in c24 if r['ls_old'] >= 2010])
+HEAD_ = fit(c24)                                   # the headline: 24m is the deeper window
+CHECK = fit(c12)                                   # 12m is a freshness check, not a second reading
+OLDR  = [r for r in c24 if r['ls_old'] <  2010]
+NEWR  = [r for r in c24 if r['ls_old'] >= 2010]
+OLD, NEW = fit(OLDR), fit(NEWR)
 
 CSS = """
 *{box-sizing:border-box;margin:0;padding:0}
@@ -206,6 +248,10 @@ summary::before{content:'▸ ';color:var(--gold)}
 details[open] summary::before{content:'▾ '}
 summary:hover{color:var(--gold-soft)}
 .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.expl{color:var(--slate-400);max-width:76ch;margin:10px 0 14px;font-size:13px}
+.expl b{color:var(--slate-100);font-weight:600}
+details{border-top:1px solid var(--ink);margin-top:16px}
+details .expl:first-of-type{margin-top:0}
 .caveat{border-left:2px solid var(--warn);padding:2px 0 2px 16px;margin:12px 0;color:var(--slate-400);max-width:74ch}
 .caveat b{color:var(--warn);font-weight:600}
 footer{margin-top:64px;border-top:1px solid var(--ink);padding-top:18px;
@@ -240,61 +286,87 @@ constants. All five were set by judgement. This measures the first of them again
   <div class="vgrid">
     <div class="vcell"><div class="lab">Engine constant</div>
       <div class="val was">$40</div><div class="sub">psf per year · set 2026-07-20</div></div>
-    <div class="arrow">→</div>
-    <div class="vcell"><div class="lab">Measured</div>
-      <div class="val is">${abs(LO):,.0f}–{abs(HI):,.0f}</div>
-      <div class="sub">psf per year · {pct(fitp(c24))} · two independent windows</div></div>
-    <div class="vcell"><div class="lab">Older stock · pre-2010 lease</div>
-      <div class="val">${abs(OLD):,.0f}</div><div class="sub">psf per year</div></div>
-    <div class="vcell"><div class="lab">Newer stock · 2010s lease</div>
-      <div class="val">${abs(NEW):,.0f}</div><div class="sub">psf per year</div></div>
+    <div class="arrow">&rarr;</div>
+    <div class="vcell"><div class="lab">Pre-2010 lease</div>
+      <div class="val is">${abs(OLD):,.0f}</div>
+      <div class="sub">psf per year · {len(OLDR)} cells across {npairs(OLDR)} pairs</div></div>
+    <div class="vcell"><div class="lab">2010s lease</div>
+      <div class="val is">${abs(NEW):,.0f}</div>
+      <div class="sub">psf per year · {len(NEWR)} cells across {npairs(NEWR)} pairs</div></div>
   </div>
-  <p class="call"><b>The call.</b> The $40 constant runs roughly 25–30% hot and should come down.
-  But a single number is the wrong shape: what the market pays for a year of lease depends on how
-  old the stock is, not on how wide the lease gap is, and not on bedroom count.
+  <p class="call"><b>The call.</b> The $40 constant is roughly right for new stock and runs about
+  60% hot on everything older — and most comparables are older. It should come down, and it should
+  stop being one number.
   <b>Use ${abs(OLD):,.0f} psf per year against pre-2010 leasehold and ${abs(NEW):,.0f} against 2010s stock.</b>
-  Leave the engine untouched until this is audited.</p>
+  Bedroom and region were both tested and neither moves it. Leave the engine untouched until this
+  is audited.</p>
 </div>
 
 <section>
-  <div class="sechead"><h2 class="disp">The figure, two windows</h2>
-  <p>Twelve months is the cleaner price basis; twenty-four is the only one deep enough to read
-  1BR and 4BR+ at all. They are shown side by side because agreement between them is the
-  validation — nothing here is fitted to one window.</p></div>
-  <div class="wins">{block('12')}{block('24')}</div>
-  <div class="caveat"><b>The CCR is not measurable this way.</b> Every qualifying pair sits in
-  Marina Bay or Sentosa Cove — one reads negative. That is a submarket, not a region. A CCR figure
-  has to come from somewhere other than neighbour pairs.</div>
+  <div class="sechead"><h2 class="disp">The figure</h2>
+  <p>Twenty-four months, {npairs(c24)} matched neighbour pairs, {len(c24)} bedroom cells, lease gaps
+  of {SHORT_GAP} years and over. Dollars per square foot per year of lease start — never a
+  percentage, for the reason set out below.</p></div>
+  <div class="scroll">{answer('24')}</div>
+
+  <div class="caveat"><b>The $44 rests on {npairs(NEWR)} pairs.</b> The split is statistically clean and it
+  holds inside every region and every bedroom, but 2010s leasehold stock that has resold enough to
+  read is a narrow pool. Treat the older figure as settled and the newer one as directional.</div>
+
+  <details><summary>Why dollars and never a percentage</summary>
+    <p class="expl">A flat dollar figure was the open question: it cannot obviously hold in both an
+    OCR pair at $1,100 psf and a CCR pair at $2,100. Splitting the sample by the base price of the
+    older project settles it — <b>the dollar is the invariant and the percentage is the artefact.</b></p>
+    <div class="scroll">{pricebands()}</div>
+    <p class="expl">The dollar figure is flat across the three readable bands while the percentage
+    falls away steadily. That is also what made <b>region</b> look like a real split: in percent the
+    OCR and RCR separate, in dollars they do not. The separation was price level wearing a region's
+    name.</p>
+  </details>
+
+  <details><summary>The cuts that were tested and moved nothing</summary>
+    <p class="expl">Bedroom, region, and the finer age bands. Kept here because the decision to use
+    one unified figure rests on them, not because they carry a number worth quoting.
+    <b>2BR reads {money(fit([r for r in c24 if r['bed']=='2BR']))} and 3BR {money(fit([r for r in c24 if r['bed']=='3BR']))}</b>
+    — a difference of well under a dollar a year, and a permutation test puts it at p&nbsp;=&nbsp;0.83.
+    1BR and 4BR+ have too few cells to read at all. In dollars the RCR and OCR are indistinguishable
+    (p&nbsp;=&nbsp;0.30).</p>
+    <div class="scroll">{nulls('24')}</div>
+    <div class="caveat"><b>The CCR is not measurable this way.</b> Every qualifying pair sits in
+    Marina Bay or Sentosa Cove — one reads negative. That is a submarket, not a region. A CCR figure
+    has to come from somewhere other than neighbour pairs.</div>
+  </details>
+
+  <details><summary>The 12-month freshness check — {money(CHECK)} against {money(HEAD_)}</summary>
+    <p class="expl">The two windows are <b>not</b> two independent readings: {len(set((r['older'],r['newer'],r['bed']) for r in c12) & set((r['older'],r['newer'],r['bed']) for r in c24))} of the
+    {len(c12)} twelve-month cells sit inside the twenty-four-month set. Twenty-four months is
+    therefore the combined figure, not an alternative to it, and the two must never be averaged —
+    that would count the last year twice. What the check is worth is this: adding the older cells
+    moves the answer from {money(CHECK)} to {money(HEAD_)}. The extra depth does not drag it.</p>
+    <div class="scroll">{answer('12')}</div>
+  </details>
 </section>
 
 <section>
-  <div class="sechead"><h2 class="disp">Is it the gap, or is it the age?</h2>
-  <p>A wide lease gap usually means the older project is genuinely old, so the two move together
-  and one of them is doing the work. Holding each fixed in turn settles it.</p></div>
-  <div class="wins pairwide">
-    <div class="win"><div class="winhead"><h3>12-month window</h3>
-      <p class="quiet">$ psf per year · cell counts below each figure</p></div>
-      <div class="scroll">{crosstab('12')}</div></div>
-    <div class="win"><div class="winhead"><h3>24-month window</h3>
-      <p class="quiet">$ psf per year · cell counts below each figure</p></div>
-      <div class="scroll">{crosstab('24')}</div></div>
-  </div>
-  <p style="margin-top:20px;max-width:74ch;color:var(--slate-400)">
+  <div class="sechead"><h2 class="disp">Why the answer is sliced by age and not by lease gap</h2>
+  <p>A wide lease gap usually means the older project is genuinely old, so the two move together and
+  one of them is doing the work. Holding each fixed in turn settles it.</p></div>
+  <div class="scroll">{crosstab('24')}</div>
+  <p class="expl" style="margin-top:18px">
   Read <b style="color:var(--slate-100)">down a column</b> — gap held fixed, age varying — and the rate
   climbs steadily as the older project gets newer. Read <b style="color:var(--slate-100)">across a row</b>
   — age held fixed, gap varying — and there is no trend beyond four years.
-  <b style="color:var(--gold-soft)">So it is age, and the answer should be sliced by lease-start band,
-  not by lease gap.</b></p>
+  <b style="color:var(--gold-soft)">So it is age.</b></p>
   <div class="caveat"><b>The 1–4 year column is excluded from every headline.</b> Two projects three
   years apart divide every difference between them — a better developer, a better site, a better
   facing — by three, so noise arrives multiplied. That column is a diagnostic, not evidence.</div>
 </section>
 
 <section>
-  <div class="sechead"><h2 class="disp">How a pair is built</h2>
-  <p>Two leasehold developments beside each other with everything else held constant, so the lease
-  start is the only thing left to explain the price difference.</p></div>
-  <div class="cards">
+  <div class="sechead"><h2 class="disp">The evidence</h2>
+  <p>How a pair is built, and every pair that qualified.</p></div>
+  <details><summary>How a pair is built</summary>
+  <div class="cards" style="margin-top:6px">
     <div class="card"><h4>Held constant</h4><ul>
       <li>within <b>500 m</b> of each other</li>
       <li>same <b>nearest MRT station</b></li>
@@ -314,16 +386,10 @@ constants. All five were set by judgement. This measures the first of them again
       <li><b>floor</b> — the PSF series carries none</li>
       <li><b>facing</b> — same</li>
       <li>development quality<br>beyond size and unit count</li>
-      <li>these are the noise the<br>500-pair sample has to absorb</li></ul></div>
-  </div>
-</section>
-
-<section>
-  <div class="sechead"><h2 class="disp">Every pair</h2>
-  <p>The evidence in full. Rows in grey are the 1–4 year gaps, shown but excluded from the figures.</p></div>
-  <details><summary>12-month window — {len(D['12'])} bedroom cells</summary>
-    <div class="scroll">{pairtable('12')}</div></details>
-  <details><summary>24-month window — {len(D['24'])} bedroom cells</summary>
+      <li>lease start and building age are<br>confounded: this is blended vintage</li></ul></div>
+  </div></details>
+  <details><summary>Every pair — {len(D['24'])} bedroom cells</summary>
+    <p class="expl">Rows in grey are the 1–4 year gaps, shown but excluded from the figures.</p>
     <div class="scroll">{pairtable('24')}</div></details>
 </section>
 

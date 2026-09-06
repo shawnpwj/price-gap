@@ -26,6 +26,8 @@ import json, math, os, html, random, statistics as st, datetime
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT  = os.path.join(HERE, '..', '..', 'kya-maps-calculator', 'calibration.html')
 D    = json.load(open(os.path.join(HERE, 'lease-pairs.json')))
+MRTP = os.path.join(HERE, 'mrt-pairs.json')
+M    = json.load(open(MRTP)) if os.path.exists(MRTP) else None
 ALL  = D['24']                       # 24 months. No gap screen.
 POOL = D.get('pooled24', [])
 
@@ -282,6 +284,20 @@ letter-spacing:.18em;text-transform:uppercase;color:var(--slate-500);white-space
 h1{font:600 clamp(28px,4vw,36px)/1.15 Optima,Candara,sans-serif;color:var(--slate-100);
 letter-spacing:.01em;margin:52px 0 10px}
 .kicker{font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--gold);margin-top:52px}
+/* THE TERM BAR. Five constants, one row, each its own destination. It replaces the old
+   single-term kicker: this page is no longer about the lease alone. */
+.terms{display:flex;flex-wrap:wrap;gap:0;margin:44px 0 0;border-top:1px solid var(--ink);
+border-bottom:1px solid var(--ink)}
+.terms a{flex:1 1 auto;min-width:150px;padding:13px 16px 12px;text-decoration:none;
+border-right:1px solid var(--ink);transition:background .18s cubic-bezier(.22,1,.36,1)}
+.terms a:last-child{border-right:0}
+.terms a:hover,.terms a:focus-visible{background:var(--navy-850)}
+.terms .tn{display:block;font:600 13.5px/1.25 Optima,Candara,sans-serif;color:var(--slate-100)}
+.terms .ts{display:block;margin-top:4px;font-size:10.5px;letter-spacing:.16em;
+text-transform:uppercase;color:var(--slate-500)}
+.terms a.done .ts{color:var(--gold)}
+.terms a.done .tn::after{content:"";display:inline-block;width:5px;height:5px;border-radius:50%;
+background:var(--gold);margin-left:7px;vertical-align:middle}
 .lede{font-size:15px;color:var(--slate-400);max-width:64ch;margin-bottom:14px}
 h2{font:600 20px/1.3 Optima,Candara,sans-serif;color:var(--slate-100);margin:0 0 6px}
 h3{font:600 15px/1.3 Optima,Candara,sans-serif;color:var(--gold-soft);letter-spacing:.02em}
@@ -438,12 +454,48 @@ JS = """
   go();
 })();
 """
+def mrt_table():
+    if not M: return ''
+    r = ['<table><thead><tr><th>Walk to the nearest station</th><th class="num">Measured</th>'
+         '<th class="num">95% interval</th><th class="num">Developments</th>'
+         '<th class="num">Pairs</th><th class="num">Engine</th></tr></thead><tbody>']
+    for b in M['bands']:
+        r.append(f'<tr><td>{b["label"]}</td>'
+                 f'<td class="num"><b>+${b["adj"]:,.0f}</b></td>'
+                 f'<td class="num">+${b["lo"]:,.0f} to +${b["hi"]:,.0f}</td>'
+                 f'<td class="num">{b["devs"]}</td><td class="num">{b["pairs"]}</td>'
+                 f'<td class="num">${M["engine"][b["key"]]}</td></tr>')
+    r.append('</tbody></table>')
+    return ''.join(r)
+
+def mrt_per100():
+    if not M: return ''
+    r = ['<table><thead><tr><th>Walk to the nearest station</th>'
+         '<th class="num">Extra walking</th><th class="num">Measured</th>'
+         '<th class="num">Per 100 m</th></tr></thead><tbody>']
+    for b in M['bands']:
+        r.append(f'<tr><td>{b["label"]}</td><td class="num">{b["walk"]:,.0f} m</td>'
+                 f'<td class="num">+${b["adj"]:,.0f}</td>'
+                 f'<td class="num"><b>${b["per100"]:.1f}</b></td></tr>')
+    r.append('</tbody></table>')
+    return ''.join(r)
+
 BANDS_JS = '[' + ','.join(f'[{hi},{BANDR[nm]:.2f},"{nm}"]' for _, hi, nm in BANDS) + ']'
 A1, A2 = age_label(OLD_NM); B1, B2 = age_label(NEW_NM)
 
 BODY = f"""
-<p class="kicker">Price Gap &middot; the lease term</p>
-<h1 class="disp">What the market pays for a year of lease</h1>
+<nav class="terms" aria-label="The five constants">
+  <a class="done" href="#lease"><span class="tn">Lease / vintage</span>
+    <span class="ts">Measured</span></a>
+  <a class="done" href="#mrt"><span class="tn">MRT walk band</span>
+    <span class="ts">Measured</span></a>
+  <a href="#judgement"><span class="tn">Tenure</span><span class="ts">Next</span></a>
+  <a href="#judgement"><span class="tn">GFA harmonisation</span>
+    <span class="ts">On judgement</span></a>
+  <a href="#judgement"><span class="tn">Integrated</span>
+    <span class="ts">On judgement</span></a>
+</nav>
+<h1 class="disp" id="lease">What the market pays for a year of lease</h1>
 <p class="lede">The engine restates every comparable using five constants, all set by judgement.
 This is the first one measured against the market.</p>
 
@@ -577,14 +629,80 @@ This is the first one measured against the market.</p>
   </details>
 </section>
 
-<section>
+<section id="mrt">
+  <div class="sechead"><h2 class="disp">What the market pays for the walk to the station</h2>
+  <p><b>{M['devs']} developments</b>, each paired with a leasehold neighbour on the same nearest
+  station, over the same 24 months. The lease difference between them is removed at the measured
+  rate above, so what is left is the walk.</p></div>
+  <div class="scroll">{mrt_table()}</div>
+
+  <p class="expl" style="margin-top:18px"><b>Your $50 is right. The other two are not.</b> The
+  engine charges ${M['engine']['mid|far']} and ${M['engine']['near|far']} where the market pays
+  ${M['bands'][1]['adj']:,.0f} and ${M['bands'][2]['adj']:,.0f}.</p>
+
+  <div class="caveat"><b>The bands cannot be added together.</b> Each spans a different amount of
+  walking, so the first two do not sum to the third. Read them per 100 m instead and all three say
+  the same thing.</div>
+  <div class="scroll" style="margin-top:14px">{mrt_per100()}</div>
+  <p class="expl"><b>${M['slope100']:.0f} psf for every extra 100 m</b> is the figure to quote. It
+  does not depend on where the band lines are drawn, and the three rows agree on it within
+  ${max(b['per100'] for b in M['bands'])-min(b['per100'] for b in M['bands']):.0f}.</p>
+
+  <details><summary>How the lease is taken out, and the check that it worked</summary>
+    <p class="expl">Each pair shares its nearest station but sits at a different distance from it.
+    Their price difference still contains whatever lease difference they carry, so the measured
+    vintage rate above is subtracted from it. What remains is distance.</p>
+    <p class="expl"><b>The check.</b> Take pairs in the same band standing the same distance from
+    the station &mdash; within 50 m of each other. Nothing separates them, so after the lease comes
+    out they should read zero. They read <b>+${M['placebo']['adj']:.1f}</b> across
+    {M['placebo']['pairs']} pairs. That is the evidence the adjustment is working and that what is
+    left is the walk.</p>
+  </details>
+
+  <details><summary>Why the minutes are approximate, and the metres are not</summary>
+    <p class="expl">Distance is measured in a straight line to the nearest operational station and
+    converted to minutes at the engine's own pace. That conversion is <b>not reliable</b>: a
+    station is held as a single point when a large interchange spans several hundred metres, and
+    some geocodes sit about 100 m off. CityLife@Tampines reads 14 minutes here against a real
+    walking route of 10.</p>
+    <p class="expl">The metres survive this and the minutes do not. Both sides of a pair are
+    measured to the <b>same</b> station point, so an error in that point largely cancels in the
+    difference between them &mdash; which is why the three rows agree per 100 m. A minute
+    threshold applied to each project on its own gets no such cancellation. <b>Treat the band
+    names as labels for the metres, not as walking times.</b> Real routes would fix this.</p>
+  </details>
+
+  <details><summary>How a pair is built</summary>
+    <div class="cards" style="margin-top:6px">
+      <div class="card"><h4>Held constant</h4><ul>
+        <li>same <b>nearest station</b>, and it must be nearest for both</li>
+        <li>both inside <b>{M['catchment']:,} m</b> of it</li>
+        <li>within <b>{M['pair_cap']:,} m</b> of each other</li>
+        <li>identical <b>top-26 primary schools</b> within 1 km</li>
+        <li>median sizes within <b>20%</b>, bedroom by bedroom</li></ul></div>
+      <div class="card"><h4>Both sides must be</h4><ul>
+        <li>leasehold, with a known lease start</li>
+        <li><b>200 units</b> or more</li>
+        <li><b>5+ transactions</b> in the window</li>
+        <li>EC only once privatised &mdash; <b>TOP + 5</b></li></ul></div>
+      <div class="card"><h4>Not controlled</h4><ul>
+        <li><b>floor</b> and <b>facing</b> &mdash; the PSF series carries neither</li>
+        <li>which <b>side</b> of the station the project sits on</li>
+        <li>bus and shuttle access</li></ul></div>
+    </div>
+  </details>
+</section>
+
+<section id="judgement">
   <div class="sechead"><h2 class="disp">Still on judgement</h2></div>
   <table class="fig"><thead><tr><th>Term</th><th class="num">Constant</th><th>Status</th></tr></thead><tbody>
   <tr><th>Lease / vintage</th><td class="num big">$40 psf / yr</td>
     <td style="color:var(--gold-soft)">measured &mdash; ${BANDR[OLD_NM]:,.0f} and ${BANDR[NEW_NM]:,.0f}</td></tr>
   <tr><th>Tenure &middot; freehold vs leasehold</th><td class="num big">&divide; 1.15</td>
     <td class="nil">next &mdash; 1,255 of 1,844 developments are freehold and cannot pair on lease</td></tr>
-  <tr><th>MRT walk band</th><td class="num big">$50 / $200 / $250</td><td class="nil">not measured</td></tr>
+  <tr><th>MRT walk band</th><td class="num big">$50 / $200 / $250</td>
+    <td>measured &mdash; +${M['bands'][0]['adj']:,.0f} / +${M['bands'][1]['adj']:,.0f} /
+    +${M['bands'][2]['adj']:,.0f}, or ${M['slope100']:.0f} per 100 m</td></tr>
   <tr><th>GFA harmonisation</th><td class="num big">+7%</td><td class="nil">not measured</td></tr>
   <tr><th>Integrated development</th><td class="num big">+5%</td><td class="nil">not measured</td></tr>
   </tbody></table>

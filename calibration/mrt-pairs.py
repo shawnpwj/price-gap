@@ -61,7 +61,7 @@ vintage figure, so what is left is purely distance to the MRT.
     impossible inside a 308 m radius and rare inside 500 m. Every radius is reported
     so the screen can be ruled on the counts, not guessed.
 """
-import json, math, itertools, collections, statistics as st, os
+import json, math, itertools, collections, statistics as st, os, random
 
 DATA = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                     '..', '..', 'property-analyzer', 'data')
@@ -188,6 +188,43 @@ def dev_count(rows):
 def pair_count(rows):
     return len({(r['closer'], r['further']) for r in rows})
 
+KEYS = [('near|mid', 'Under 5 min vs 5-10 min'),
+        ('mid|far',  '5-10 min vs over 10 min'),
+        ('near|far', 'Under 5 min vs over 10 min')]
+
+def boot(g, B=4000, seed=17):
+    """Cluster bootstrap by PAIR — cells inside one pair are not independent."""
+    r = random.Random(seed); d = {}
+    for x in g: d.setdefault((x['closer'], x['further']), []).append(x)
+    k = list(d); o = []
+    for _ in range(B):
+        smp = [c for kk in (r.choice(k) for _ in k) for c in d[kk]]
+        o.append(st.mean([x['adj'] for x in smp]))
+    o.sort(); return o[int(.025*B)], o[int(.975*B)]
+
+def summary():
+    rows = build(CATCHMENT)
+    out = dict(cells=len(rows), pairs=pair_count(rows), devs=dev_count(rows),
+               near_m=NEAR_M, far_m=FAR_M, catchment=CATCHMENT, pair_cap=PAIR_CAP,
+               window=[CUT, LAST], engine={'near|mid': 50, 'mid|far': 200, 'near|far': 250},
+               bands=[])
+    for k, label in KEYS:
+        g = [r for r in rows if r['pairkey'] == k]
+        lo, hi = boot(g)
+        walk = st.mean([r['m_far'] - r['m_close'] for r in g])
+        adj  = st.mean([r['adj'] for r in g])
+        out['bands'].append(dict(key=k, label=label, adj=adj, lo=lo, hi=hi, walk=walk,
+                                 per100=adj/walk*100, cells=len(g),
+                                 pairs=pair_count(g), devs=dev_count(g)))
+    tp = [r for r in rows if r['b_close'] == r['b_far'] and (r['m_far'] - r['m_close']) < 50]
+    plo, phi = boot(tp)
+    out['placebo'] = dict(adj=st.mean([r['adj'] for r in tp]), lo=plo, hi=phi,
+                          cells=len(tp), pairs=pair_count(tp), devs=dev_count(tp))
+    xs = [r['m_far'] - r['m_close'] for r in rows]; ys = [r['adj'] for r in rows]
+    out['slope100'] = sum(x*y for x, y in zip(xs, ys)) / sum(x*x for x in xs) * 100
+    out['rows'] = rows
+    return out
+
 if __name__ == '__main__':
     print('window %s..%s   near <%.0fm  mid %.0f-%.0fm  far >%.0fm' % (CUT, LAST, NEAR_M, NEAR_M, FAR_M, FAR_M))
     print('eligible universe: %d leasehold developments' % len(P))
@@ -216,3 +253,13 @@ if __name__ == '__main__':
               % (r['bed'], r['closer'][:14], r['m_close'], r['b_close'], r['further'][:14],
                  r['m_far'], r['b_far'], r['ls_close'], r['ls_far'], r['raw'], r['adj']))
     if not ex: print('   (no qualifying cell)')
+
+    S = summary()
+    json.dump(S, open(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                   'mrt-pairs.json'), 'w'), indent=1)
+    print('\nwrote mrt-pairs.json  —  %d cells / %d pairs / %d developments' %
+          (S['cells'], S['pairs'], S['devs']))
+    for b in S['bands']:
+        print('  %-28s %+5.0f  [%+4.0f,%+4.0f]  %3d pairs  %3d devs  %5.1f psf/100m'
+              % (b['label'], b['adj'], b['lo'], b['hi'], b['pairs'], b['devs'], b['per100']))
+    print('  placebo %+.1f  ·  slope %+.1f psf per 100 m' % (S['placebo']['adj'], S['slope100']))

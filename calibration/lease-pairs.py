@@ -170,6 +170,41 @@ def cell(name, bed, cut):
     return dict(psf=st.median([s[m] for m in ms]), n=n,
                 sqft=st.median([q[m][1] for m in ms]), months=len(ms))
 
+def cell_between(name, bed, lo, hi):
+    """Same as cell(), but for an arbitrary month window — used by the vintage-vs-age test."""
+    s, q = psf.get(name, {}).get(bed), qh.get(name, {}).get(bed)
+    if not s or not q: return None
+    ms = [m for m in s if lo <= m <= hi and m in q]
+    if not ms: return None
+    n = sum(q[m][2] for m in ms)
+    if n < MIN_N: return None
+    return dict(psf=st.median([s[m] for m in ms]), n=n, sqft=st.median([q[m][1] for m in ms]))
+
+def build_between(lo, hi):
+    """The whole pair build against an arbitrary transaction window.
+
+    THE VINTAGE-VS-AGE TEST (Shawn asked, 2026-09-06): should the bands slide forward as
+    the stock ages? Run the identical method on a transaction window three years earlier.
+    If the effect is AGE, the band that reads high slides ~3 years later in the late run.
+    If it is CALENDAR VINTAGE, it sits still. IT SITS STILL — see the page."""
+    rows = []
+    for a, b in itertools.combinations(list(P), 2):
+        A, B = P[a], P[b]
+        if abs(A['ls'] - B['ls']) < MIN_GAP_YEARS: continue
+        if hav(A['lat'], A['lng'], B['lat'], B['lng']) > RADIUS_M: continue
+        if A['station'] != B['station']: continue
+        if A['schools'] != B['schools']: continue
+        old, new = (A, B) if A['ls'] < B['ls'] else (B, A)
+        for bd in BEDS:
+            co, cn = cell_between(old['name'], bd, lo, hi), cell_between(new['name'], bd, lo, hi)
+            if not co or not cn: continue
+            if abs(co['sqft'] - cn['sqft']) / max(co['sqft'], cn['sqft']) > SIZE_TOL: continue
+            rows.append(dict(older=old['name'], newer=new['name'], region=A['region'],
+                             ls_old=old['ls'], ls_new=new['ls'], gap=new['ls'] - old['ls'],
+                             psf_old=co['psf'], psf_new=cn['psf'], diff=cn['psf'] - co['psf'],
+                             bed=bd))
+    return rows
+
 def build(window):
     cut = months_back(LAST, window - 1)
     rows = []
@@ -330,6 +365,13 @@ if __name__ == '__main__':
           f'   a {pa:+.2f}  b {pb:+.2f}')
 
     d = os.path.dirname(os.path.abspath(__file__))
-    json.dump({**{str(w): out[w] for w in WINDOWS}, 'pooled24': pooled},
+    FIRST = min(m for p in psf.values() for b in p.values() for m in b)
+    early = build_between(FIRST, months_back(FIRST, -23))
+    print(f'\n  VINTAGE-VS-AGE TEST — same method on {FIRST}..{months_back(FIRST, -23)}: '
+          f'{len(early)} cells, {len({(r["older"],r["newer"]) for r in early})} pairs')
+
+    json.dump({**{str(w): out[w] for w in WINDOWS}, 'pooled24': pooled,
+               'early24': early, 'early_window': [FIRST, months_back(FIRST, -23)],
+               'late_window': [months_back(LAST, 23), LAST]},
               open(os.path.join(d, 'lease-pairs.json'), 'w'), indent=1)
     print(f'\nwrote lease-pairs.json')

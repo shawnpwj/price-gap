@@ -62,60 +62,62 @@ Every one of these is a ruling he gave, not a default. Do not quietly change one
 | bands | **by lease START only** | ruled 2026-09-06. Bedroom and region were tested and neither moves the number; they stay on the page behind an explain mark, never on its face |
 | scale | **dollars, never a percentage** | ruled 2026-09-06. Across base-PSF bands the $/yr holds at $26–30 while the %/yr falls away. The dollar is the invariant; the percentage is what made region look like a real split |
 
-### The estimator — THREE MEASURED BANDS, read at the midpoint
+### The answer — TWO bands, read at the MIDPOINT
 
-**226 developments · 231 pairs · 382 cells.** Read at the MIDPOINT of the two lease starts.
+**226 developments · 231 pairs · 382 cells.** 24 months of resale and sub-sale.
 
 | midpoint of the two lease starts | $ psf / yr | 95% | devs | pairs |
 |---|---|---|---|---|
 | up to 2010 | **$25** | 22.1–27.5 | 154 | 136 |
-| 2011–2013 | **$40** | 28.2–50.6 | 64 | 57 |
-| 2014 onward | **$47** | 40.8–52.8 | 56 | 38 |
+| 2011 onward | **$44** (a floor) | 38.6–49.8 | 103 | 95 |
 
-**COUNTING WORDS — get these right.** *Development* = one condo (226 appear). *Pair* = two
-neighbouring developments compared (231). *Cell* = one pair at one bedroom type, 1–4 per pair
-(382) — this is the unit the figures are computed on.
+Held-out error: flat 24.0k · **two bands 20.7k** · three bands 20.9k.
 
-**READ AT THE MIDPOINT.** Shawn broke the earlier lease-start bands in one question: *what do I
-use for a 2005-vs-2025 pair?* If the rate varies with vintage, the whole difference across an
-interval is the gap times the rate at its midpoint — so the midpoint form IS the blend, and a
-pair straddling any boundary needs no special handling. Do not go back to banding on `ls_old`.
+**COUNTING WORDS.** *Development* = one condo. *Pair* = two neighbours compared. *Cell* = one pair
+at one bedroom, 1–4 per pair — the unit every figure is computed on. He asked for this explicitly;
+always report developments alongside pairs.
 
-**TWO FITTED SHAPES DIED. DO NOT RESURRECT THEM.**
-A straight line on the midpoint ($20.9 + $1.40) ran low at both ends. A fitted knee (flat, then
-rising) fixed that on 168 pairs — and then MOVED when the screen widened to 231. The best knee is
-now anywhere in 1998–2008 and the fit changes under 2% across that whole span: **the knee is not
-identified.** Held-out error: flat 24.0k · line 21.4k · quadratic 20.2k · knee 20.7k · **bands
-20.9k**. The bands tie the fitted shapes and claim nothing the pairs cannot carry.
+**READ AT THE MIDPOINT.** He broke lease-start banding in one question: *what do I use for a
+2005-vs-2025 pair?* The midpoint form IS the blend, so a straddling pair needs no decision.
+**Never band on `ls_old` again.**
 
-**THE NEWEST BAND IS A FLOOR, NOT A FIGURE.** 56 developments, 38 pairs, and the rate was still
-climbing when the evidence ran out. Quote $47 as the least it can be.
+### THE BANDS DO NOT MOVE AS THE STOCK AGES — tested, 2026-09-06
 
-**NO MINIMUM LEASE GAP.** The old 5-year screen protected the per-pair MEAN, which divides each
-difference by its own gap. The fitted estimator weights by gap instead, so a 3-year pair carries
-3 years of leverage. Band rates are flat across every threshold. Do not put it back.
+He asked whether the ranges should slide forward each year, on the theory that this is really age
+and that lease decay will drag PSF down. **Ran the identical method on 2021-08..2023-07 sales,
+three years earlier (`build_between()`, stored as `early24`). The jump sits at the SAME CALENDAR
+BAND in both runs.** The 2012–2014 band read +$43 when its stock was 11 years old and +$49 now
+that it is 14. It aged four years and kept paying the high rate.
 
-**BEDROOM IS THE MATCH, NOT THE ANSWER.** Not in the equation — it is the stratum holding size
-constant, and the finest size resolution the data has. Pooling to one PSF per project matched on
-pooled size LOSES pairs (159 vs 231) and lets mix leak at ~-$214 psf per 100% of size.
-`build_pooled()` keeps it as a diagnostic.
+**So this is CALENDAR VINTAGE, not age.** Projects launched from about 2012 sold into a much
+steeper pricing era and have carried it since. The bands stay put; do not re-cut them by age.
 
-### The screens, and what widening them does
+**On decay — he is right about the mechanism and wrong about this gradient.** Decay bites on lease
+REMAINING, knee at 60–65 years. Here the older side has a median 74 years left and only 16 of 382
+cells are below the knee, so decay is nearly absent. And the gradient runs the OTHER way: the
+stock with MORE lease left (2011+, ~85 years) pays MORE, not less. Decay will arrive around the end
+of this decade as the OLDEST band steepening — a new figure for old stock, not a sliding boundary.
 
-**WALK BAND RETIRED (Shawn, 2026-09-06).** It required both sides in the same 5/10-minute walk
-band of their shared station. With distance already screened at 500 m that is redundant, and it
-cut arbitrarily — throwing out pairs 258–414 m apart on the same station because one sat at 640 m
-from the MRT and the other at 900 m. Cost 20 pairs at the new end alone (The Trilinq/Parc Clematis
-258 m, Oue Twin Peaks/Irwell Hill 329 m, Queens Peak/Stirling 387 m). 168 → 231 pairs.
+### What was tested (all recomputed 2026-09-06 — earlier literals had gone stale)
 
-**THE 200-UNIT FLOOR STAYS, AND THE DATA BACKS HIS ORIGINAL RULING.** Lowering it to 100 adds 33
-pairs, and those added pairs fitted alone read **$32.9 with a slope of $0.11** — a high, flat,
-directionless reading. Exactly the "a boutique block's PSF is one odd sale" problem he named on
-2026-09-06. Below 100 units nothing further arrives; they have no transaction depth.
+| tested | reads | verdict |
+|---|---|---|
+| bedroom, 2BR vs 3BR | $0.2 apart, p=0.95 | no difference |
+| region, up to 2010 | RCR $26 · OCR $27, p=0.89 | no difference |
+| **region, 2011 onward** | **RCR $62 · OCR $37, p<0.001** | **REAL** — why that band's interval is wide. Splitting does not predict better (27 RCR pairs), so one figure, disclosed |
+| the CCR | 19 cells | not measurable — all Marina Bay / Sentosa |
+| fitted curve or knee | moved with the sample | a line ran low at both ends; a knee then moved when the screen widened. **The knee is NOT identified — do not report one** |
+| dropping the 200-unit floor | added pairs read $33, no gradient | floor stays; his original ruling holds |
+| matching on size not bedroom | 159 pairs vs 231, mix leaks −$249 psf per 100% size | bedroom is the better control |
+| minimum lease gap | no change | retired; it protected an estimator this page does not use |
+| walk-band match | cost 20 new-end pairs at 258–414 m | retired |
 
-**THE REAL CEILING IS FREEHOLD, NOT THE SCREENS.** Of 1,844 developments in `dsi-index.json`,
-**1,255 are freehold** and structurally cannot pair on lease start. 446 are eligible leasehold at
-the 200-unit floor. That is what the tenure pass unlocks, and it is the reason it is next.
+**THE REAL CEILING IS FREEHOLD.** Of 1,844 developments in `dsi-index.json`, **1,255 are freehold**
+and structurally cannot pair on lease start. That is what the tenure pass unlocks.
+
+**NOTHING IN THE PAGE PROSE IS HARDCODED.** An earlier version carried p-values and coefficients
+as literals and every one of them went stale the moment the pair screen changed — two were still
+being displayed as fact after they had flipped. If you add a claim to `build-page.py`, compute it.
 
 ## Run it
 

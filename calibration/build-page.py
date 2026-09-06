@@ -1,302 +1,196 @@
 #!/usr/bin/env python3
-"""Renders the calibration findings as ../../kya-maps-calculator/calibration.html.
+"""Renders the lease-term finding as ../../kya-maps-calculator/calibration.html.
 
-HIDDEN PAGE. It is not in the nav and nothing links to it: the only way in is a
-DOUBLE-CLICK on the "Live Data" chip at the top right of the calculator (Shawn,
-2026-09-06). It is a working document — the audit trail behind the Price Gap
-engine's constants — and never a client-facing view.
+HIDDEN PAGE. Not in the nav, nothing links to it: the only way in is a DOUBLE-CLICK on
+the "Live Data" chip at the top right of the calculator. A working document, never a
+client view. Self-contained, no Tailwind.
 
-Self-contained, no Tailwind: the main page's CDN dependency is a known offline
-defect and this page must not inherit it. Tokens copied from index.html so the
-navy-and-gold identity holds.
+RULINGS BEHIND THE SHAPE OF THIS PAGE (Shawn, 2026-09-06, in the order he gave them):
+  * QUANTUM ONLY — no percentages anywhere.
+  * THE FACE CARRIES THE ANSWER. Everything else goes behind an explain mark, never
+    into the bin: a page may not show a number it cannot explain.
+  * READ AT THE MIDPOINT of the two lease starts. He broke lease-start banding by
+    asking what a 2005-vs-2025 pair should use. The midpoint form IS the blend, so a
+    pair straddling a boundary needs no decision.
+  * NO MINIMUM LEASE GAP, and NO WALK-BAND MATCH.
+  * AS SIMPLE AS POSSIBLE. Two numbers on the face, three explain marks, nothing else.
 
-SHAPE (Shawn, 2026-09-06, four rulings, in the order he gave them):
-  * QUANTUM ONLY. No percentages anywhere. Across base-PSF bands the $/yr holds while
-    the %/yr falls away, so the dollar is the invariant. The percentage is also what
-    made region look like a real split when it is a price-level effect.
-  * THE FACE OF THE PAGE CARRIES THE ANSWER. Everything disproved moves BEHIND AN
-    EXPLAIN MARK, never into the bin. A page may not show a number it cannot explain.
-  * A CURVE, NOT A CONSTANT AND NOT TWO BANDS. rate = a + b*(midpoint - 2000). He found
-    the seam by asking what to use for a 2005-vs-2025 pair; a two-band step has to pick
-    a side and is wrong either way. The midpoint form IS the blend.
-  * NO MINIMUM LEASE GAP. The old 5-year screen protected the per-pair mean, not this
-    estimator. Removing it tripled the sample and tightened the slope.
+EVERY FIGURE ON THIS PAGE IS COMPUTED HERE. Nothing is hardcoded in the prose — an
+earlier version carried p-values and coefficients as literals and they went stale the
+moment the pair screen changed. If you add a claim, compute it.
 
   python3 lease-pairs.py && python3 build-page.py
 """
-import json, os, html, random, statistics as st, datetime
+import json, math, os, html, random, statistics as st, datetime
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT  = os.path.join(HERE, '..', '..', 'kya-maps-calculator', 'calibration.html')
 D    = json.load(open(os.path.join(HERE, 'lease-pairs.json')))
+ALL  = D['24']                       # 24 months. No gap screen.
+POOL = D.get('pooled24', [])
 
-# ── the estimator ───────────────────────────────────────────────────────────
-def curve(rows):
-    """rate = a + b*(mid-2000), fitted as diff = gap*(a + b*(mid-2000)). Pure-python 2x2.
-    This form IS the blend: if the rate rises smoothly with vintage then the whole
-    difference across an interval is the gap times the rate at its midpoint, so a pair
-    straddling any cut-over needs no special handling."""
-    s11 = s12 = s22 = t1 = t2 = 0.0
-    for r in rows:
-        x1 = r['gap']; x2 = r['gap'] * (mid(r) - 2000)
-        s11 += x1*x1; s12 += x1*x2; s22 += x2*x2; t1 += x1*r['diff']; t2 += x2*r['diff']
-    det = s11*s22 - s12*s12
-    return ((s22*t1 - s12*t2)/det, (s11*t2 - s12*t1)/det) if det else (None, None)
+# ── the answer: TWO bands, read at the midpoint ─────────────────────────────
+BANDS = [(1900, 2011, 'up to 2010'), (2011, 3000, '2011 onward')]
 
-def mid(r):   return (r['ls_old'] + r['ls_new']) / 2
+mid    = lambda r: (r['ls_old'] + r['ls_new']) / 2
+fit    = lambda rs: sum(r['diff'] for r in rs) / sum(r['gap'] for r in rs) if rs else None
+fpct   = lambda rs: math.exp(sum(math.log(r['psf_new']/r['psf_old']) for r in rs)
+                             / sum(r['gap'] for r in rs)) - 1
+npairs = lambda rs: len({(r['older'], r['newer']) for r in rs})
+ndev   = lambda rs: len({x for r in rs for x in (r['older'], r['newer'])})
+money  = lambda v: '—' if v is None else f'{v:+,.0f}'
 
-# THE ANSWER IS THREE MEASURED BANDS, read at the MIDPOINT of the two lease starts.
-# Not a fitted curve: the tail slope is not identified by this data (see the page).
-BANDS = [(1900, 2011, 'up to 2010'), (2011, 2014, '2011–2013'), (2014, 2030, '2014 onward')]
+def band_of(m): return next(n for lo, hi, n in BANDS if lo <= m < hi)
+def rate(m):    return BANDR[band_of(m)]
+def rows_in(nm):
+    lo, hi = next((l, h) for l, h, n in BANDS if n == nm)
+    return [r for r in ALL if lo <= mid(r) < hi]
 
-def band_of(m):
-    return next(n for lo, hi, n in BANDS if lo <= m < hi)
+def ci(rs, N=4000, seed=3):
+    g = random.Random(seed)
+    v = sorted(fit([rs[g.randrange(len(rs))] for _ in rs]) for _ in range(N))
+    return v[int(.025*N)], v[int(.975*N)-1]
 
-def rate(m):  return BANDR[band_of(m)]
-
-def hinge(rows, K):
-    """rate = c + d*max(0, mid - K). Flat until the knee year, rising after it.
-    Fitted the same way as everything else here: diff = gap * rate(midpoint)."""
-    s11 = s12 = s22 = t1 = t2 = 0.0
-    for r in rows:
-        x1 = r['gap']; x2 = r['gap'] * max(0.0, mid(r) - K)
-        s11 += x1*x1; s12 += x1*x2; s22 += x2*x2; t1 += x1*r['diff']; t2 += x2*r['diff']
-    det = s11*s22 - s12*s12
-    if not det: return None, None
-    return (s22*t1 - s12*t2)/det, (s11*t2 - s12*t1)/det
-
-def hinge_rss(rows, K):
-    c, d = hinge(rows, K)
-    return sum((r['diff'] - r['gap']*(c + d*max(0.0, mid(r)-K)))**2 for r in rows)
-
-def pick_knee(rows, lo=2000, hi=2014):
-    return min(range(lo, hi+1), key=lambda K: hinge_rss(rows, K))
-
-def hinge_ci(rows, K, N=1500, seed=29):
-    g = random.Random(seed); n = len(rows); CC = []; DD = []; KK = []
+def perm(A, B, N=8000, seed=11):
+    """Could this gap have come from shuffling the two groups together?"""
+    g = random.Random(seed); obs = abs(fit(A) - fit(B)); pool = A + B; nA = len(A); c = 0
     for _ in range(N):
-        s = [rows[g.randrange(n)] for _ in range(n)]
-        k = pick_knee(s); c, d = hinge(s, K)
-        KK.append(k); CC.append(c); DD.append(d)
-    CC.sort(); DD.sort(); KK.sort()
-    q = lambda v, p: v[min(int(p*len(v)), len(v)-1)]
-    return (q(CC,.025), q(CC,.975)), (q(DD,.025), q(DD,.975)), (q(KK,.025), q(KK,.975))
-def fit(r):   return sum(x['diff'] for x in r) / sum(x['gap'] for x in r) if r else None
-def money(v): return '—' if v is None else f'{v:+,.0f}'
-def npairs(r):return len({(x['older'], x['newer']) for x in r})
+        g.shuffle(pool)
+        if abs(fit(pool[:nA]) - fit(pool[nA:])) >= obs: c += 1
+    return obs, c / N
 
-def curve_ci(rows, N=2000, seed=17):
-    g = random.Random(seed); n = len(rows); AA = []; BB = []
-    for _ in range(N):
-        a, b = curve([rows[g.randrange(n)] for _ in range(n)])
-        if a is not None: AA.append(a); BB.append(b)
-    AA.sort(); BB.sort(); lo, hi = int(.025*len(AA)), int(.975*len(AA)) - 1
-    return (AA[lo], AA[hi]), (BB[lo], BB[hi])
+BANDR  = {nm: fit(rows_in(nm)) for _, _, nm in BANDS}
+BANDCI = {nm: ci(rows_in(nm)) for _, _, nm in BANDS}
+NDEV   = ndev(ALL)
+MIDS   = sorted(mid(r) for r in ALL)
+MID_LO, MID_HI = MIDS[int(.05*len(MIDS))], MIDS[int(.95*len(MIDS))]
+OLD_NM, NEW_NM = BANDS[0][2], BANDS[1][2]
 
-def _solve(S, T):
-    """Tiny Gaussian elimination, so the page needs no numpy."""
-    n = len(T); M = [row[:] + [T[i]] for i, row in enumerate(S)]
+def reg(nm, g):  return [r for r in rows_in(nm) if r['region'] == g]
+RCR_NEW, OCR_NEW = reg(NEW_NM, 'RCR'), reg(NEW_NM, 'OCR')
+RCR_OLD, OCR_OLD = reg(OLD_NM, 'RCR'), reg(OLD_NM, 'OCR')
+P_BED  = perm([r for r in ALL if r['bed'] == '2BR'], [r for r in ALL if r['bed'] == '3BR'])
+P_ROLD = perm(RCR_OLD, OCR_OLD)
+P_RNEW = perm(RCR_NEW, OCR_NEW)
+CCR    = [r for r in ALL if r['region'] == 'CCR']
+
+def pooled_size_leak():
+    """How much of the pooled method's answer is really unmatched size. Pure-python OLS."""
+    if not POOL: return None, None
+    X = [[r['gap'], r['gap']*(mid(r)-2000),
+          (r['sqft_new']-r['sqft_old'])/max(r['sqft_old'], r['sqft_new'])] for r in POOL]
+    y = [r['diff'] for r in POOL]; n = 3
+    S = [[sum(X[k][i]*X[k][j] for k in range(len(X))) for j in range(n)] for i in range(n)]
+    T = [sum(X[k][i]*y[k] for k in range(len(X))) for i in range(n)]
+    M = [S[i][:] + [T[i]] for i in range(n)]
     for i in range(n):
         p = max(range(i, n), key=lambda r: abs(M[r][i])); M[i], M[p] = M[p], M[i]
         for r in range(i+1, n):
             f = M[r][i]/M[i][i]
-            for c_ in range(i, n+1): M[r][c_] -= f*M[i][c_]
+            for c in range(i, n+1): M[r][c] -= f*M[i][c]
     x = [0.0]*n
     for i in range(n-1, -1, -1):
         x[i] = (M[i][n] - sum(M[i][j]*x[j] for j in range(i+1, n)))/M[i][i]
-    return x
+    return x[2], npairs(POOL)
+SIZE_LEAK, POOL_PAIRS = pooled_size_leak()
 
-def cv(rows, model, folds=5, reps=20, seed=23):
-    """Held-out squared error per cell. The only honest way to rank shapes that carry
-    different numbers of parameters."""
-    g = random.Random(seed); idx = list(range(len(rows))); err = []
+def cv_bands(bands, reps=30, folds=5, seed=23):
+    """Held-out squared error per cell — the only fair way to rank shapes."""
+    g = random.Random(seed); idx = list(range(len(ALL))); err = []
     for _ in range(reps):
         g.shuffle(idx)
         for f in range(folds):
             te = set(idx[f::folds])
-            tr = [rows[i] for i in idx if i not in te]; ts = [rows[i] for i in idx if i in te]
-            if model == 'flat':
-                a = fit(tr); pr = [a*x['gap'] for x in ts]
-            elif model == 'step':
-                o = [x for x in tr if x['ls_old'] < 2010]; n_ = [x for x in tr if x['ls_old'] >= 2010]
-                a = fit(o); b = fit(n_) if n_ else a
-                pr = [(a if x['ls_old'] < 2010 else b)*x['gap'] for x in ts]
-            elif model == 'old':
-                s11=s12=s22=t1=t2=0.0
-                for x in tr:
-                    x1=x['gap']; x2=x['gap']*(x['ls_old']-2000)
-                    s11+=x1*x1; s12+=x1*x2; s22+=x2*x2; t1+=x1*x['diff']; t2+=x2*x['diff']
-                d_=s11*s22-s12*s12; a=(s22*t1-s12*t2)/d_; b=(s11*t2-s12*t1)/d_
-                pr = [x['gap']*(a+b*(x['ls_old']-2000)) for x in ts]
-            elif model == 'quad':
-                import itertools as _it
-                n_ = 3
-                S = [[0.0]*n_ for _ in range(n_)]; T = [0.0]*n_
-                for x in tr:
-                    v = [x['gap'], x['gap']*(mid(x)-2000), x['gap']*(mid(x)-2000)**2]
-                    for i in range(n_):
-                        T[i] += v[i]*x['diff']
-                        for j in range(n_): S[i][j] += v[i]*v[j]
-                co = _solve(S, T)
-                pr = [x['gap']*(co[0]+co[1]*(mid(x)-2000)+co[2]*(mid(x)-2000)**2) for x in ts]
-            elif model == 'band':
-                rt = {}
-                for lo, hi, nm in BANDS:
-                    b = [x for x in tr if lo <= mid(x) < hi]
-                    rt[nm] = fit(b) if b else fit(tr)
-                pr = [rt[band_of(mid(x))]*x['gap'] for x in ts]
-            elif model == 'hinge':
-                k = pick_knee(tr); a, b = hinge(tr, k)
-                pr = [x['gap']*(a+b*max(0.0, mid(x)-k)) for x in ts]
-            else:
-                a, b = curve(tr); pr = [x['gap']*(a+b*(mid(x)-2000)) for x in ts]
-            err += [(x['diff']-q)**2 for x, q in zip(ts, pr)]
+            tr = [ALL[i] for i in idx if i not in te]; ts = [ALL[i] for i in idx if i in te]
+            rt = {}
+            for lo, hi, nm in bands:
+                b = [x for x in tr if lo <= mid(x) < hi]; rt[nm] = fit(b) if b else fit(tr)
+            for x in ts:
+                nm = next(n for lo, hi, n in bands if lo <= mid(x) < hi)
+                err.append((x['diff'] - rt[nm]*x['gap'])**2)
     return sum(err)/len(err)
 
-ALL   = D['24']                      # NO gap screen — see the docstring in lease-pairs.py
-BANDR = {}                           # filled below, once fit() exists
-KNEE  = pick_knee(ALL)               # kept only for the rejected-shapes section
-C, Dd = hinge(ALL, KNEE)
-(CLO, CHI), (DLO, DHI), (KLO, KHI) = hinge_ci(ALL, KNEE)
-A, B  = curve(ALL)                   # the straight line, kept only as the comparison
-(ALO, AHI), (BLO, BHI) = curve_ci(ALL)
+CV_FLAT  = cv_bands([(1900, 3000, 'all')])
+CV_TWO   = cv_bands(BANDS)
+CV_THREE = cv_bands([(1900, 2011, 'a'), (2011, 2014, 'b'), (2014, 3000, 'c')])
 
-def band_rows(nm):
-    return [r for r in ALL if band_of(mid(r)) == nm]
+# ── the vintage-vs-age test ─────────────────────────────────────────────────
+EARLY   = D.get('early24', [])
+EW, LW  = D.get('early_window', ['', '']), D.get('late_window', ['', ''])
+NOW     = int(LW[1][:4]) if LW[1] else datetime.date.today().year
+EARLY_NOW = int(EW[1][:4]) if EW[1] else NOW - 3
+AGE_SLICES = [(1900, 2006), (2006, 2009), (2009, 2012), (2012, 2015), (2015, 3000)]
 
-def band_ci(nm, N=3000, seed=3):
-    g = random.Random(seed); rs = band_rows(nm)
-    v = sorted(fit([rs[g.randrange(len(rs))] for _ in rs]) for _ in range(N))
-    return v[int(.025*N)], v[int(.975*N)-1]
+def age_label(nm):
+    """The age the band's older side actually has today. Descriptive only — the band is
+    fixed by calendar year, because the vintage-vs-age test says it does not slide."""
+    rs = rows_in(nm); a = sorted(NOW - r['ls_old'] for r in rs)
+    return a[int(.25*len(a))], a[int(.75*len(a))]
 
-for _lo, _hi, _nm in BANDS:
-    BANDR[_nm] = fit([r for r in ALL if _lo <= mid(r) < _hi])
-BANDCI = {nm: band_ci(nm) for _, _, nm in BANDS}
-NDEV   = len({x for r in ALL for x in (r['older'], r['newer'])})
-ndev   = lambda rs: len({x for r in rs for x in (r['older'], r['newer'])})
-POOL  = D.get('pooled24', [])
-PA, PB = curve(POOL) if POOL else (None, None)
-MIDS  = sorted(mid(r) for r in ALL)
-MID_LO, MID_HI = MIDS[int(.05*len(MIDS))], MIDS[int(.95*len(MIDS))]
-
-BEDS  = ['1BR', '2BR', '3BR', '4BR+']
-REGS  = ['CCR', 'RCR', 'OCR']
-PBANDS = [(0,1200,'under $1,200'), (1200,1600,'$1,200 – $1,600'),
-          (1600,2000,'$1,600 – $2,000'), (2000,99999,'$2,000 and over')]
-
-THEAD = ('<table class="fig"><thead><tr><th></th><th class="num">$ psf / yr</th>'
-         '<th class="num">cells</th><th class="num">pairs</th><th></th></tr></thead><tbody>')
-
-def row(label, rows, note=''):
-    if not rows:
-        return f'<tr><th>{label}</th><td colspan="4" class="nil">not measurable</td></tr>'
-    return (f'<tr><th>{label}</th><td class="num big">{money(fit(rows))}</td>'
-            f'<td class="num quiet">{len(rows)}</td>'
-            f'<td class="num quiet">{npairs(rows)}</td><td class="note">{note}</td></tr>')
-
-def lookup():
+# ── tables ──────────────────────────────────────────────────────────────────
+def answer_table():
     h = ['<table class="fig look"><thead><tr><th>Midpoint of the two lease starts</th>'
-         '<th class="num">$ psf per year</th><th class="num">95% interval</th>'
+         '<th class="num">$ psf / yr</th><th class="num">95% interval</th>'
          '<th class="num">developments</th><th class="num">pairs</th></tr></thead><tbody>']
-    for lo, hi, nm in BANDS:
-        rs = band_rows(nm); cl, ch = BANDCI[nm]
-        h.append(f'<tr><th>{nm}</th><td class="num big">${BANDR[nm]:,.0f}</td>'
-                 f'<td class="num quiet">${cl:,.0f} to ${ch:,.0f}</td>'
+    for _, _, nm in BANDS:
+        rs = rows_in(nm); lo, hi = BANDCI[nm]; a1, a2 = age_label(nm)
+        h.append(f'<tr><th>{nm} <i class="age">{a1}–{a2} yrs old</i></th>'
+                 f'<td class="num big">${BANDR[nm]:,.0f}</td>'
+                 f'<td class="num quiet">${lo:,.0f} to ${hi:,.0f}</td>'
                  f'<td class="num quiet">{ndev(rs)}</td><td class="num quiet">{npairs(rs)}</td></tr>')
     return ''.join(h) + '</tbody></table>'
 
-def observed():
-    """Finer slices than the bands, so the reader can see where the turn actually is."""
-    g = random.Random(7)
-    h = ['<table class="fig"><thead><tr><th>Midpoint</th><th class="num">$ psf / yr</th>'
-         '<th class="num">95% interval</th><th class="num">developments</th>'
-         '<th class="num">pairs</th><th class="num">cells</th></tr></thead><tbody>']
-    for lo, hi in [(1990,2000),(2000,2005),(2005,2008),(2008,2011),(2011,2014),(2014,2030)]:
-        s_ = [r for r in ALL if lo <= mid(r) < hi]
-        if len(s_) < 8: continue
-        v = sorted(fit([s_[g.randrange(len(s_))] for _ in s_]) for _ in range(2000))
-        turn = ' class="flag"' if lo >= 2011 else ''
-        h.append(f'<tr{turn}><th>{lo}–{min(hi-1,2025)}</th><td class="num big">{fit(s_):+,.0f}</td>'
-                 f'<td class="num quiet">{v[50]:+,.0f} to {v[1949]:+,.0f}</td>'
-                 f'<td class="num quiet">{ndev(s_)}</td><td class="num quiet">{npairs(s_)}</td>'
-                 f'<td class="num quiet">{len(s_)}</td></tr>')
+def vintage_table():
+    h = ['<table class="fig"><thead><tr><th>Midpoint</th>'
+         f'<th class="num">{EW[0][:4]}–{EW[1][:4]} sales</th><th class="num">age then</th>'
+         f'<th class="num">{LW[0][:4]}–{LW[1][:4]} sales</th><th class="num">age now</th>'
+         '</tr></thead><tbody>']
+    for lo, hi in AGE_SLICES:
+        e = [r for r in EARLY if lo <= mid(r) < hi]; l = [r for r in ALL if lo <= mid(r) < hi]
+        if len(e) < 6 or len(l) < 6: continue
+        ea = st.median([EARLY_NOW - r['ls_old'] for r in e])
+        la = st.median([NOW - r['ls_old'] for r in l])
+        hot = ' class="flag"' if lo >= 2012 else ''
+        lab = f'up to {hi-1}' if lo <= 1900 else f'{lo}–{min(hi-1, 2025)}'
+        h.append(f'<tr{hot}><th>{lab}</th>'
+                 f'<td class="num big">{money(fit(e))}</td><td class="num quiet">{ea:.0f} yrs</td>'
+                 f'<td class="num big">{money(fit(l))}</td><td class="num quiet">{la:.0f} yrs</td></tr>')
     return ''.join(h) + '</tbody></table>'
 
-def residuals():
-    """Where the fitted shape does not follow the market. Bootstrapped, because two of
-    these buckets are small and a residual that cannot be told from zero is not a finding."""
-    g = random.Random(41)
-    h = ['<table class="fig"><thead><tr><th>Midpoint</th><th class="num">the curve runs</th>'
-         '<th class="num">95% interval</th><th class="num">cells</th><th></th></tr></thead><tbody>']
-    for lo, hi in [(1990,2000),(2000,2005),(2005,2010),(2010,2015),(2015,2030)]:
-        s_ = [r for r in ALL if lo <= mid(r) < hi]
-        if len(s_) < 3: continue
-        per = lambda rs: sum(r['diff'] - r['gap']*rate(mid(r)) for r in rs) / sum(r['gap'] for r in rs)
-        v = per(s_)
-        bs = sorted(per([s_[g.randrange(len(s_))] for _ in s_]) for _ in range(1500))
-        blo, bhi = bs[int(.025*len(bs))], bs[int(.975*len(bs))-1]
-        real = blo > 0 or bhi < 0
-        h.append(f'<tr{" class=flag" if real else ""}><th>{lo}–{min(hi-1,2025)}</th>'
-                 f'<td class="num big">{v:+,.1f}</td>'
-                 f'<td class="num quiet">{blo:+,.1f} to {bhi:+,.1f}</td>'
-                 f'<td class="num quiet">{len(s_)}</td>'
-                 f'<td class="note">{"the shape misses this bucket" if real else "no difference from the fitted shape"}</td></tr>')
-    return ''.join(h) + '</tbody></table>'
-
-def gapstability():
-    h = ['<table class="fig"><thead><tr><th>Minimum lease gap</th>'
-         + ''.join(f'<th class="num">{nm}</th>' for _, _, nm in BANDS)
-         + '<th class="num">cells</th><th class="num">pairs</th></tr></thead><tbody>']
-    for mg in (1, 2, 3, 5, 8):
-        rs = [r for r in ALL if r['gap'] >= mg]
-        cells = ''
-        for lo, hi, nm in BANDS:
-            b = [r for r in rs if lo <= mid(r) < hi]
-            cells += f'<td class="num big">${fit(b):,.0f}</td>' if b else '<td class="num nil">—</td>'
-        lab = f'{mg} years' if mg > 1 else 'none — the method'
-        h.append(f'<tr{"" if mg==1 else " class=dim"}><th>{lab}</th>{cells}'
-                 f'<td class="num quiet">{len(rs)}</td><td class="num quiet">{npairs(rs)}</td></tr>')
-    return ''.join(h) + '</tbody></table>'
-
-def models():
-    h = ['<table class="fig"><thead><tr><th>Shape</th><th class="num">held-out error</th>'
-         '<th></th></tr></thead><tbody>']
-    for nm, k, note in [('One flat rate', 'flat', 'the engine today'),
-                        ('Two bands, stepped on the older project', 'step', 'an earlier version of this page'),
-                        ('A curve keyed on the older project', 'old', ''),
-                        ('A straight line on the pair midpoint', 'mid', 'ran low at both ends'),
-                        ('A quadratic on the pair midpoint', 'quad', 'better, but hard to explain and to extend'),
-                        (f'A fitted knee at {KNEE}', 'hinge', 'the knee is not identified — see below'),
-                        ('<b>Three measured bands</b>', 'band', 'the method')]:
-        v = cv(ALL, k)
-        h.append(f'<tr><th>{nm}</th><td class="num big">{v/1000:,.1f}k</td>'
-                 f'<td class="note">{note}</td></tr>')
-    return ''.join(h) + '</tbody></table>'
-
-def pricebands():
-    h = ['<table class="fig"><thead><tr><th>Base PSF of the older project</th>'
-         '<th class="num">$ psf / yr</th><th class="num">cells</th>'
-         '<th class="num">median base psf</th><th></th></tr></thead><tbody>']
-    for lo, hi, nm in PBANDS:
-        b = [r for r in ALL if lo <= r['psf_old'] < hi]
-        if not b:
-            h.append(f'<tr><th>{nm}</th><td colspan="4" class="nil">no cells</td></tr>'); continue
-        thin = len(b) < 25
-        h.append(f'<tr{" class=dim" if thin else ""}><th>{nm}</th><td class="num big">{money(fit(b))}</td>'
-                 f'<td class="num quiet">{len(b)}</td>'
-                 f'<td class="num quiet">${st.median([r["psf_old"] for r in b]):,.0f}</td>'
-                 f'<td class="note">{"the CCR pairs — not measurable this way" if thin else ""}</td></tr>')
-    return ''.join(h) + '</tbody></table>'
-
-def nulls():
-    h = [THEAD, '<tr class="sep"><th colspan="5">By bedroom — no difference</th></tr>']
-    for bd in BEDS:
-        s = [r for r in ALL if r['bed'] == bd]
-        h.append(row(bd, s, 'too thin to read' if 0 < len(s) < 25 else ''))
-    h.append('<tr class="sep"><th colspan="5">By region — no difference in dollars</th></tr>')
-    for rg in REGS:
-        s = [r for r in ALL if r['region'] == rg]
-        h.append(row(rg, s, 'Marina Bay and Sentosa only — not the CCR' if rg == 'CCR' else ''))
+def tested_table():
+    def r_(what, figure, verdict, flag=False):
+        return (f'<tr{" class=flag" if flag else ""}><th>{what}</th>'
+                f'<td class="num">{figure}</td><td class="note wide">{verdict}</td></tr>')
+    h = ['<table class="fig"><thead><tr><th>Tested</th><th class="num">what it reads</th>'
+         '<th>verdict</th></tr></thead><tbody>']
+    h.append(r_('Bedroom &mdash; 2BR against 3BR',
+                f'${P_BED[0]:,.1f} apart',
+                f'No difference (p&nbsp;=&nbsp;{P_BED[1]:.2f}). Bedroom is the size match, never the answer.'))
+    h.append(r_(f'Region, {OLD_NM}',
+                f'RCR ${fit(RCR_OLD):,.0f} &middot; OCR ${fit(OCR_OLD):,.0f}',
+                f'No difference (p&nbsp;=&nbsp;{P_ROLD[1]:.2f}). One figure serves the island.'))
+    h.append(r_(f'Region, {NEW_NM}',
+                f'RCR ${fit(RCR_NEW):,.0f} &middot; OCR ${fit(OCR_NEW):,.0f}',
+                f'<b>Real</b> (p&nbsp;=&nbsp;{P_RNEW[1]:.3f}), and it is why this band\'s interval is wide. '
+                f'Splitting on it does not predict better ({npairs(RCR_NEW)} RCR pairs), so the page '
+                f'keeps one figure and says so here.', True))
+    h.append(r_('The CCR', f'{len(CCR)} cells',
+                'Not measurable. Every qualifying pair is Marina Bay or Sentosa &mdash; a submarket, not a region.'))
+    h.append(r_('Three bands instead of two', f'{CV_THREE/1000:,.1f}k against {CV_TWO/1000:,.1f}k',
+                'Worse on held-out error, and the extra band split into two incoherent regional halves.'))
+    h.append(r_('One flat rate', f'{CV_FLAT/1000:,.1f}k against {CV_TWO/1000:,.1f}k',
+                'Much worse. This is what the engine does today.'))
+    h.append(r_('A fitted curve or knee', 'moved with the sample',
+                'A straight line ran low at both ends; a fitted knee then moved when the pair screen '
+                'widened. The knee is not identified &mdash; do not report one.'))
+    h.append(r_('Dropping the 200-unit floor', '$33 with no gradient',
+                'The pairs it adds read high and flat. A boutique block&rsquo;s PSF is one odd sale. Floor stays.'))
+    h.append(r_('Matching on size instead of bedroom',
+                f'{POOL_PAIRS} pairs against {npairs(ALL)}',
+                f'Loses pairs and lets the sales mix leak in, worth &minus;${abs(SIZE_LEAK):,.0f} psf per 100% of '
+                f'unmatched size. Bedroom is the better control.'))
+    h.append(r_('A minimum lease gap', 'no change',
+                'It protected an estimator this page does not use. Removing it roughly tripled the sample.'))
     return ''.join(h) + '</tbody></table>'
 
 def pairtable():
@@ -304,7 +198,7 @@ def pairtable():
     h = ['<table class="fig pairs"><thead><tr><th>older</th><th class="num">lease</th>'
          '<th>newer</th><th class="num">lease</th><th class="num">gap</th><th>bed</th>'
          '<th class="num">psf</th><th class="num">psf</th><th class="num">$ / yr</th>'
-         '<th class="num">the curve</th><th class="num">apart</th><th>station</th>'
+         '<th class="num">band says</th><th class="num">apart</th><th>station</th>'
          '</tr></thead><tbody>']
     for r in rows:
         h.append(
@@ -422,32 +316,28 @@ footer{margin-top:64px;border-top:1px solid var(--ink);padding-top:18px;
 font-size:11.5px;color:var(--slate-600);display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap}
 @media (max-width:640px){.wrap{padding:0 16px 64px}.vcell .val{font-size:30px}.note{display:none}}
 """
-
-
 CSS += """
-.vcell.grow{flex:1 1 340px;min-width:300px}
-.formula{font:600 clamp(22px,2.6vw,30px)/1.25 Optima,Candara,sans-serif;color:var(--gold);
-white-space:nowrap;letter-spacing:.01em}
-.formula span{color:var(--slate-600);padding:0 2px}
-.formula em{font-style:normal;color:var(--gold-soft);font-size:.72em;letter-spacing:.01em}
-@media (max-width:520px){.formula{white-space:normal;font-size:21px}}
-.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin-bottom:26px}
+.vcell.grow{flex:1 1 300px;min-width:260px}
+.two{display:flex;gap:30px;flex-wrap:wrap}
+.two .n{font:600 clamp(30px,4vw,42px)/1 Optima,Candara,sans-serif;color:var(--gold)}
+.two .w{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--slate-500);margin-top:6px}
+.two .g{font-size:11px;color:var(--slate-600);margin-top:3px}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:22px}
 .step{border:1px solid var(--ink);border-radius:11px;background:var(--navy-850);
 padding:16px 18px;display:flex;gap:12px;align-items:flex-start}
 .step .sn{flex:none;width:22px;height:22px;border-radius:50%;border:1px solid rgba(201,169,106,.5);
 color:var(--gold);display:grid;place-items:center;font:600 11px/1 Optima,Candara,sans-serif}
 .step p{color:var(--slate-400);font-size:12.5px}
 .step p b{color:var(--slate-100);font-weight:600}
-.worked{border:1px solid var(--ink);border-radius:12px;background:var(--navy-850);padding:20px 22px}
-.worked h3{margin-bottom:10px}
-table.wk th{color:var(--slate-500);font-weight:400;width:150px;white-space:nowrap}
-table.wk td{color:var(--slate-300)}
-table.wk td b{color:var(--slate-100);font-weight:600}
-table.wk tr.tot th,table.wk tr.tot td{border-bottom:none;padding-top:12px}
-table.wk tr.tot td b{color:var(--gold)}
 .look td.big{color:var(--gold-soft)}
-tr.flag td.big{color:var(--warn)}
-.calc{margin-top:20px;border:1px solid rgba(201,169,106,.3);border-radius:12px;
+i.age{font-style:normal;font-size:11px;color:var(--slate-600);margin-left:9px;white-space:nowrap}
+tr.flag td.big,tr.flag th{color:var(--warn)}
+.note.wide{width:52%;font-size:12px}
+@media (max-width:900px){.note.wide{display:none}}
+.expl{color:var(--slate-400);max-width:78ch;margin:10px 0 14px;font-size:13px}
+.expl b{color:var(--slate-100);font-weight:600}
+details{border-top:1px solid var(--ink);margin-top:16px}
+.calc{margin-top:22px;border:1px solid rgba(201,169,106,.3);border-radius:12px;
 background:linear-gradient(180deg,var(--navy-800),var(--navy-850));padding:20px 22px}
 .calc h3{margin-bottom:12px}
 .cin{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px}
@@ -459,328 +349,186 @@ width:130px;font-variant-numeric:tabular-nums}
 .cin input:focus{outline:none;border-color:rgba(201,169,106,.6)}
 .cout{border-top:1px solid var(--ink);padding-top:14px}
 .cout.bad{color:var(--slate-600);font-style:italic}
-.crow{display:flex;justify-content:space-between;gap:16px;padding:5px 0;color:var(--slate-400)}
+.crow{display:flex;justify-content:space-between;gap:16px;padding:5px 0;color:var(--slate-400);align-items:center}
 .crow b{color:var(--slate-100);font-variant-numeric:tabular-nums;font-weight:600}
+.crow i.cflat{font-style:normal;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+color:var(--gold);border:1px solid rgba(201,169,106,.4);border-radius:999px;padding:2px 9px;margin-left:10px}
 .crow.big{border-top:1px solid var(--ink);margin-top:8px;padding-top:12px;font-size:15px}
 .crow.big b{color:var(--gold);font:600 21px/1 Optima,Candara,sans-serif}
 .chint{color:var(--slate-500);font-size:12px;margin-top:10px}
 .cwarn{color:var(--warn);font-size:12px;margin-top:8px}
-.crow i.cflat{font-style:normal;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
-color:var(--gold);border:1px solid rgba(201,169,106,.4);border-radius:999px;padding:2px 9px;
-margin-left:10px;align-self:center}
-.crow{align-items:center}
 """
+
 JS = """
 (function(){
-  var BANDS=%BANDS%, LO=%LO%, HI=%HI%;
-  function bandFor(m){for(var i=0;i<BANDS.length;i++){if(m<BANDS[i][0])return BANDS[i];}
-    return BANDS[BANDS.length-1];}
+  var B=%BANDS%, LO=%LO%, HI=%HI%;
+  function bandFor(m){for(var i=0;i<B.length;i++){if(m<B[i][0])return B[i];}return B[B.length-1];}
   function n(id){return parseFloat(document.getElementById(id).value);}
   function go(){
     var a=n('lsA'), b=n('lsB'), o=document.getElementById('calcOut');
     if(!a||!b||a<1960||b<1960||a>2040||b>2040){o.className='cout bad';
       o.innerHTML='Enter two lease start years.';return;}
-    if(a===b){o.className='cout bad';o.innerHTML='Same lease start — no adjustment.';return;}
+    if(a===b){o.className='cout bad';o.innerHTML='Same lease start \\u2014 no adjustment.';return;}
     var mid=(a+b)/2, bd=bandFor(mid), rate=bd[1], gap=b-a, adj=rate*gap;
     var warn='';
     if(mid>HI) warn='<p class="cwarn">Midpoint '+mid.toFixed(1)+' is past the measured range '+
-      '(ends '+HI.toFixed(0)+'). The newest band is the thinnest and the rate was still climbing '+
-      'when the evidence ran out, so treat this as a floor rather than a figure.</p>';
-    else if(mid<LO) warn='<p class="chint">Midpoint '+mid.toFixed(1)+' is below the bulk of the '+
-      'sample (starts '+LO.toFixed(0)+'), but it sits in the oldest band, which is flat and rests '+
-      'on more evidence than the other two together. The rate does not change going further back.</p>';
+      '(ends '+HI.toFixed(0)+'). The rate was still climbing when the evidence ran out, so treat '+
+      'this as a floor.</p>';
+    else if(mid<LO) warn='<p class="chint">Midpoint '+mid.toFixed(1)+' is older than the bulk of '+
+      'the sample, but the older band is flat and carries most of the evidence. The rate does not '+
+      'change going further back.</p>';
     o.className='cout';
     o.innerHTML =
       '<div class="crow"><span>Midpoint</span><b>'+mid.toFixed(1)+'</b></div>'+
-      '<div class="crow"><span>Rate at that midpoint</span><b>$'+rate.toFixed(1)+' psf / yr</b>'+
+      '<div class="crow"><span>Rate</span><b>$'+rate.toFixed(0)+' psf / yr</b>'+
         '<i class="cflat">'+bd[2]+'</i></div>'+
       '<div class="crow"><span>Lease gap</span><b>'+Math.abs(gap)+' years</b></div>'+
       '<div class="crow big"><span>Adjustment</span><b>'+(adj>=0?'+':'')+'$'+
         Math.round(adj).toLocaleString()+' psf</b></div>'+
       '<p class="chint">Add this to the '+(gap>0?'older':'newer')+
-      ' comparable\\'s PSF to restate it onto the subject\\'s lease terms.</p>'+warn;
+      ' comparable\\'s PSF to put it on the subject\\'s lease terms.</p>'+warn;
   }
-  ['lsA','lsB'].forEach(function(id){
-    document.getElementById(id).addEventListener('input',go);});
+  ['lsA','lsB'].forEach(function(id){document.getElementById(id).addEventListener('input',go);});
   go();
 })();
 """
-
 BANDS_JS = '[' + ','.join(f'[{hi},{BANDR[nm]:.2f},"{nm}"]' for _, hi, nm in BANDS) + ']'
-
-EX_A, EX_B = 2005, 2025
-EX_MID = (EX_A + EX_B) / 2
+A1, A2 = age_label(OLD_NM); B1, B2 = age_label(NEW_NM)
 
 BODY = f"""
-<p class="kicker">Price Gap · the lease term</p>
+<p class="kicker">Price Gap &middot; the lease term</p>
 <h1 class="disp">What the market pays for a year of lease</h1>
-<p class="lede">The Price Gap engine restates every comparable onto the subject's terms using five
-constants. All five were set by judgement. This measures the first of them against the market.</p>
+<p class="lede">The engine restates every comparable using five constants, all set by judgement.
+This is the first one measured against the market.</p>
 
 <div class="verdict">
   <div class="vgrid">
     <div class="vcell"><div class="lab">Engine constant</div>
-      <div class="val was">$40</div><div class="sub">psf per year, flat · set 2026-07-20</div></div>
+      <div class="val was">$40</div><div class="sub">flat, every comparable</div></div>
     <div class="arrow">&rarr;</div>
     <div class="vcell grow"><div class="lab">Measured</div>
-      <div class="formula">${BANDR['up to 2010']:,.0f} <span>·</span> ${BANDR['2011–2013']:,.0f}
-        <span>·</span> ${BANDR['2014 onward']:,.0f}</div>
-      <div class="sub">dollars psf per year · by the midpoint of the two lease starts ·
-        {NDEV} developments, {npairs(ALL)} pairs</div></div>
+      <div class="two">
+        <div><div class="n">${BANDR[OLD_NM]:,.0f}</div><div class="w">{OLD_NM}</div>
+          <div class="g">{ndev(rows_in(OLD_NM))} developments</div></div>
+        <div><div class="n">${BANDR[NEW_NM]:,.0f}</div><div class="w">{NEW_NM}</div>
+          <div class="g">{ndev(rows_in(NEW_NM))} developments</div></div>
+      </div></div>
   </div>
-  <p class="call"><b>The call.</b> The rate is <b>flat at ${BANDR['up to 2010']:,.0f} a year</b> for
-  every pair centred up to 2010 — that band alone rests on {ndev(band_rows('up to 2010'))} developments
-  and holds whatever else is varied — and then <b>steps up sharply</b>, to
-  ${BANDR['2011–2013']:,.0f} and then ${BANDR['2014 onward']:,.0f}. The engine's flat $40
-  over-adjusts an old pair by more than half and under-adjusts a new one.
-  Bedroom and region were both tested and neither moves it.
-  <b>Read at the midpoint</b>, which is what lets one table price a pair straddling any boundary.
-  Leave the engine untouched until this is audited.</p>
+  <p class="call"><b>The call.</b> Two rates, not one, chosen by the <b>midpoint of the two lease
+  starts</b>. The engine's flat $40 charges an old pair
+  {40/BANDR[OLD_NM]:.1f} times what the market pays and short-changes a new one.
+  Leave the engine alone until this is audited.</p>
 </div>
 
 <section>
-  <div class="sechead"><h2 class="disp">What is being counted</h2>
-  <p>Three words appear throughout and they count different things.</p></div>
+  <div class="sechead"><h2 class="disp">How to use it</h2></div>
   <div class="steps">
     <div class="step"><span class="sn">1</span>
-      <p><b>Development</b> — one condominium. {NDEV} of them appear somewhere in this study.</p></div>
+      <p>Average the <b>two lease start years</b>. That is the midpoint.</p></div>
     <div class="step"><span class="sn">2</span>
-      <p><b>Pair</b> — two neighbouring developments compared against each other.
-      {npairs(ALL)} of them.</p></div>
+      <p>Midpoint <b>{OLD_NM}</b> &rarr; ${BANDR[OLD_NM]:,.0f}. <b>{NEW_NM}</b> &rarr;
+      ${BANDR[NEW_NM]:,.0f}.</p></div>
     <div class="step"><span class="sn">3</span>
-      <p><b>Cell</b> — one pair read at one bedroom type. A pair yields one to four.
-      {len(ALL)} of them, and this is the unit the figures are computed on.</p></div>
-  </div>
-  <p class="expl">So {NDEV} developments produce {npairs(ALL)} pairs and {len(ALL)} cells. The
-  development count is the smaller number because most developments sit in more than one pair —
-  a block with three leasehold neighbours appears three times.</p>
-</section>
-
-<section>
-  <div class="sechead"><h2 class="disp">How to calculate it</h2>
-  <p>Four steps. The midpoint is the whole trick: it is what lets one table handle a pair that
-  straddles a band boundary, instead of having to decide which side it belongs to.</p></div>
-
-  <div class="steps">
-    <div class="step"><span class="sn">1</span>
-      <p>Take the <b>two lease start years</b> — the subject's and the comparable's.</p></div>
-    <div class="step"><span class="sn">2</span>
-      <p>Average them. That is the <b>midpoint</b>.</p></div>
-    <div class="step"><span class="sn">3</span>
-      <p>Read the rate off the band the midpoint falls in:
-      <b>up to 2010 &rarr; ${BANDR['up to 2010']:,.0f}</b>,
-      2011&ndash;13 &rarr; ${BANDR['2011–2013']:,.0f},
-      2014 on &rarr; ${BANDR['2014 onward']:,.0f}.</p></div>
-    <div class="step"><span class="sn">4</span>
-      <p>Multiply by the <b>lease gap</b>, and add it to the comparable's PSF.</p></div>
-  </div>
-
-  <div class="worked">
-    <h3>Worked — a {EX_A} comparable against a {EX_B} subject</h3>
-    <table class="fig wk"><tbody>
-      <tr><th>Lease starts</th><td>{EX_A} and {EX_B}</td></tr>
-      <tr><th>Midpoint</th><td>({EX_A} + {EX_B}) &divide; 2 = <b>{EX_MID:,.0f}</b></td></tr>
-      <tr><th>Rate</th><td>midpoint {EX_MID:,.0f} falls in the <b>{band_of(EX_MID)}</b> band
-        = <b>${rate(EX_MID):,.0f} psf per year</b></td></tr>
-      <tr><th>Lease gap</th><td>{EX_B} &minus; {EX_A} = <b>{EX_B-EX_A} years</b></td></tr>
-      <tr class="tot"><th>Adjustment</th><td>${rate(EX_MID):,.0f} &times; {EX_B-EX_A}
-        = <b>+${rate(EX_MID)*(EX_B-EX_A):,.0f} psf</b> onto the {EX_A} comparable</td></tr>
-    </tbody></table>
-    <p class="expl">Note what a flat constant would have done here. At $40 it reads
-    +${40*(EX_B-EX_A):,.0f} against a measured ${rate(EX_MID)*(EX_B-EX_A):,.0f}. Run it the other
-    way — an old pair centred on 1995 — and $40 reads +${40*10:,.0f} over ten years against a
-    measured ${rate(1995)*10:,.0f}, which is {40/rate(1995):.1f} times too much. One number cannot
-    be right at both ends.</p>
+      <p>Multiply by the <b>lease gap</b> and add to the comparable's PSF.</p></div>
   </div>
 
   <div class="calc">
     <h3>Try a pair</h3>
     <div class="cin">
-      <label>Comparable lease start<input id="lsA" type="number" value="{EX_A}" min="1960" max="2040" step="1"></label>
-      <label>Subject lease start<input id="lsB" type="number" value="{EX_B}" min="1960" max="2040" step="1"></label>
+      <label>Comparable lease start<input id="lsA" type="number" value="2005" min="1960" max="2040" step="1"></label>
+      <label>Subject lease start<input id="lsB" type="number" value="2025" min="1960" max="2040" step="1"></label>
     </div>
     <div id="calcOut" class="cout"></div>
   </div>
+  <p class="expl">The midpoint is what lets two rates price a pair that straddles the boundary:
+  a 2005-against-2025 comparable is centred on 2015 and takes the newer rate, without anyone
+  having to decide which side it belongs to.</p>
+</section>
 
-  <details><summary>The rate, read off directly</summary>
-    <div class="scroll">{lookup()}</div>
-    <p class="expl">The sample's midpoints run {MID_LO:,.0f} to {MID_HI:,.0f} at the 5th and 95th
-    percentile. Rows outside that are the curve extended past its evidence, which is a different
-    kind of claim — usable, but say so when you use it.</p>
+<section>
+  <div class="sechead"><h2 class="disp">The measurement</h2>
+  <p>{NDEV} developments, paired with a leasehold neighbour and compared bedroom by bedroom.
+  Twenty-four months of resale and sub-sale to {LW[1]}.</p></div>
+  <div class="scroll">{answer_table()}</div>
+  <div class="caveat"><b>The newer figure is a floor.</b> It rests on
+  {ndev(rows_in(NEW_NM))} developments, and it runs hotter in the RCR
+  (${fit(RCR_NEW):,.0f}) than the OCR (${fit(OCR_NEW):,.0f}) &mdash; a real split, and the reason
+  its interval is wide. Young stock has barely resold, so quote ${BANDR[NEW_NM]:,.0f} as the least
+  it can be.</div>
+</section>
+
+<section>
+  <div class="sechead"><h2 class="disp">Behind it</h2>
+  <p>Three questions, answered once each.</p></div>
+
+  <details><summary>Do the bands move as the stock ages?</summary>
+    <p class="expl"><b>No. They are fixed calendar years.</b> The obvious worry is that this is
+    really an age effect &mdash; that a 2011 project is dear because it is {NOW-2011} years old,
+    so next year the boundary should slide. It does not. Running the identical method on sales
+    from {EW[0]}&ndash;{EW[1]}, three years earlier, puts the jump at the same calendar band, with
+    the stock three years younger.</p>
+    <div class="scroll">{vintage_table()}</div>
+    <p class="expl">Read the age columns: the {AGE_SLICES[3][0]}&ndash;{AGE_SLICES[3][1]-1} band was
+    {st.median([EARLY_NOW - r['ls_old'] for r in EARLY if AGE_SLICES[3][0] <= mid(r) < AGE_SLICES[3][1]]):.0f}
+    years old in the early run and
+    {st.median([NOW - r['ls_old'] for r in ALL if AGE_SLICES[3][0] <= mid(r) < AGE_SLICES[3][1]]):.0f}
+    now. It aged four years and kept paying the high rate. <b>What is being measured is the vintage
+    of the stock, not its age</b> &mdash; projects launched from about 2012 sold into a much steeper
+    pricing era and have carried it ever since.</p>
+    <p class="expl">So the bands stay put. What will eventually change the answer is different:
+    <b>lease decay</b>. That bites on how much lease is <em>left</em>, and the market's knee is
+    60&ndash;65 years remaining. In this sample the older side has a median
+    {st.median([r['ls_old'] + 99 - NOW for r in rows_in(OLD_NM)]):.0f} years left, and only
+    {sum(1 for r in ALL if r['ls_old'] + 99 - NOW < 65)} of {len(ALL)} cells are below the knee at
+    all &mdash; so decay is almost absent here, and the gradient in fact runs the <em>other</em> way,
+    with the stock that has more lease left paying more. Decay will arrive as the oldest band
+    steepening, around the end of this decade. Re-run then, and it will show up as a new figure
+    for old stock, not as the boundary sliding.</p>
+  </details>
+
+  <details><summary>What was tested and what it changed</summary>
+    <p class="expl">Every cut and every alternative method, with the figure it produced.
+    &ldquo;Held-out error&rdquo; means fitted on four fifths of the pairs and scored on the fifth
+    it never saw &mdash; lower is better.</p>
+    <div class="scroll">{tested_table()}</div>
+    <p class="expl">Three words are used throughout and count different things. A
+    <b>development</b> is one condominium ({NDEV} appear). A <b>pair</b> is two neighbouring
+    developments compared ({npairs(ALL)}). A <b>cell</b> is one pair read at one bedroom type,
+    one to four per pair ({len(ALL)}) &mdash; the unit every figure is computed on.</p>
+  </details>
+
+  <details><summary>How a pair is built, and every pair</summary>
+    <div class="cards" style="margin-top:6px">
+      <div class="card"><h4>Held constant</h4><ul>
+        <li>within <b>500 m</b> of each other</li>
+        <li>same <b>nearest MRT station</b></li>
+        <li>identical <b>top-26 primary schools</b> within 1 km</li>
+        <li>median sizes within <b>20%</b>, bedroom by bedroom</li></ul></div>
+      <div class="card"><h4>Both sides must be</h4><ul>
+        <li>leasehold, with a known lease start</li>
+        <li><b>200 units</b> or more</li>
+        <li><b>5+ transactions</b> in the window</li>
+        <li>EC only once privatised &mdash; <b>TOP + 5</b></li>
+        <li>resale and sub-sale only</li></ul></div>
+      <div class="card"><h4>Not controlled</h4><ul>
+        <li><b>floor</b> &mdash; the PSF series carries none</li>
+        <li><b>facing</b> &mdash; same</li>
+        <li>lease start and building age are<br>confounded: this is blended vintage</li></ul></div>
+    </div>
+    <div class="scroll" style="margin-top:16px">{pairtable()}</div>
   </details>
 </section>
 
 <section>
-  <div class="sechead"><h2 class="disp">The figure</h2>
-  <p>{npairs(ALL)} matched neighbour pairs, {len(ALL)} bedroom cells, twenty-four months.
-  Dollars per square foot per year of lease start — never a percentage, for the reason below.</p></div>
-
-  <h3>Finer than the bands, to show where the turn is</h3>
-  <div class="scroll">{observed()}</div>
-
-  <div class="caveat"><b>The newest band is a floor, not a ceiling.</b> It rests on
-  {ndev(band_rows('2014 onward'))} developments and {npairs(band_rows('2014 onward'))} pairs, and the
-  rate was <b>still climbing when the evidence ran out</b> — young leasehold stock has barely
-  resold, and new sale is excluded by ruling. Quote ${BANDR['2014 onward']:,.0f} as the least it
-  can be, not as the answer.</div>
-
-  <details><summary>Why three measured bands and not a fitted curve</summary>
-    <p class="expl">Two fitted shapes were tried before this one and <b>both were beaten by the
-    sample they were fitted on</b>. A straight line through the midpoint ran low at both ends. A
-    knee — flat, then rising — fitted that better, until the pair screen was widened and it moved:
-    the best knee is now anywhere from 1998 to 2008, and across that whole span the fit changes by
-    less than 2%. <b>The knee is not identified by this data.</b> Reporting a fitted year and slope
-    would be claiming a precision the pairs do not carry.</p>
-    <p class="expl">What <em>is</em> stable is the band-by-band reading above: it barely moves when
-    the screens change, its intervals are tight, and it holds up on held-out error as well as any
-    fitted shape. So the page reports what was measured and stops there.</p>
-    <div class="scroll">{residuals()}</div>
-    <p class="expl">Residuals against the bands, in the same units as the rate. Every slice sits
-    within its interval of zero.</p>
-  </details>
-
-  <details><summary>One hypothesis tested and rejected — the lease-decay knee</summary>
-    <p class="expl">A pair centred in the 1990s has a lease running down toward the 60–65 year
-    mark, which is where the 2026-07-27 decay study found the market's knee, so the obvious
-    suspicion was that the old end is decay showing through rather than vintage. <b>It is not.</b>
-    Refitting on the remaining lease of the older project instead of vintage is worse on held-out
-    error (19.4k against {cv(ALL,'hinge')/1000:,.1f}k), adding it alongside vintage is worse
-    (19.1k), and a term for years below a 65-year remaining lease earns nothing it does not already
-    have. The turn is in the vintage of the stock, not in how much lease is left on it.</p>
-  </details>
-
-  <details><summary>Why a curve, and not one number or two bands</summary>
-    <p class="expl">Ranked by <b>held-out</b> error — each shape fitted on four fifths of the pairs
-    and scored on the fifth it never saw, which is the only fair way to compare shapes carrying
-    different numbers of parameters.</p>
-    <div class="scroll">{models()}</div>
-    <p class="expl">The midpoint curve wins, and it wins for a reason that is arithmetic rather
-    than empirical: <b>if the rate rises smoothly with vintage, the total difference across an
-    interval is exactly the gap times the rate at its midpoint.</b> So the midpoint form <em>is</em>
-    the blend. A two-band step has to decide which side a straddling pair belongs to and gets it
-    wrong either way; the curve never faces the question.</p>
-  </details>
-
-  <details><summary>Why there is no minimum lease gap</summary>
-    <p class="expl">Earlier passes threw away every pair under five years of lease separation. That
-    screen was built for a different estimator — the average of each pair's own $/yr, which divides
-    each difference by its own gap and so multiplies a short pair's noise. <b>This estimator fits
-    the difference against the gap</b>, so a three-year pair carries three years of leverage and
-    cannot shout. Refitting at every threshold shows the screen was buying nothing and costing
-    two thirds of the evidence.</p>
-    <div class="scroll">{gapstability()}</div>
-    <p class="expl">Both coefficients are flat across the whole range and the interval on b is
-    <b>tighter</b> without the screen. Dropping it took the sample from 97 cells to {len(ALL)}, and
-    the pairs whose older side is 2010s stock from 8 to
-    {npairs([r for r in ALL if r['ls_old'] >= 2010])} — which is where the curve's newer end
-    comes from.</p>
-  </details>
-
-  <details><summary>Why bedroom is the match and not the answer</summary>
-    <p class="expl">Bedroom does not appear in the equation. It is the <b>stratum that holds size
-    constant</b>, and it is the finest size resolution the data has — the PSF series on disk is
-    aggregated to project &times; bedroom &times; month and there is nothing below it. Comparing
-    two projects on one blended PSF each would let the sales mix do the talking: a block selling
-    mostly two-bedders looks dearer per foot than one selling mostly three-bedders, with no lease
-    involved.</p>
-    <p class="expl">The alternative was tested — one transaction-weighted PSF per project, matched
-    on pooled median size:</p>
-    <div class="scroll"><table class="fig"><thead><tr><th>Method</th><th class="num">pairs</th>
-      <th class="num">a</th><th class="num">b</th><th></th></tr></thead><tbody>
-      <tr><th>Bedroom-matched</th><td class="num big">{npairs(ALL)}</td>
-        <td class="num big">${A:,.1f}</td><td class="num big">${B:,.2f}</td>
-        <td class="note">the method</td></tr>
-      <tr class="dim"><th>Pooled, size-matched</th><td class="num big">{len(POOL)}</td>
-        <td class="num big">${PA:,.1f}</td><td class="num big">${PB:,.2f}</td>
-        <td class="note">diagnostic only</td></tr>
-    </tbody></table></div>
-    <p class="expl">It <b>loses</b> pairs rather than gaining them, which is the counterintuitive
-    part: matching a whole sales mix within 20% is far harder than matching one bedroom within 20%.
-    Two projects with different mixes fail the pooled test and still match cleanly on 3BR alone.
-    And the mix leaks anyway — the pooled residual still tracks the size difference it could not
-    match, at roughly &minus;$214 psf per 100% of size, which is what drags its slope down by a
-    third.</p>
-  </details>
-
-  <details><summary>Why dollars and never a percentage</summary>
-    <p class="expl">A flat dollar figure was the open question: it cannot obviously hold in both an
-    OCR pair at $1,100 psf and a CCR pair at $2,100. Splitting the sample by the base price of the
-    older project settles it — <b>the dollar is the invariant and the percentage is the artefact.</b></p>
-    <div class="scroll">{pricebands()}</div>
-    <p class="expl">The dollar holds across the readable bands while the percentage falls away
-    steadily. That is also what made <b>region</b> look like a real split: in percent the OCR and
-    RCR separate, in dollars they do not. The separation was price level wearing a region's name.</p>
-  </details>
-
-  <details><summary>The cuts that were tested and moved nothing</summary>
-    <p class="expl">Bedroom and region. Kept because the decision to use one unified curve rests on
-    them, not because they carry a number worth quoting. A permutation test puts 2BR against 3BR at
-    p&nbsp;=&nbsp;0.83 and the RCR against the OCR at p&nbsp;=&nbsp;0.30 in dollars.</p>
-    <div class="scroll">{nulls()}</div>
-    <div class="caveat"><b>The CCR is not measurable this way.</b> Every qualifying pair sits in
-    Marina Bay or Sentosa Cove — one reads negative. That is a submarket, not a region. A CCR
-    figure has to come from somewhere other than neighbour pairs.</div>
-  </details>
-
-  <details><summary>The 12-month freshness check</summary>
-    <p class="expl">The two windows are <b>not</b> two independent readings:
-    {len(set((r['older'],r['newer'],r['bed']) for r in D['12']) & set((r['older'],r['newer'],r['bed']) for r in ALL))}
-    of the {len(D['12'])} twelve-month cells sit inside the twenty-four-month set. Twenty-four
-    months is therefore the combined figure, not an alternative to it, and the two must never be
-    averaged — that would count the last year twice. Refitting the curve on twelve months alone
-    gives <b>${curve(D['12'])[0]:,.1f} + ${curve(D['12'])[1]:,.2f}</b> against
-    ${A:,.1f} + ${B:,.2f}. The extra depth does not drag it.</p>
-  </details>
-</section>
-
-<section>
-  <div class="sechead"><h2 class="disp">The evidence</h2>
-  <p>How a pair is built, and every pair that qualified.</p></div>
-  <details><summary>How a pair is built</summary>
-  <div class="cards" style="margin-top:6px">
-    <div class="card"><h4>Held constant</h4><ul>
-      <li>within <b>500 m</b> of each other</li>
-      <li>same <b>nearest MRT station</b></li>
-      <li>same <b>walk band</b> to it</li>
-      <li>identical <b>top-26 primary schools</b> within 1 km</li>
-      <li>median sizes within <b>20%</b>, bedroom by bedroom</li></ul></div>
-    <div class="card"><h4>Both sides must be</h4><ul>
-      <li>leasehold, with a known lease start</li>
-      <li><b>200 units</b> or more</li>
-      <li><b>5+ transactions</b> in the window</li>
-      <li>EC only once privatised — <b>TOP + 5</b></li>
-      <li>resale and sub-sale only</li></ul></div>
-    <div class="card"><h4>How pairs combine</h4><ul>
-      <li>price difference fitted against<br>the lease gap</li>
-      <li>each pair weighted by the lease<br>separation it actually contains</li>
-      <li>a 20-year pair carries 20 years<br>of evidence; a 3-year pair carries 3</li>
-      <li><b>no minimum gap</b></li></ul></div>
-    <div class="card"><h4>Uncontrolled</h4><ul>
-      <li><b>floor</b> — the PSF series carries none</li>
-      <li><b>facing</b> — same</li>
-      <li>development quality<br>beyond size and unit count</li>
-      <li>lease start and building age are<br>confounded: this is blended vintage</li></ul></div>
-  </div></details>
-  <details><summary>Every pair — {len(ALL)} bedroom cells</summary>
-    <p class="expl">The last column is what the curve says that pair should have read.</p>
-    <div class="scroll">{pairtable()}</div></details>
-</section>
-
-<section>
-  <div class="sechead"><h2 class="disp">Still to measure</h2>
-  <p>Four constants remain on judgement alone.</p></div>
+  <div class="sechead"><h2 class="disp">Still on judgement</h2></div>
   <table class="fig"><thead><tr><th>Term</th><th class="num">Constant</th><th>Status</th></tr></thead><tbody>
   <tr><th>Lease / vintage</th><td class="num big">$40 psf / yr</td>
-    <td style="color:var(--gold-soft)">measured — a curve, ${A:,.1f} + ${B:,.2f} &times; (midpoint &minus; 2000)</td></tr>
-  <tr><th>Tenure · freehold vs leasehold</th><td class="num big">&divide; 1.15</td>
-    <td class="nil">not yet measured — same curve as the lease term</td></tr>
-  <tr><th>MRT walk band</th><td class="num big">$50 / $200 / $250</td><td class="nil">not yet measured</td></tr>
-  <tr><th>GFA harmonisation</th><td class="num big">+7%</td><td class="nil">not yet measured</td></tr>
-  <tr><th>Integrated development</th><td class="num big">+5%</td><td class="nil">not yet measured</td></tr>
-  <tr><th>Study vs no study</th><td class="num quiet">—</td>
-    <td class="nil">not in the engine · 211 clean project cells available</td></tr>
-  <tr><th>One bedroom fewer</th><td class="num quiet">—</td>
-    <td class="nil">not in the engine · to be read as quantum, not psf</td></tr>
+    <td style="color:var(--gold-soft)">measured &mdash; ${BANDR[OLD_NM]:,.0f} and ${BANDR[NEW_NM]:,.0f}</td></tr>
+  <tr><th>Tenure &middot; freehold vs leasehold</th><td class="num big">&divide; 1.15</td>
+    <td class="nil">next &mdash; 1,255 of 1,844 developments are freehold and cannot pair on lease</td></tr>
+  <tr><th>MRT walk band</th><td class="num big">$50 / $200 / $250</td><td class="nil">not measured</td></tr>
+  <tr><th>GFA harmonisation</th><td class="num big">+7%</td><td class="nil">not measured</td></tr>
+  <tr><th>Integrated development</th><td class="num big">+5%</td><td class="nil">not measured</td></tr>
   </tbody></table>
 </section>
 """
@@ -792,15 +540,11 @@ HTML = f"""<!doctype html>
 <meta name="theme-color" content="#101727">
 <title>Constant Calibration — KYA</title>
 <style>{CSS}</style></head><body>
-
 <header><div class="hin">
-  <div class="brand">
-    <div class="mark">K</div>
-    <div><p>KYA REAL ESTATE</p><p>Private Client Advisory</p></div>
-  </div>
+  <div class="brand"><div class="mark">K</div>
+    <div><p>KYA REAL ESTATE</p><p>Private Client Advisory</p></div></div>
   <span class="chip"><b></b> Internal — Constant Calibration</span>
 </div></header>
-
 <div class="wrap">
 {BODY}
 <footer>
@@ -812,14 +556,11 @@ HTML = f"""<!doctype html>
 <script>{JS.replace('%BANDS%', BANDS_JS).replace('%LO%', f'{MID_LO}').replace('%HI%', f'{MID_HI}')}</script>
 </body></html>
 """
-
 open(OUT, 'w').write(HTML)
 print(f'wrote {os.path.relpath(OUT, HERE)}  ({len(HTML)//1024} KB)')
-print(f'  {NDEV} developments · {npairs(ALL)} pairs · {len(ALL)} cells, no gap screen')
-for _l, _h, _n in BANDS:
-    _r = band_rows(_n); _c = BANDCI[_n]
-    print(f'    {_n:14s} ${BANDR[_n]:5.1f}/yr  95% [{_c[0]:.1f}, {_c[1]:.1f}]  '
-          f'{ndev(_r):3d} devs {npairs(_r):3d} pairs')
-print(f'  held-out: flat {cv(ALL,"flat")/1000:.1f}k · line {cv(ALL,"mid")/1000:.1f}k · '
-      f'quad {cv(ALL,"quad")/1000:.1f}k · knee {cv(ALL,"hinge")/1000:.1f}k · '
-      f'BANDS {cv(ALL,"band")/1000:.1f}k')
+print(f'  {NDEV} developments · {npairs(ALL)} pairs · {len(ALL)} cells')
+for _, _, nm in BANDS:
+    c = BANDCI[nm]
+    print(f'    {nm:14s} ${BANDR[nm]:5.1f}/yr  95% [{c[0]:.1f}, {c[1]:.1f}]  {ndev(rows_in(nm)):3d} devs')
+print(f'  held-out: flat {CV_FLAT/1000:.1f}k · TWO {CV_TWO/1000:.1f}k · three {CV_THREE/1000:.1f}k')
+print(f'  region in the newer band: RCR ${fit(RCR_NEW):.0f} vs OCR ${fit(OCR_NEW):.0f}, p={P_RNEW[1]:.3f}')

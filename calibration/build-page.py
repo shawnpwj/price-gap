@@ -1075,17 +1075,17 @@ the floor study&rsquo;s own {V['meta']['floor_step']*100:.1f}% per floor. What i
 extra area is worth.</p>
 
 {hero('1.00&times;', 'every strata sqft priced alike',
-      [(f"{V['newsale']['corrected']['ratio']:.2f}&times;", 'developer price list',
+      [(f"{V['newsale']['corrected']['discount']:.0f}% off", 'the developer discounts it',
         V['newsale']['corrected']['devs']),
-       (f"{V['resale']['corrected']['ratio']:.2f}&times;", 'resale, the same stacks',
+       (f"{V['resale']['corrected']['discount']:.0f}% off", 'the resale market discounts it',
         V['resale']['corrected']['devs'])],
-      f"<b>The call. Quote a quarter.</b> A developer charges about "
-      f"<b>{V['newsale']['corrected']['ratio']:.2f}&times;</b> the home&rsquo;s own psf for the "
-      f"extra penthouse area &mdash; a {V['newsale']['corrected']['discount']:.0f}% discount, and "
-      f"the cheapest square foot on the price list. The resale market later pays about "
-      f"<b>{V['resale']['corrected']['ratio']:.2f}&times;</b> for the same space, so the void "
-      f"re-rates upward on exit. <b>The engine sees none of this</b> &mdash; it works in psf and "
-      f"charges the void the same as a bedroom.")}
+      f"<b>The call.</b> A developer sells the extra penthouse area at "
+      f"<b>{V['newsale']['corrected']['discount']:.0f}% off</b> the home&rsquo;s own psf &mdash; "
+      f"the cheapest square foot on the price list. The resale market discounts the same space "
+      f"by only <b>{V['resale']['corrected']['discount']:.0f}%</b>. So the space the developer "
+      f"marks down hardest is the space the next buyer marks down least, and the void re-rates "
+      f"on the way out. <b>The engine sees none of it</b> &mdash; it works in psf and charges "
+      f"the void the same as a bedroom.")}
 
 <section>
   <div class="calc">

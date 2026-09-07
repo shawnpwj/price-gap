@@ -14,6 +14,7 @@ main and pushed. Page live on offline staging, hidden behind a double-click on t
 | Lease difference | $40 flat | **$25 / $43** by midpoint | §3 |
 | MRT distance | $50 / $200 / $250 | **+$66 / +$156 / +$243**, or **$23 per 100 m** | §11 |
 | Integrated | +5% | **+6.7%** (4.5–9.1), which CONTAINS the +5% | §12 |
+| Void · extra penthouse area | **none — 1.00× implicit** | **0.23×** price list, **0.49×** resale | §13 |
 | Tenure · FH vs LH | ÷1.15 | — **next** | §10 |
 
 GFA harmonisation (+7%) was **dropped from the study entirely** on his ruling, 2026-09-06.
@@ -27,6 +28,7 @@ GFA harmonisation (+7%) was **dropped from the study entirely** on his ruling, 2
 | **Lease / vintage term** | **MEASURED AND SHIPPED.** See §3. |
 | **Integrated development (+5%)** | **MEASURED AND SHIPPED.** See §12. |
 | **MRT walk band ($50/$200/$250)** | **MEASURED AND SHIPPED.** See §11. |
+| **Void · extra penthouse area** | **MEASURED AND SHIPPED.** See §13. No engine constant exists. |
 | Tenure · FH vs LH (÷1.15) | judgement only — **next**, see §10 |
 
 **NOTHING HAS BEEN WRITTEN BACK TO `../scripts/price-gap.ts` AND NOTHING MAY BE** until
@@ -46,6 +48,7 @@ against stale inputs.
 python3 lease-pairs.py        # -> lease-pairs.json
 python3 mrt-pairs.py          # -> mrt-pairs.json        (needs lease-pairs.json)
 python3 integrated-pairs.py   # -> integrated-pairs.json (needs both of the above)
+python3 void-pairs.py         # -> void-pairs.json       (independent — order-free)
 python3 build-page.py         # -> ../../kya-maps-calculator/calibration.html
 cd ../../property-analyzer && npm run maps:deploy
 ```
@@ -485,3 +488,86 @@ station is worth nothing.** The same applies to Sengkang Grand and Compass Heigh
 
 * **Populate `pricegap-overrides.json`** so the flag stops being inert. Not done — it writes to a
   file the engine reads, and framing ruling 3 says nothing is written back until Shawn audits.
+
+---
+
+## 13. VOID SPACE — MEASURED
+
+**1,681 penthouse sales · 125 developments** on the developer track,
+119 sales · 60 developments on resale.
+
+| track | base psf | extra-area psf | ratio | 95% | discount |
+|---|---|---|---|---|---|
+| New sale (price list) | $1,705 | **$374** | **0.23×** | 0.22–0.24 | 77% |
+| Resale (same stacks) | $1,832 | $833 | **0.49×** | 0.38–0.59 | 51% |
+
+**THE ENGINE HAS NO CONSTANT FOR THIS.** `price-gap.ts` works entirely in psf and restates each
+comparable as one number, so it charges the void the same as a bedroom — an implicit **1.00×**.
+A penthouse reads 12% cheaper per square foot than the unit directly
+below it and nothing about the home got worse. Any comparison that reaches for a penthouse's
+headline psf is reading a blend, not a price.
+
+**Quote a quarter.** Not two decimals — see the sensitivity below.
+
+### The pair
+Same project + same block + **same stack**. A stack is one vertical line of units, so the
+top-floor unit stands on the same floor plate as everything below it. Where its strata area is
+larger, the difference is space the floor plate never gained.
+
+    marginal psf = (penthouse price − floor-adjusted base price) ÷ extra sqft
+    ratio        = marginal psf ÷ base psf
+
+Screens: base legs within 3% of the stack's median size and within
+270 days of the penthouse sale; **3+ base legs**, so the
+comparator is a median; extra area **10–55%**
+of the floor plate — under that is a bay window, over it is a **duplex**, which is a second floor
+plate and exactly what the pair exists to exclude.
+
+### The placebo decided the answer
+The marginal psf is **leveraged**: the extra area is small against the home, so a 2% error in the
+base comparator swings it by more than 10%. The threat is a top-floor bonus the linear floor step
+does not capture — it would land entirely on the void.
+
+Run the same machinery on stacks whose top unit is the **same size** as those below: no extra area,
+so the residual should be zero. Across **3,514 such sales it reads +1.12%**
+(1.07 to 1.19) — a real top-floor bonus on developer price lists. Stripping it
+off the penthouse leg first takes the answer from 0.29× to **0.23×**.
+That corrected figure is the one on the page.
+
+The same placebo on **resale reads -0.24%** across
+885 sales — nil. The top-floor bonus is something developers charge and the
+resale market does not repeat.
+
+### Sensitivity — some of this IS the floor step
+| floor step | ratio |
+|---|---|
+| 0.3%/floor | 0.32× |
+| 0.4%/floor ← measured | 0.29× |
+| 0.5%/floor | 0.26× |
+| 0.6%/floor | 0.23× |
+
+Range 0.23–0.32,
+and the placebo correction lands at the bottom of it. Same bias, two roads.
+
+### The finding worth money
+**The spread inside one development is wider than the spread between developments.** Affinity at
+Serangoon runs a spread of 1.20 across its own top-floor stacks, Mayfair Gardens 1.10, Sims Urban
+Oasis 1.01. At Parc Clematis and Normanton Park some stacks charged **nothing at all** for
+140–270 extra sqft. The advice is not "penthouses are good value" — it is **find the stack where
+the void was given away**.
+
+### WHAT THIS CANNOT SEE — read before quoting
+REALIS records strata area, not what is under the ceiling. **Void, roof terrace and private roof
+measure as one thing here.** All three are area on a floor plate that did not grow and all three
+price like it. Quote it as **extra penthouse area**; ceiling height is a subset that has not been
+separated. Naming which is which needs the floor plan, unit by unit.
+
+### SOURCE IS NOT THE MAPS REFRESH
+Every other script here reads `../../property-analyzer/data/`. This one reads the **REALIS
+unit-level pull** held by the floor study (`launch-picker/floor-study/data/realis-*-all-sg.json`),
+because it is the only local dataset carrying a **unit number** — and without the unit number there
+is no stack, without the stack there is no same-floor-plate pair. 2015-01 to 2026-08, all
+Singapore, strata, apartment and condominium. Read-only, same arrangement as the others.
+
+`void-pairs.py` **depends on none of the other three and they depend on none of it**, so it may be
+run at any point in the mandatory order. `void-evidence.csv` is the flat pair-level export.

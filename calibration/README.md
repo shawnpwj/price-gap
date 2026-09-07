@@ -570,16 +570,17 @@ is no stack, without the stack there is no same-floor-plate pair. 2015-01 to 202
 Singapore, strata, apartment and condominium. Read-only, same arrangement as the others.
 
 ### The calculator on the panel
-`Price a void` takes two units off one price list — the penthouse and any ordinary unit below it
-in the same stack — plus the floors between them. It applies the same order as `void-pairs.py`
-and **the order matters**: lift the base leg to the penthouse's floor at 0.4%/floor first, then
-take the +1.12% top-floor bonus back off the penthouse, and only then divide. That order is what
-moved the headline from 0.29× to 0.23×. It returns the extra-area psf, the ratio with a
-cheap/at-market/dear verdict against the 0.14–0.36 quartiles, and what the penthouse would ask
-at the measured 0.23× — in dollars, against the asking price. It warns when the extra area falls
-outside the 10–55% screen, because outside it the figure is a bay window or a duplex.
+**Shawn's ruling, 2026-09-07: ask for two things and return a quantum range.** An earlier version
+carried the floor step, the placebo correction, a cheap/at-market/dear verdict and a fair-price
+comparison — all of it correct and all of it in the way. It was cut back.
 
-Seeded with a real pair: Grand Dunman stack 45, 1,055 → 1,238 sqft, off its own price list.
+`What should the penthouse cost` takes the **unit below** (sqft and psf) and the **penthouse
+sqft**. The floor plate is priced at the psf it already sells for; only the **extra area** is
+repriced, at **0.25–0.75×** — the resale quartiles rounded. Output is one line: the quantum range.
+
+The basis is deliberately **resale, not the price list**. The question the tool answers is what the
+space is worth, not what a developer is charging for it. The 0.23× developer figure stays on the
+panel above as evidence and out of the calculator.
 
 `void-pairs.py` **depends on none of the other three and they depend on none of it**, so it may be
 run at any point in the mandatory order. `void-evidence.csv` is the flat pair-level export.

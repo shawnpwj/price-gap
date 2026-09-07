@@ -489,62 +489,28 @@ JS = """
   go();
 })();
 
-/* VOID SPACE. Two units off one price list, same stack. The base leg is lifted to the
-   penthouse's floor at the measured floor step, then the top-floor bonus the placebo found on
-   developer price lists is taken back off the penthouse before anything is divided -- exactly
-   the order void-pairs.py uses, because the marginal psf is leveraged and that order is what
-   moved the headline from 0.29 to 0.23. */
+/* VOID SPACE. Deliberately the smallest calculator on this page: the unit below, its psf,
+   and the penthouse size. The floor plate is priced at the psf it already sells for; only the
+   EXTRA area is repriced, at the resale quartiles. No floor step, no placebo correction, no
+   verdict -- Shawn's ruling, 2026-09-07: ask for two things and return a quantum range. */
 (function(){
-  var R=%VR%, P25=%VP25%, P75=%VP75%, FS=%VFS%, TOP=%VTOP%, RR=%VRR%;
+  var LO=%VLO%, HI=%VHI%;
   function n(id){return parseFloat(document.getElementById(id).value);}
-  function money(x){return (x<0?'-$':'$')+Math.round(Math.abs(x)).toLocaleString();}
+  function m(x){return '$'+(x/1e6).toFixed(2)+'M';}
   function go(){
-    var bs=n('vbS'), bp=n('vbP'), ps=n('vpS'), pp=n('vpP'), f=n('vF'),
-        o=document.getElementById('voidOut');
-    if(!(bs>0&&bp>0&&ps>0&&pp>0)||isNaN(f)){o.className='cout bad';
-      o.innerHTML='Enter both units.';return;}
+    var bs=n('vbS'), bp=n('vbP'), ps=n('vpS'), o=document.getElementById('voidOut');
+    if(!(bs>0&&bp>0&&ps>0)){o.className='cout bad';o.innerHTML='Enter the unit below and the penthouse size.';return;}
     var extra=ps-bs;
     if(extra<=0){o.className='cout bad';
       o.innerHTML='The penthouse is not larger \u2014 there is no extra area to price.';return;}
-    var xr=extra/bs;
-    var adj=bp*(1+FS*f), bpsf=adj/bs, phAdj=pp/(1+TOP),
-        vpsf=(phAdj-adj)/extra, ratio=vpsf/bpsf,
-        fair=adj+bpsf*R*extra, fairAsked=fair*(1+TOP), diff=pp-fairAsked;
-    var chip, hint;
-    if(ratio<P25){chip='cheap'; hint='<b>Cheap.</b> This stack is in the bottom quarter of the '+
-      'market \u2014 the developer is close to giving the extra area away.';}
-    else if(ratio>P75){chip='dear'; hint='<b>Dear.</b> Top quarter. The extra area is being '+
-      'charged near a habitable rate. Look for another stack in the same project before '+
-      'paying it.';}
-    else {chip='at market'; hint='<b>At market.</b> Ordinary pricing for extra penthouse area.';}
-    var warn='';
-    if(xr<0.10) warn='<p class="cwarn">Extra area is only '+(xr*100).toFixed(0)+'% of the base. '+
-      'Below 10% is bay-window and measurement noise, not a void \u2014 the ratio is unreliable '+
-      'at this size.</p>';
-    else if(xr>0.55) warn='<p class="cwarn">Extra area is '+(xr*100).toFixed(0)+'% of the base. '+
-      'Over 55% is usually a duplex or a merged whole-floor unit \u2014 a second floor plate, '+
-      'which this figure was built to exclude. Check the floor plan before quoting it.</p>';
+    var plate=bs*bp, lo=plate+extra*bp*LO, hi=plate+extra*bp*HI;
     o.className='cout';
     o.innerHTML=
-      '<div class="crow"><span>Base unit, lifted '+f+' floor'+(f===1?'':'s')+' at '+
-        (FS*100).toFixed(1)+'%</span><b>'+money(adj)+'</b></div>'+
-      '<div class="crow"><span>Base psf at that floor</span><b>'+money(bpsf)+' psf</b></div>'+
-      '<div class="crow"><span>Extra area</span><b>'+Math.round(extra).toLocaleString()+
-        ' sqft &middot; '+(xr*100).toFixed(0)+'% of the plate</b></div>'+
-      '<div class="crow"><span>What the developer charges for it</span><b>'+money(vpsf)+
-        ' psf</b></div>'+
-      '<div class="crow big"><span>Priced at</span><b>'+ratio.toFixed(2)+'&times;</b>'+
-        '<i class="cflat">'+chip+'</i></div>'+
-      '<div class="crow"><span>At the measured '+R.toFixed(2)+'&times; this penthouse would ask'+
-        '</span><b>'+money(fairAsked)+'</b></div>'+
-      '<div class="crow"><span>Against the asking price</span><b>'+
-        (diff>=0?'+':'')+money(diff)+'</b></div>'+
-      '<p class="chint">'+hint+' Market quartiles are '+P25.toFixed(2)+'&times; to '+
-        P75.toFixed(2)+'&times;, median '+R.toFixed(2)+'&times;. The resale market later pays '+
-        'about '+RR.toFixed(2)+'&times; for the same space, so anything under that is carry.</p>'+
-      warn;
+      '<div class="crow big"><span>Worth</span><b>'+m(lo)+' &ndash; '+m(hi)+'</b></div>'+
+      '<p class="chint">'+Math.round(extra).toLocaleString()+' sqft of extra area at '+
+      LO.toFixed(2)+'&ndash;'+HI.toFixed(2)+'&times; the psf below it.</p>';
   }
-  ['vbS','vbP','vpS','vpP','vF'].forEach(function(id){
+  ['vbS','vbP','vpS'].forEach(function(id){
     var e=document.getElementById(id); if(e) e.addEventListener('input',go);});
   go();
 })();
@@ -1112,18 +1078,11 @@ extra area is worth.</p>
 
 <section>
   <div class="calc">
-    <h3>Price a void</h3>
-    <p class="expl" style="margin:0 0 14px">Two units off the same price list, <b>same
-    stack</b>: the penthouse and any ordinary unit below it. It returns what the developer is
-    charging for the extra area, and whether that stack is cheap or dear against the
-    measured {V['newsale']['corrected']['ratio']:.2f}&times;. Seeded with a real pair &mdash;
-    Grand Dunman stack 45, off its own price list.</p>
+    <h3>What should the penthouse cost</h3>
     <div class="cin">
-      <label>Base unit sqft<input id="vbS" type="number" value="1055" min="200" max="9000" step="1"></label>
-      <label>Base unit price<input id="vbP" type="number" value="2739000" min="100000" step="1000"></label>
-      <label>Penthouse sqft<input id="vpS" type="number" value="1238" min="200" max="9000" step="1"></label>
-      <label>Penthouse price<input id="vpP" type="number" value="2882000" min="100000" step="1000"></label>
-      <label>Floors apart<input id="vF" type="number" value="2" min="0" max="70" step="1"></label>
+      <label>Unit below &mdash; sqft<input id="vbS" type="number" value="1216" min="200" max="9000" step="1"></label>
+      <label>Unit below &mdash; psf<input id="vbP" type="number" value="2662" min="200" max="9000" step="10"></label>
+      <label>Penthouse sqft<input id="vpS" type="number" value="1421" min="200" max="9000" step="1"></label>
     </div>
     <div id="voidOut" class="cout"></div>
   </div>
@@ -1309,7 +1268,7 @@ HTML = f"""<!doctype html>
   <span>price-gap/calibration/lease-pairs.py · regenerate with build-page.py</span>
 </footer>
 </div>
-<script>{JS.replace('%BANDS%', BANDS_JS).replace('%LO%', f'{MID_LO}').replace('%HI%', f'{MID_HI}').replace('%VR%', f"{V['newsale']['corrected']['ratio']}").replace('%VP25%', f"{V['newsale']['corrected']['p25']}").replace('%VP75%', f"{V['newsale']['corrected']['p75']}").replace('%VFS%', f"{V['meta']['floor_step']}").replace('%VTOP%', f"{V['newsale']['placebo']['residual_pct']/100}").replace('%VRR%', f"{V['resale']['corrected']['ratio']}")}</script>
+<script>{JS.replace('%BANDS%', BANDS_JS).replace('%LO%', f'{MID_LO}').replace('%HI%', f'{MID_HI}').replace('%VLO%', '0.25').replace('%VHI%', '0.75')}</script>
 </body></html>
 """
 open(OUT, 'w').write(HTML)

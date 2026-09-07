@@ -14,7 +14,7 @@ main and pushed. Page live on offline staging, hidden behind a double-click on t
 | Lease difference | $40 flat | **$25 / $43** by midpoint | §3 |
 | MRT distance | $50 / $200 / $250 | **+$66 / +$156 / +$243**, or **$23 per 100 m** | §11 |
 | Integrated | +5% | **+6.7%** (4.5–9.1), which CONTAINS the +5% | §12 |
-| Void · extra penthouse area | **none — 1.00× implicit** | **0.23×** price list, **0.49×** resale | §13 |
+| Void · extra penthouse area | **none — 1.00× implicit** | resale buyer pays **52% less** for it than for the floor plate | §13 |
 | Tenure · FH vs LH | ÷1.15 | — **next** | §10 |
 
 GFA harmonisation (+7%) was **dropped from the study entirely** on his ruling, 2026-09-06.
@@ -492,6 +492,18 @@ station is worth nothing.** The same applies to Sengkang Grand and Compass Heigh
 ---
 
 ## 13. VOID SPACE — MEASURED
+
+> **THE PAGE IS RESALE ONLY. Shawn's ruling, 2026-09-07:** *"i dont need the developer price list
+> actually, I dont need all the developer numbers and figures. ALL i care about is RESALE. Remove
+> all developer stuff, these are noise."* The new-sale track is still measured by `void-pairs.py`
+> and still documented below — the developer placebo (+1.12%) is the evidence that the resale
+> placebo passing means something — but **it does not reach the page.** Do not put it back
+> without asking.
+>
+> **The page shows the RAW resale figure (0.476×, 52% off), not the placebo-corrected one.** The
+> resale residual is −0.24% with an interval straddling zero, so there is nothing to correct for,
+> and correcting by a figure that cannot be told from zero is worse than leaving it alone. The
+> correction is only load-bearing on the developer track, which is off the page.
 
 **1,681 penthouse sales · 125 developments** on the developer track,
 119 sales · 60 developments on resale.

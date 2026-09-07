@@ -569,31 +569,36 @@ def mrt_table():
     return ''.join(r)
 
 # ── void space ──────────────────────────────────────────────────────────────
+# RESALE ONLY. Shawn's ruling, 2026-09-07: "I dont need the developer price list... ALL i care
+# about is RESALE." The new-sale track is still measured by void-pairs.py -- the developer
+# placebo (+1.12%) is what proves the resale placebo passing means something -- but it does not
+# reach the page. Do not put it back without asking.
+VR = V['resale']['headline'] if V else None   # HEADLINE, not corrected: the resale placebo is
+# -0.24% with an interval straddling zero, so there is nothing to correct for. Correcting by a
+# figure indistinguishable from zero is worse than leaving it alone.
+
 def void_answer():
-    """Both tracks side by side. They never pool -- new sale is the developer's price list,
-    resale is what the next buyer pays for the same space."""
-    r = ['<table class="fig"><thead><tr><th>Track</th><th class="num">Base psf</th>'
-         '<th class="num">Extra area psf</th><th class="num">Ratio</th><th class="num">95%</th>'
-         '<th class="num">Discount</th><th class="num">Pairs</th><th class="num">Devs</th>'
-         '</tr></thead><tbody>']
-    for k, nm in (('newsale', 'New sale &mdash; developer price list'),
-                  ('resale', 'Resale &mdash; the same stacks, later')):
-        h = V[k]['corrected']
-        r.append(f'<tr><th>{nm}</th>'
-                 f'<td class="num quiet">${h["base_psf"]:,}</td>'
-                 f'<td class="num big">${h["void_psf"]:,}</td>'
-                 f'<td class="num big" style="color:var(--gold)">{h["ratio"]:.2f}&times;</td>'
-                 f'<td class="num quiet">{h["lo"]:.2f}&ndash;{h["hi"]:.2f}</td>'
-                 f'<td class="num">{h["discount"]:.0f}%</td>'
-                 f'<td class="num quiet">{h["pairs"]:,}</td>'
-                 f'<td class="num quiet">{h["devs"]}</td></tr>')
+    """The measurement as a spec sheet. One track, so a row per fact reads better than a table
+    with a single line in it."""
+    r = ['<table class="fig"><tbody>']
+    for lab, val, sub in (
+        ('The discount', f'{VR["discount"]:.0f}% off', 'against the psf the floor plate commands'),
+        ('What the extra area fetches', f'${VR["void_psf"]:,} psf',
+         f'where the home itself fetches ${VR["base_psf"]:,}'),
+        ('95% interval', f'{VR["lo"]:.2f}&ndash;{VR["hi"]:.2f}&times;',
+         f'median {VR["ratio"]:.2f}&times;, quartiles {VR["p25"]:.2f}&ndash;{VR["p75"]:.2f}'),
+        ('Typical extra area', f'{VR["extra"]:,} sqft',
+         f'{VR["extra_pct"]*100:.0f}% of the floor plate'),
+        ('Penthouse resales', f'{VR["pairs"]:,}', f'across {VR["devs"]} developments')):
+        r.append(f'<tr><th>{lab}</th><td class="num big" style="color:var(--gold)">{val}</td>'
+                 f'<td class="quiet" style="font-size:12.5px">{sub}</td></tr>')
     r.append('</tbody></table>')
     return ''.join(r)
 
 def void_sens():
     r = ['<table class="fig"><thead><tr><th>Floor step assumed</th><th class="num">Ratio</th>'
-         '<th class="num">Pairs</th></tr></thead><tbody>']
-    for x in V['newsale']['sensitivity']:
+         '<th class="num">Sales</th></tr></thead><tbody>']
+    for x in V['resale']['sensitivity']:
         me = x['floor_step'] == V['meta']['floor_step']
         r.append(f'<tr><th>{x["floor_step"]*100:.1f}% per floor'
                  + (' <span style="color:var(--gold)">&larr; measured</span>' if me else '')
@@ -602,43 +607,44 @@ def void_sens():
     r.append('</tbody></table>')
     return ''.join(r)
 
-def void_cut(track, name):
-    rows = [c for c in V[track]['cuts'] if c['cut'] == name]
+def void_cut(name):
+    rows = [c for c in V['resale']['cuts'] if c['cut'] == name]
     r = ['<table class="fig"><thead><tr><th>' + name.capitalize() + '</th>'
-         '<th class="num">Base psf</th><th class="num">Extra area psf</th>'
-         '<th class="num">Ratio</th><th class="num">95%</th><th class="num">Pairs</th>'
-         '<th class="num">Devs</th></tr></thead><tbody>']
+         '<th class="num">Discount</th><th class="num">Extra-area psf</th>'
+         '<th class="num">95%</th><th class="num">Sales</th><th class="num">Devs</th>'
+         '</tr></thead><tbody>']
     for c in rows:
-        r.append(f'<tr><th>{c["label"]}</th><td class="num quiet">${c["base_psf"]:,}</td>'
+        r.append(f'<tr><th>{c["label"]}</th>'
+                 f'<td class="num big" style="color:var(--gold)">{100-c["ratio"]*100:.0f}% off</td>'
                  f'<td class="num">${c["void_psf"]:,}</td>'
-                 f'<td class="num big">{c["ratio"]:.2f}&times;</td>'
-                 f'<td class="num quiet">{c["lo"]:.2f}&ndash;{c["hi"]:.2f}</td>'
+                 f'<td class="num quiet">{c["lo"]:.2f}&ndash;{c["hi"]:.2f}&times;</td>'
                  f'<td class="num quiet">{c["pairs"]:,}</td>'
                  f'<td class="num quiet">{c["devs"]}</td></tr>')
     r.append('</tbody></table>')
     return ''.join(r)
 
-def void_devs(n=26, widest=False):
-    d = V['newsale']['devs']
+def void_devs(n=30, widest=False):
+    d = V['resale']['devs']
     d = sorted(d, key=lambda r: -r['spread'])[:n] if widest else d[:n]
     r = ['<table class="fig"><thead><tr><th>Development</th><th class="num">D</th>'
-         '<th class="num">Base</th><th class="num">Penthouse</th><th class="num">Extra</th>'
-         '<th class="num">Base psf</th><th class="num">Extra area psf</th>'
-         '<th class="num">Ratio</th><th class="num">Spread</th><th class="num">Sales</th>'
-         '</tr></thead><tbody>']
+         '<th class="num">Extra</th><th class="num">Home psf</th>'
+         '<th class="num">Extra-area psf</th><th class="num">Discount</th>'
+         '<th class="num">Spread</th><th class="num">Resales</th></tr></thead><tbody>']
     for x in d:
         r.append(f'<tr><th>{html.escape(nice(x["proj"]))}</th>'
                  f'<td class="num quiet">{x["dist"]}</td>'
-                 f'<td class="num quiet">{x["base_sqft"]:,}</td>'
-                 f'<td class="num quiet">{x["ph_sqft"]:,}</td>'
                  f'<td class="num">+{x["extra"]:,}</td>'
                  f'<td class="num quiet">${x["base_psf"]:,}</td>'
                  f'<td class="num">${x["void_psf"]:,}</td>'
-                 f'<td class="num big" style="color:var(--gold)">{x["ratio"]:.2f}&times;</td>'
-                 f'<td class="num {"big" if x["spread"]>=.6 else "quiet"}">{x["spread"]:.2f}</td>'
+                 f'<td class="num big" style="color:var(--gold)">{100-x["ratio"]*100:.0f}% off</td>'
+                 f'<td class="num {"big" if x["spread"]>=.5 else "quiet"}">{x["spread"]:.2f}</td>'
                  f'<td class="num quiet">{x["pairs"]}</td></tr>')
     r.append('</tbody></table>')
     return ''.join(r)
+
+def void_spread_names(k=3):
+    d = sorted(V['resale']['devs'], key=lambda r: -r['spread'])[:k]
+    return ', '.join(f'<b>{html.escape(nice(x["proj"]))}</b> {x["spread"]:.2f}' for x in d)
 
 def hero(was, was_sub, answers, call):
     """The verdict block every panel opens with. `answers` is a list of
@@ -1071,21 +1077,17 @@ sitting on the station.</p>
 <p class="lede">Same project, same block, <b>same stack</b> &mdash; so the top-floor unit stands on
 the same floor plate as every unit below it. Where its strata area is larger, the difference is
 space the floor plate never gained: void over the living room, or roof. Floor is normalised out at
-the floor study&rsquo;s own {V['meta']['floor_step']*100:.1f}% per floor. What is left is what that
-extra area is worth.</p>
+{V['meta']['floor_step']*100:.1f}% per floor. What is left is what that extra area is worth on
+the <b>resale</b> market.</p>
 
 {hero('1.00&times;', 'every strata sqft priced alike',
-      [(f"{V['newsale']['corrected']['discount']:.0f}% off", 'the developer discounts it',
-        V['newsale']['corrected']['devs']),
-       (f"{V['resale']['corrected']['discount']:.0f}% off", 'the resale market discounts it',
-        V['resale']['corrected']['devs'])],
-      f"<b>The call.</b> A developer sells the extra penthouse area at "
-      f"<b>{V['newsale']['corrected']['discount']:.0f}% off</b> the home&rsquo;s own psf &mdash; "
-      f"the cheapest square foot on the price list. The resale market discounts the same space "
-      f"by only <b>{V['resale']['corrected']['discount']:.0f}%</b>. So the space the developer "
-      f"marks down hardest is the space the next buyer marks down least, and the void re-rates "
-      f"on the way out. <b>The engine sees none of it</b> &mdash; it works in psf and charges "
-      f"the void the same as a bedroom.")}
+      [(f"{VR['discount']:.0f}% off", 'what a resale buyer pays for it', VR['devs'])],
+      f"<b>The call.</b> A resale buyer pays about <b>half price</b> for the extra area of a "
+      f"penthouse &mdash; {VR['discount']:.0f}% off the psf the same home&rsquo;s floor plate "
+      f"commands. <b>The engine sees none of it.</b> It works in psf and charges the void the "
+      f"same as a bedroom, so a penthouse reads "
+      f"{abs(VR['headline_drop']):.0f}% cheaper per square foot than the unit underneath it with "
+      f"nothing about the home worse.")}
 
 <section>
   <div class="calc">
@@ -1099,11 +1101,6 @@ extra area is worth.</p>
   </div>
 
   <div class="scroll">{void_answer()}</div>
-  <p class="expl"><b>The penthouse psf reads {abs(V['newsale']['headline']['headline_drop']):.0f}%
-  below the unit underneath it</b> and nothing about the home got worse. That is the whole effect:
-  a cheap block of area averaged into an expensive one. Any comparison that reaches for a
-  penthouse&rsquo;s headline psf &mdash; the engine&rsquo;s included &mdash; is reading a blended
-  figure, not a price.</p>
 
   <div class="caveat"><b>Void, roof terrace or private roof &mdash; the caveat reads them as one
   thing.</b> REALIS records strata area, not what is under the ceiling. All three are area on a
@@ -1111,72 +1108,61 @@ extra area is worth.</p>
   Naming which is which needs the floor plan, unit by unit. Quote this as <b>extra penthouse
   area</b>; ceiling height is a subset of it and has not been separated.</div>
 
-  <details open><summary>The placebo, and why it moved the answer</summary>
-    <p class="expl">The marginal psf is <b>leveraged</b>: the extra area is small against the home,
-    so a 2% error in the base comparator swings it by more than 10%. The threat is a top-floor
-    bonus that a straight-line floor step does not capture &mdash; any such bonus lands entirely
-    on the void and inflates the ratio.</p>
+  <details><summary>The check that the floor step is not doing the work</summary>
+    <p class="expl">The figure is <b>leveraged</b>: the extra area is small against the home, so a
+    2% error in the base comparator swings it by more than 10%. The threat is a top-floor bonus
+    that a straight-line floor step does not capture &mdash; any such bonus would land entirely on
+    the void.</p>
     <p class="expl"><b>The check.</b> Run the identical machinery on stacks whose top unit is the
     <b>same size</b> as the units below. No extra area, so the residual should be zero. Across
-    {V['newsale']['placebo']['pairs']:,} such sales it reads
-    <b>+{V['newsale']['placebo']['residual_pct']:.2f}%</b>
-    ({V['newsale']['placebo']['lo']:.2f} to {V['newsale']['placebo']['hi']:.2f}) &mdash; a real
-    top-floor bonus on developer price lists, over and above the floor step. Stripping it off the
-    penthouse leg first takes the answer from
-    {V['newsale']['headline']['ratio']:.2f}&times; to
-    <b>{V['newsale']['corrected']['ratio']:.2f}&times;</b>. The corrected figure is the one on the
-    face.</p>
-    <p class="expl">The same placebo on <b>resale</b> reads
-    {V['resale']['placebo']['residual_pct']:+.2f}% across {V['resale']['placebo']['pairs']} sales
-    &mdash; nil. The top-floor bonus is something developers charge and the resale market does not
-    repeat, which is a finding in its own right.</p>
-  </details>
-
-  <details><summary>How much of this is the floor-step assumption</summary>
-    <p class="expl">Honest answer: some of it. Re-run everything at other floor steps and the
-    uncorrected ratio moves with the assumption &mdash; which is the same bias the placebo
-    catches, arriving by another road.</p>
+    {V['resale']['placebo']['pairs']:,} such resales it reads
+    <b>{V['resale']['placebo']['residual_pct']:+.2f}%</b>
+    ({V['resale']['placebo']['lo']:+.2f} to {V['resale']['placebo']['hi']:+.2f}) &mdash;
+    indistinguishable from zero. <b>Nothing is corrected</b>, because correcting by a figure that
+    cannot be told from zero is worse than leaving it alone. The resale market pays no top-floor
+    bonus beyond the floor step itself.</p>
+    <p class="expl">Re-run everything at other floor steps and the answer barely moves:</p>
     <div class="scroll">{void_sens()}</div>
-    <p class="expl">Across the defensible range the ratio runs
-    <b>{min(x['ratio'] for x in V['newsale']['sensitivity']):.2f} to
-    {max(x['ratio'] for x in V['newsale']['sensitivity']):.2f}</b>, and the placebo correction
-    lands at the bottom of it. <b>Quote a quarter, not two decimal places.</b></p>
+    <p class="expl">Across the defensible range it runs
+    <b>{min(x['ratio'] for x in V['resale']['sensitivity']):.2f} to
+    {max(x['ratio'] for x in V['resale']['sensitivity']):.2f}</b>. The assumption is not carrying
+    the answer. <b>Quote half, not two decimal places.</b></p>
   </details>
 </section>
 
 <section>
   <h2>Where it moves</h2>
-  <p class="expl"><b>The bigger the void, the cheaper it gets.</b> A penthouse where the extra area
-  is a third of the floor plate is priced further down than one where it is a sixth &mdash; the
-  developer knows the buyer will not pay twice for space they cannot furnish.</p>
-  <div class="scroll">{void_cut('newsale', 'extra area')}</div>
+  <p class="expl"><b>The bigger the void, the more the buyer pays for it.</b> Where the extra area
+  is a tenth of the floor plate it is discounted hardest; at a quarter and above the discount
+  narrows &mdash; a large roof or a full double-volume room is a room, and gets treated as one.</p>
+  <div class="scroll">{void_cut('extra area')}</div>
 
-  <p class="expl" style="margin-top:18px"><b>And the dearer the home, the dearer the void.</b> As a
-  ratio it climbs with price tier, so in dollars it climbs twice over.</p>
-  <div class="scroll">{void_cut('newsale', 'price tier')}</div>
+  <p class="expl" style="margin-top:18px"><b>The cheaper the home, the more the extra area is
+  worth to the buyer</b> &mdash; the opposite of the shape you would guess. Below $1,500 psf the
+  discount is smallest.</p>
+  <div class="scroll">{void_cut('price tier')}</div>
 
   <details style="margin-top:16px"><summary>By region, and by tenure</summary>
-    <div class="scroll">{void_cut('newsale', 'region')}</div>
-    <div class="scroll" style="margin-top:14px">{void_cut('newsale', 'tenure')}</div>
-    <p class="expl">Freehold reads dearer than leasehold, but freehold stock sits in pricier
-    pockets and the price-tier cut above already explains most of it. Do not quote the tenure split
-    on its own.</p>
+    <div class="scroll">{void_cut('region')}</div>
+    <div class="scroll" style="margin-top:14px">{void_cut('tenure')}</div>
+    <p class="expl">Every one of these cells is thin. Read them for direction, never as a figure
+    to quote on its own.</p>
   </details>
 </section>
 
 <section>
   <h2>The finding that is worth money</h2>
   <p class="expl"><b>The spread inside one development is wider than the spread between
-  developments.</b> The developer prices the void stack by stack and the pricing is close to
-  arbitrary &mdash; at some stacks the extra area is charged at nothing at all.</p>
-  <div class="scroll">{void_devs(widest=True, n=14)}</div>
-  <p class="expl">Read the <b>spread</b> column: it is the gap between the dearest and the cheapest
+  developments.</b> The void is priced stack by stack, and what one buyer paid for it bears
+  little relation to what the buyer in the next line paid: {void_spread_names()}.</p>
+  <div class="scroll">{void_devs(widest=True, n=12)}</div>
+  <p class="expl">Read the <b>spread</b> column: the gap between the dearest and the cheapest
   stack in that same development. <b>The advice is not &ldquo;penthouses are good value&rdquo;
-  &mdash; it is find the stack where the void was given away.</b> Same project, same launch, same
-  price list.</p>
+  &mdash; it is find the stack where the void was given away.</b></p>
 
-  <details><summary>Every development that priced the void cheapest</summary>
-    <div class="scroll">{void_devs(n=26)}</div>
+  <details><summary>Every development, cheapest void first</summary>
+    <div class="scroll">{void_devs(n=30)}</div>
+    <p class="expl">Developments with at least two matched penthouse resales.</p>
   </details>
 </section>
 
@@ -1187,7 +1173,7 @@ extra area is worth.</p>
         <li>same project, same <b>block</b>, same <b>stack</b></li>
         <li>&mdash; so the same <b>floor plate</b>, by construction</li>
         <li>base legs within <b>{V['meta']['size_tol']*100:.0f}%</b> of the stack&rsquo;s median size</li>
-        <li>base legs within <b>{V['meta']['match_days']} days</b> of the penthouse sale</li></ul></div>
+        <li>base legs within <b>{V['meta']['match_days']} days</b> of the penthouse resale</li></ul></div>
       <div class="card"><h4>The screens</h4><ul>
         <li><b>{V['meta']['min_base']}+ base legs</b>, so the comparator is a median</li>
         <li>extra area <b>{V['meta']['extra_band'][0]*100:.0f}&ndash;{V['meta']['extra_band'][1]*100:.0f}%</b>
@@ -1196,8 +1182,8 @@ extra area is worth.</p>
             which is what this pair exists to exclude</li></ul></div>
       <div class="card"><h4>Not controlled</h4><ul>
         <li><b>what the extra area is</b> &mdash; void, roof terrace or roof</li>
-        <li>renovation and fit-out on the resale track</li>
-        <li>the top floor&rsquo;s own view, beyond the floor step and the placebo</li></ul></div>
+        <li><b>renovation and fit-out</b>, on either leg</li>
+        <li>the top floor&rsquo;s own view, beyond the floor step and the check above</li></ul></div>
     </div>
   </details>
   <details><summary>Where the data comes from &mdash; not the MAPS refresh</summary>
@@ -1205,7 +1191,7 @@ extra area is worth.</p>
     <b>REALIS unit-level pull</b> held by the floor study, because it is the only dataset here that
     carries a <b>unit number</b> &mdash; and without the unit number there is no stack, without the
     stack there is no same-floor-plate pair. {V['meta']['window']}, all Singapore, strata,
-    apartment and condominium. Read-only, same arrangement as the others.</p>
+    apartment and condominium, <b>resale only</b>.</p>
     <p class="expl"><code>price-gap/calibration/void-pairs.py</code> &rarr;
     <code>void-pairs.json</code>. It depends on none of the other three and they depend on none of
     it, so it may be run at any point in the order.</p>
@@ -1237,8 +1223,8 @@ extra area is worth.</p>
     <td>measured &mdash; +{G['cuts'][4]['pct']:.1f}% ({G['cuts'][4]['pct_lo']:.1f} to
     {G['cuts'][4]['pct_hi']:.1f}), which contains the +5%</td></tr>
   <tr><th>Void &middot; extra penthouse area</th><td class="num big">1.00&times; (implicit)</td>
-    <td>measured &mdash; {V['newsale']['corrected']['ratio']:.2f}&times; on the price list,
-    {V['resale']['corrected']['ratio']:.2f}&times; on resale; the engine has no constant for it</td></tr>
+    <td>measured &mdash; a resale buyer pays {VR['discount']:.0f}% less for it than for the
+    floor plate; the engine has no constant for it</td></tr>
   </tbody></table>
 </section>
 </div>
@@ -1279,7 +1265,7 @@ HTML = f"""<!doctype html>
   <span>price-gap/calibration/lease-pairs.py · regenerate with build-page.py</span>
 </footer>
 </div>
-<script>{JS.replace('%BANDS%', BANDS_JS).replace('%LO%', f'{MID_LO}').replace('%HI%', f'{MID_HI}').replace('%VLO%', f"{V['resale']['corrected']['lo']}").replace('%VHI%', f"{V['resale']['corrected']['hi']}").replace('%VMID%', f"{V['resale']['corrected']['ratio']}")}</script>
+<script>{JS.replace('%BANDS%', BANDS_JS).replace('%LO%', f'{MID_LO}').replace('%HI%', f'{MID_HI}').replace('%VLO%', f"{VR['lo']}").replace('%VHI%', f"{VR['hi']}").replace('%VMID%', f"{VR['ratio']}")}</script>
 </body></html>
 """
 open(OUT, 'w').write(HTML)

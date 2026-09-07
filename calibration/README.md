@@ -576,7 +576,13 @@ comparison — all of it correct and all of it in the way. It was cut back.
 
 `What should the penthouse cost` takes the **unit below** (sqft and psf) and the **penthouse
 sqft**. The floor plate is priced at the psf it already sells for; only the **extra area** is
-repriced, at **0.25–0.75×** — the resale quartiles rounded. Output is one line: the quantum range.
+repriced, at the **95% interval on the resale median — 0.38–0.59×**. Output is one line: the
+quantum range.
+
+**The band is the interval on the median, not the quartiles.** His call, same day: the quartile
+range (0.24–0.78) was too wide to act on. Read it as where the market's *typical* ratio sits, not
+where one particular penthouse could land — a single stack can still fall outside it, and the
+per-development table shows several that do.
 
 The basis is deliberately **resale, not the price list**. The question the tool answers is what the
 space is worth, not what a developer is charging for it. The 0.23× developer figure stays on the

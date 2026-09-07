@@ -491,8 +491,14 @@ JS = """
 
 /* VOID SPACE. Deliberately the smallest calculator on this page: the unit below, its psf,
    and the penthouse size. The floor plate is priced at the psf it already sells for; only the
-   EXTRA area is repriced, at the resale quartiles. No floor step, no placebo correction, no
-   verdict -- Shawn's ruling, 2026-09-07: ask for two things and return a quantum range. */
+   EXTRA area is repriced. No floor step, no placebo correction, no verdict -- Shawn's ruling,
+   2026-09-07: ask for two things and return a quantum range.
+
+   THE BAND IS THE 95% INTERVAL ON THE RESALE MEDIAN, not the quartiles. His call, same day: the
+   quartile range (0.24-0.78) was too wide to act on. Read it as where the market's TYPICAL ratio
+   sits, not where one particular penthouse could land -- a single stack can still fall outside
+   it, and the per-development table above shows several that do. Derived from void-pairs.json,
+   never hardcoded. */
 (function(){
   var LO=%VLO%, HI=%VHI%;
   function n(id){return parseFloat(document.getElementById(id).value);}
@@ -508,7 +514,8 @@ JS = """
     o.innerHTML=
       '<div class="crow big"><span>Worth</span><b>'+m(lo)+' &ndash; '+m(hi)+'</b></div>'+
       '<p class="chint">'+Math.round(extra).toLocaleString()+' sqft of extra area at '+
-      LO.toFixed(2)+'&ndash;'+HI.toFixed(2)+'&times; the psf below it.</p>';
+      LO.toFixed(2)+'&ndash;'+HI.toFixed(2)+'&times; the psf below it \u2014 the 95% interval '+
+      'on the resale median.</p>';
   }
   ['vbS','vbP','vpS'].forEach(function(id){
     var e=document.getElementById(id); if(e) e.addEventListener('input',go);});
@@ -1268,7 +1275,7 @@ HTML = f"""<!doctype html>
   <span>price-gap/calibration/lease-pairs.py · regenerate with build-page.py</span>
 </footer>
 </div>
-<script>{JS.replace('%BANDS%', BANDS_JS).replace('%LO%', f'{MID_LO}').replace('%HI%', f'{MID_HI}').replace('%VLO%', '0.25').replace('%VHI%', '0.75')}</script>
+<script>{JS.replace('%BANDS%', BANDS_JS).replace('%LO%', f'{MID_LO}').replace('%HI%', f'{MID_HI}').replace('%VLO%', f"{V['resale']['corrected']['lo']}").replace('%VHI%', f"{V['resale']['corrected']['hi']}")}</script>
 </body></html>
 """
 open(OUT, 'w').write(HTML)

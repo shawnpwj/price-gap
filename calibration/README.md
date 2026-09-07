@@ -589,8 +589,19 @@ other here, but they are different quantities and the median is the one with evi
 carried the floor step, the placebo correction, a cheap/at-market/dear verdict and a fair-price
 comparison — all of it correct and all of it in the way. It was cut back.
 
-`What should the penthouse cost` takes the **unit below** (sqft and psf) and the **penthouse
-sqft**. The floor plate is priced at the psf it already sells for; only the **extra area** is
+`What should the penthouse cost` takes the **unit below** (sqft and psf), the **penthouse sqft**,
+and **how many floors below** it sits.
+
+**The floor lift is not optional and it goes first.** The measurement lifts every base leg to the
+penthouse's own floor at 0.4%/floor before taking the median; a calculator that skips it
+understates the floor plate and drops the entire error onto the void, which is small enough to be
+swamped by it.
+
+**It is applied at every floor gap, one included** — 0.4% for one floor, 4% for ten. Shawn's
+ruling, 2026-09-07: *"you should adjust by 0.4% as well no? dont say its immaterial."* Do not
+special-case a single floor, and do not describe the one-floor lift as too small to bother with.
+The adjustment is the method; its size is not the point. He caught this in the same pass that
+restored the field, which had been cut in the simplification. The floor plate is priced at the psf it already sells for; only the **extra area** is
 repriced, at the **95% interval on the resale median — 0.38–0.59×**. Output is one line: the
 quantum range.
 

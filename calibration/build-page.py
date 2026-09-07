@@ -503,25 +503,33 @@ JS = """
    but they are different quantities, and the median is the one with evidence behind it. All three
    derived from void-pairs.json, never hardcoded. */
 (function(){
-  var LO=%VLO%, HI=%VHI%, MID=%VMID%;
+  var LO=%VLO%, HI=%VHI%, MID=%VMID%, FS=%VFS%;
   function n(id){return parseFloat(document.getElementById(id).value);}
   function m(x){return '$'+(x/1e6).toFixed(2)+'M';}
   function go(){
-    var bs=n('vbS'), bp=n('vbP'), ps=n('vpS'), o=document.getElementById('voidOut');
-    if(!(bs>0&&bp>0&&ps>0)){o.className='cout bad';o.innerHTML='Enter the unit below and the penthouse size.';return;}
+    var bs=n('vbS'), bp=n('vbP'), ps=n('vpS'), f=n('vF'), o=document.getElementById('voidOut');
+    if(!(bs>0&&bp>0&&ps>0)||isNaN(f)||f<0){o.className='cout bad';
+      o.innerHTML='Enter the unit below and the penthouse size.';return;}
     var extra=ps-bs;
     if(extra<=0){o.className='cout bad';
       o.innerHTML='The penthouse is not larger \u2014 there is no extra area to price.';return;}
-    var plate=bs*bp, lo=plate+extra*bp*LO, hi=plate+extra*bp*HI, mid=plate+extra*bp*MID;
+    /* Lift the unit below to the penthouse's own floor FIRST. The measurement does this to
+       every base leg before taking the median, so a calculator that skips it understates the
+       floor plate and drops the whole error onto the void. */
+    var psf=bp*(1+FS*f), plate=bs*psf,
+        lo=plate+extra*psf*LO, hi=plate+extra*psf*HI, mid=plate+extra*psf*MID;
     o.className='cout';
     o.innerHTML=
       '<div class="crow big"><span>Worth</span><b>'+m(lo)+' &ndash; '+m(hi)+'</b></div>'+
       '<div class="crow"><span>Midpoint</span><b>'+m(mid)+'</b></div>'+
-      '<p class="chint">'+Math.round(extra).toLocaleString()+' sqft of extra area at '+
-      LO.toFixed(2)+'&ndash;'+HI.toFixed(2)+'&times; the psf below it \u2014 the 95% interval '+
-      'on the resale median.</p>';
+      '<p class="chint">Floor plate at $'+Math.round(psf).toLocaleString()+' psf'+
+      (f>0?' \u2014 the unit below lifted '+f+' floor'+(f===1?'':'s')+' at '+
+        (FS*100).toFixed(1)+'%':'')+'. '+
+      Math.round(extra).toLocaleString()+' sqft of extra area at '+
+      LO.toFixed(2)+'&ndash;'+HI.toFixed(2)+'&times; that \u2014 the 95% interval on the '+
+      'resale median.</p>';
   }
-  ['vbS','vbP','vpS'].forEach(function(id){
+  ['vbS','vbP','vpS','vF'].forEach(function(id){
     var e=document.getElementById(id); if(e) e.addEventListener('input',go);});
   go();
 })();
@@ -1096,6 +1104,7 @@ the <b>resale</b> market.</p>
       <label>Unit below &mdash; sqft<input id="vbS" type="number" value="1216" min="200" max="9000" step="1"></label>
       <label>Unit below &mdash; psf<input id="vbP" type="number" value="2662" min="200" max="9000" step="10"></label>
       <label>Penthouse sqft<input id="vpS" type="number" value="1421" min="200" max="9000" step="1"></label>
+      <label>Floors below<input id="vF" type="number" value="1" min="0" max="70" step="1"></label>
     </div>
     <div id="voidOut" class="cout"></div>
   </div>
@@ -1265,7 +1274,7 @@ HTML = f"""<!doctype html>
   <span>price-gap/calibration/lease-pairs.py · regenerate with build-page.py</span>
 </footer>
 </div>
-<script>{JS.replace('%BANDS%', BANDS_JS).replace('%LO%', f'{MID_LO}').replace('%HI%', f'{MID_HI}').replace('%VLO%', f"{VR['lo']}").replace('%VHI%', f"{VR['hi']}").replace('%VMID%', f"{VR['ratio']}")}</script>
+<script>{JS.replace('%BANDS%', BANDS_JS).replace('%LO%', f'{MID_LO}').replace('%HI%', f'{MID_HI}').replace('%VLO%', f"{VR['lo']}").replace('%VHI%', f"{VR['hi']}").replace('%VMID%', f"{VR['ratio']}").replace('%VFS%', f"{V['meta']['floor_step']}")}</script>
 </body></html>
 """
 open(OUT, 'w').write(HTML)

@@ -570,7 +570,10 @@ is no stack, without the stack there is no same-floor-plate pair. 2015-01 to 202
 Singapore, strata, apartment and condominium. Read-only, same arrangement as the others.
 
 ### The calculator on the panel
-**Shawn's ruling, 2026-09-07: ask for two things and return a quantum range.** An earlier version
+**Shawn's ruling, 2026-09-07: ask for two things and return a quantum range, with the **midpoint** beneath it.
+
+The midpoint is the **measured median (0.49×)**, not (lo+hi)/2. They land within a cent of each
+other here, but they are different quantities and the median is the one with evidence behind it.** An earlier version
 carried the floor step, the placebo correction, a cheap/at-market/dear verdict and a fair-price
 comparison — all of it correct and all of it in the way. It was cut back.
 

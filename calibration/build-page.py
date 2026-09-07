@@ -497,10 +497,13 @@ JS = """
    THE BAND IS THE 95% INTERVAL ON THE RESALE MEDIAN, not the quartiles. His call, same day: the
    quartile range (0.24-0.78) was too wide to act on. Read it as where the market's TYPICAL ratio
    sits, not where one particular penthouse could land -- a single stack can still fall outside
-   it, and the per-development table above shows several that do. Derived from void-pairs.json,
-   never hardcoded. */
+   it, and the per-development table above shows several that do.
+
+   THE MIDPOINT IS THE MEASURED MEDIAN, not (lo+hi)/2. They land within a cent of each other here
+   but they are different quantities, and the median is the one with evidence behind it. All three
+   derived from void-pairs.json, never hardcoded. */
 (function(){
-  var LO=%VLO%, HI=%VHI%;
+  var LO=%VLO%, HI=%VHI%, MID=%VMID%;
   function n(id){return parseFloat(document.getElementById(id).value);}
   function m(x){return '$'+(x/1e6).toFixed(2)+'M';}
   function go(){
@@ -509,10 +512,11 @@ JS = """
     var extra=ps-bs;
     if(extra<=0){o.className='cout bad';
       o.innerHTML='The penthouse is not larger \u2014 there is no extra area to price.';return;}
-    var plate=bs*bp, lo=plate+extra*bp*LO, hi=plate+extra*bp*HI;
+    var plate=bs*bp, lo=plate+extra*bp*LO, hi=plate+extra*bp*HI, mid=plate+extra*bp*MID;
     o.className='cout';
     o.innerHTML=
       '<div class="crow big"><span>Worth</span><b>'+m(lo)+' &ndash; '+m(hi)+'</b></div>'+
+      '<div class="crow"><span>Midpoint</span><b>'+m(mid)+'</b></div>'+
       '<p class="chint">'+Math.round(extra).toLocaleString()+' sqft of extra area at '+
       LO.toFixed(2)+'&ndash;'+HI.toFixed(2)+'&times; the psf below it \u2014 the 95% interval '+
       'on the resale median.</p>';
@@ -1275,7 +1279,7 @@ HTML = f"""<!doctype html>
   <span>price-gap/calibration/lease-pairs.py · regenerate with build-page.py</span>
 </footer>
 </div>
-<script>{JS.replace('%BANDS%', BANDS_JS).replace('%LO%', f'{MID_LO}').replace('%HI%', f'{MID_HI}').replace('%VLO%', f"{V['resale']['corrected']['lo']}").replace('%VHI%', f"{V['resale']['corrected']['hi']}")}</script>
+<script>{JS.replace('%BANDS%', BANDS_JS).replace('%LO%', f'{MID_LO}').replace('%HI%', f'{MID_HI}').replace('%VLO%', f"{V['resale']['corrected']['lo']}").replace('%VHI%', f"{V['resale']['corrected']['hi']}").replace('%VMID%', f"{V['resale']['corrected']['ratio']}")}</script>
 </body></html>
 """
 open(OUT, 'w').write(HTML)

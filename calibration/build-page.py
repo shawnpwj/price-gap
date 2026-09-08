@@ -969,9 +969,10 @@ def ten_transfer_table(key, head):
 
 def ten_sens_table():
     if not T: return ''
-    r = ['<table class="fig"><thead><tr><th>Screen</th><th class="num">freehold is worth</th>'
+    r = ['<table class="fig"><thead><tr><th>How far apart the two may sit</th>'
+         '<th class="num">freehold is worth</th>'
          '<th class="num">pairs</th></tr></thead><tbody>']
-    for x in T['sens']:
+    for x in [x for x in T['sens'] if not x['label'].endswith('floor')]:
         head = x['label'].endswith('(headline)')
         r.append(f'<tr><th>{"<b>" if head else ""}{x["label"]}{"</b>" if head else ""}</th>'
                  f'<td class="num {"big" if head else "quiet"}">+{x["pct"]*100:.1f}%</td>'
@@ -1394,64 +1395,14 @@ constant at all.</p>
 
 <section>
   <div class="sechead"><h2 class="disp">Behind it</h2>
-  <p>Seven questions, answered once each.</p></div>
+  <p>Two questions, answered once each.</p></div>
 
-  <details><summary>Why a percentage and not a dollar figure?</summary>
-    <p class="expl"><b>Because it travels.</b> The test is whether a figure can price stock it
-    has never seen: fit it without one price tier, then ask it about that tier, and the same by
-    region. The percentage wins on the cheapest stock and in the OCR, where a flat dollar figure
-    is too large a share of the price.</p>
-    <div class="scroll">{ten_transfer_table('price', 'Predicting a price tier never seen')}</div>
-    <div class="scroll" style="margin-top:14px">{ten_transfer_table('region', 'Predicting a region never seen')}</div>
-    <p class="expl" style="margin-top:18px">The dollar form is +${THD['p']:,.0f}. On $1,100 stock
-    the percentage says +${1100*THP['p']:,.0f}; on $3,500, +${3500*THP['p']:,.0f}. <b>The sample
-    runs ${min(r['psf_lh'] for r in TMIX):,.0f} to ${max(r['psf_lh'] for r in TMIX):,.0f} psf</b>,
-    so the percentage is measured in the middle and inferred at the edges.</p>
-  </details>
-
-  <details><summary>Do the like-for-like checks read zero?</summary>
-    <p class="expl"><b>Both do.</b> Same method on pairs sharing a tenure, where the premium is
-    zero by construction: leasehold against leasehold
-    <b>{T['placebo']['LH x LH']['pct']*100:+.1f}%</b>
-    ({T['placebo']['LH x LH']['pairs']} pairs), freehold against freehold
-    <b>{T['placebo']['FH x FH']['pct']*100:+.1f}%</b>
-    ({T['placebo']['FH x FH']['pairs']} pairs). Which side takes the freehold slot is drawn at
-    random and averaged &mdash; doing it alphabetically read a false +2.9%.</p>
-  </details>
-
-  <details><summary>Where the calculator gets the lease left</summary>
-    <p class="expl"><b>From the completion year</b> &mdash; the one date a buyer always has.
-    {T['build']['term']}-year term, less the years since TOP, less the build. Across
-    {T['build']['n']} leasehold developments the build gap is a median
-    <b>{T['build']['median']} years</b> and {T['build']['term_share']*100:.0f}% of stock is on a
-    {T['build']['term']}-year lease, so the inference is good to a year or two against steps
-    fifteen years wide.</p>
-    <p class="expl">The build gap in use is <b>{T['build']['engine']} years</b>. It barely touches
-    this answer, but the same figure invents a TOP year where none is on record.</p>
-  </details>
-
-  <details><summary>What does this say about the $10 age adjustment?</summary>
-    <p class="expl">Freehold-against-freehold pairs measure it directly, since nothing else
-    separates them: <b>${T['fh_age_rate']:,.0f} a year</b> against the $10 in use. The age term
-    is understated and the lease term overstated.</p>
-  </details>
-
-  <details><summary>Why the 200-unit floor stays</summary>
-    <p class="expl">Dropping it halves the answer, and the {T['floor']['added_pairs']} pairs it
-    lets in cannot carry one: a median <b>{T['floor']['n_fh_added']:.0f} sales</b> a side against
-    {T['floor']['n_fh_headline']:.0f} in the headline, and fitted on their own they read a
-    directionless <b>+{T['floor']['added_pct']*100:.1f}%</b>. Freehold stock is mostly boutique,
-    so the floor bites harder here than on the lease study.</p>
-  </details>
-
-  <details><summary>How much do the screens move it?</summary>
+  <details><summary>Does distance affect the premium?</summary>
     <p class="expl"><b>{T['counts']['devs']} developments &middot; {T['counts']['pairs']} pairs
     &middot; {T['counts']['cells']} cells</b>, on the same screens as the lease study &mdash;
     500 m apart, the same station, the same schools, 200+ units, sizes within 20% &mdash; across
     24 months of resale and sub-sale to {T['window'][1]}.</p>
     <div class="scroll">{ten_sens_table()}</div>
-    <p class="expl" style="margin-top:18px">Distance barely matters. The unit floor is the one
-    that does.</p>
   </details>
 
   <details><summary>Does it hold across the island, and across bedrooms?</summary>
@@ -1463,12 +1414,6 @@ constant at all.</p>
     size constant. One- and four-bedroom are too thin to show.</p>
   </details>
 
-  <div class="caveat" style="margin-top:22px"><b>The confound to know.</b> Freehold is the
-  <b>older</b> side in {TOLDER} of the {T['counts']['cells']} cells, and the age adjustment that
-  removes it is as large as the premium being measured. Fit that rate freely instead of importing
-  the measured bands and the answer is
-  +{[x for x in T['race'] if x['key']=='va' and x['rate']=='free'][0]['prem']*100:.1f}%, so read
-  the headline as the top of a range starting there.</div>
 </section>
 
 </div>

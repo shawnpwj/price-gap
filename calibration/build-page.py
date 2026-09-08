@@ -159,7 +159,7 @@ def age_label(nm):
 # ── tables ──────────────────────────────────────────────────────────────────
 def answer_table():
     h = ['<table class="fig look"><thead><tr><th>Midpoint of the two lease starts</th>'
-         '<th class="num">$ psf / yr</th><th class="num">95% interval</th>'
+         '<th class="num">$ psf / yr</th><th class="num">could really be</th>'
          '<th class="num">developments</th><th class="num">pairs</th></tr></thead><tbody>']
     for _, _, nm in BANDS:
         rs = rows_in(nm); lo, hi = BANDCI[nm]; a1, a2 = age_label(nm)
@@ -209,9 +209,9 @@ def tested_table():
     h.append(r_('The CCR', f'{len(CCR)} cells',
                 'Not measurable. Every qualifying pair is Marina Bay or Sentosa &mdash; a submarket, not a region.'))
     h.append(r_('Three bands instead of two', f'{CV_THREE/1000:,.1f}k against {CV_TWO/1000:,.1f}k',
-                'Worse on held-out error, and the extra band split into two incoherent regional halves.'))
+                'Worse on the average miss, and the extra band split into two incoherent regional halves.'))
     h.append(r_('One flat rate', f'{CV_FLAT/1000:,.1f}k against {CV_TWO/1000:,.1f}k',
-                'Worse on held-out error. It is the form the constant takes today.'))
+                'Worse on the average miss. It is the form the constant takes today.'))
     h.append(r_('A fitted curve or knee', 'moved with the sample',
                 'A straight line ran low at both ends; a fitted knee then moved when the pair screen '
                 'widened. The knee is not identified &mdash; do not report one.'))
@@ -307,8 +307,10 @@ transition:background .18s cubic-bezier(.22,1,.36,1),color .18s cubic-bezier(.22
 .terms button:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
 .terms .tn{display:block;font:600 14.5px/1.25 Optima,Candara,sans-serif;
 color:var(--slate-400);letter-spacing:.005em}
-.terms .ts{display:block;margin-top:4px;font-size:9.5px;letter-spacing:.2em;
-text-transform:uppercase;color:var(--slate-600)}
+/* The sub-label is the panel's ANSWER, not a status word, so it is set as a figure:
+   readable size, no uppercase, gold on a measured panel. Shawn, 2026-09-08. */
+.terms .ts{display:block;margin-top:4px;font-size:11.5px;letter-spacing:.02em;
+color:var(--slate-600);font-variant-numeric:tabular-nums}
 .terms button.done .ts{color:rgba(201,169,106,.75)}
 .terms button[aria-current="true"]{background:var(--navy-850)}
 .terms button[aria-current="true"] .tn{color:var(--slate-100)}
@@ -342,8 +344,8 @@ box-shadow:0 10px 40px -12px rgba(0,0,0,.55);padding:26px 28px}
 white-space:nowrap;letter-spacing:-.012em}
 .ans .w{font-size:11.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--slate-400);
 margin-top:10px}
-.ans .g{font:600 18px/1.15 Optima,Candara,sans-serif;color:var(--slate-200);margin-top:8px}
-.ans .g span{font:400 10px/1 -apple-system,Segoe UI,sans-serif;letter-spacing:.16em;
+.ans .g{font:600 18px/1.15 Optima,Candara,sans-serif;color:var(--slate-300);margin-top:8px}
+.ans .g span{font:400 11.5px/1 -apple-system,Segoe UI,sans-serif;letter-spacing:.04em;
 text-transform:uppercase;color:var(--slate-600);display:block;margin-top:3px}
 .vcell.grow{flex:1 1 340px}
 @media (max-width:1100px){
@@ -362,7 +364,7 @@ font-size:15px;color:var(--slate-300);max-width:72ch}
 table.fig{width:100%;border-collapse:collapse;font-size:13px;margin-top:4px}
 table.fig th,table.fig td{padding:8px 12px;text-align:left;border-bottom:1px solid rgba(36,48,80,.55);
 vertical-align:baseline}
-table.fig thead th{font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+table.fig thead th{font-size:12.5px;letter-spacing:.02em;
 color:var(--slate-600);font-weight:400;border-bottom:1px solid var(--ink);white-space:nowrap}
 table.fig tbody th{font-weight:400;color:var(--slate-300);white-space:nowrap}
 .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
@@ -399,8 +401,8 @@ font-weight:400;margin-bottom:9px}
 .card li{padding:3px 0;color:var(--slate-400);font-size:12.5px}
 .card li b{color:var(--slate-100);font-weight:600}
 details{border-top:1px solid var(--ink);margin-top:16px}
-summary{cursor:pointer;padding:14px 0;font-size:11px;letter-spacing:.18em;text-transform:uppercase;
-color:var(--slate-500);list-style:none}
+summary{cursor:pointer;padding:13px 0;font-size:13px;letter-spacing:.01em;
+color:var(--slate-400);list-style:none}
 summary::-webkit-details-marker{display:none}
 summary::before{content:'▸ ';color:var(--gold)}
 details[open] summary::before{content:'▾ '}
@@ -420,7 +422,7 @@ CSS += """
 /* Which way round the calculator runs. Two states, both always visible, so the reader can
    see that the other direction exists without having to discover it. */
 .dirs{display:flex;gap:6px;margin:0 0 14px}
-.dirs button{flex:1;padding:7px 10px;font:inherit;font-size:11.5px;letter-spacing:.04em;
+.dirs button{flex:1;padding:12px 10px;font:inherit;font-size:12.5px;letter-spacing:.04em;
   border-radius:7px;cursor:pointer;background:transparent;color:var(--ink-2,#aeb6c8);
   border:1px solid rgba(255,255,255,.13)}
 .dirs button.on{background:rgba(198,164,94,.13);border-color:var(--gold-soft);
@@ -497,8 +499,8 @@ JS = """
       '<div class="crow"><span>Rate</span><b>$'+rate.toFixed(0)+' psf / yr</b>'+
         '<i class="cflat">'+bd[2]+'</i></div>'+
       '<div class="crow"><span>Lease gap</span><b>'+Math.abs(gap)+' years</b></div>'+
-      '<div class="crow big"><span>Adjustment</span><b>'+(adj>=0?'+':'')+'$'+
-        Math.round(adj).toLocaleString()+' psf</b></div>'+
+      '<div class="crow big"><span>Adjustment</span><b>'+(adj<0?'\u2212':'+')+'$'+
+        Math.abs(Math.round(adj)).toLocaleString()+' psf</b></div>'+
       '<p class="chint">Add this to the '+(gap>0?'older':'newer')+
       ' comparable\\'s PSF to put it on the subject\\'s lease terms.</p>'+warn;
   }
@@ -544,11 +546,13 @@ JS = """
                   : ((p + age)*(1+st[1]));   // leasehold in, freehold out
     o.className='cout';
     o.innerHTML=
-      '<div class="crow"><span>Completion-year gap \u2014 the freehold is '+
-        (dv===0?'the same age':(Math.abs(dv)+' yrs '+(dv>0?'newer':'older')))+
-        ', at $'+r.toFixed(0)+' a year</span><b>'+
-        (fwd?(age>=0?'\u2212':'+'):(age>=0?'+':'\u2212'))+'$'+
-        Math.abs(Math.round(age)).toLocaleString()+'</b></div>'+
+      (dv===0
+        ? '<div class="crow"><span>Same completion year</span><b>no age adjustment</b></div>'
+        : '<div class="crow"><span>Completion-year gap \u2014 the freehold is '+
+          Math.abs(dv)+' yrs '+(dv>0?'newer':'older')+
+          ', at $'+r.toFixed(0)+' a year</span><b>'+
+          (fwd?(age>=0?'\u2212':'+'):(age>=0?'+':'\u2212'))+'$'+
+          Math.abs(Math.round(age)).toLocaleString()+'</b></div>')+
       '<div class="crow"><span>Freehold premium, '+st[2].split(' ')[0].replace('-','\u2013')+
         ' years of lease left</span><b>'+
         (fwd?'\u2212':'+')+(st[1]*100).toFixed(0)+'%</b></div>'+
@@ -583,8 +587,13 @@ JS = """
   function m(x){return '$'+(x/1e6).toFixed(2)+'M';}
   function go(){
     var bs=n('vbS'), bp=n('vbP'), ps=n('vpS'), f=n('vF'), o=document.getElementById('voidOut');
-    if(!(bs>0&&bp>0&&ps>0)||isNaN(f)||f<0){o.className='cout bad';
+    if(!(bs>0&&bp>0&&ps>0)){o.className='cout bad';
       o.innerHTML='Enter the unit below and the penthouse size.';return;}
+    /* The floors field is its own error. Answering a bad floor count by naming the size fields
+       points the reader at the two inputs that are already right. 70 is the tallest tower here;
+       past that the floor step compounds into an answer nobody should quote. */
+    if(isNaN(f)||f<0||f>70){o.className='cout bad';
+      o.innerHTML='Floors below: enter a number between 0 and 70.';return;}
     var extra=ps-bs;
     if(extra<=0){o.className='cout bad';
       o.innerHTML='The penthouse is not larger \u2014 there is no extra area to price.';return;}
@@ -601,8 +610,8 @@ JS = """
       (f>0?' \u2014 the unit below lifted '+f+' floor'+(f===1?'':'s')+' at '+
         (FS*100).toFixed(1)+'%':'')+'. '+
       Math.round(extra).toLocaleString()+' sqft of extra area at '+
-      LO.toFixed(2)+'&ndash;'+HI.toFixed(2)+'&times; that \u2014 the 95% interval on the '+
-      'resale median.</p>';
+      LO.toFixed(2)+'&ndash;'+HI.toFixed(2)+'&times; that \u2014 where the typical '+
+      'resale ratio sits.</p>';
   }
   ['vbS','vbP','vpS','vF'].forEach(function(id){
     var e=document.getElementById(id); if(e) e.addEventListener('input',go);});
@@ -638,7 +647,7 @@ JS = """
 def mrt_table():
     if not M: return ''
     r = ['<table class="fig look"><thead><tr><th>Walk to the nearest station</th>'
-         '<th class="num">measured</th><th class="num">95% interval</th>'
+         '<th class="num">measured</th><th class="num">could really be</th>'
          '<th class="num">developments</th><th class="num">pairs</th>'
          '<th class="num">in use</th></tr></thead><tbody>']
     for b in M['bands']:
@@ -668,7 +677,7 @@ def void_answer():
         ('The discount', f'{VR["discount"]:.0f}% off', 'against the psf the floor plate commands'),
         ('What the extra area fetches', f'${VR["void_psf"]:,} psf',
          f'where the home itself fetches ${VR["base_psf"]:,}'),
-        ('95% interval', f'{VR["lo"]:.2f}&ndash;{VR["hi"]:.2f}&times;',
+        ('Could really be', f'{VR["lo"]:.2f}&ndash;{VR["hi"]:.2f}&times;',
          f'median {VR["ratio"]:.2f}&times;, quartiles {VR["p25"]:.2f}&ndash;{VR["p75"]:.2f}'),
         ('Typical extra area', f'{VR["extra"]:,} sqft',
          f'{VR["extra_pct"]*100:.0f}% of the floor plate'),
@@ -679,7 +688,8 @@ def void_answer():
     return ''.join(r)
 
 def void_sens():
-    r = ['<table class="fig"><thead><tr><th>Floor step assumed</th><th class="num">Ratio</th>'
+    r = ['<table class="fig"><thead><tr><th>Floor step assumed</th>'
+         '<th class="num">what the extra area fetches</th>'
          '<th class="num">Sales</th></tr></thead><tbody>']
     for x in V['resale']['sensitivity']:
         me = x['floor_step'] == V['meta']['floor_step']
@@ -693,8 +703,8 @@ def void_sens():
 def void_cut(name):
     rows = [c for c in V['resale']['cuts'] if c['cut'] == name]
     r = ['<table class="fig"><thead><tr><th>' + name.capitalize() + '</th>'
-         '<th class="num">Discount</th><th class="num">Extra-area psf</th>'
-         '<th class="num">95%</th><th class="num">Sales</th><th class="num">Devs</th>'
+         '<th class="num">discount</th><th class="num">extra-area psf</th>'
+         '<th class="num">could really be</th><th class="num">Sales</th><th class="num">Devs</th>'
          '</tr></thead><tbody>']
     for c in rows:
         r.append(f'<tr><th>{c["label"]}</th>'
@@ -709,10 +719,11 @@ def void_cut(name):
 def void_devs(n=30, widest=False):
     d = V['resale']['devs']
     d = sorted(d, key=lambda r: -r['spread'])[:n] if widest else d[:n]
-    r = ['<table class="fig"><thead><tr><th>Development</th><th class="num">D</th>'
+    r = ['<table class="fig"><thead><tr><th>Development</th><th class="num">district</th>'
          '<th class="num">Extra</th><th class="num">Home psf</th>'
          '<th class="num">Extra-area psf</th><th class="num">Discount</th>'
-         '<th class="num">Spread</th><th class="num">Resales</th></tr></thead><tbody>']
+         '<th class="num">widest gap &times;</th><th class="num">Resales</th>'
+         '</tr></thead><tbody>']
     for x in d:
         r.append(f'<tr><th>{html.escape(nice(x["proj"]))}</th>'
                  f'<td class="num quiet">{x["dist"]}</td>'
@@ -765,9 +776,9 @@ def int_table():
     The dollars stay in the last column. (Shawn, 2026-09-06; a deliberate exception to the
     dollars-never-percent rule that governs the lease study.)"""
     if not G: return ''
-    r = ['<table class="fig look"><thead><tr><th>Reading only pairs where&hellip;</th>'
-         '<th class="num">premium</th><th class="num">95% interval</th>'
-         '<th class="num">pairs</th><th class="num">adjustment carried</th>'
+    r = ['<table class="fig look"><thead><tr><th>Looking only at pairs that are&hellip;</th>'
+         '<th class="num">premium</th><th class="num">could really be</th>'
+         '<th class="num">pairs</th><th class="num">correction removed</th>'
          '<th class="num">in psf</th></tr></thead><tbody>']
     for c in G['cuts']:
         big = 'big' if c['label'] == '&lt;5 yr gap, within 400 m' else 'quiet'
@@ -868,7 +879,7 @@ def ten_grad_table():
     and the constant this replaces is itself a ratio."""
     if not TGL: return ''
     r = ['<table class="fig"><thead><tr><th>Lease left on the leasehold side</th>'
-         '<th class="num">freehold is worth</th><th class="num">95% interval</th>'
+         '<th class="num">freehold is worth</th><th class="num">could really be</th>'
          '<th class="num">developments</th><th class="num">pairs</th></tr></thead><tbody>']
     for g in TGL:
         r.append(f'<tr><th>{g["label"].split(" ")[0].replace("-", "&ndash;")} years</th>'
@@ -885,9 +896,9 @@ def ten_race_table():
     choice between the two is argued."""
     if not T: return ''
     ORDER = {'va': 'after the age adjustment', 'av': 'before it', 'none': '&mdash;'}
-    r = ['<table class="fig look"><thead><tr><th>Age gap removed at</th>'
-         '<th>Premium applied</th><th class="num">reads</th>'
-         '<th class="num">held-out error</th></tr></thead><tbody>',
+    r = ['<table class="fig look"><thead><tr><th>Age priced at</th>'
+         '<th>Freehold step added</th><th class="num">reads</th>'
+         '<th class="num">average miss</th></tr></thead><tbody>',
          f'<tr><th>nothing &mdash; take the freehold price as it stands</th>'
          f'<td class="quiet">none</td><td class="num quiet">&mdash;</td>'
          f'<td class="num quiet">{T["null_rmse"]:,.0f}</td></tr>',
@@ -1413,8 +1424,8 @@ constant at all.</p>
   station, the same schools, 200+ units, sizes within 20% &mdash; across 24 months of resale and
   sub-sale to {T['window'][1]}.</p></div>
   <div class="scroll">{ten_race_table()}</div>
-  <p class="expl" style="margin-top:18px">Held-out error is the average miss, in psf, when the
-  rule is fitted without a pair and then asked to restate it. Lower is better. The form in use
+  <p class="expl" style="margin-top:18px">The average miss is in psf: fit the rule without a
+  pair, then ask it to restate that pair and see how far out it lands. Lower is better. The form in use
   reads {T['engine_rmse']:,.0f} against {T['null_rmse']:,.0f} for doing nothing at all, and the
   $40 is why: on a completion-year clock it scores worse than $10 does. <b>Your own measured
   lease rates, carried across onto that clock, win.</b> <b>Whether the premium goes on before or after the age
@@ -1527,8 +1538,8 @@ constant at all.</p>
 
 <section>
   <div class="sechead"><h2 class="disp">Where the constants now stand</h2></div>
-  <table class="fig"><thead><tr><th>Term</th><th class="num">Constant</th><th>Measured</th></tr></thead><tbody>
-  <tr><th>Lease / vintage</th><td class="num big">$40 psf / yr</td>
+  <div class="scroll"><table class="fig"><thead><tr><th>Term</th><th class="num">Constant</th><th>Measured</th></tr></thead><tbody>
+  <tr><th>Lease &mdash; how new the building is</th><td class="num big">$40 psf / yr</td>
     <td style="color:var(--gold-soft)">${BANDR[OLD_NM]:,.0f} and ${BANDR[NEW_NM]:,.0f}, by midpoint</td></tr>
   <tr><th>Tenure &middot; freehold vs leasehold</th><td class="num big">&divide; 1.15</td>
     <td style="color:var(--gold-soft)">+{THP['p']*100:.0f}% on average, and
@@ -1539,10 +1550,11 @@ constant at all.</p>
     <tr><th>Integrated development</th><td class="num big">+5%</td>
     <td style="color:var(--gold-soft)">+{G['cuts'][4]['pct']:.1f}% ({G['cuts'][4]['pct_lo']:.1f} to
     {G['cuts'][4]['pct_hi']:.1f}), which contains the +5%</td></tr>
-  <tr><th>Void &middot; extra penthouse area</th><td class="num big">1.00&times; (implicit)</td>
+  <tr><th>Void &middot; extra penthouse area</th>
+    <td class="num big">1.00&times; &mdash; full price</td>
     <td style="color:var(--gold-soft)">a resale buyer pays {VR['discount']:.0f}% less for it than
     for the floor plate; there is no constant for it today</td></tr>
-  </tbody></table>
+  </tbody></table></div>
   <div class="caveat" style="margin-top:18px"><b>Nothing has been written back yet.</b>
   Every figure on this page sits beside its constant, not in place of it.</div>
 </section>
@@ -1564,15 +1576,21 @@ HTML = f"""<!doctype html>
   </div>
   <nav class="terms" aria-label="The constants">
     <button type="button" class="done" data-go="lease" aria-current="true">
-      <span class="tn">Lease Difference</span><span class="ts">Measured</span></button>
+      <span class="tn">Lease Difference</span>
+      <span class="ts">${BANDR[OLD_NM]:,.0f} / ${BANDR[NEW_NM]:,.0f} a year</span></button>
     <button type="button" class="done" data-go="mrt">
-      <span class="tn">MRT Distance</span><span class="ts">Measured</span></button>
+      <span class="tn">MRT Distance</span>
+      <span class="ts">${M['bands'][0]['adj']:,.0f} / ${M['bands'][1]['adj']:,.0f} /
+        ${M['bands'][2]['adj']:,.0f}</span></button>
     <button type="button" class="done" data-go="integrated">
-      <span class="tn">Integrated</span><span class="ts">Measured</span></button>
+      <span class="tn">Integrated</span>
+      <span class="ts">+{G['cuts'][4]['pct']:.1f}%</span></button>
     <button type="button" class="done" data-go="void">
-      <span class="tn">Void Space</span><span class="ts">Measured</span></button>
+      <span class="tn">Void Space</span>
+      <span class="ts">{VR['discount']:.0f}% off</span></button>
     <button type="button" class="done" data-go="judgement">
-      <span class="tn">FH vs LH</span><span class="ts">Measured</span></button>
+      <span class="tn">Freehold vs Leasehold</span>
+      <span class="ts">+{TGL[0]['pct']*100:.0f}% to +{TGL[-1]['pct']*100:.0f}%</span></button>
   </nav>
 </header>
 <div class="wrap">

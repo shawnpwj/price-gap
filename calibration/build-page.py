@@ -298,7 +298,7 @@ letter-spacing:.01em;margin:52px 0 10px}
    it stays reachable at any scroll depth, which is the point of splitting the page up. */
 .terms{display:flex;flex-wrap:wrap;gap:0;border-top:1px solid var(--ink);
 max-width:1180px;margin:0 auto;padding:0 24px}
-.terms button{flex:1 1 auto;min-width:158px;padding:13px 17px 12px;text-align:left;
+.terms button{flex:1 1 auto;min-width:132px;padding:13px 14px 12px;text-align:left;
 background:none;border:0;border-right:1px solid var(--ink);cursor:pointer;font:inherit;
 color:inherit;position:relative;
 transition:background .18s cubic-bezier(.22,1,.36,1),color .18s cubic-bezier(.22,1,.36,1)}
@@ -318,7 +318,7 @@ color:var(--slate-600);font-variant-numeric:tabular-nums}
 .terms button[aria-current="true"]::after{content:"";position:absolute;left:0;right:0;bottom:-1px;
 height:2px;background:var(--gold)}
 .panel>h1{margin-top:46px}
-@media (max-width:760px){.terms{padding:0 16px}.terms button{min-width:130px}}
+@media (max-width:760px){.terms{padding:0 16px}.terms button{min-width:118px}}
 .lede{font-size:15px;color:var(--slate-400);max-width:64ch;margin-bottom:14px}
 h2{font:600 20px/1.3 Optima,Candara,sans-serif;color:var(--slate-100);margin:0 0 6px}
 h3{font:600 15px/1.3 Optima,Candara,sans-serif;color:var(--gold-soft);letter-spacing:.02em}
@@ -390,6 +390,8 @@ tr.dim td.big{color:var(--slate-500);font-weight:400}
    including iPad landscape at 1024. (The figure tables above are narrower and stay two-up there.) */
 .wins.pairwide{grid-template-columns:repeat(auto-fit,minmax(520px,1fr))}
 .win .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table.fig a{color:inherit;text-decoration:none;border-bottom:1px solid rgba(201,169,106,.35)}
+table.fig a:hover{color:var(--gold-soft);border-bottom-color:var(--gold)}
 .winhead{margin-bottom:8px}
 .winhead p{font-size:12px;color:var(--slate-600)}
 /* method + notes */
@@ -624,12 +626,16 @@ JS = """
 (function(){
   var btns=[].slice.call(document.querySelectorAll('.terms button')),
       panels=[].slice.call(document.querySelectorAll('.panel'));
+  // #judgement was this panel's name until 2026-09-08. Links to it are already out in the
+  // world, so the old hash still lands on the renamed panel.
+  var ALIAS={judgement:'tenure'};
   function show(name,push){
+    name = ALIAS[name] || name;
     var found=false;
     panels.forEach(function(p){
       var on=p.getAttribute('data-p')===name; p.hidden=!on; if(on)found=true;
     });
-    if(!found){show('lease',push);return;}
+    if(!found){show('summary',push);return;}
     btns.forEach(function(b){
       if(b.getAttribute('data-go')===name)b.setAttribute('aria-current','true');
       else b.removeAttribute('aria-current');
@@ -641,7 +647,7 @@ JS = """
     b.addEventListener('click',function(){show(b.getAttribute('data-go'),true);});
   });
   window.addEventListener('hashchange',function(){show(location.hash.slice(1),false);});
-  show((location.hash||'#lease').slice(1),false);
+  show((location.hash||'#summary').slice(1),false);
 })();
 """
 def mrt_table():
@@ -890,10 +896,15 @@ def ten_grad_table():
     r.append('</tbody></table>')
     return ''.join(r)
 
-def ten_race_table():
-    """The percentage forms only, against the engine and against doing nothing. The dollar
-    forms are not shown here — they belong in the scale explain mark, which is where the
-    choice between the two is argued."""
+def ten_race_table(full=False):
+    """The percentage forms only, against the constant in use and against doing nothing. The
+    dollar forms are not shown here — they belong in the scale explain mark, which is where the
+    choice between the two is argued.
+
+    THREE ROWS ON THE FACE (2026-09-08, off the design critique). The finding is: doing nothing,
+    the constant as it stands, and your own measured rates. The other eight rows are the working
+    and sit behind "Every form tested" — an eleven-row table in the position of most authority
+    was the densest object on the page."""
     if not T: return ''
     ORDER = {'va': 'after the age adjustment', 'av': 'before it', 'none': '&mdash;'}
     r = ['<table class="fig look"><thead><tr><th>Age priced at</th>'
@@ -909,6 +920,7 @@ def ten_race_table():
     best = min(pct, key=lambda x: x['rmse'])
     for x in pct:
         if x['key'] == 'none' and x['rate'] != 'free': continue
+        if not full and x is not best: continue
         rate = ('the measured lease rates, <b>$%.0f / $%.0f</b>' % (T['bands']['old'], T['bands']['new'])
                 if isinstance(x['a'], str) else f'${x["a"]:,.0f} a year')
         if x['rate'] == 'free': rate += ' <span class="quiet">(fitted here)</span>'
@@ -978,7 +990,35 @@ BANDS_JS = '[' + ','.join(f'[{hi},{BANDR[nm]:.2f},"{nm}"]' for _, hi, nm in BAND
 A1, A2 = age_label(OLD_NM); B1, B2 = age_label(NEW_NM)
 
 BODY = f"""
-<div class="panel" data-p="lease">
+<div class="panel" data-p="summary">
+<h1 class="disp">Where the constants now stand</h1>
+<p class="lede">Five constants set by judgement, each now measured against the market. This is
+the whole study on one screen; every figure below has a panel of its own.</p>
+
+<section>
+  <div class="scroll"><table class="fig"><thead><tr><th>Term</th><th class="num">Constant</th><th>Measured</th></tr></thead><tbody>
+  <tr><th><a href="#lease">Lease &mdash; how new the building is</a></th><td class="num big">$40 psf / yr</td>
+    <td style="color:var(--gold-soft)">${BANDR[OLD_NM]:,.0f} and ${BANDR[NEW_NM]:,.0f}, by midpoint</td></tr>
+  <tr><th><a href="#tenure">Tenure &middot; freehold vs leasehold</a></th><td class="num big">&divide; 1.15</td>
+    <td style="color:var(--gold-soft)">+{THP['p']*100:.0f}% on average, and
+    +{TGL[0]['pct']*100:.0f}% to +{TGL[-1]['pct']*100:.0f}% by the lease left</td></tr>
+  <tr><th><a href="#mrt">MRT walk band</a></th><td class="num big">$50 / $200 / $250</td>
+    <td style="color:var(--gold-soft)">+${M['bands'][0]['adj']:,.0f} / +${M['bands'][1]['adj']:,.0f} /
+    +${M['bands'][2]['adj']:,.0f}, or ${M['slope100']:.0f} per 100 m</td></tr>
+    <tr><th><a href="#integrated">Integrated development</a></th><td class="num big">+5%</td>
+    <td style="color:var(--gold-soft)">+{G['cuts'][4]['pct']:.1f}% ({G['cuts'][4]['pct_lo']:.1f} to
+    {G['cuts'][4]['pct_hi']:.1f}), which contains the +5%</td></tr>
+  <tr><th><a href="#void">Void &middot; extra penthouse area</a></th>
+    <td class="num big">1.00&times; &mdash; full price</td>
+    <td style="color:var(--gold-soft)">a resale buyer pays {VR['discount']:.0f}% less for it than
+    for the floor plate; there is no constant for it today</td></tr>
+  </tbody></table></div>
+  <div class="caveat" style="margin-top:18px"><b>Nothing has been written back yet.</b>
+  Every figure on this page sits beside its constant, not in place of it.</div>
+</section>
+</div>
+
+<div class="panel" data-p="lease" hidden>
 <h1 class="disp">What the market pays for a year of lease</h1>
 <p class="lede">The engine restates every comparable using constants set by judgement. This is
 the first one measured against the market.</p>
@@ -1353,7 +1393,7 @@ the <b>resale</b> market.</p>
 </section>
 </div>
 
-<div class="panel" data-p="judgement" hidden>
+<div class="panel" data-p="tenure" hidden>
 <h1 class="disp">What the market pays for freehold</h1>
 <p class="lede">The last constant on judgement, and the only one that turned out not to be a
 constant at all.</p>
@@ -1423,13 +1463,22 @@ constant at all.</p>
   {T['counts']['cells']} cells.</b> Same screens as the lease study &mdash; 500 m apart, the same
   station, the same schools, 200+ units, sizes within 20% &mdash; across 24 months of resale and
   sub-sale to {T['window'][1]}.</p></div>
+  <p class="expl">The average miss is in psf: fit the rule without a pair, then ask it to
+  restate that pair and see how far out it lands. Lower is better.</p>
   <div class="scroll">{ten_race_table()}</div>
-  <p class="expl" style="margin-top:18px">The average miss is in psf: fit the rule without a
-  pair, then ask it to restate that pair and see how far out it lands. Lower is better. The form in use
-  reads {T['engine_rmse']:,.0f} against {T['null_rmse']:,.0f} for doing nothing at all, and the
-  $40 is why: on a completion-year clock it scores worse than $10 does. <b>Your own measured
-  lease rates, carried across onto that clock, win.</b> <b>Whether the premium goes on before or after the age
-  adjustment barely registers</b> &mdash; the two orderings sit within five psf of each other.</p>
+  <p class="expl" style="margin-top:18px"><b>Your own measured lease rates win.</b> Carried
+  across onto the completion-year clock they miss by {min(x['rmse'] for x in T['race'] if x['key'] in ('va','av')):,.0f}
+  against {T['engine_rmse']:,.0f} for the form in use, and {T['null_rmse']:,.0f} for doing
+  nothing at all.</p>
+
+  <details><summary>Every form tested</summary>
+    <p class="expl">Eleven ways of putting the two terms together, each fitted without a pair and
+    then asked to restate it. <b>Whether the premium goes on before or after the age adjustment
+    barely registers</b> &mdash; the two orderings sit within five psf of each other &mdash; and
+    the $40 is what costs the form in use: on a completion-year clock it scores worse than $10
+    does.</p>
+    <div class="scroll">{ten_race_table(full=True)}</div>
+  </details>
 </section>
 
 <section>
@@ -1477,9 +1526,8 @@ constant at all.</p>
     Across the {T['build']['n']} leasehold developments with both dates on record the build gap
     is a median <b>{T['build']['median']} years</b> (quartiles {T['build']['p25']}&ndash;{T['build']['p75']}),
     and {T['build']['term_share']*100:.0f}% of leasehold stock is on a {T['build']['term']}-year
-    lease &mdash; so the inference is good to a year or two, against steps fifteen years wide.
-    That is why the field is locked: it is right often enough that overriding it by habit would
-    do more harm than good.</p>
+    lease &mdash; so the inference is good to a year or two, against steps fifteen years
+    wide.</p>
     <p class="expl"><b>The build gap in use is {T['build']['engine']} years, not
     {T['build']['median']}.</b> A fifth constant, unmeasured until now. It barely touches this
     answer, but the same figure fills in a TOP year for any development with no completion year on
@@ -1536,28 +1584,6 @@ constant at all.</p>
   uncontrolled by ruling.</div>
 </section>
 
-<section>
-  <div class="sechead"><h2 class="disp">Where the constants now stand</h2></div>
-  <div class="scroll"><table class="fig"><thead><tr><th>Term</th><th class="num">Constant</th><th>Measured</th></tr></thead><tbody>
-  <tr><th>Lease &mdash; how new the building is</th><td class="num big">$40 psf / yr</td>
-    <td style="color:var(--gold-soft)">${BANDR[OLD_NM]:,.0f} and ${BANDR[NEW_NM]:,.0f}, by midpoint</td></tr>
-  <tr><th>Tenure &middot; freehold vs leasehold</th><td class="num big">&divide; 1.15</td>
-    <td style="color:var(--gold-soft)">+{THP['p']*100:.0f}% on average, and
-    +{TGL[0]['pct']*100:.0f}% to +{TGL[-1]['pct']*100:.0f}% by the lease left</td></tr>
-  <tr><th>MRT walk band</th><td class="num big">$50 / $200 / $250</td>
-    <td style="color:var(--gold-soft)">+${M['bands'][0]['adj']:,.0f} / +${M['bands'][1]['adj']:,.0f} /
-    +${M['bands'][2]['adj']:,.0f}, or ${M['slope100']:.0f} per 100 m</td></tr>
-    <tr><th>Integrated development</th><td class="num big">+5%</td>
-    <td style="color:var(--gold-soft)">+{G['cuts'][4]['pct']:.1f}% ({G['cuts'][4]['pct_lo']:.1f} to
-    {G['cuts'][4]['pct_hi']:.1f}), which contains the +5%</td></tr>
-  <tr><th>Void &middot; extra penthouse area</th>
-    <td class="num big">1.00&times; &mdash; full price</td>
-    <td style="color:var(--gold-soft)">a resale buyer pays {VR['discount']:.0f}% less for it than
-    for the floor plate; there is no constant for it today</td></tr>
-  </tbody></table></div>
-  <div class="caveat" style="margin-top:18px"><b>Nothing has been written back yet.</b>
-  Every figure on this page sits beside its constant, not in place of it.</div>
-</section>
 </div>
 """
 
@@ -1575,7 +1601,10 @@ HTML = f"""<!doctype html>
     <span class="chip"><b></b> Internal — Constant Calibration</span>
   </div>
   <nav class="terms" aria-label="The constants">
-    <button type="button" class="done" data-go="lease" aria-current="true">
+    <button type="button" class="done" data-go="summary" aria-current="true">
+      <span class="tn">Summary</span>
+      <span class="ts">all five, side by side</span></button>
+    <button type="button" class="done" data-go="lease">
       <span class="tn">Lease Difference</span>
       <span class="ts">${BANDR[OLD_NM]:,.0f} / ${BANDR[NEW_NM]:,.0f} a year</span></button>
     <button type="button" class="done" data-go="mrt">
@@ -1588,7 +1617,7 @@ HTML = f"""<!doctype html>
     <button type="button" class="done" data-go="void">
       <span class="tn">Void Space</span>
       <span class="ts">{VR['discount']:.0f}% off</span></button>
-    <button type="button" class="done" data-go="judgement">
+    <button type="button" class="done" data-go="tenure">
       <span class="tn">Freehold vs Leasehold</span>
       <span class="ts">+{TGL[0]['pct']*100:.0f}% to +{TGL[-1]['pct']*100:.0f}%</span></button>
   </nav>

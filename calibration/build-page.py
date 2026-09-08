@@ -1250,6 +1250,76 @@ the walk. What is left is the building sitting on the station.</p>
 </section>
 </div>
 
+<div class="panel" data-p="tenure" hidden>
+<h1 class="disp">What the market pays for freehold</h1>
+<p class="lede">The last constant on judgement, and the only one that turned out not to be a
+constant at all.</p>
+
+{hero('&divide; 1.15', 'flat, every freehold comparable',
+      [(f'+{g["pct"]*100:.0f}%', ten_step_label(g), g['devs']) for g in TGL],
+      '')}
+
+<section>
+  <div class="sechead"><h2 class="disp">How to use it</h2></div>
+  <div class="steps">
+    <div class="step"><span class="sn">1</span>
+      <p>Take the <b>difference in completion year</b> &mdash; TOP, not lease start. A freehold
+      has no lease start to difference against.</p></div>
+    <div class="step"><span class="sn">2</span>
+      <p>Price that at the <b>measured lease rate</b>: ${T['bands']['old']:,.0f} a year up to
+      {T['band_bound']-1}, ${T['bands']['new']:,.0f} from {T['band_bound']}, read at the
+      midpoint.</p></div>
+    <div class="step"><span class="sn">3</span>
+      <p>Then take off the <b>freehold percentage for the lease the leasehold side has
+      left</b>, from the table below.</p></div>
+  </div>
+
+  <div class="calc">
+    <h3>Restate a comparable</h3>
+    <div class="dirs" role="group" aria-label="Which way round">
+      <button type="button" id="tdF" class="on">Freehold &rarr; leasehold</button>
+      <button type="button" id="tdL">Leasehold &rarr; freehold</button>
+    </div>
+    <div class="cin">
+      <label id="tpL">Freehold comparable &mdash; psf<input id="tfP" type="number" value="2100" min="200" max="9000" step="10"></label>
+      <label>Freehold TOP year<input id="tfT" type="number" value="2005" min="1960" max="2035" step="1"></label>
+      <label>Leasehold TOP year<input id="tlT" type="number" value="2015" min="1960" max="2035" step="1"></label>
+    </div>
+    <div id="tenOut" class="cout"></div>
+  </div>
+</section>
+
+<section>
+  <div class="sechead"><h2 class="disp">Freehold is worth more as the lease runs down</h2>
+  <p>One freehold and one leasehold development, next door, bedroom by bedroom. The only thing
+  that changes down this table is <b>how much lease the leasehold side has left</b>.</p></div>
+  <div class="scroll">{ten_grad_table()}</div>
+</section>
+
+<section>
+  <div class="sechead"><h2 class="disp">Behind it</h2>
+  <p>Two questions, answered once each.</p></div>
+
+  <details><summary>Does distance affect the premium?</summary>
+    <p class="expl"><b>{T['counts']['devs']} developments &middot; {T['counts']['pairs']} pairs
+    &middot; {T['counts']['cells']} cells</b>, on the same screens as the lease study &mdash;
+    500 m apart, the same station, the same schools, 200+ units, sizes within 20% &mdash; across
+    24 months of resale and sub-sale to {T['window'][1]}.</p>
+    <div class="scroll">{ten_sens_table()}</div>
+  </details>
+
+  <details><summary>Does it hold across the island, and across bedrooms?</summary>
+    <div class="scroll">{ten_slice_table('region', 'Region')}</div>
+    <p class="expl" style="margin-top:18px">The three regions agree closely &mdash; part of the
+    case for a percentage, since one ratio serves the island.</p>
+    <div class="scroll" style="margin-top:14px">{ten_slice_table('bedroom', 'Bedroom')}</div>
+    <p class="expl" style="margin-top:18px">Bedroom is the match, not the answer &mdash; it holds
+    size constant. One- and four-bedroom are too thin to show.</p>
+  </details>
+
+</section>
+
+</div>
 <div class="panel" data-p="void" hidden>
 <h1 class="disp">What the market pays for the void</h1>
 <p class="lede">Same project, same block, <b>same stack</b>, so the top unit stands on the floor
@@ -1347,76 +1417,6 @@ plate of the ones below it. The extra strata area is void or roof. Floor is take
 </section>
 </div>
 
-<div class="panel" data-p="tenure" hidden>
-<h1 class="disp">What the market pays for freehold</h1>
-<p class="lede">The last constant on judgement, and the only one that turned out not to be a
-constant at all.</p>
-
-{hero('&divide; 1.15', 'flat, every freehold comparable',
-      [(f'+{g["pct"]*100:.0f}%', ten_step_label(g), g['devs']) for g in TGL],
-      '')}
-
-<section>
-  <div class="sechead"><h2 class="disp">How to use it</h2></div>
-  <div class="steps">
-    <div class="step"><span class="sn">1</span>
-      <p>Take the <b>difference in completion year</b> &mdash; TOP, not lease start. A freehold
-      has no lease start to difference against.</p></div>
-    <div class="step"><span class="sn">2</span>
-      <p>Price that at the <b>measured lease rate</b>: ${T['bands']['old']:,.0f} a year up to
-      {T['band_bound']-1}, ${T['bands']['new']:,.0f} from {T['band_bound']}, read at the
-      midpoint.</p></div>
-    <div class="step"><span class="sn">3</span>
-      <p>Then take off the <b>freehold percentage for the lease the leasehold side has
-      left</b>, from the table below.</p></div>
-  </div>
-
-  <div class="calc">
-    <h3>Restate a comparable</h3>
-    <div class="dirs" role="group" aria-label="Which way round">
-      <button type="button" id="tdF" class="on">Freehold &rarr; leasehold</button>
-      <button type="button" id="tdL">Leasehold &rarr; freehold</button>
-    </div>
-    <div class="cin">
-      <label id="tpL">Freehold comparable &mdash; psf<input id="tfP" type="number" value="2100" min="200" max="9000" step="10"></label>
-      <label>Freehold TOP year<input id="tfT" type="number" value="2005" min="1960" max="2035" step="1"></label>
-      <label>Leasehold TOP year<input id="tlT" type="number" value="2015" min="1960" max="2035" step="1"></label>
-    </div>
-    <div id="tenOut" class="cout"></div>
-  </div>
-</section>
-
-<section>
-  <div class="sechead"><h2 class="disp">Freehold is worth more as the lease runs down</h2>
-  <p>One freehold and one leasehold development, next door, bedroom by bedroom. The only thing
-  that changes down this table is <b>how much lease the leasehold side has left</b>.</p></div>
-  <div class="scroll">{ten_grad_table()}</div>
-</section>
-
-<section>
-  <div class="sechead"><h2 class="disp">Behind it</h2>
-  <p>Two questions, answered once each.</p></div>
-
-  <details><summary>Does distance affect the premium?</summary>
-    <p class="expl"><b>{T['counts']['devs']} developments &middot; {T['counts']['pairs']} pairs
-    &middot; {T['counts']['cells']} cells</b>, on the same screens as the lease study &mdash;
-    500 m apart, the same station, the same schools, 200+ units, sizes within 20% &mdash; across
-    24 months of resale and sub-sale to {T['window'][1]}.</p>
-    <div class="scroll">{ten_sens_table()}</div>
-  </details>
-
-  <details><summary>Does it hold across the island, and across bedrooms?</summary>
-    <div class="scroll">{ten_slice_table('region', 'Region')}</div>
-    <p class="expl" style="margin-top:18px">The three regions agree closely &mdash; part of the
-    case for a percentage, since one ratio serves the island.</p>
-    <div class="scroll" style="margin-top:14px">{ten_slice_table('bedroom', 'Bedroom')}</div>
-    <p class="expl" style="margin-top:18px">Bedroom is the match, not the answer &mdash; it holds
-    size constant. One- and four-bedroom are too thin to show.</p>
-  </details>
-
-</section>
-
-</div>
 """
 
 HTML = f"""<!doctype html>
@@ -1446,12 +1446,12 @@ HTML = f"""<!doctype html>
     <button type="button" class="done" data-go="integrated">
       <span class="tn">Integrated</span>
       <span class="ts">+{G['cuts'][4]['pct']:.1f}%</span></button>
-    <button type="button" class="done" data-go="void">
-      <span class="tn">Void Space</span>
-      <span class="ts">{VR['discount']:.0f}% off</span></button>
     <button type="button" class="done" data-go="tenure">
       <span class="tn">Freehold vs Leasehold</span>
       <span class="ts">+{TGL[0]['pct']*100:.0f}% to +{TGL[-1]['pct']*100:.0f}%</span></button>
+    <button type="button" class="done" data-go="void">
+      <span class="tn">Void Space</span>
+      <span class="ts">{VR['discount']:.0f}% off</span></button>
   </nav>
 </header>
 <div class="wrap">

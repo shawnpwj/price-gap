@@ -414,11 +414,25 @@ font-size:11.5px;color:var(--slate-600);display:flex;justify-content:space-betwe
 @media (max-width:640px){.wrap{padding:0 16px 64px}.vcell .val{font-size:30px}.note{display:none}}
 """
 CSS += """
-/* The calculator's derived-field tag. A field that fills itself has to say so, and has to
-   say when it has stopped: 'from TOP' while it is inferring, 'entered' once typed over. */
-.calc label .auto{float:right;font-size:10px;letter-spacing:.08em;text-transform:uppercase;
-  color:var(--gold-soft);opacity:.85}
-.calc label .auto.off{color:var(--ink-3, #8b93a7)}
+/* Which way round the calculator runs. Two states, both always visible, so the reader can
+   see that the other direction exists without having to discover it. */
+.dirs{display:flex;gap:6px;margin:0 0 14px}
+.dirs button{flex:1;padding:7px 10px;font:inherit;font-size:11.5px;letter-spacing:.04em;
+  border-radius:7px;cursor:pointer;background:transparent;color:var(--ink-2,#aeb6c8);
+  border:1px solid rgba(255,255,255,.13)}
+.dirs button.on{background:rgba(198,164,94,.13);border-color:var(--gold-soft);
+  color:var(--gold-soft)}
+.dirs button:hover{border-color:rgba(255,255,255,.3)}
+
+/* THE LOCK. The lease left follows from the completion year, so the field fills itself and
+   stays shut; the lock is the whole affordance for taking it over. Small, top right of its
+   own label, never a row of its own. */
+.calc label{position:relative}
+.calc label.haslock{padding-right:20px}
+.calc .lock{position:absolute;top:0;right:0;padding:0 2px;line-height:1;font-size:12px;
+  background:none;border:0;cursor:pointer;opacity:.75}
+.calc .lock:hover{opacity:1}
+.calc input[readonly]{opacity:.72;cursor:default}
 
 .vcell.grow{flex:1 1 300px;min-width:260px}
 .two{display:flex;gap:30px;flex-wrap:wrap}
@@ -498,53 +512,74 @@ JS = """
 })();
 
 (function(){
-  // FH vs LH. Vintage comes off at the measured lease rate on the COMPLETION-YEAR clock,
-  // then the freehold step for the lease the subject has left. Both are additions, so the
-  // order is not a question -- which is one of the reasons the dollar form was chosen.
-  var TB=%TENB%, TS=%TENS%;
+  // FH vs LH. Two directions, because a client is as likely to hold the leasehold price as
+  // the freehold one, and the arithmetic is the same equation read either way:
+  //     freehold = (leasehold + age) x (1 + premium)
+  // where AGE is the completion-year gap at the measured lease rate and PREMIUM is the step
+  // for the lease the leasehold side has left. Going the other way just inverts it.
+  //
+  // PERCENT, NOT DOLLARS. Shawn, 2026-09-08: "Change it all to %, i dont need quantum."
+  //
+  // TB = [older rate, newer rate, boundary year, build years, lease term, this year]
+  // TS = [[floor of the lease-left step, premium as a fraction, its label], ...]
+  var TB=%TENB%, TS=%TENS%, fwd=true, touched=false;
   function n(id){return parseFloat(document.getElementById(id).value);}
+  function el(id){return document.getElementById(id);}
   function rate(a,b){return ((a+b)/2-TB[3]) < TB[2] ? TB[0] : TB[1];}
-  function step(left){for(var i=0;i<TS.length;i++){if(left>=TS[i][0])return TS[i];}return TS[TS.length-1];}
-  // The lease a subject has left is DERIVED from its completion year, because that is the
-  // one date a buyer always has: term less the years since TOP less the years it took to
-  // build. Typing in the field takes it over -- an actual lease start beats an inference
-  // from a median -- and the field says which of the two is in force.
-  var touched=false;
-  function derive(){
-    var tl=n('tlT'); if(!tl) return null;
-    return Math.max(1, Math.min(TB[4], TB[4]-(TB[5]-tl)-TB[3]));
-  }
+  function step(left){for(var i=0;i<TS.length;i++){if(left>=TS[i][0])return TS[i];}
+    return TS[TS.length-1];}
+
+  // The lease a subject has left follows from its completion year, so the field is LOCKED and
+  // fills itself. Opening the lock hands it over: an actual lease start is a fact and beats an
+  // inference from a median. Closing it again goes back to the inference.
+  function derive(){var t=n('tlT'); if(!t) return null;
+    return Math.max(1, Math.min(TB[4], TB[4]-(TB[5]-t)-TB[3]));}
   function sync(){
-    var d=derive(), f=document.getElementById('tlL'), tag=document.getElementById('tlA');
+    var d=derive(), f=el('tlL'), k=el('tlK');
     if(!touched&&d!==null) f.value=d;
-    tag.textContent = touched ? 'entered' : 'from TOP';
-    tag.className = touched ? 'auto off' : 'auto';
+    f.readOnly=!touched;
+    k.innerHTML = touched ? '🔓' : '🔒';
+    k.setAttribute('aria-pressed', touched?'false':'true');
+    k.title = touched ? 'Entered by hand. Click to work it out from the completion year again.'
+                      : 'Worked out from the completion year. Click to enter it yourself.';
+  }
+  function dirs(){
+    el('tdF').className = fwd?'on':''; el('tdL').className = fwd?'':'on';
+    el('tpL').childNodes[0].nodeValue =
+      (fwd?'Freehold':'Leasehold')+' comparable \u2014 psf';
   }
   function go(){
-    sync();
-    var p=n('tfP'), tf=n('tfT'), tl=n('tlT'), lf=n('tlL'), o=document.getElementById('tenOut');
-    if(!p||!tf||!tl||!lf){o.className='cout bad';
-      o.innerHTML='Fill in all four.';return;}
-    var r=rate(tf,tl), dv=tl-tf, age=r*dv, st=step(lf), out=p+age-st[1];
+    sync(); dirs();
+    var p=n('tfP'), tf=n('tfT'), tl=n('tlT'), lf=n('tlL'), o=el('tenOut');
+    if(!p||!tf||!tl||!lf){o.className='cout bad';o.innerHTML='Fill in all four.';return;}
+    var r=rate(tf,tl), dv=tf-tl, age=r*dv, st=step(lf),
+        out = fwd ? (p/(1+st[1]) - age)      // freehold in, leasehold out
+                  : ((p + age)*(1+st[1]));   // leasehold in, freehold out
     o.className='cout';
     o.innerHTML=
-      '<div class="crow"><span>Completion-year difference \u2014 '+(dv>0?'+':'')+dv+
-        ' yrs at $'+r.toFixed(0)+'</span><b>'+(age>=0?'+':'\u2212')+'$'+
+      '<div class="crow"><span>Completion-year gap \u2014 the freehold is '+
+        (dv===0?'the same age':(Math.abs(dv)+' yrs '+(dv>0?'newer':'older')))+
+        ', at $'+r.toFixed(0)+' a year</span><b>'+
+        (fwd?(age>=0?'\u2212':'+'):(age>=0?'+':'\u2212'))+'$'+
         Math.abs(Math.round(age)).toLocaleString()+'</b></div>'+
-      '<div class="crow"><span>Freehold premium, '+st[2]+'</span><b>\u2212$'+
-        Math.round(st[1]).toLocaleString()+'</b></div>'+
-      '<div class="crow big"><span>Restated as leasehold</span><b>$'+
+      '<div class="crow"><span>Freehold premium, '+st[2].split(' ')[0].replace('-','\u2013')+
+        ' years of lease left</span><b>'+
+        (fwd?'\u2212':'+')+(st[1]*100).toFixed(0)+'%</b></div>'+
+      '<div class="crow big"><span>'+(fwd?'As leasehold':'As freehold')+'</span><b>$'+
         Math.round(out).toLocaleString()+' psf</b></div>'+
       '<p class="chint">'+(touched?'Lease left as entered.':
         'Lease left worked out from the completion year: '+TB[4]+' \u2212 ('+TB[5]+' \u2212 '+
-        tl+') \u2212 '+TB[3]+' years of building = '+lf+'. Type over it if you have the '+
-        'actual lease start.')+' The engine would take $40 a year of age and then divide by '+
-      '1.15, which gives $'+Math.round((p+40*dv)/1.15).toLocaleString()+'.</p>';
+        tl+') \u2212 '+TB[3]+' years of building = '+lf+'.')+
+      (fwd?' The engine would take $40 a year of age and then divide by 1.15, which gives $'+
+        Math.round((p-40*dv)/1.15).toLocaleString()+'.':'')+'</p>';
   }
   ['tfP','tfT','tlT'].forEach(function(id){
-    var e=document.getElementById(id); if(e) e.addEventListener('input',go);});
-  var lf=document.getElementById('tlL');
-  if(lf) lf.addEventListener('input',function(){touched=true;go();});
+    var e=el(id); if(e) e.addEventListener('input',go);});
+  var f=el('tlL'); if(f) f.addEventListener('input',function(){if(touched)go();});
+  var k=el('tlK');
+  if(k) k.addEventListener('click',function(){touched=!touched; go(); if(touched)f.focus();});
+  el('tdF').addEventListener('click',function(){fwd=true;go();});
+  el('tdL').addEventListener('click',function(){fwd=false;go();});
   go();
 })();
 
@@ -835,109 +870,110 @@ THD  = (T or {}).get('headline', {}).get('dollars', {})
 THP  = (T or {}).get('headline', {}).get('percent', {})
 
 def ten_step_label(g):
-    """The hero shows three amounts, so each must say WHICH CASE its amount is for. He asked
-    what the difference between the three figures was; that is the answer, and it belongs on
+    """The face shows three figures, so each must say WHICH CASE it is the figure for. He
+    asked what the difference between the three was; that is the answer, and it belongs on
     the figures rather than in a paragraph underneath them."""
     return g['label'].split(' ')[0].replace('-', '&ndash;') + ' years of lease left'
 
 def ten_grad_table():
+    """PERCENT ONLY. Shawn, 2026-09-08: "Change it all to %, i dont need quantum." A
+    deliberate reversal of the dollars-never-percent rule that governs the lease study, and
+    the measurement supports it — the two forms tie when asked to travel across price levels,
+    and the constant this replaces is itself a ratio."""
     if not TGL: return ''
     r = ['<table class="fig"><thead><tr><th>Lease left on the leasehold side</th>'
-         '<th class="num">freehold is worth</th><th class="num">in percent</th>'
-         '<th class="num">95% interval</th><th class="num">pairs</th></tr></thead><tbody>']
+         '<th class="num">freehold is worth</th><th class="num">95% interval</th>'
+         '<th class="num">pairs</th></tr></thead><tbody>']
     for g in TGL:
-        r.append(f'<tr><th>{g["label"]}</th><td class="num big">+${g["dol"]:,.0f}</td>'
-                 f'<td class="num quiet">+{g["pct"]*100:.1f}%</td>'
+        r.append(f'<tr><th>{g["label"].split(" ")[0].replace("-", "&ndash;")} years</th>'
+                 f'<td class="num big">+{g["pct"]*100:.1f}%</td>'
                  f'<td class="num quiet">+{g["lo"]*100:.1f}% to +{g["hi"]*100:.1f}%</td>'
                  f'<td class="num quiet">{g["pairs"]}</td></tr>')
     r.append('</tbody></table>')
     return ''.join(r)
 
 def ten_race_table():
-    """Every way of restating a freehold comparable, scored on the same held-out folds.
-
-    THREE COLUMNS, not a sentence per row. What removes the age gap, what shape the freehold
-    premium takes, and whether the order matters — those are the three things he asked about,
-    so they are three columns and the reader can scan down whichever one they came for."""
+    """The percentage forms only, against the engine and against doing nothing. The dollar
+    forms are not shown here — they belong in the scale explain mark, which is where the
+    choice between the two is argued."""
     if not T: return ''
+    ORDER = {'va': 'after the age adjustment', 'av': 'before it', 'none': '&mdash;'}
     r = ['<table class="fig look"><thead><tr><th>Age gap removed at</th>'
-         '<th>Freehold premium</th><th class="num">reads</th>'
+         '<th>Premium applied</th><th class="num">reads</th>'
          '<th class="num">held-out error</th></tr></thead><tbody>',
          f'<tr><th>nothing &mdash; take the freehold price as it stands</th>'
          f'<td class="quiet">none</td><td class="num quiet">&mdash;</td>'
          f'<td class="num quiet">{T["null_rmse"]:,.0f}</td></tr>',
          f'<tr><th><b>$40 a year</b> &mdash; the engine as written</th>'
-         f'<td class="quiet"><b>&divide; 1.15</b>, after</td><td class="num quiet">15.0%</td>'
+         f'<td class="quiet">after, as &divide;&nbsp;1.15</td><td class="num quiet">15.0%</td>'
          f'<td class="num quiet">{T["engine_rmse"]:,.0f}</td></tr>']
-    FORM = {'va': 'a percentage, after', 'av': 'a percentage, before',
-            'dol': '<b>dollars</b> &mdash; order cannot matter', 'none': 'none'}
-    best = min(T['race'], key=lambda x: x['rmse'])
-    for x in T['race']:
+    pct = [x for x in T['race'] if x['key'] in ('va', 'av', 'none')]
+    best = min(pct, key=lambda x: x['rmse'])
+    for x in pct:
         if x['key'] == 'none' and x['rate'] != 'free': continue
         rate = ('the measured lease rates, <b>$%.0f / $%.0f</b>' % (T['bands']['old'], T['bands']['new'])
                 if isinstance(x['a'], str) else f'${x["a"]:,.0f} a year')
         if x['rate'] == 'free': rate += ' <span class="quiet">(fitted here)</span>'
-        prem = ('&mdash;' if x['key'] == 'none'
-                else (f'+${x["prem"]:,.0f}' if x['key'] == 'dol' else f'+{x["prem"]*100:.1f}%'))
+        prem = '&mdash;' if x['key'] == 'none' else f'+{x["prem"]*100:.1f}%'
         big = 'big' if x is best else 'quiet'
-        r.append(f'<tr><th>{rate}</th><td class="quiet">{FORM[x["key"]]}</td>'
+        r.append(f'<tr><th>{rate}</th><td class="quiet">{ORDER[x["key"]]}</td>'
                  f'<td class="num {big}">{prem}</td>'
                  f'<td class="num {big}">{x["rmse"]:,.0f}</td></tr>')
     r.append('</tbody></table>')
     return ''.join(r)
 
 def ten_slice_table(key, head):
-    rows = (T or {}).get('slices', {}).get(key, [])
-    rows = [x for x in rows if not x.get('thin')]
+    rows = [x for x in (T or {}).get('slices', {}).get(key, []) if not x.get('thin')]
     if not rows: return ''
-    r = [f'<table class="fig"><thead><tr><th>{head}</th><th class="num">in dollars</th>'
-         '<th class="num">in percent</th><th class="num">pairs</th></tr></thead><tbody>']
+    r = [f'<table class="fig"><thead><tr><th>{head}</th>'
+         '<th class="num">freehold is worth</th><th class="num">pairs</th></tr></thead><tbody>']
     for x in rows:
-        r.append(f'<tr><th>{x["label"]}</th><td class="num big">+${x["dol"]:,.0f}</td>'
-                 f'<td class="num quiet">+{x["pct"]*100:.1f}%</td>'
+        r.append(f'<tr><th>{x["label"]}</th><td class="num big">+{x["pct"]*100:.1f}%</td>'
                  f'<td class="num quiet">{x["pairs"]}</td></tr>')
     r.append('</tbody></table>')
     return ''.join(r)
 
 def ten_transfer_table(key, head):
+    """The one place a dollar figure still appears, because this table IS the argument for
+    the percentage: it asks each form to price stock it has never seen."""
     rows = (T or {}).get('transfer', {}).get(key, [])
     if not rows: return ''
     r = [f'<table class="fig"><thead><tr><th>{head}</th><th class="num">its base psf</th>'
-         '<th class="num">dollars miss by</th><th class="num">percent miss by</th>'
-         '</tr></thead><tbody>']
+         '<th class="num">a percentage misses by</th><th class="num">a flat dollar figure '
+         'misses by</th></tr></thead><tbody>']
     for x in rows:
-        dw = x['dol_err'] < x['pct_err']
+        pw = x['pct_err'] <= x['dol_err']
         r.append(f'<tr><th>{x["group"]}</th><td class="num quiet">${x["base"]:,.0f}</td>'
-                 f'<td class="num {"big" if dw else "quiet"}">{x["dol_err"]:,.0f}</td>'
-                 f'<td class="num {"quiet" if dw else "big"}">{x["pct_err"]:,.0f}</td></tr>')
+                 f'<td class="num {"big" if pw else "quiet"}">{x["pct_err"]:,.0f}</td>'
+                 f'<td class="num {"quiet" if pw else "big"}">{x["dol_err"]:,.0f}</td></tr>')
     r.append(f'<tr><th><b>average</b></th><td class="num quiet"></td>'
-             f'<td class="num"><b>{st.mean([x["dol_err"] for x in rows]):,.0f}</b></td>'
-             f'<td class="num"><b>{st.mean([x["pct_err"] for x in rows]):,.0f}</b></td></tr>')
+             f'<td class="num"><b>{st.mean([x["pct_err"] for x in rows]):,.0f}</b></td>'
+             f'<td class="num"><b>{st.mean([x["dol_err"] for x in rows]):,.0f}</b></td></tr>')
     r.append('</tbody></table>')
     return ''.join(r)
 
 def ten_sens_table():
     if not T: return ''
-    r = ['<table class="fig"><thead><tr><th>Screen</th><th class="num">in dollars</th>'
-         '<th class="num">in percent</th><th class="num">pairs</th></tr></thead><tbody>']
+    r = ['<table class="fig"><thead><tr><th>Screen</th><th class="num">freehold is worth</th>'
+         '<th class="num">pairs</th></tr></thead><tbody>']
     for x in T['sens']:
         head = x['label'].endswith('(headline)')
         r.append(f'<tr><th>{"<b>" if head else ""}{x["label"]}{"</b>" if head else ""}</th>'
-                 f'<td class="num {"big" if head else "quiet"}">+${x["dol"]:,.0f}</td>'
-                 f'<td class="num quiet">+{x["pct"]*100:.1f}%</td>'
+                 f'<td class="num {"big" if head else "quiet"}">+{x["pct"]*100:.1f}%</td>'
                  f'<td class="num quiet">{x["pairs"]}</td></tr>')
     r.append('</tbody></table>')
     return ''.join(r)
 
-# [older rate, newer rate, the boundary year, the lease-start offset] — all four DERIVED.
-# [older rate, newer rate, boundary year, measured build years, lease term, this year] —
-# all six DERIVED. The build gap and the 99-year term are what let the calculator work out
-# the lease a subject has left from nothing but its completion year.
+# [older rate, newer rate, boundary year, measured build years, lease term, this year] — all
+# six DERIVED. The build gap and the 99-year term are what let the calculator work out the
+# lease a subject has left from nothing but its completion year.
 TENB_JS = ('[%.2f,%.2f,%d,%d,%d,%d]' % (T['bands']['old'], T['bands']['new'], T['band_bound'],
                                         T['build']['median'], T['build']['term'],
                                         datetime.date.today().year)) if T else '[0,0,0,0,99,2026]'
-TENS_JS = '[' + ','.join(f'[{g["min_left"]},{g["dol"]:.2f},"{g["label"]}"]'
+# [floor of the step, the premium as a fraction, the step's label] — PERCENT, his ruling.
+TENS_JS = '[' + ','.join(f'[{g["min_left"]},{g["pct"]:.5f},"{g["label"]}"]'
                          for g in TGL) + ']' if TGL else '[]'
+
 BANDS_JS = '[' + ','.join(f'[{hi},{BANDR[nm]:.2f},"{nm}"]' for _, hi, nm in BANDS) + ']'
 A1, A2 = age_label(OLD_NM); B1, B2 = age_label(NEW_NM)
 
@@ -1391,14 +1427,13 @@ the <b>resale</b> market.</p>
 constant at all.</p>
 
 {hero('&divide; 1.15', 'flat, every freehold comparable',
-      [(f'+${g["dol"]:,.0f}', ten_step_label(g), None) for g in TGL],
+      [(f'+{g["pct"]*100:.0f}%', ten_step_label(g), None) for g in TGL],
       f"<b>The call.</b> One figure cannot do it. Freehold is worth "
-      f"<b>+${TGL[0]['dol']:,.0f} psf</b> against a fresh lease and "
-      f"<b>+${TGL[-1]['dol']:,.0f}</b> against a spent one, so the flat &divide;&nbsp;1.15 "
+      f"<b>+{TGL[0]['pct']*100:.0f}%</b> against a fresh lease and "
+      f"<b>+{TGL[-1]['pct']*100:.0f}%</b> against a spent one, so the flat &divide;&nbsp;1.15 "
       f"overcharges the first and undercharges the second. <b>Use one step, never the sum.</b> "
-      f"Averaged across all {T['counts']['pairs']} pairs it is +${THD['p']:,.0f} psf, or "
-      f"+{THP['p']*100:.0f}%, on {T['counts']['devs']} developments. "
-      f"Leave the engine alone until this is audited.")}
+      f"Averaged across all {T['counts']['pairs']} pairs it is +{THP['p']*100:.0f}%, on "
+      f"{T['counts']['devs']} developments. Leave the engine alone until this is audited.")}
 
 <section>
   <div class="sechead"><h2 class="disp">How to use it</h2></div>
@@ -1408,25 +1443,34 @@ constant at all.</p>
       has no lease start to difference against.</p></div>
     <div class="step"><span class="sn">2</span>
       <p>Price that at the <b>measured lease rate</b>: ${T['bands']['old']:,.0f} a year up to
-      2010, ${T['bands']['new']:,.0f} from 2011, read at the midpoint.</p></div>
+      {T['band_bound']-1}, ${T['bands']['new']:,.0f} from {T['band_bound']}, read at the
+      midpoint.</p></div>
     <div class="step"><span class="sn">3</span>
-      <p>Then add the <b>freehold step for the lease the leasehold side has left</b>, from the
-      table below. Both are additions, so the order does not matter.</p></div>
+      <p>Then take off the <b>freehold percentage for the lease the leasehold side has
+      left</b>, from the table below.</p></div>
   </div>
 
   <div class="calc">
-    <h3>Restate a freehold comparable</h3>
+    <h3>Restate a comparable</h3>
+    <div class="dirs" role="group" aria-label="Which way round">
+      <button type="button" id="tdF" class="on">Freehold &rarr; leasehold</button>
+      <button type="button" id="tdL">Leasehold &rarr; freehold</button>
+    </div>
     <div class="cin">
-      <label>Freehold comparable &mdash; psf<input id="tfP" type="number" value="2100" min="200" max="9000" step="10"></label>
+      <label id="tpL">Freehold comparable &mdash; psf<input id="tfP" type="number" value="2100" min="200" max="9000" step="10"></label>
       <label>Freehold TOP year<input id="tfT" type="number" value="2005" min="1960" max="2035" step="1"></label>
-      <label>Leasehold subject &mdash; TOP year<input id="tlT" type="number" value="2015" min="1960" max="2035" step="1"></label>
-      <label>Lease left on the subject <span class="auto" id="tlA">from TOP</span><input id="tlL" type="number" value="85" min="20" max="99" step="1"></label>
+      <label>Leasehold TOP year<input id="tlT" type="number" value="2015" min="1960" max="2035" step="1"></label>
+      <label class="haslock">Lease left on the leasehold
+        <button type="button" class="lock" id="tlK" aria-pressed="true"
+          title="Worked out from the completion year. Click to enter it yourself.">&#128274;</button>
+        <input id="tlL" type="number" value="85" min="20" max="99" step="1" readonly></label>
     </div>
     <div id="tenOut" class="cout"></div>
   </div>
-  <p class="expl">The engine does this as a division by 1.15 applied after a $40-a-year age
-  adjustment. Both halves of that are wrong here: the $40 is too steep on a completion-year
-  clock, and one ratio cannot cover a fresh lease and a spent one.</p>
+  <p class="expl"><b>The lease left is locked</b> because it follows from the completion year:
+  {T['build']['term']} years less the age less the {T['build']['median']} years it took to
+  build. Open the lock only when you have the actual lease start &mdash; then it is a fact
+  rather than an inference, and it should win.</p>
 </section>
 
 <section>
@@ -1442,10 +1486,9 @@ constant at all.</p>
   lease gap. An engine that charges a lease difference and then a flat freehold ratio on top is
   charging twice for part of the same thing.</p>
   <div class="caveat"><b>The fresh-lease step is the thin one.</b> It rests on
-  {TGL[0]['pairs']} pairs. The direction is stable &mdash; refitting the vintage rate freely
-  instead of using the measured bands leaves the same climb, from
-  +{TGL[0]['pct_free']*100:.0f}% to +{TGL[-1]['pct_free']*100:.0f}% &mdash; but treat the
-  ${TGL[0]['dol']:,.0f} as the shape of the answer rather than a settled figure.</div>
+  {TGL[0]['pairs']} pairs, and it has moved twice as the method tightened. The climb is the
+  finding; that step's level is not settled. The two lower steps rest on
+  {TGL[1]['pairs']} and {TGL[2]['pairs']} pairs and have barely moved at all.</div>
 </section>
 
 <section>
@@ -1460,72 +1503,70 @@ constant at all.</p>
   <b>The engine as written is barely better than doing nothing</b> &mdash;
   {T['engine_rmse']:,.0f} against {T['null_rmse']:,.0f} &mdash; and the $40 is why: on a
   completion-year clock it scores worse than $10 does. Your own measured lease rates, carried
-  across onto that clock, win.</p>
+  across onto that clock, win. <b>Whether the premium goes on before or after the age
+  adjustment barely registers</b> &mdash; the two orderings sit within five psf of each other.</p>
 </section>
 
 <section>
   <div class="sechead"><h2 class="disp">Behind it</h2>
   <p>Seven questions, answered once each.</p></div>
 
-  <details><summary>Dollars or a percentage &mdash; and can you just say {THP['p']*100:.0f}%?</summary>
-    <p class="expl"><b>You can. On this sample the two cannot be told apart, and the
-    percentage is the same measurement in another unit.</b> Drawn at random, held-out folds
-    favour dollars &mdash; {T['scale_test']['dol_rmse']:,.0f} psf against
-    {T['scale_test']['pct_rmse']:,.0f}, winning {T['scale_test']['wins']} of
-    {T['scale_test']['folds']}. But a random fold looks like the sample it came from, which is
-    exactly where an addition and a ratio are hardest to separate.</p>
-    <p class="expl"><b>The test that matters is whether a figure travels.</b> Fit it without one
-    price tier and ask it about that tier; then the same by region. It ends level &mdash; and it
-    splits the way a percentage would predict, with the percentage winning on the cheapest stock
-    and on the OCR, where a flat dollar figure is too big a share of the price.</p>
+  <details><summary>Why a percentage and not a dollar figure?</summary>
+    <p class="expl"><b>Because it travels, and because the constant it replaces is itself a
+    ratio.</b> Drawn at random, held-out folds mildly favour a flat dollar figure &mdash;
+    {T['scale_test']['dol_rmse']:,.0f} psf against {T['scale_test']['pct_rmse']:,.0f}. But a
+    random fold looks like the sample it came from, which is exactly where an addition and a
+    ratio are hardest to separate.</p>
+    <p class="expl">The test that separates them is whether a figure can price stock it has
+    never seen. Fit it without one price tier and ask it about that tier; then the same by
+    region. It ends level overall &mdash; and it splits the way a percentage would predict,
+    with the percentage winning on the cheapest stock and in the OCR, where a flat dollar
+    figure is far too large a share of the price.</p>
     <div class="scroll">{ten_transfer_table('price', 'Predicting a price tier never seen')}</div>
     <div class="scroll" style="margin-top:14px">{ten_transfer_table('region', 'Predicting a region never seen')}</div>
-    <p class="expl" style="margin-top:18px"><b>So use whichever suits the conversation, and know
-    where they part company.</b> Around the middle of this sample they agree within about $35 a
-    foot. They diverge at the ends: on a $1,100 psf freehold the dollar figure says
-    +${THD['p']:,.0f} and the percentage +${1100*THP['p']:,.0f}; on a $3,500 psf freehold, still
-    +${THD['p']:,.0f} against +${3500*THP['p']:,.0f}. <b>The sample cannot settle which is right
-    out there</b> &mdash; it runs from about ${min(r['psf_lh'] for r in TMIX):,.0f} to
-    ${max(r['psf_lh'] for r in TMIX):,.0f} psf &mdash; so do not carry either form far past its
-    edges.</p>
-    <div class="scroll" style="margin-top:14px">{ten_slice_table('scale', 'Price level of the leasehold side')}</div>
+    <p class="expl" style="margin-top:18px">A flat dollar figure fitted on this sample is
+    +${THD['p']:,.0f}. On ${TBASE:,.0f} stock the two agree. On $1,100 stock the percentage
+    says +${1100*THP['p']:,.0f} and the dollar figure still says +${THD['p']:,.0f}; on $3,500
+    stock, +${3500*THP['p']:,.0f} against the same +${THD['p']:,.0f}. <b>The sample runs from
+    ${min(r['psf_lh'] for r in TMIX):,.0f} to ${max(r['psf_lh'] for r in TMIX):,.0f} psf and
+    cannot settle either end</b>, so treat the percentage as measured in the middle and
+    inferred at the edges.</p>
   </details>
 
   <details><summary>Do the placebos read zero?</summary>
-    <p class="expl"><b>Both do.</b> Run the identical estimator on pairs that share a tenure &mdash;
-    where the true freehold premium is zero by construction &mdash; and it finds nothing:
-    leasehold against leasehold reads <b>${T['placebo']['LH x LH']['dol']:+,.0f}</b>
+    <p class="expl"><b>Both do.</b> Run the identical estimator on pairs that share a tenure
+    &mdash; where the true freehold premium is zero by construction &mdash; and it finds
+    nothing: leasehold against leasehold reads <b>{T['placebo']['LH x LH']['pct']*100:+.1f}%</b>
     ({T['placebo']['LH x LH']['pairs']} pairs) and freehold against freehold
-    <b>${T['placebo']['FH x FH']['dol']:+,.0f}</b> ({T['placebo']['FH x FH']['pairs']} pairs).</p>
+    <b>{T['placebo']['FH x FH']['pct']*100:+.1f}%</b>
+    ({T['placebo']['FH x FH']['pairs']} pairs).</p>
     <p class="expl">Which side of a same-tenure pair takes the freehold slot is assigned <b>at
     random</b> and averaged over many draws. That matters: assigning it alphabetically read a
     false +2.9% on the freehold set, purely because alphabetically-earlier freeholds happened to
     sit newer.</p>
   </details>
 
-  <details><summary>Where the calculator gets the subject's remaining lease</summary>
+  <details><summary>Where the calculator gets the lease left</summary>
     <p class="expl"><b>From the completion year, which is the one date a buyer always has.</b>
     {T['build']['term']}-year term, less the years since TOP, less the years it took to build.
     Across the {T['build']['n']} leasehold developments with both dates on record the build gap
     is a median <b>{T['build']['median']} years</b> (quartiles {T['build']['p25']}&ndash;{T['build']['p75']}),
     and {T['build']['term_share']*100:.0f}% of leasehold stock is on a {T['build']['term']}-year
-    lease &mdash; so the inference is good to a year or two, against gradient steps fifteen years
-    wide.</p>
+    lease &mdash; so the inference is good to a year or two, against steps fifteen years wide.
+    That is why the field is locked: it is right often enough that overriding it by habit would
+    do more harm than good.</p>
     <p class="expl"><b>The engine assumes {T['build']['engine']} years, not
-    {T['build']['median']}.</b> That is a fifth constant nobody had checked. It barely touches
-    this answer &mdash; the premium reads +${THD['p']:,.0f} on the measured gap against
-    +$310 on the engine's &mdash; but it is wrong, and it is used elsewhere to invent a TOP year
-    for any development that has no completion year on record.</p>
-    <p class="expl">Type in the field and it stops inferring: an actual lease start always beats
-    an inference from a median, and the field says which of the two is in force.</p>
+    {T['build']['median']}.</b> A fifth constant nobody had checked. It barely touches this
+    answer, but the engine also uses it to invent a TOP year for any development with no
+    completion year on record, so it is worth fixing there on its own account.</p>
   </details>
 
   <details><summary>What does this say about the engine's $10 age adjustment?</summary>
     <p class="expl">Freehold-against-freehold pairs measure it directly, since nothing else
-    separates them. They fit <b>${T['fh_age_rate']:,.0f} a year</b> of completion-year difference,
-    against the engine's unvalidated $10. A by-product of this study, not its subject &mdash;
-    but it points the same way as everything else here: the age term is understated and the
-    lease term is overstated.</p>
+    separates them. They fit <b>${T['fh_age_rate']:,.0f} a year</b> of completion-year
+    difference, against the engine's unvalidated $10. A by-product of this study, not its
+    subject &mdash; but it points the same way as everything else here: the age term is
+    understated and the lease term is overstated.</p>
   </details>
 
   <details><summary>Why the 200-unit floor stays</summary>
@@ -1537,7 +1578,7 @@ constant at all.</p>
     <b>{T['floor']['n_fh_added']:.0f} sales</b> on the freehold side against
     {T['floor']['n_fh_headline']:.0f} in the headline, <b>{T['floor']['thin_added']*100:.0f}%</b>
     of them under ten a side against {T['floor']['thin_headline']*100:.0f}%, and fitted on their
-    own they read a directionless <b>+${T['floor']['added_dol']:,.0f}</b>. Freehold stock is
+    own they read a directionless <b>+{T['floor']['added_pct']*100:.1f}%</b>. Freehold stock is
     mostly boutique, so this floor bites harder here than it did on the lease study &mdash; and
     a five-transaction minimum is a floor, not a volume.</p>
   </details>
@@ -1551,10 +1592,9 @@ constant at all.</p>
 
   <details><summary>Does it hold across the island, and across bedrooms?</summary>
     <div class="scroll">{ten_slice_table('region', 'Region')}</div>
-    <p class="expl" style="margin-top:18px">In percent the three regions agree closely; in dollars
-    the CCR figure is roughly double the OCR one, which is price level rather than geography. It
-    is the one reading that argues for the percentage form, and it is why the percentage is kept
-    on the page rather than dropped.</p>
+    <p class="expl" style="margin-top:18px">The three regions agree closely, which is itself part
+    of the case for a percentage: the same ratio serves the island, where a flat dollar figure
+    would have to be roughly twice as large in the CCR as in the OCR.</p>
     <div class="scroll" style="margin-top:14px">{ten_slice_table('bedroom', 'Bedroom')}</div>
     <p class="expl" style="margin-top:18px">Bedroom is the match, not the answer &mdash; it holds
     size constant. Two- and three-bedroom read the same; one- and four-bedroom are too thin to
@@ -1563,11 +1603,12 @@ constant at all.</p>
 
   <div class="caveat" style="margin-top:22px"><b>The confound to know.</b> Freehold is the
   <b>older</b> side in {TOLDER} of the {T['counts']['cells']} cells, and the age adjustment that
-  removes it is a median <b>${TADJ:,.0f} psf</b> &mdash; about {TADJ/TBASE*100:.0f}% of the base,
-  which is the same size as the premium being measured. This answer leans on the vintage rate
-  being right. Fitting that rate freely instead of importing the measured bands gives a smaller
-  premium (+{[x for x in T['race'] if x['key']=='va' and x['rate']=='free'][0]['prem']*100:.1f}%),
-  so read the headline as the top of a range that starts there.</div>
+  removes it is a median <b>{TADJ/TBASE*100:.0f}% of the base</b> &mdash; the same size as the
+  premium being measured. This answer leans on the vintage rate being right. Fitting that rate
+  freely instead of importing the measured bands gives
+  +{[x for x in T['race'] if x['key']=='va' and x['rate']=='free'][0]['prem']*100:.1f}%, so read
+  the headline as the top of a range that starts there. Floor, facing and building quality stay
+  uncontrolled by ruling.</div>
 </section>
 
 <section>
@@ -1576,8 +1617,8 @@ constant at all.</p>
   <tr><th>Lease / vintage</th><td class="num big">$40 psf / yr</td>
     <td style="color:var(--gold-soft)">${BANDR[OLD_NM]:,.0f} and ${BANDR[NEW_NM]:,.0f}, by midpoint</td></tr>
   <tr><th>Tenure &middot; freehold vs leasehold</th><td class="num big">&divide; 1.15</td>
-    <td style="color:var(--gold-soft)">+${THD['p']:,.0f} psf on average, and
-    +${TGL[0]['dol']:,.0f} to +${TGL[-1]['dol']:,.0f} by the lease left</td></tr>
+    <td style="color:var(--gold-soft)">+{THP['p']*100:.0f}% on average, and
+    +{TGL[0]['pct']*100:.0f}% to +{TGL[-1]['pct']*100:.0f}% by the lease left</td></tr>
   <tr><th>MRT walk band</th><td class="num big">$50 / $200 / $250</td>
     <td style="color:var(--gold-soft)">+${M['bands'][0]['adj']:,.0f} / +${M['bands'][1]['adj']:,.0f} /
     +${M['bands'][2]['adj']:,.0f}, or ${M['slope100']:.0f} per 100 m</td></tr>

@@ -95,7 +95,9 @@ def pairs(rows, lo, hi, want_extra=True):
             adj  = st.median([x['price'] * (1 + FLOOR_STEP * (top - x['fl'])) for x in base])
             bpsf = adj / med
             rec = dict(proj=k[0], blk=k[1], stk=k[2], dist=p['dist'], reg=p['reg'],
-                       ten='FH' if 'Freehold' in p['ten'] or 'freehold' in p['ten'] else 'LH',
+                       # 999-yr is FREEHOLD (Shawn) -- the same reading floor-study's
+                       # analyze.py tenure_class() makes on this very same data file.
+                       ten='FH' if ('freehold' in p['ten'].lower() or '999' in p['ten']) else 'LH',
                        floor=top, base_sqft=round(med), ph_sqft=round(phm),
                        extra=round(extra), extra_pct=round(xr, 3), n_base=len(base),
                        base_price=round(adj), ph_price=p['price'], base_psf=round(bpsf),

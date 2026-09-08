@@ -493,7 +493,7 @@ JS = """
       'change going further back.</p>';
     o.className='cout';
     o.innerHTML =
-      '<div class="crow"><span>Midpoint</span><b>'+mid.toFixed(1)+'</b></div>'+
+      '<div class="crow"><span>Midpoint</span><b>'+(mid%1?mid.toFixed(1):mid.toFixed(0))+'</b></div>'+
       '<div class="crow"><span>Rate</span><b>$'+rate.toFixed(0)+' psf / yr</b>'+
         '<i class="cflat">'+bd[2]+'</i></div>'+
       '<div class="crow"><span>Lease gap</span><b>'+Math.abs(gap)+' years</b></div>'+
@@ -740,13 +740,14 @@ def hero(was, was_sub, answers, call):
         '<div class="ans"><div class="n">' + a[0] + '</div><div class="w">' + a[1] + '</div>'
         + ('<div class="g">' + str(a[2]) + '<span>developments</span></div>' if a[2] else '')
         + '</div>' for a in answers)
+    call_p = ('<p class="call">' + call + '</p>') if call else ''
     return ('<div class="verdict"><div class="vgrid">'
             '<div class="vcell"><div class="lab">Engine constant</div>'
             '<div class="val was">' + was + '</div><div class="sub">' + was_sub + '</div></div>'
             '<div class="arrow">&rarr;</div>'
             '<div class="vcell grow"><div class="lab">Measured</div>'
             '<div class="answers">' + cells + '</div></div></div>'
-            '<p class="call">' + call + '</p></div>')
+            + call_p + '</div>')
 
 def nice(n):
     """Title-case a project name without destroying acronyms. PLQ is not Plq."""
@@ -812,6 +813,8 @@ def int_devs():
                  f'<td class="num quiet">{d["pairs"]}</td></tr>')
     return ''.join(r) + '</tbody></table>'
 
+# NOT RENDERED since 2026-09-08 — Shawn took the per-100 m framing off the MRT panel;
+# the bands are the face there now. Kept as the record.
 def mrt_split():
     if not M or not M.get('nf_split'): return ''
     r = ['<table class="fig"><thead><tr><th>Pairs whose walk differs by&hellip;</th>'
@@ -824,6 +827,8 @@ def mrt_split():
     r.append('</tbody></table>')
     return ''.join(r)
 
+# NOT RENDERED since 2026-09-08 — Shawn took the per-100 m framing off the MRT panel;
+# the bands are the face there now. Kept as the record.
 def mrt_per100():
     if not M: return ''
     r = ['<table class="fig"><thead><tr><th>Walk to the nearest station</th>'
@@ -1083,40 +1088,10 @@ so what is left is the walk.</p>
       [(f"+${b['adj']:,.0f}", lab, b['devs'])
        for b, lab in zip(M['bands'], ('under 5 vs 5-10 min', '5-10 vs over 10 min',
                                       'under 5 vs over 10 min'))],
-      f"<b>The call.</b> Quote <b>${M['slope100']:.0f} psf per extra 100 m</b> &mdash; it holds "
-      f"whatever the band lines do, and the three figures above all agree on it. Two of the "
-      f"three constants in use sit inside the measured intervals; the "
-      f"<b>${M['engine']['mid|far']}</b> middle step reads above the measurement.")}
+      '')}
 
 <section>
   <div class="scroll">{mrt_table()}</div>
-
-  <p class="expl" style="margin-top:18px"><b>Two of the three hold up.</b> The
-  ${M['engine']['near|mid']} and ${M['engine']['near|far']} steps both sit inside the measured
-  intervals. The ${M['engine']['mid|far']} middle step does not &mdash; the market pays
-  <b>${M['bands'][1]['adj']:,.0f}</b>, and the interval tops out at
-  ${M['bands'][1]['hi']:,.0f}.</p>
-
-  <div class="caveat"><b>The bands cannot be added together.</b> Each spans a different amount of
-  walking, so the first two do not sum to the third. Read them per 100 m instead and all three say
-  the same thing.</div>
-  <div class="scroll" style="margin-top:14px">{mrt_per100()}</div>
-  <p class="expl"><b>${M['slope100']:.0f} psf for every extra 100 m</b> is the figure to quote. It
-  does not depend on where the band lines are drawn, and the three rows agree on it within
-  ${max(b['per100'] for b in M['bands'])-min(b['per100'] for b in M['bands']):.0f}.</p>
-
-  <details><summary>Why the bottom row understates the contrast you are picturing</summary>
-    <p class="expl"><b>Most &ldquo;under 5 vs over 10&rdquo; pairs barely straddle the line.</b> The
-    typical one is {M['nf_close']:,.0f} m against {M['nf_far']:,.0f} m &mdash; not a doorstep
-    against a fifteen-minute walk. So the band average is diluted by pairs that only just qualify.
-    Split them by the walking they actually span and the effect is plainly there:</p>
-    <div class="scroll">{mrt_split()}</div>
-    <p class="expl">Pairs separated by more than 700 m read
-    <b>+${[x for x in M['nf_split'] if x['label'].startswith('over')][0]['adj']:,.0f}</b>. The band
-    figure is right for the pairs it contains; it is the wrong number to reach for when the two
-    homes you are comparing are further apart than that. <b>Use the per-100 m rate and multiply
-    by the actual difference in walking.</b></p>
-  </details>
 
   <details><summary>How the lease is taken out, and the check that it worked</summary>
     <p class="expl">Each pair shares its nearest station but sits at a different distance from it.
@@ -1124,29 +1099,20 @@ so what is left is the walk.</p>
     vintage rate above is subtracted from it. What remains is distance.</p>
     <p class="expl"><b>The check.</b> Take pairs in the same band standing the same distance from
     the station &mdash; within 50 m of each other. Nothing separates them, so after the lease comes
-    out they should read zero. They read <b>+${M['placebo']['adj']:.1f}</b> across
+    out they should read zero. They read <b>{'&minus;' if M['placebo']['adj'] < 0 else '+'}${abs(M['placebo']['adj']):.1f}</b> across
     {M['placebo']['pairs']} pairs. That is the evidence the adjustment is working and that what is
     left is the walk.</p>
   </details>
 
-  <details><summary>Where the 5 and 10 minute lines are drawn, and what it costs</summary>
+  <details><summary>Where the 5 and 10 minute lines are drawn</summary>
     <p class="expl"><b>Under 400 m &middot; 400 to 800 m &middot; over 800 m.</b> People walk about
-    80 metres a minute, so five minutes is 400 m and ten is 800. Distance is measured straight
-    across the map to the nearest operational station.</p>
-    <p class="expl">The constant in use draws them tighter &mdash; every distance is inflated by
-    30% before converting, which pulls the five-minute bar in to 308 m. At 308 m
-    <b>J Gateway</b>, standing beside JEM at Jurong East, files as a five-to-ten-minute walk.</p>
-    <p class="expl"><b>The lines are the weak part of this measurement.</b> A station is held as a
-    single point when a large interchange spans hundreds of metres, and some geocodes sit about
-    100 m off &mdash; CityLife@Tampines measures 869 m here against a real 700 m walking route.
-    Across defensible placements of the two lines the bottom row runs <b>$162 to $304</b>. That
-    spread is wider than any interval in the table above and it is the honest uncertainty on the
-    figure.</p>
-    <p class="expl">What survives it: both sides of a pair are measured to the <b>same</b> station
-    point, so an error in that point largely cancels in the difference between them. That is why
-    the three rows agree per 100 m, and why <b>${M['slope100']:.0f} psf per 100 m</b> is the
-    figure to reach for whenever the two homes being compared are not a typical band pair. Real
-    walking routes would close the rest.</p>
+    80 metres a minute. Distance is measured straight across the map, not along the pavement.</p>
+    <p class="expl"><b>The lines are the soft part of this.</b> A big interchange is held as one
+    point and some addresses sit about 100 m off, so a project can fall on the wrong side of a
+    line &mdash; CityLife@Tampines measures 869 m here against a 700 m walk. Move the lines
+    anywhere defensible and the bottom row runs <b>$162 to $304</b>.</p>
+    <p class="expl"><b>Why it still holds.</b> Both sides of a pair are measured to the same
+    station point, so the error largely cancels in the gap between them.</p>
   </details>
 
   <details><summary>How a pair is built</summary>

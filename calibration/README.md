@@ -4,7 +4,7 @@
 they build.** Everything below is either a ruling Shawn gave or a result measured against the
 market. Nothing here is a default.
 
-Last worked **2026-09-06**. Commits `price-gap 5561e54`, `kya-maps-calculator d2e5c20`, both on
+Last worked **2026-09-08**. Commits `price-gap 172ef11`, `kya-maps-calculator 2061795`, both on
 main and pushed. Page live on offline staging, hidden behind a double-click on the Live Data chip.
 
 **ALL FOUR CONSTANTS ARE MEASURED.** The tenure pass closed on 2026-09-08 — see §10.

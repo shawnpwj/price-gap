@@ -899,6 +899,8 @@ def ten_grad_table():
     r.append('</tbody></table>')
     return ''.join(r)
 
+# NOT RENDERED since 2026-09-08 — Shawn took the whole measurement section off the tenure
+# panel, this table with it. Kept as the record of every form tested.
 def ten_race_table(full=False):
     """The percentage forms only, against the constant in use and against doing nothing. The
     dollar forms are not shown here — they belong in the scale explain mark, which is where the
@@ -1029,9 +1031,7 @@ the first one measured against the market.</p>
 {hero('$40', 'flat, every comparable',
       [(f'${BANDR[OLD_NM]:,.0f}', OLD_NM, ndev(rows_in(OLD_NM))),
        (f'${BANDR[NEW_NM]:,.0f}', NEW_NM, ndev(rows_in(NEW_NM)))],
-      f"<b>The call.</b> Two rates, not one, chosen by the <b>midpoint of the two lease starts</b>. "
-      f"A flat $40 sits {40/BANDR[OLD_NM]:.1f} times the measured rate on an old pair and below it "
-      f"on a new one.")}
+      '')}
 
 <section>
   <div class="sechead"><h2 class="disp">How to use it</h2></div>
@@ -1371,11 +1371,7 @@ constant at all.</p>
 
 {hero('&divide; 1.15', 'flat, every freehold comparable',
       [(f'+{g["pct"]*100:.0f}%', ten_step_label(g), g['devs']) for g in TGL],
-      f"<b>The call.</b> One figure cannot do it. Freehold is worth "
-      f"<b>+{TGL[0]['pct']*100:.0f}%</b> against a fresh lease and "
-      f"<b>+{TGL[-1]['pct']*100:.0f}%</b> against a spent one. <b>Use one step, never the "
-      f"sum.</b> Across all {T['counts']['pairs']} pairs it averages "
-      f"+{THP['p']*100:.0f}%.")}
+      '')}
 
 <section>
   <div class="sechead"><h2 class="disp">How to use it</h2></div>
@@ -1405,9 +1401,6 @@ constant at all.</p>
     </div>
     <div id="tenOut" class="cout"></div>
   </div>
-  <p class="expl"><b>The lease left is not asked for</b> &mdash; it follows from the completion
-  year: {T['build']['term']} years less the age less the {T['build']['median']} years it took to
-  build. The result says which step that lands on.</p>
 </section>
 
 <section>
@@ -1416,40 +1409,6 @@ constant at all.</p>
   bedroom by bedroom. The only thing that changes down this table is <b>how much lease the
   leasehold neighbour has left</b>.</p></div>
   <div class="scroll">{ten_grad_table()}</div>
-  <p class="expl" style="margin-top:18px"><b>This is the double-count.</b> If freehold and lease
-  were separate things, this column would be flat &mdash; freehold would be worth the same
-  whatever the neighbour's lease. It is not flat. It roughly doubles as the lease shortens, which
-  says the two are <b>one curve</b>: at the far end of a lease, the freehold gap simply is the
-  lease gap. Charging a lease difference and then a flat freehold ratio on top charges twice for
-  part of the same thing.</p>
-  <div class="caveat"><b>The fresh-lease step is the thin one.</b> It rests on
-  {TGL[0]['pairs']} pairs, and it has moved twice as the method tightened. The climb is the
-  finding; that step's level is not settled. The two lower steps rest on
-  {TGL[1]['pairs']} and {TGL[2]['pairs']} pairs and have barely moved at all.</div>
-</section>
-
-<section>
-  <div class="sechead"><h2 class="disp">The measurement</h2>
-  <p><b>{T['counts']['devs']} developments &middot; {T['counts']['pairs']} pairs &middot;
-  {T['counts']['cells']} cells.</b> Same screens as the lease study &mdash; 500 m apart, the same
-  station, the same schools, 200+ units, sizes within 20% &mdash; across 24 months of resale and
-  sub-sale to {T['window'][1]}.</p></div>
-  <p class="expl">The average miss is in psf: fit the rule without a pair, then ask it to
-  restate that pair and see how far out it lands. Lower is better.</p>
-  <div class="scroll">{ten_race_table()}</div>
-  <p class="expl" style="margin-top:18px"><b>Your own measured lease rates win.</b> Carried
-  across onto the completion-year clock they miss by {min(x['rmse'] for x in T['race'] if x['key'] in ('va','av')):,.0f}
-  against {T['engine_rmse']:,.0f} for the form in use, and {T['null_rmse']:,.0f} for doing
-  nothing at all.</p>
-
-  <details><summary>Every form tested</summary>
-    <p class="expl">Eleven ways of putting the two terms together, each fitted without a pair and
-    then asked to restate it. <b>Whether the premium goes on before or after the age adjustment
-    barely registers</b> &mdash; the two orderings sit within five psf of each other &mdash; and
-    the $40 is what costs the form in use: on a completion-year clock it scores worse than $10
-    does.</p>
-    <div class="scroll">{ten_race_table(full=True)}</div>
-  </details>
 </section>
 
 <section>
@@ -1528,6 +1487,10 @@ constant at all.</p>
   </details>
 
   <details><summary>How much do the screens move it?</summary>
+    <p class="expl"><b>{T['counts']['devs']} developments &middot; {T['counts']['pairs']} pairs
+    &middot; {T['counts']['cells']} cells</b>, on the same screens as the lease study &mdash;
+    500 m apart, the same station, the same schools, 200+ units, sizes within 20% &mdash; across
+    24 months of resale and sub-sale to {T['window'][1]}.</p>
     <div class="scroll">{ten_sens_table()}</div>
     <p class="expl" style="margin-top:18px">Distance barely matters &mdash; widening to a
     kilometre moves the figure less than the interval around it. The unit floor is the one that

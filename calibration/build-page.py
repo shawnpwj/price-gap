@@ -208,7 +208,7 @@ def tested_table():
     h.append(r_('Three bands instead of two', f'{CV_THREE/1000:,.1f}k against {CV_TWO/1000:,.1f}k',
                 'Worse on held-out error, and the extra band split into two incoherent regional halves.'))
     h.append(r_('One flat rate', f'{CV_FLAT/1000:,.1f}k against {CV_TWO/1000:,.1f}k',
-                'Much worse. This is what the engine does today.'))
+                'Worse on held-out error. It is the form the constant takes today.'))
     h.append(r_('A fitted curve or knee', 'moved with the sample',
                 'A straight line ran low at both ends; a fitted knee then moved when the pair screen '
                 'widened. The knee is not identified &mdash; do not report one.'))
@@ -424,15 +424,7 @@ CSS += """
   color:var(--gold-soft)}
 .dirs button:hover{border-color:rgba(255,255,255,.3)}
 
-/* THE LOCK. The lease left follows from the completion year, so the field fills itself and
-   stays shut; the lock is the whole affordance for taking it over. Small, top right of its
-   own label, never a row of its own. */
 .calc label{position:relative}
-.calc label.haslock{padding-right:20px}
-.calc .lock{position:absolute;top:0;right:0;padding:0 2px;line-height:1;font-size:12px;
-  background:none;border:0;cursor:pointer;opacity:.75}
-.calc .lock:hover{opacity:1}
-.calc input[readonly]{opacity:.72;cursor:default}
 
 .vcell.grow{flex:1 1 300px;min-width:260px}
 .two{display:flex;gap:30px;flex-wrap:wrap}
@@ -522,37 +514,29 @@ JS = """
   //
   // TB = [older rate, newer rate, boundary year, build years, lease term, this year]
   // TS = [[floor of the lease-left step, premium as a fraction, its label], ...]
-  var TB=%TENB%, TS=%TENS%, fwd=true, touched=false;
+  var TB=%TENB%, TS=%TENS%, fwd=true;
   function n(id){return parseFloat(document.getElementById(id).value);}
   function el(id){return document.getElementById(id);}
   function rate(a,b){return ((a+b)/2-TB[3]) < TB[2] ? TB[0] : TB[1];}
   function step(left){for(var i=0;i<TS.length;i++){if(left>=TS[i][0])return TS[i];}
     return TS[TS.length-1];}
 
-  // The lease a subject has left follows from its completion year, so the field is LOCKED and
-  // fills itself. Opening the lock hands it over: an actual lease start is a fact and beats an
-  // inference from a median. Closing it again goes back to the inference.
-  function derive(){var t=n('tlT'); if(!t) return null;
+  // THE LEASE LEFT IS NOT ASKED FOR. Shawn, 2026-09-08: it followed entirely from the leasehold
+  // completion year, so the field only restated an answer the calculator already had. It is
+  // worked out here and shown in the result instead. Term, less the years since TOP, less the
+  // years it took to build.
+  function left(){var t=n('tlT'); if(!t) return null;
     return Math.max(1, Math.min(TB[4], TB[4]-(TB[5]-t)-TB[3]));}
-  function sync(){
-    var d=derive(), f=el('tlL'), k=el('tlK');
-    if(!touched&&d!==null) f.value=d;
-    f.readOnly=!touched;
-    k.innerHTML = touched ? '🔓' : '🔒';
-    k.setAttribute('aria-pressed', touched?'false':'true');
-    k.title = touched ? 'Entered by hand. Click to work it out from the completion year again.'
-                      : 'Worked out from the completion year. Click to enter it yourself.';
-  }
   function dirs(){
     el('tdF').className = fwd?'on':''; el('tdL').className = fwd?'':'on';
     el('tpL').childNodes[0].nodeValue =
       (fwd?'Freehold':'Leasehold')+' comparable \u2014 psf';
   }
   function go(){
-    sync(); dirs();
-    var p=n('tfP'), tf=n('tfT'), tl=n('tlT'), lf=n('tlL'), o=el('tenOut');
-    if(!p||!tf||!tl||!lf){o.className='cout bad';o.innerHTML='Fill in all four.';return;}
-    var r=rate(tf,tl), dv=tf-tl, age=r*dv, st=step(lf),
+    dirs();
+    var p=n('tfP'), tf=n('tfT'), tl=n('tlT'), o=el('tenOut');
+    if(!p||!tf||!tl){o.className='cout bad';o.innerHTML='Fill in all three.';return;}
+    var lf=left(), r=rate(tf,tl), dv=tf-tl, age=r*dv, st=step(lf),
         out = fwd ? (p/(1+st[1]) - age)      // freehold in, leasehold out
                   : ((p + age)*(1+st[1]));   // leasehold in, freehold out
     o.className='cout';
@@ -567,17 +551,11 @@ JS = """
         (fwd?'\u2212':'+')+(st[1]*100).toFixed(0)+'%</b></div>'+
       '<div class="crow big"><span>'+(fwd?'As leasehold':'As freehold')+'</span><b>$'+
         Math.round(out).toLocaleString()+' psf</b></div>'+
-      '<p class="chint">'+(touched?'Lease left as entered.':
-        'Lease left worked out from the completion year: '+TB[4]+' \u2212 ('+TB[5]+' \u2212 '+
-        tl+') \u2212 '+TB[3]+' years of building = '+lf+'.')+
-      (fwd?' The engine would take $40 a year of age and then divide by 1.15, which gives $'+
-        Math.round((p-40*dv)/1.15).toLocaleString()+'.':'')+'</p>';
+      '<p class="chint">Lease left worked out from the completion year: '+TB[4]+' \u2212 ('+
+      TB[5]+' \u2212 '+tl+') \u2212 '+TB[3]+' years of building = '+lf+'.</p>';
   }
   ['tfP','tfT','tlT'].forEach(function(id){
     var e=el(id); if(e) e.addEventListener('input',go);});
-  var f=el('tlL'); if(f) f.addEventListener('input',function(){if(touched)go();});
-  var k=el('tlK');
-  if(k) k.addEventListener('click',function(){touched=!touched; go(); if(touched)f.focus();});
   el('tdF').addEventListener('click',function(){fwd=true;go();});
   el('tdL').addEventListener('click',function(){fwd=false;go();});
   go();
@@ -659,7 +637,7 @@ def mrt_table():
     r = ['<table class="fig look"><thead><tr><th>Walk to the nearest station</th>'
          '<th class="num">measured</th><th class="num">95% interval</th>'
          '<th class="num">developments</th><th class="num">pairs</th>'
-         '<th class="num">engine</th></tr></thead><tbody>']
+         '<th class="num">in use</th></tr></thead><tbody>']
     for b in M['bands']:
         r.append(f'<tr><th>{b["label"]}</th>'
                  f'<td class="num big">+${b["adj"]:,.0f}</td>'
@@ -883,11 +861,12 @@ def ten_grad_table():
     if not TGL: return ''
     r = ['<table class="fig"><thead><tr><th>Lease left on the leasehold side</th>'
          '<th class="num">freehold is worth</th><th class="num">95% interval</th>'
-         '<th class="num">pairs</th></tr></thead><tbody>']
+         '<th class="num">developments</th><th class="num">pairs</th></tr></thead><tbody>']
     for g in TGL:
         r.append(f'<tr><th>{g["label"].split(" ")[0].replace("-", "&ndash;")} years</th>'
                  f'<td class="num big">+{g["pct"]*100:.1f}%</td>'
                  f'<td class="num quiet">+{g["lo"]*100:.1f}% to +{g["hi"]*100:.1f}%</td>'
+                 f'<td class="num quiet">{g["devs"]}</td>'
                  f'<td class="num quiet">{g["pairs"]}</td></tr>')
     r.append('</tbody></table>')
     return ''.join(r)
@@ -904,7 +883,7 @@ def ten_race_table():
          f'<tr><th>nothing &mdash; take the freehold price as it stands</th>'
          f'<td class="quiet">none</td><td class="num quiet">&mdash;</td>'
          f'<td class="num quiet">{T["null_rmse"]:,.0f}</td></tr>',
-         f'<tr><th><b>$40 a year</b> &mdash; the engine as written</th>'
+         f'<tr><th><b>$40 a year</b> &mdash; the constant as it stands</th>'
          f'<td class="quiet">after, as &divide;&nbsp;1.15</td><td class="num quiet">15.0%</td>'
          f'<td class="num quiet">{T["engine_rmse"]:,.0f}</td></tr>']
     pct = [x for x in T['race'] if x['key'] in ('va', 'av', 'none')]
@@ -967,9 +946,11 @@ def ten_sens_table():
 # [older rate, newer rate, boundary year, measured build years, lease term, this year] — all
 # six DERIVED. The build gap and the 99-year term are what let the calculator work out the
 # lease a subject has left from nothing but its completion year.
-TENB_JS = ('[%.2f,%.2f,%d,%d,%d,%d]' % (T['bands']['old'], T['bands']['new'], T['band_bound'],
-                                        T['build']['median'], T['build']['term'],
-                                        datetime.date.today().year)) if T else '[0,0,0,0,99,2026]'
+# ROUNDED TO THE DOLLAR. Shawn, 2026-09-08: a 10-year gap at "$25 a year" must read $250, not
+# $249. The row states the rate to the dollar, so the arithmetic behind it uses that same dollar.
+TENB_JS = ('[%d,%d,%d,%d,%d,%d]' % (round(T['bands']['old']), round(T['bands']['new']),
+                                    T['band_bound'], T['build']['median'], T['build']['term'],
+                                    datetime.date.today().year)) if T else '[0,0,0,0,99,2026]'
 # [floor of the step, the premium as a fraction, the step's label] — PERCENT, his ruling.
 TENS_JS = '[' + ','.join(f'[{g["min_left"]},{g["pct"]:.5f},"{g["label"]}"]'
                          for g in TGL) + ']' if TGL else '[]'
@@ -987,8 +968,8 @@ the first one measured against the market.</p>
       [(f'${BANDR[OLD_NM]:,.0f}', OLD_NM, ndev(rows_in(OLD_NM))),
        (f'${BANDR[NEW_NM]:,.0f}', NEW_NM, ndev(rows_in(NEW_NM)))],
       f"<b>The call.</b> Two rates, not one, chosen by the <b>midpoint of the two lease starts</b>. "
-      f"The engine's flat $40 charges an old pair {40/BANDR[OLD_NM]:.1f} times what the market pays "
-      f"and short-changes a new one. Leave the engine alone until this is audited.")}
+      f"A flat $40 sits {40/BANDR[OLD_NM]:.1f} times the measured rate on an old pair and below it "
+      f"on a new one.")}
 
 <section>
   <div class="sechead"><h2 class="disp">How to use it</h2></div>
@@ -1114,16 +1095,16 @@ so what is left is the walk.</p>
        for b, lab in zip(M['bands'], ('under 5 vs 5-10 min', '5-10 vs over 10 min',
                                       'under 5 vs over 10 min'))],
       f"<b>The call.</b> Quote <b>${M['slope100']:.0f} psf per extra 100 m</b> &mdash; it holds "
-      f"whatever the band lines do, and the three figures above all agree on it. Of the engine's "
-      f"three steps only <b>${M['engine']['mid|far']}</b> is wrong; the other two sit inside the "
-      f"measured intervals.")}
+      f"whatever the band lines do, and the three figures above all agree on it. Two of the "
+      f"three constants in use sit inside the measured intervals; the "
+      f"<b>${M['engine']['mid|far']}</b> middle step reads above the measurement.")}
 
 <section>
   <div class="scroll">{mrt_table()}</div>
 
-  <p class="expl" style="margin-top:18px"><b>Two of the three hold up.</b> The engine's
-  ${M['engine']['near|mid']} and ${M['engine']['near|far']} both sit inside the measured intervals.
-  Its ${M['engine']['mid|far']} for the middle step does not &mdash; the market pays
+  <p class="expl" style="margin-top:18px"><b>Two of the three hold up.</b> The
+  ${M['engine']['near|mid']} and ${M['engine']['near|far']} steps both sit inside the measured
+  intervals. The ${M['engine']['mid|far']} middle step does not &mdash; the market pays
   <b>${M['bands'][1]['adj']:,.0f}</b>, and the interval tops out at
   ${M['bands'][1]['hi']:,.0f}.</p>
 
@@ -1163,9 +1144,9 @@ so what is left is the walk.</p>
     <p class="expl"><b>Under 400 m &middot; 400 to 800 m &middot; over 800 m.</b> People walk about
     80 metres a minute, so five minutes is 400 m and ten is 800. Distance is measured straight
     across the map to the nearest operational station.</p>
-    <p class="expl">The engine draws them tighter &mdash; it inflates every distance by 30% before
-    converting, which pulls the five-minute bar in to 308 m. That is too strict. At 308 m it files
-    <b>J Gateway</b>, standing beside JEM at Jurong East, as a five-to-ten-minute walk.</p>
+    <p class="expl">The constant in use draws them tighter &mdash; every distance is inflated by
+    30% before converting, which pulls the five-minute bar in to 308 m. At 308 m
+    <b>J Gateway</b>, standing beside JEM at Jurong East, files as a five-to-ten-minute walk.</p>
     <p class="expl"><b>The lines are the weak part of this measurement.</b> A station is held as a
     single point when a large interchange spans hundreds of metres, and some geocodes sit about
     100 m off &mdash; CityLife@Tampines measures 869 m here against a real 700 m walking route.
@@ -1234,13 +1215,12 @@ sitting on the station.</p>
 
   <p class="expl" style="margin-top:18px"><b>Call it ${G['cuts'][3]['adj']:,.0f} to
   ${G['cuts'][2]['adj']:,.0f} psf, or roughly {min(c['pct'] for c in G['cuts'][1:]):.0f} to
-  {max(c['pct'] for c in G['cuts'][1:]):.0f}%.</b> The engine assumes <b>+5%</b>, which sits at
-  or below the bottom of that range &mdash; on this evidence it is more likely too low than too
-  high. It is also the only constant here that has never actually fired.</p>
+  {max(c['pct'] for c in G['cuts'][1:]):.0f}%.</b> The <b>+5%</b> in use sits at or below the
+  bottom of that range &mdash; on this evidence more likely low than high.</p>
 
-  <div class="caveat"><b>The engine's integrated flag is inert.</b> It reads from an override
-  file that flags nothing, so every development is treated as not integrated and the &plusmn;5%
-  has never applied to a single comparable. The {G['n_integrated']} developments below are a
+  <div class="caveat"><b>The integrated flag is inert.</b> It reads from an override file that
+  flags nothing, so every development is treated as not integrated and the &plusmn;5% has not yet
+  applied to a comparable. The {G['n_integrated']} developments below are a
   classification made for this study and audited by hand &mdash; a judgement, not a datum.</div>
 
   <details><summary>Does it matter how far apart the two sit?</summary>
@@ -1305,8 +1285,8 @@ the <b>resale</b> market.</p>
       [(f"{VR['discount']:.0f}% off", 'what a resale buyer pays for it', VR['devs'])],
       f"<b>The call.</b> A resale buyer pays about <b>half price</b> for the extra area of a "
       f"penthouse &mdash; {VR['discount']:.0f}% off the psf the same home&rsquo;s floor plate "
-      f"commands. <b>The engine sees none of it.</b> It works in psf and charges the void the "
-      f"same as a bedroom, so a penthouse reads "
+      f"commands. <b>There is no constant for it today</b> &mdash; the void is charged the same "
+      f"psf as a bedroom, so a penthouse reads "
       f"{abs(VR['headline_drop']):.0f}% cheaper per square foot than the unit underneath it with "
       f"nothing about the home worse.")}
 
@@ -1427,13 +1407,12 @@ the <b>resale</b> market.</p>
 constant at all.</p>
 
 {hero('&divide; 1.15', 'flat, every freehold comparable',
-      [(f'+{g["pct"]*100:.0f}%', ten_step_label(g), None) for g in TGL],
+      [(f'+{g["pct"]*100:.0f}%', ten_step_label(g), g['devs']) for g in TGL],
       f"<b>The call.</b> One figure cannot do it. Freehold is worth "
       f"<b>+{TGL[0]['pct']*100:.0f}%</b> against a fresh lease and "
-      f"<b>+{TGL[-1]['pct']*100:.0f}%</b> against a spent one, so the flat &divide;&nbsp;1.15 "
-      f"overcharges the first and undercharges the second. <b>Use one step, never the sum.</b> "
-      f"Averaged across all {T['counts']['pairs']} pairs it is +{THP['p']*100:.0f}%, on "
-      f"{T['counts']['devs']} developments. Leave the engine alone until this is audited.")}
+      f"<b>+{TGL[-1]['pct']*100:.0f}%</b> against a spent one. <b>Use one step, never the "
+      f"sum.</b> Across all {T['counts']['pairs']} pairs it averages "
+      f"+{THP['p']*100:.0f}%.")}
 
 <section>
   <div class="sechead"><h2 class="disp">How to use it</h2></div>
@@ -1460,17 +1439,12 @@ constant at all.</p>
       <label id="tpL">Freehold comparable &mdash; psf<input id="tfP" type="number" value="2100" min="200" max="9000" step="10"></label>
       <label>Freehold TOP year<input id="tfT" type="number" value="2005" min="1960" max="2035" step="1"></label>
       <label>Leasehold TOP year<input id="tlT" type="number" value="2015" min="1960" max="2035" step="1"></label>
-      <label class="haslock">Lease left on the leasehold
-        <button type="button" class="lock" id="tlK" aria-pressed="true"
-          title="Worked out from the completion year. Click to enter it yourself.">&#128274;</button>
-        <input id="tlL" type="number" value="85" min="20" max="99" step="1" readonly></label>
     </div>
     <div id="tenOut" class="cout"></div>
   </div>
-  <p class="expl"><b>The lease left is locked</b> because it follows from the completion year:
-  {T['build']['term']} years less the age less the {T['build']['median']} years it took to
-  build. Open the lock only when you have the actual lease start &mdash; then it is a fact
-  rather than an inference, and it should win.</p>
+  <p class="expl"><b>The lease left is not asked for</b> &mdash; it follows from the completion
+  year: {T['build']['term']} years less the age less the {T['build']['median']} years it took to
+  build. The result says which step that lands on.</p>
 </section>
 
 <section>
@@ -1483,8 +1457,8 @@ constant at all.</p>
   were separate things, this column would be flat &mdash; freehold would be worth the same
   whatever the neighbour's lease. It is not flat. It roughly doubles as the lease shortens, which
   says the two are <b>one curve</b>: at the far end of a lease, the freehold gap simply is the
-  lease gap. An engine that charges a lease difference and then a flat freehold ratio on top is
-  charging twice for part of the same thing.</p>
+  lease gap. Charging a lease difference and then a flat freehold ratio on top charges twice for
+  part of the same thing.</p>
   <div class="caveat"><b>The fresh-lease step is the thin one.</b> It rests on
   {TGL[0]['pairs']} pairs, and it has moved twice as the method tightened. The climb is the
   finding; that step's level is not settled. The two lower steps rest on
@@ -1499,11 +1473,10 @@ constant at all.</p>
   sub-sale to {T['window'][1]}.</p></div>
   <div class="scroll">{ten_race_table()}</div>
   <p class="expl" style="margin-top:18px">Held-out error is the average miss, in psf, when the
-  rule is fitted without a pair and then asked to restate it. Lower is better.
-  <b>The engine as written is barely better than doing nothing</b> &mdash;
-  {T['engine_rmse']:,.0f} against {T['null_rmse']:,.0f} &mdash; and the $40 is why: on a
-  completion-year clock it scores worse than $10 does. Your own measured lease rates, carried
-  across onto that clock, win. <b>Whether the premium goes on before or after the age
+  rule is fitted without a pair and then asked to restate it. Lower is better. The form in use
+  reads {T['engine_rmse']:,.0f} against {T['null_rmse']:,.0f} for doing nothing at all, and the
+  $40 is why: on a completion-year clock it scores worse than $10 does. <b>Your own measured
+  lease rates, carried across onto that clock, win.</b> <b>Whether the premium goes on before or after the age
   adjustment barely registers</b> &mdash; the two orderings sit within five psf of each other.</p>
 </section>
 
@@ -1555,16 +1528,16 @@ constant at all.</p>
     lease &mdash; so the inference is good to a year or two, against steps fifteen years wide.
     That is why the field is locked: it is right often enough that overriding it by habit would
     do more harm than good.</p>
-    <p class="expl"><b>The engine assumes {T['build']['engine']} years, not
-    {T['build']['median']}.</b> A fifth constant nobody had checked. It barely touches this
-    answer, but the engine also uses it to invent a TOP year for any development with no
-    completion year on record, so it is worth fixing there on its own account.</p>
+    <p class="expl"><b>The build gap in use is {T['build']['engine']} years, not
+    {T['build']['median']}.</b> A fifth constant, unmeasured until now. It barely touches this
+    answer, but the same figure fills in a TOP year for any development with no completion year on
+    record, so it is worth updating there on its own account.</p>
   </details>
 
-  <details><summary>What does this say about the engine's $10 age adjustment?</summary>
+  <details><summary>What does this say about the $10 age adjustment?</summary>
     <p class="expl">Freehold-against-freehold pairs measure it directly, since nothing else
     separates them. They fit <b>${T['fh_age_rate']:,.0f} a year</b> of completion-year
-    difference, against the engine's unvalidated $10. A by-product of this study, not its
+    difference, against the $10 in use. A by-product of this study, not its
     subject &mdash; but it points the same way as everything else here: the age term is
     understated and the lease term is overstated.</p>
   </details>
@@ -1627,9 +1600,9 @@ constant at all.</p>
     {G['cuts'][4]['pct_hi']:.1f}), which contains the +5%</td></tr>
   <tr><th>Void &middot; extra penthouse area</th><td class="num big">1.00&times; (implicit)</td>
     <td style="color:var(--gold-soft)">a resale buyer pays {VR['discount']:.0f}% less for it than
-    for the floor plate; the engine has no constant for it</td></tr>
+    for the floor plate; there is no constant for it today</td></tr>
   </tbody></table>
-  <div class="caveat" style="margin-top:18px"><b>Nothing has been written back to the engine.</b>
+  <div class="caveat" style="margin-top:18px"><b>Nothing has been written back yet.</b>
   Every figure on this page sits beside its constant, not in place of it.</div>
 </section>
 </div>

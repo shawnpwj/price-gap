@@ -675,6 +675,8 @@ VR = V['resale']['headline'] if V else None   # HEADLINE, not corrected: the res
 # -0.24% with an interval straddling zero, so there is nothing to correct for. Correcting by a
 # figure indistinguishable from zero is worse than leaving it alone.
 
+# NOT RENDERED since 2026-09-08 — Shawn took the spec table off the void panel; the hero and
+# the calculator carry it. Kept as the record.
 def void_answer():
     """The measurement as a spec sheet. One track, so a row per fact reads better than a table
     with a single line in it."""
@@ -787,7 +789,8 @@ def int_table():
          '<th class="num">pairs</th><th class="num">correction removed</th>'
          '<th class="num">in psf</th></tr></thead><tbody>']
     for c in G['cuts']:
-        big = 'big' if c['label'] == '&lt;5 yr gap, within 400 m' else 'quiet'
+        # THE BROADEST CUT IS THE BOLDED ONE. Shawn, 2026-09-08: every pair, +6.0%.
+        big = 'big' if c['label'] == 'every pair' else 'quiet'
         r.append(f'<tr><th>{c["label"]}</th>'
                  f'<td class="num {big}">+{c["pct"]:.1f}%</td>'
                  f'<td class="num quiet">+{c["pct_lo"]:.1f}% to +{c["pct_hi"]:.1f}%</td>'
@@ -1061,15 +1064,6 @@ the first one measured against the market.</p>
   paired with a leasehold neighbour and compared bedroom by bedroom, across 24 months of resale
   and sub-sale to {LW[1]}.</p></div>
   <div class="scroll">{answer_table()}</div>
-
-  <p class="expl" style="margin-top:18px">Two condominiums next door, one leased a few years after
-  the other. The figure is <b>how much more per square foot the newer one fetches, for each year
-  between them</b>.</p>
-  <p class="expl"><b>The newer band is the steeper one.</b> Being newer pays nearly twice as much
-  in stock from 2011 as it does in older stock.</p>
-  <div class="caveat"><b>Treat the newer figure as a floor.</b> It rests on
-  {ndev(rows_in(NEW_NM))} developments and runs hotter in the RCR (${fit(RCR_NEW):,.0f}) than the
-  OCR (${fit(OCR_NEW):,.0f}). Young stock has barely resold yet.</div>
 </section>
 
 <section>
@@ -1203,16 +1197,6 @@ the walk. What is left is the building sitting on the station.</p>
 <section>
   <div class="scroll">{int_table()}</div>
 
-  <div class="caveat"><b>Read the adjustment column with the answer.</b> Integrated developments
-  are newer than their neighbours, so each carries about ${G['confound']['treat_load']:,.0f} of
-  correction &mdash; twice the like-for-like pairs &mdash; and the bolded row, which carries the
-  least of it, is the one to quote.</div>
-
-  <p class="expl" style="margin-top:18px"><b>Call it ${G['cuts'][3]['adj']:,.0f} to
-  ${G['cuts'][2]['adj']:,.0f} psf, or roughly {min(c['pct'] for c in G['cuts'][1:]):.0f} to
-  {max(c['pct'] for c in G['cuts'][1:]):.0f}%.</b> The <b>+5%</b> in use sits at or below the
-  bottom of that range &mdash; on this evidence more likely low than high.</p>
-
   <details><summary>Does it matter how far apart the two sit?</summary>
     <p class="expl">The pairs are not all the same distance from their station, so some carry a
     bigger walking correction than others. Holding the lease gap fixed and sweeping that limit:</p>
@@ -1275,12 +1259,7 @@ the <b>resale</b> market.</p>
 
 {hero('1.00&times;', 'every strata sqft priced alike',
       [(f"{VR['discount']:.0f}% off", 'what a resale buyer pays for it', VR['devs'])],
-      f"<b>The call.</b> A resale buyer pays about <b>half price</b> for the extra area of a "
-      f"penthouse &mdash; {VR['discount']:.0f}% off the psf the same home&rsquo;s floor plate "
-      f"commands. <b>There is no constant for it today</b> &mdash; the void is charged the same "
-      f"psf as a bedroom, so a penthouse reads "
-      f"{abs(VR['headline_drop']):.0f}% cheaper per square foot than the unit underneath it with "
-      f"nothing about the home worse.")}
+      '')}
 
 <section>
   <div class="calc">
@@ -1293,14 +1272,6 @@ the <b>resale</b> market.</p>
     </div>
     <div id="voidOut" class="cout"></div>
   </div>
-
-  <div class="scroll">{void_answer()}</div>
-
-  <div class="caveat"><b>Void, roof terrace or private roof &mdash; the caveat reads them as one
-  thing.</b> REALIS records strata area, not what is under the ceiling. All three are area on a
-  floor plate that did not grow and all three price like it, which is why they measure together.
-  Naming which is which needs the floor plan, unit by unit. Quote this as <b>extra penthouse
-  area</b>; ceiling height is a subset of it and has not been separated.</div>
 
   <details><summary>The check that the floor step is not doing the work</summary>
     <p class="expl">The figure is <b>leveraged</b>: the extra area is small against the home, so a

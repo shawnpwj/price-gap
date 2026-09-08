@@ -379,6 +379,44 @@ def fold_errors(rows, rate, form, reps=40, folds=5, seed=99):
                                 for yh, r in zip(predict(te, avals(te, a_spec), form, p), te)]))
     return per
 
+def transfer(keyfn, groups):
+    """THE HARDER TEST, and the one that actually settles the scale question.
+
+    Held-out folds are drawn at random, so every fold looks like the sample it came from —
+    which is exactly the situation in which an additive and a multiplicative form are hard to
+    tell apart. The question that matters is whether a figure TRAVELS: fit it where the stock
+    is cheap and ask it about expensive stock, and the wrong form breaks. So fit on two price
+    tiers and predict the third, then the same by region."""
+    out = []
+    for k in groups:
+        tr = [r for r in MIXED if keyfn(r) != k]
+        te = [r for r in MIXED if keyfn(r) == k]
+        if len(te) < 8: continue
+        row = dict(group=str(k), n=len(te), base=st.median([r['psf_lh'] for r in te]))
+        for nm, form in (('dol', 'dol'), ('pct', 'va')):
+            a_spec, pp, _ = fit(tr, 'bands', form)
+            row[nm] = pp
+            row[nm + '_err'] = math.sqrt(st.mean(
+                [(y - r['psf_fh'])**2
+                 for y, r in zip(predict(te, avals(te, a_spec), form, pp), te)]))
+        out.append(row)
+    return out
+
+_q = sorted(r['psf_lh'] for r in MIXED)
+_t1, _t2 = _q[len(_q)//3], _q[2*len(_q)//3]
+_tier = lambda r: 'cheapest third' if r['psf_lh'] < _t1 else (
+    'middle third' if r['psf_lh'] < _t2 else 'dearest third')
+TRANSFER = dict(price=transfer(_tier, ['cheapest third', 'middle third', 'dearest third']),
+                region=transfer(lambda r: r['region'], ['CCR', 'RCR', 'OCR']))
+for nm, rows in TRANSFER.items():
+    print(f'\n── TRANSFER — fit without one {nm} group, then predict it ' + '─'*10)
+    for r in rows:
+        print(f'  {r["group"]:16s} base ${r["base"]:>6,.0f}  dollars {r["dol_err"]:>6.0f} '
+              f'(${r["dol"]:,.0f})   percent {r["pct_err"]:>6.0f} ({r["pct"]:+.1%})   '
+              f'{"dollars" if r["dol_err"] < r["pct_err"] else "PERCENT"}')
+    print(f'  {"average":16s} {"":13s} dollars {st.mean([r["dol_err"] for r in rows]):>6.0f}'
+          f'          percent {st.mean([r["pct_err"] for r in rows]):>6.0f}')
+
 _dol, _pct = fold_errors(MIXED, 'bands', 'dol'), fold_errors(MIXED, 'bands', 'va')
 _d = [a - b for a, b in zip(_dol, _pct)]
 SCALE_T = dict(dol_rmse=math.sqrt(st.mean(_dol)), pct_rmse=math.sqrt(st.mean(_pct)),
@@ -500,7 +538,7 @@ print(f'  the pairs the 100-unit floor ADDS, fitted alone: {FLOOR["added_pairs"]
 json.dump(dict(window=[CUT, LAST], bands=BANDR, band_bound=BAND_BOUND,
                construction_years=CONSTRUCTION_YEARS, build=BUILD, counts=D, race=RACE, headline=HL,
                placebo=PLACEBO, fh_age_rate=af, floor=FLOOR,
-               slices=SLICES, sens=SENS, scale_test=SCALE_T,
+               slices=SLICES, sens=SENS, scale_test=SCALE_T, transfer=TRANSFER,
                mixed=MIXED, placebo_lh=PLA_L, placebo_fh=PLA_F,
                null_rmse=NULL, engine_rmse=ENG),
           open(os.path.join(HERE, 'tenure-pairs.json'), 'w'))

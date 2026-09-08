@@ -834,6 +834,12 @@ TGL  = [g for g in TG if not g.get('thin')]
 THD  = (T or {}).get('headline', {}).get('dollars', {})
 THP  = (T or {}).get('headline', {}).get('percent', {})
 
+def ten_step_label(g):
+    """The hero shows three amounts, so each must say WHICH CASE its amount is for. He asked
+    what the difference between the three figures was; that is the answer, and it belongs on
+    the figures rather than in a paragraph underneath them."""
+    return g['label'].split(' ')[0].replace('-', '&ndash;') + ' years of lease left'
+
 def ten_grad_table():
     if not TGL: return ''
     r = ['<table class="fig"><thead><tr><th>Lease left on the leasehold side</th>'
@@ -890,6 +896,23 @@ def ten_slice_table(key, head):
         r.append(f'<tr><th>{x["label"]}</th><td class="num big">+${x["dol"]:,.0f}</td>'
                  f'<td class="num quiet">+{x["pct"]*100:.1f}%</td>'
                  f'<td class="num quiet">{x["pairs"]}</td></tr>')
+    r.append('</tbody></table>')
+    return ''.join(r)
+
+def ten_transfer_table(key, head):
+    rows = (T or {}).get('transfer', {}).get(key, [])
+    if not rows: return ''
+    r = [f'<table class="fig"><thead><tr><th>{head}</th><th class="num">its base psf</th>'
+         '<th class="num">dollars miss by</th><th class="num">percent miss by</th>'
+         '</tr></thead><tbody>']
+    for x in rows:
+        dw = x['dol_err'] < x['pct_err']
+        r.append(f'<tr><th>{x["group"]}</th><td class="num quiet">${x["base"]:,.0f}</td>'
+                 f'<td class="num {"big" if dw else "quiet"}">{x["dol_err"]:,.0f}</td>'
+                 f'<td class="num {"quiet" if dw else "big"}">{x["pct_err"]:,.0f}</td></tr>')
+    r.append(f'<tr><th><b>average</b></th><td class="num quiet"></td>'
+             f'<td class="num"><b>{st.mean([x["dol_err"] for x in rows]):,.0f}</b></td>'
+             f'<td class="num"><b>{st.mean([x["pct_err"] for x in rows]):,.0f}</b></td></tr>')
     r.append('</tbody></table>')
     return ''.join(r)
 
@@ -1368,12 +1391,13 @@ the <b>resale</b> market.</p>
 constant at all.</p>
 
 {hero('&divide; 1.15', 'flat, every freehold comparable',
-      [(f'+${THD["p"]:,.0f}', 'per square foot', T['counts']['devs'])],
-      f"<b>The call.</b> Add <b>${THD['p']:,.0f} psf</b> &mdash; about "
-      f"{THD['p']/TBASE*100:.0f}% on the ${TBASE:,.0f} median &mdash; but only as an average. "
-      f"The premium is <b>+${TGL[0]['dol']:,.0f}</b> against a fresh lease and "
-      f"<b>+${TGL[-1]['dol']:,.0f}</b> once the lease is down, so the flat &divide;&nbsp;1.15 "
-      f"overcharges freehold against new leasehold and undercharges it against old. "
+      [(f'+${g["dol"]:,.0f}', ten_step_label(g), None) for g in TGL],
+      f"<b>The call.</b> One figure cannot do it. Freehold is worth "
+      f"<b>+${TGL[0]['dol']:,.0f} psf</b> against a fresh lease and "
+      f"<b>+${TGL[-1]['dol']:,.0f}</b> against a spent one, so the flat &divide;&nbsp;1.15 "
+      f"overcharges the first and undercharges the second. <b>Use one step, never the sum.</b> "
+      f"Averaged across all {T['counts']['pairs']} pairs it is +${THD['p']:,.0f} psf, or "
+      f"+{THP['p']*100:.0f}%, on {T['counts']['devs']} developments. "
       f"Leave the engine alone until this is audited.")}
 
 <section>
@@ -1443,21 +1467,28 @@ constant at all.</p>
   <div class="sechead"><h2 class="disp">Behind it</h2>
   <p>Seven questions, answered once each.</p></div>
 
-  <details><summary>Dollars or a percentage?</summary>
-    <p class="expl"><b>Dollars.</b> Scored on {T['scale_test']['folds']} identical held-out folds,
-    the dollar form beat the percentage on <b>{T['scale_test']['wins']}</b> of them
-    ({T['scale_test']['dol_rmse']:,.0f} against {T['scale_test']['pct_rmse']:,.0f} psf,
-    t&nbsp;=&nbsp;{abs(T['scale_test']['t']):.1f}). Same answer the lease study reached, and it
-    carries a second advantage here: <b>a dollar premium is order-free</b>. Two additions commute,
-    so the question of whether the freehold adjustment comes before or after the age adjustment
-    stops existing. Applied as a percentage the order barely matters either &mdash; the two
-    orderings score within a psf of each other &mdash; but it has to be decided, and this way it
-    does not.</p>
-    <p class="expl">The percentage is kept beside every dollar figure because the constant it
-    replaces is itself a ratio. On the {T['counts']['pairs']}-pair sample the average reads
-    <b>+{THP['p']*100:.1f}%</b> ({THP['lo']*100:.1f} to {THP['hi']*100:.1f}), against the
-    engine's 15%.</p>
-    <div class="scroll">{ten_slice_table('scale', 'Price level of the leasehold side')}</div>
+  <details><summary>Dollars or a percentage &mdash; and can you just say {THP['p']*100:.0f}%?</summary>
+    <p class="expl"><b>You can. On this sample the two cannot be told apart, and the
+    percentage is the same measurement in another unit.</b> Drawn at random, held-out folds
+    favour dollars &mdash; {T['scale_test']['dol_rmse']:,.0f} psf against
+    {T['scale_test']['pct_rmse']:,.0f}, winning {T['scale_test']['wins']} of
+    {T['scale_test']['folds']}. But a random fold looks like the sample it came from, which is
+    exactly where an addition and a ratio are hardest to separate.</p>
+    <p class="expl"><b>The test that matters is whether a figure travels.</b> Fit it without one
+    price tier and ask it about that tier; then the same by region. It ends level &mdash; and it
+    splits the way a percentage would predict, with the percentage winning on the cheapest stock
+    and on the OCR, where a flat dollar figure is too big a share of the price.</p>
+    <div class="scroll">{ten_transfer_table('price', 'Predicting a price tier never seen')}</div>
+    <div class="scroll" style="margin-top:14px">{ten_transfer_table('region', 'Predicting a region never seen')}</div>
+    <p class="expl" style="margin-top:18px"><b>So use whichever suits the conversation, and know
+    where they part company.</b> Around the middle of this sample they agree within about $35 a
+    foot. They diverge at the ends: on a $1,100 psf freehold the dollar figure says
+    +${THD['p']:,.0f} and the percentage +${1100*THP['p']:,.0f}; on a $3,500 psf freehold, still
+    +${THD['p']:,.0f} against +${3500*THP['p']:,.0f}. <b>The sample cannot settle which is right
+    out there</b> &mdash; it runs from about ${min(r['psf_lh'] for r in TMIX):,.0f} to
+    ${max(r['psf_lh'] for r in TMIX):,.0f} psf &mdash; so do not carry either form far past its
+    edges.</p>
+    <div class="scroll" style="margin-top:14px">{ten_slice_table('scale', 'Price level of the leasehold side')}</div>
   </details>
 
   <details><summary>Do the placebos read zero?</summary>

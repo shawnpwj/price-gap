@@ -784,7 +784,7 @@ def dsweep_table():
     r = ['<table class="fig"><thead><tr><th>The two may sit&hellip;</th>'
          '<th class="num">&lt;10 yr gap</th><th class="num">pairs</th>'
          '<th class="num">&lt;5 yr gap</th><th class="num">pairs</th>'
-         '<th class="num">placebo</th></tr></thead><tbody>']
+         '<th class="num">like-for-like</th></tr></thead><tbody>']
     a = {x['dg']: x for x in G['dsweep'][0]['rows']}
     b = {x['dg']: x for x in G['dsweep'][1]['rows']}
     for dg in sorted(set(a) | set(b)):
@@ -1141,42 +1141,26 @@ so what is left is the walk.</p>
 <div class="panel" data-p="integrated" hidden>
 <h1 class="disp">What the market pays for being on top of the station</h1>
 <p class="lede">An integrated development against an ordinary condo a short walk away at the
-<b>same station</b>. The lease difference between them is removed at the measured lease rate, and
-the walking difference at the measured ${G['slope']:.0f} per 100 m. What is left is the building
-sitting on the station.</p>
+<b>same station</b>. The lease difference between them is taken out, and so is the difference in
+the walk. What is left is the building sitting on the station.</p>
 
-{hero('+5%', 'never actually fired',
+{hero('+5%', 'flat, on an integrated project',
       [(f"+{G['cuts'][4]['pct']:.1f}%", '&lt;5 yr gap, within 400 m', G['cuts'][4]['devs']),
        (f"+{G['cuts'][0]['pct']:.1f}%", 'every pair', G['cuts'][0]['devs'])],
-      f"<b>The call. About +{G['cuts'][4]['pct']:.1f}%</b>, or roughly "
-      f"${G['cuts'][4]['adj']:,.0f} psf at these price levels &mdash; the cut that carries the "
-      f"least correction of anything here, and the broadest cut of all {G['cuts'][0]['pairs']} "
-      f"pairs lands beside it at +{G['cuts'][0]['pct']:.1f}%. "
-      f"<b>The engine's +5% falls inside the interval</b> "
-      f"({G['cuts'][4]['pct_lo']:.1f}% to {G['cuts'][4]['pct_hi']:.1f}%), so it sits at the low "
-      f"end but is not demonstrably wrong. It has, however, never fired on a single comparable.")}
+      '')}
 
 <section>
   <div class="scroll">{int_table()}</div>
 
-  <div class="caveat"><b>Read the adjustment column with the answer.</b> Integrated developments are
-  systematically newer than their neighbours &mdash; {G['confound']['treat_gap']:+.0f} years of
-  lease apart against {G['confound']['placebo_gap']:+.0f} for the plain-vs-plain pairs. So they
-  carry about ${G['confound']['treat_load']:,.0f} of adjustment each, roughly double the placebo's
-  ${G['confound']['placebo_load']:,.0f}, and the answer is what survives a large subtraction.
-  <b>The bolded row carries the least correction of any cut here, which is why it is the one to
-  quote.</b> The rows reading higher are the ones that let the two sit further apart, and the
-  sweep below shows that is walking effect leaking in, not a bigger building premium.</div>
+  <div class="caveat"><b>Read the adjustment column with the answer.</b> Integrated developments
+  are newer than their neighbours, so each carries about ${G['confound']['treat_load']:,.0f} of
+  correction &mdash; twice the like-for-like pairs &mdash; and the bolded row, which carries the
+  least of it, is the one to quote.</div>
 
   <p class="expl" style="margin-top:18px"><b>Call it ${G['cuts'][3]['adj']:,.0f} to
   ${G['cuts'][2]['adj']:,.0f} psf, or roughly {min(c['pct'] for c in G['cuts'][1:]):.0f} to
   {max(c['pct'] for c in G['cuts'][1:]):.0f}%.</b> The <b>+5%</b> in use sits at or below the
   bottom of that range &mdash; on this evidence more likely low than high.</p>
-
-  <div class="caveat"><b>The integrated flag is inert.</b> It reads from an override file that
-  flags nothing, so every development is treated as not integrated and the &plusmn;5% has not yet
-  applied to a comparable. The {G['n_integrated']} developments below are a
-  classification made for this study and audited by hand &mdash; a judgement, not a datum.</div>
 
   <details><summary>Does it matter how far apart the two sit?</summary>
     <p class="expl">The pairs are not all the same distance from their station, so some carry a
@@ -1184,7 +1168,7 @@ sitting on the station.</p>
     <div class="scroll">{dsweep_table()}</div>
     <p class="expl"><b>It is not neutral.</b> Inside the tight lease-gap column the premium climbs
     from +{G['dsweep'][1]['rows'][0]['pct']:.1f}% to +{G['dsweep'][1]['rows'][-1]['pct']:.1f}% as
-    the limit loosens, while the placebo beside it stays flat. That is what unremoved walking
+    the limit loosens, while the like-for-like check beside it stays flat. That is what unremoved walking
     effect leaking into the answer would look like &mdash; the further apart the two sit, the more
     of the gap between them is the walk rather than the building. <b>The tighter rows are the
     conservative ones</b>, and they sit near +7%.</p>
@@ -1200,6 +1184,8 @@ sitting on the station.</p>
   </details>
 
   <details><summary>Every development, and what each one reads</summary>
+    <p class="expl">These {G['n_integrated']} are a classification made for this study and audited
+    by hand &mdash; a judgement, not a datum.</p>
     <div class="scroll">{int_devs()}</div>
     <p class="expl"><b>Read the lease-gap column before the premium column.</b> The three that
     read low or negative are the three with the widest lease gaps, and their answers are
@@ -1461,8 +1447,8 @@ constant at all.</p>
     inferred at the edges.</p>
   </details>
 
-  <details><summary>Do the placebos read zero?</summary>
-    <p class="expl"><b>Both do.</b> Run the identical estimator on pairs that share a tenure
+  <details><summary>Do the like-for-like checks read zero?</summary>
+    <p class="expl"><b>Both do.</b> Run the identical method on pairs that share a tenure
     &mdash; where the true freehold premium is zero by construction &mdash; and it finds
     nothing: leasehold against leasehold reads <b>{T['placebo']['LH x LH']['pct']*100:+.1f}%</b>
     ({T['placebo']['LH x LH']['pairs']} pairs) and freehold against freehold

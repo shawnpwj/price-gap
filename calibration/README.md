@@ -7,7 +7,7 @@ market. Nothing here is a default.
 Last worked **2026-09-06**. Commits `price-gap 5561e54`, `kya-maps-calculator d2e5c20`, both on
 main and pushed. Page live on offline staging, hidden behind a double-click on the Live Data chip.
 
-**THREE OF THE FOUR CONSTANTS ARE MEASURED. TENURE IS NEXT — see §9.**
+**ALL FOUR CONSTANTS ARE MEASURED.** The tenure pass closed on 2026-09-08 — see §10.
 
 | constant | engine says | measured | where |
 |---|---|---|---|
@@ -15,7 +15,7 @@ main and pushed. Page live on offline staging, hidden behind a double-click on t
 | MRT distance | $50 / $200 / $250 | **+$66 / +$156 / +$243**, or **$23 per 100 m** | §11 |
 | Integrated | +5% | **+6.7%** (4.5–9.1), which CONTAINS the +5% | §12 |
 | Void · extra penthouse area | **none — 1.00× implicit** | resale buyer pays **52% less** for it than for the floor plate | §13 |
-| Tenure · FH vs LH | ÷1.15 | — **next** | §10 |
+| Tenure · FH vs LH | ÷1.15 | **+$310 psf**, and **+$191 → +$387** by the lease left | §10 |
 
 GFA harmonisation (+7%) was **dropped from the study entirely** on his ruling, 2026-09-06.
 
@@ -29,7 +29,7 @@ GFA harmonisation (+7%) was **dropped from the study entirely** on his ruling, 2
 | **Integrated development (+5%)** | **MEASURED AND SHIPPED.** See §12. |
 | **MRT walk band ($50/$200/$250)** | **MEASURED AND SHIPPED.** See §11. |
 | **Void · extra penthouse area** | **MEASURED AND SHIPPED.** See §13. No engine constant exists. |
-| Tenure · FH vs LH (÷1.15) | judgement only — **next**, see §10 |
+| **Tenure · FH vs LH (÷1.15)** | **MEASURED AND SHIPPED.** See §10. |
 
 **NOTHING HAS BEEN WRITTEN BACK TO `../scripts/price-gap.ts` AND NOTHING MAY BE** until
 Shawn audits. This folder is a validation table that sits BESIDE the constants. That is
@@ -49,6 +49,7 @@ python3 lease-pairs.py        # -> lease-pairs.json
 python3 mrt-pairs.py          # -> mrt-pairs.json        (needs lease-pairs.json)
 python3 integrated-pairs.py   # -> integrated-pairs.json (needs both of the above)
 python3 void-pairs.py         # -> void-pairs.json       (independent — order-free)
+python3 tenure-pairs.py       # -> tenure-pairs.json     (needs lease-pairs.json)
 python3 build-page.py         # -> ../../kya-maps-calculator/calibration.html
 cd ../../property-analyzer && npm run maps:deploy
 ```
@@ -280,29 +281,94 @@ the pattern is `property-analyzer/scripts/fetch-demand-ura.ts`, 60-month serving
 
 ---
 
-## 10. NEXT — TENURE, FREEHOLD vs LEASEHOLD
+## 10. TENURE — FREEHOLD vs LEASEHOLD — MEASURED
 
-**The only constant left, and the biggest sample available.** Of the 1,844 developments in
-`dsi-index.json`, **1,255 are FREEHOLD** and structurally cannot pair on lease start — which is
-the real ceiling on this whole workstream, not the pair screens.
+`tenure-pairs.py` → `tenure-pairs.json` → `build-page.py`. **105 developments · 78 pairs ·
+102 cells**, on the identical lease-study screens.
 
-**THE PRIZE IS NOT THE CONSTANT, IT IS THE DOUBLE-COUNT.** Framing ruling 2: *lease and tenure
-are ONE curve, not two terms* — at the far end of a lease the freehold gap IS the lease gap, so
-the engine may be charging for the same thing twice. **The test is whether the lease slope
-extrapolates onto the freehold gap.** If it does, the double-count is proven and that matters
-more than the ÷1.15.
+### THE ANSWER — it is not a constant
 
-**THE METHOD IS ALREADY BUILT.** Copy `mrt-pairs.py`'s shape: neighbour pairs at the same station,
-one FH and one LH, with the lease difference removed at the measured two-band rate and the
-walking difference at the measured $/100 m. Both inputs come out of the JSON, never as literals.
-**Build the placebo first** — FH-vs-FH and LH-vs-LH pairs under the same corrections must read
-zero — because on this study the placebo has decided every screen ruling.
+| lease left on the leasehold side | freehold is worth | in percent | 95% | pairs |
+|---|---|---|---|---|
+| 90+ years | **+$191** | +9.0% | 3.0–14.7 | 15 |
+| 75–89 | **+$323** | +20.3% | 15.9–25.1 | 43 |
+| 60–74 | **+$387** | +21.6% | 14.9–32.1 | 16 |
+| **all pairs, one figure** | **+$310** | +17.1% | 13.3–21.1 | 78 |
 
-**BUILDING AGE IS THE CONFOUND TO WATCH.** It is not measured, and an FH-vs-LH pair can differ on
-it freely. `AGE_PSF_PER_YEAR = 10` in the engine is also unvalidated. FH-vs-FH pairs decompose it
-for free (~555 available) and would validate that constant as a by-product.
+**THIS IS THE DOUBLE-COUNT, AND IT IS PROVEN.** Framing ruling 2 said lease and tenure are ONE
+curve. If they were separate, that column would be flat. It roughly doubles as the lease runs
+down, and it survives refitting the vintage rate freely (+5.6% → +24.3%). A flat ÷1.15
+overcharges freehold against new leasehold and undercharges it against old.
 
-After tenure: the study premium, then the bedroom step as QUANTUM matched within project.
+### THE FOUR RULINGS THAT SHAPED IT (Shawn, 2026-09-08)
+
+1. **THE CLOCK IS TOP, NOT LEASE START** — *"lets match on TOP year instead of lease start
+   year."* A freehold has no lease start, and 999-year stock (which he ruled is **freehold**)
+   carries real lease starts back to 1827.
+2. **NO TOP SCREEN** — *"we dont need to match TOP, the question is also how do we adjust for
+   TOP differences."* The vintage rate is part of the answer, not a nuisance to screen away.
+3. **THE HORSE RACE** — *"It could be $10psf per year to match TOP followed by 15% premium. OR
+   we could do 44psf per year adjustment then adjust by 15% premium. Whichever makes more
+   sense. I want the data and number to tell."* So the rate, the form AND the order are all
+   fitted and ranked on held-out error.
+4. **REUSE $25/$43 AS MEASURED**, read at the midpoint of the two lease-start equivalents
+   (TOP − 6, the engine's own `CONSTRUCTION_YEARS`). Derived from `lease-pairs.json`, never
+   a literal.
+
+### THE RACE — held-out RMSE in psf, lower is better
+
+| age gap removed at | premium | reads | error |
+|---|---|---|---|
+| nothing at all | none | — | 412 |
+| **$40/yr — the engine as written** | ÷1.15 after | 15.0% | **389** |
+| $40/yr | % after | +17.9% | 390 |
+| $10/yr | % after | +11.4% | 335 |
+| the measured $25/$43 | % after | +17.1% | 282 |
+| the measured $25/$43 | % **before** | +16.0% | 282 |
+| **the measured $25/$43** | **dollars** | **+$310** | **267** |
+| freely fitted ($13/yr) | none | — | 391 |
+
+* **THE ENGINE AS WRITTEN IS BARELY BETTER THAN DOING NOTHING** — 389 against 412 — and the
+  $40 is why: on a completion-year clock it scores worse than $10 does.
+* **DOLLARS, NOT PERCENT.** Paired over 200 identical folds the dollar form wins **144** of
+  them (269.8 vs 285.8 psf, t = 9.8). Same answer the lease study reached.
+* **BEFORE OR AFTER DOES NOT MATTER** — 282.5 against 281.7, indistinguishable. And **a dollar
+  premium is order-free**, because two additions commute. Choosing dollars deletes the
+  question he asked.
+* **A FREEHOLD PREMIUM GENUINELY EXISTS BEYOND VINTAGE** — the best no-premium row is 391.
+
+### THE CHECKS
+
+* **BOTH PLACEBOS READ ZERO.** LH×LH $+1 (276 pairs), FH×FH $−1 (90 pairs). **The slot must
+  be randomised**: assigning the freehold slot ALPHABETICALLY read a false +2.9% on the FH set,
+  purely because alphabetically-earlier freeholds happened to sit newer. That is not an
+  estimator bias and it must not be reported as one.
+* **BY-PRODUCT — the engine's `AGE_PSF_PER_YEAR = 10` reads $18.** FH×FH pairs measure it
+  directly, since nothing else separates them.
+* **REGION:** +17.2 / +17.7 / +16.5% CCR/RCR/OCR — flat in percent, $448/$370/$227 in dollars.
+  This is the ONE reading that argues for the percentage form, which is why the percentage
+  stays on the page beside every dollar figure. **Bedroom:** 2BR +$299, 3BR +$320; 1BR and
+  4BR+ too thin.
+
+### THE 200-UNIT FLOOR STANDS — and this one needed proving
+
+Dropping it to 100 units HALVES the premium (+17.1% → +10.0%), so it could not be waved
+through. **His ruling:** *"the problem with <200 units is that there are little to no
+transaction volume which might make it inaccurate due to lack of volume averages."*
+
+The data says exactly that. The 81 pairs the lower floor adds run on a median of **6 sales**
+on the freehold side against 9 in the headline, **93% of them under ten a side** against 65%,
+and fitted alone they read a directionless **+$87**. Freehold stock is mostly boutique, so this
+floor bites harder here than on the lease study. **A five-transaction cell minimum is a floor,
+not a volume.** Distance, by contrast, barely moves it: 800 m gives +$269, 1 km +$259.
+
+### THE CONFOUND TO KNOW, AND IT IS THE REAL LIMIT
+
+**Freehold is the OLDER side in 73 of the 102 cells**, median 6 years, and the age adjustment
+that removes it is a median **$224 psf — 12% of the base, the same size as the premium being
+measured**. The answer leans on the vintage rate being right. Fitting that rate freely instead
+of importing the measured bands gives **+14.6%**, so read +17.1% as the top of a range that
+starts there. Floor, facing and building quality stay uncontrolled by ruling.
 
 ## 11. MRT WALK BAND — MEASURED
 

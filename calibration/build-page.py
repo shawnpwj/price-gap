@@ -186,6 +186,9 @@ def vintage_table():
                  f'<td class="num big">{money(fit(l))}</td><td class="num quiet">{la:.0f} yrs</td></tr>')
     return ''.join(h) + '</tbody></table>'
 
+# NOT RENDERED since 2026-09-08 — Shawn pulled the "What was tested and what it changed"
+# explain mark off the lease panel. Kept because it is the record of every cut and every
+# alternative method; put it back by calling it from a details block.
 def tested_table():
     def r_(what, figure, verdict, flag=False):
         return (f'<tr{" class=flag" if flag else ""}><th>{what}</th>'
@@ -998,8 +1001,9 @@ the first one measured against the market.</p>
 
 <section>
   <div class="sechead"><h2 class="disp">The measurement</h2>
-  <p><b>{NDEV} developments.</b> Each paired with a leasehold neighbour and compared bedroom by
-  bedroom, across 24 months of resale and sub-sale to {LW[1]}.</p></div>
+  <p><b>{NDEV} developments &middot; {npairs(ALL)} pairs &middot; {len(ALL)} cells.</b> Each
+  paired with a leasehold neighbour and compared bedroom by bedroom, across 24 months of resale
+  and sub-sale to {LW[1]}.</p></div>
   <div class="scroll">{answer_table()}</div>
 
   <p class="expl" style="margin-top:18px">Two condominiums next door, one leased a few years after
@@ -1014,7 +1018,7 @@ the first one measured against the market.</p>
 
 <section>
   <div class="sechead"><h2 class="disp">Behind it</h2>
-  <p>Four questions, answered once each.</p></div>
+  <p>Three questions, answered once each.</p></div>
 
   <details><summary>Do the bands move as the stock ages?</summary>
     <p class="expl"><b>No. They are fixed calendar years.</b> If this were really an age effect,
@@ -1033,31 +1037,16 @@ the first one measured against the market.</p>
   </details>
 
   <details><summary>Why the newer band is nearly double</summary>
-    <p class="expl"><b>Part of it is simply a smaller box.</b> Read in dollars instead of dollars
-    per square foot, a year of newness costs about ${BANDQ[OLD_NM]:,.0f} on older stock and about
-    ${BANDQ[NEW_NM]:,.0f} on stock from 2011. Newer three-bedrooms are about {SHRINK3:.0%} smaller
-    &mdash; {SQ3_NEW:,.0f} sq ft against {SQ3_OLD:,.0f} &mdash; so the same money spreads over less
-    floor, and the per-foot figure rises.</p>
-    <p class="expl"><b>The rest is real.</b> Size cannot be the whole answer. The two sides of a
-    pair must already be within 20% of each other on size before the pair is used at all, and the
-    jump survives every slice below.</p>
+    <p class="expl"><b>Part of it is that newer developments are built more efficiently</b>
+    &mdash; a three-bedroom from 2011 on runs {SHRINK3:.0%} smaller, {SQ3_NEW:,.0f} sq ft against
+    {SQ3_OLD:,.0f}. A buyer pays a quantum, and the same $50k of newness over a smaller plate
+    reads as a bigger figure per foot.</p>
     <div class="scroll">{why_table()}</div>
     <p class="expl">Small flats, large flats, pairs two years apart or twenty &mdash; the jump is
     in every row. A higher base price explains some of it, narrowing the gap from
     {fpct(rows_in(OLD_NM)):+.2%} to {fpct(rows_in(NEW_NM)):+.2%} a year, but nowhere near all.</p>
     <p class="expl">What is left is vintage: through the 2010s each successive launch in the same
     spot came out dearer than the last. This measures the size of that effect, not its cause.</p>
-  </details>
-
-  <details><summary>What was tested and what it changed</summary>
-    <p class="expl">Every cut and every alternative method, with what it produced.
-    &ldquo;Held-out error&rdquo; means fitted on four fifths of the pairs and scored on the fifth
-    it never saw &mdash; lower is better.</p>
-    <div class="scroll">{tested_table()}</div>
-    <p class="expl"><b>{NDEV} developments</b> &mdash; one condominium each. They form
-    <b>{npairs(ALL)} pairs</b>, two neighbours compared. Each pair is read at one to four bedroom
-    types, giving <b>{len(ALL)} cells</b> &mdash; the unit every figure on this page is computed
-    on.</p>
   </details>
 
   <details><summary>How a pair is built, and every pair</summary>

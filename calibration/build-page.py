@@ -1251,11 +1251,10 @@ the walk. What is left is the building sitting on the station.</p>
 
 <div class="panel" data-p="void" hidden>
 <h1 class="disp">What the market pays for the void</h1>
-<p class="lede">Same project, same block, <b>same stack</b> &mdash; so the top-floor unit stands on
-the same floor plate as every unit below it. Where its strata area is larger, the difference is
-space the floor plate never gained: void over the living room, or roof. Floor is normalised out at
-{V['meta']['floor_step']*100:.1f}% per floor. What is left is what that extra area is worth on
-the <b>resale</b> market.</p>
+<p class="lede">Same project, same block, <b>same stack</b>, so the top unit stands on the floor
+plate of the ones below it. The extra strata area is void or roof. Floor is taken out at
+{V['meta']['floor_step']*100:.1f}% a floor; what is left is what that area fetches on
+<b>resale</b>.</p>
 
 {hero('1.00&times;', 'every strata sqft priced alike',
       [(f"{VR['discount']:.0f}% off", 'what a resale buyer pays for it', VR['devs'])],
@@ -1273,57 +1272,45 @@ the <b>resale</b> market.</p>
     <div id="voidOut" class="cout"></div>
   </div>
 
-  <details><summary>The check that the floor step is not doing the work</summary>
-    <p class="expl">The figure is <b>leveraged</b>: the extra area is small against the home, so a
-    2% error in the base comparator swings it by more than 10%. The threat is a top-floor bonus
-    that a straight-line floor step does not capture &mdash; any such bonus would land entirely on
-    the void.</p>
-    <p class="expl"><b>The check.</b> Run the identical machinery on stacks whose top unit is the
-    <b>same size</b> as the units below. No extra area, so the residual should be zero. Across
-    {V['resale']['placebo']['pairs']:,} such resales it reads
+  <details><summary>Is the floor step doing the work?</summary>
+    <p class="expl">The extra area is small against the home, so a 2% error in the base swings the
+    answer by more than 10%. <b>The check:</b> the same method on stacks whose top unit is the
+    <b>same size</b> as the ones below. No extra area, so it should read zero. Across
+    {V['resale']['placebo']['pairs']:,} resales it reads
     <b>{V['resale']['placebo']['residual_pct']:+.2f}%</b>
-    ({V['resale']['placebo']['lo']:+.2f} to {V['resale']['placebo']['hi']:+.2f}) &mdash;
-    indistinguishable from zero. <b>Nothing is corrected</b>, because correcting by a figure that
-    cannot be told from zero is worse than leaving it alone. The resale market pays no top-floor
-    bonus beyond the floor step itself.</p>
-    <p class="expl">Re-run everything at other floor steps and the answer barely moves:</p>
+    ({V['resale']['placebo']['lo']:+.2f} to {V['resale']['placebo']['hi']:+.2f}) &mdash; zero.
+    Nothing is corrected.</p>
     <div class="scroll">{void_sens()}</div>
-    <p class="expl">Across the defensible range it runs
+    <p class="expl">At other floor steps it runs
     <b>{min(x['ratio'] for x in V['resale']['sensitivity']):.2f} to
-    {max(x['ratio'] for x in V['resale']['sensitivity']):.2f}</b>. The assumption is not carrying
-    the answer. <b>Quote half, not two decimal places.</b></p>
+    {max(x['ratio'] for x in V['resale']['sensitivity']):.2f}</b>. <b>Quote half.</b></p>
   </details>
 </section>
 
 <section>
   <h2>Where it moves</h2>
-  <p class="expl"><b>The bigger the void, the more the buyer pays for it.</b> Where the extra area
-  is a tenth of the floor plate it is discounted hardest; at a quarter and above the discount
-  narrows &mdash; a large roof or a full double-volume room is a room, and gets treated as one.</p>
+  <p class="expl"><b>The bigger the void, the more the buyer pays for it.</b> A large roof or a
+  full double-volume room is a room, and gets treated as one.</p>
   <div class="scroll">{void_cut('extra area')}</div>
 
   <p class="expl" style="margin-top:18px"><b>The cheaper the home, the more the extra area is
-  worth to the buyer</b> &mdash; the opposite of the shape you would guess. Below $1,500 psf the
-  discount is smallest.</p>
+  worth to the buyer</b> &mdash; the opposite of what you would guess.</p>
   <div class="scroll">{void_cut('price tier')}</div>
 
   <details style="margin-top:16px"><summary>By region, and by tenure</summary>
     <div class="scroll">{void_cut('region')}</div>
     <div class="scroll" style="margin-top:14px">{void_cut('tenure')}</div>
-    <p class="expl">Every one of these cells is thin. Read them for direction, never as a figure
-    to quote on its own.</p>
+    <p class="expl">Thin cells. Direction only, never a figure to quote.</p>
   </details>
 </section>
 
 <section>
   <h2>The finding that is worth money</h2>
   <p class="expl"><b>The spread inside one development is wider than the spread between
-  developments.</b> The void is priced stack by stack, and what one buyer paid for it bears
-  little relation to what the buyer in the next line paid: {void_spread_names()}.</p>
+  developments</b> &mdash; the void is priced stack by stack: {void_spread_names()}.</p>
   <div class="scroll">{void_devs(widest=True, n=12)}</div>
-  <p class="expl">Read the <b>spread</b> column: the gap between the dearest and the cheapest
-  stack in that same development. <b>The advice is not &ldquo;penthouses are good value&rdquo;
-  &mdash; it is find the stack where the void was given away.</b></p>
+  <p class="expl"><b>The advice is not &ldquo;penthouses are good value&rdquo; &mdash; it is find
+  the stack where the void was given away.</b></p>
 
   <details><summary>Every development, cheapest void first</summary>
     <div class="scroll">{void_devs(n=30)}</div>
@@ -1352,14 +1339,9 @@ the <b>resale</b> market.</p>
     </div>
   </details>
   <details><summary>Where the data comes from &mdash; not the MAPS refresh</summary>
-    <p class="expl">Every other panel reads <code>property-analyzer/data/</code>. This one reads the
-    <b>REALIS unit-level pull</b> held by the floor study, because it is the only dataset here that
-    carries a <b>unit number</b> &mdash; and without the unit number there is no stack, without the
-    stack there is no same-floor-plate pair. {V['meta']['window']}, all Singapore, strata,
-    apartment and condominium, <b>resale only</b>.</p>
-    <p class="expl"><code>price-gap/calibration/void-pairs.py</code> &rarr;
-    <code>void-pairs.json</code>. It depends on none of the other three and they depend on none of
-    it, so it may be run at any point in the order.</p>
+    <p class="expl">The <b>REALIS unit-level pull</b> held by the floor study &mdash; the only
+    dataset here carrying a <b>unit number</b>, and without that there is no stack.
+    {V['meta']['window']}, all Singapore, strata, <b>resale only</b>.</p>
   </details>
 </section>
 </div>
@@ -1405,9 +1387,8 @@ constant at all.</p>
 
 <section>
   <div class="sechead"><h2 class="disp">Freehold is worth more as the lease runs down</h2>
-  <p>Every pair is one freehold and one leasehold development, next door to each other, compared
-  bedroom by bedroom. The only thing that changes down this table is <b>how much lease the
-  leasehold neighbour has left</b>.</p></div>
+  <p>One freehold and one leasehold development, next door, bedroom by bedroom. The only thing
+  that changes down this table is <b>how much lease the leasehold side has left</b>.</p></div>
   <div class="scroll">{ten_grad_table()}</div>
 </section>
 
@@ -1416,74 +1397,51 @@ constant at all.</p>
   <p>Seven questions, answered once each.</p></div>
 
   <details><summary>Why a percentage and not a dollar figure?</summary>
-    <p class="expl"><b>Because it travels, and because the constant it replaces is itself a
-    ratio.</b> Drawn at random, held-out folds mildly favour a flat dollar figure &mdash;
-    {T['scale_test']['dol_rmse']:,.0f} psf against {T['scale_test']['pct_rmse']:,.0f}. But a
-    random fold looks like the sample it came from, which is exactly where an addition and a
-    ratio are hardest to separate.</p>
-    <p class="expl">The test that separates them is whether a figure can price stock it has
-    never seen. Fit it without one price tier and ask it about that tier; then the same by
-    region. It ends level overall &mdash; and it splits the way a percentage would predict,
-    with the percentage winning on the cheapest stock and in the OCR, where a flat dollar
-    figure is far too large a share of the price.</p>
+    <p class="expl"><b>Because it travels.</b> The test is whether a figure can price stock it
+    has never seen: fit it without one price tier, then ask it about that tier, and the same by
+    region. The percentage wins on the cheapest stock and in the OCR, where a flat dollar figure
+    is too large a share of the price.</p>
     <div class="scroll">{ten_transfer_table('price', 'Predicting a price tier never seen')}</div>
     <div class="scroll" style="margin-top:14px">{ten_transfer_table('region', 'Predicting a region never seen')}</div>
-    <p class="expl" style="margin-top:18px">A flat dollar figure fitted on this sample is
-    +${THD['p']:,.0f}. On ${TBASE:,.0f} stock the two agree. On $1,100 stock the percentage
-    says +${1100*THP['p']:,.0f} and the dollar figure still says +${THD['p']:,.0f}; on $3,500
-    stock, +${3500*THP['p']:,.0f} against the same +${THD['p']:,.0f}. <b>The sample runs from
-    ${min(r['psf_lh'] for r in TMIX):,.0f} to ${max(r['psf_lh'] for r in TMIX):,.0f} psf and
-    cannot settle either end</b>, so treat the percentage as measured in the middle and
-    inferred at the edges.</p>
+    <p class="expl" style="margin-top:18px">The dollar form is +${THD['p']:,.0f}. On $1,100 stock
+    the percentage says +${1100*THP['p']:,.0f}; on $3,500, +${3500*THP['p']:,.0f}. <b>The sample
+    runs ${min(r['psf_lh'] for r in TMIX):,.0f} to ${max(r['psf_lh'] for r in TMIX):,.0f} psf</b>,
+    so the percentage is measured in the middle and inferred at the edges.</p>
   </details>
 
   <details><summary>Do the like-for-like checks read zero?</summary>
-    <p class="expl"><b>Both do.</b> Run the identical method on pairs that share a tenure
-    &mdash; where the true freehold premium is zero by construction &mdash; and it finds
-    nothing: leasehold against leasehold reads <b>{T['placebo']['LH x LH']['pct']*100:+.1f}%</b>
-    ({T['placebo']['LH x LH']['pairs']} pairs) and freehold against freehold
+    <p class="expl"><b>Both do.</b> Same method on pairs sharing a tenure, where the premium is
+    zero by construction: leasehold against leasehold
+    <b>{T['placebo']['LH x LH']['pct']*100:+.1f}%</b>
+    ({T['placebo']['LH x LH']['pairs']} pairs), freehold against freehold
     <b>{T['placebo']['FH x FH']['pct']*100:+.1f}%</b>
-    ({T['placebo']['FH x FH']['pairs']} pairs).</p>
-    <p class="expl">Which side of a same-tenure pair takes the freehold slot is assigned <b>at
-    random</b> and averaged over many draws. That matters: assigning it alphabetically read a
-    false +2.9% on the freehold set, purely because alphabetically-earlier freeholds happened to
-    sit newer.</p>
+    ({T['placebo']['FH x FH']['pairs']} pairs). Which side takes the freehold slot is drawn at
+    random and averaged &mdash; doing it alphabetically read a false +2.9%.</p>
   </details>
 
   <details><summary>Where the calculator gets the lease left</summary>
-    <p class="expl"><b>From the completion year, which is the one date a buyer always has.</b>
-    {T['build']['term']}-year term, less the years since TOP, less the years it took to build.
-    Across the {T['build']['n']} leasehold developments with both dates on record the build gap
-    is a median <b>{T['build']['median']} years</b> (quartiles {T['build']['p25']}&ndash;{T['build']['p75']}),
-    and {T['build']['term_share']*100:.0f}% of leasehold stock is on a {T['build']['term']}-year
-    lease &mdash; so the inference is good to a year or two, against steps fifteen years
-    wide.</p>
-    <p class="expl"><b>The build gap in use is {T['build']['engine']} years, not
-    {T['build']['median']}.</b> A fifth constant, unmeasured until now. It barely touches this
-    answer, but the same figure fills in a TOP year for any development with no completion year on
-    record, so it is worth updating there on its own account.</p>
+    <p class="expl"><b>From the completion year</b> &mdash; the one date a buyer always has.
+    {T['build']['term']}-year term, less the years since TOP, less the build. Across
+    {T['build']['n']} leasehold developments the build gap is a median
+    <b>{T['build']['median']} years</b> and {T['build']['term_share']*100:.0f}% of stock is on a
+    {T['build']['term']}-year lease, so the inference is good to a year or two against steps
+    fifteen years wide.</p>
+    <p class="expl">The build gap in use is <b>{T['build']['engine']} years</b>. It barely touches
+    this answer, but the same figure invents a TOP year where none is on record.</p>
   </details>
 
   <details><summary>What does this say about the $10 age adjustment?</summary>
     <p class="expl">Freehold-against-freehold pairs measure it directly, since nothing else
-    separates them. They fit <b>${T['fh_age_rate']:,.0f} a year</b> of completion-year
-    difference, against the $10 in use. A by-product of this study, not its
-    subject &mdash; but it points the same way as everything else here: the age term is
-    understated and the lease term is overstated.</p>
+    separates them: <b>${T['fh_age_rate']:,.0f} a year</b> against the $10 in use. The age term
+    is understated and the lease term overstated.</p>
   </details>
 
   <details><summary>Why the 200-unit floor stays</summary>
-    <p class="expl">Because dropping it halves the answer, and the pairs it lets in cannot carry
-    one. Shawn's ruling, {T['floor']['added_pairs']} added pairs later: <i>&ldquo;there are little
-    to no transaction volume which might make it inaccurate due to lack of volume
-    averages.&rdquo;</i></p>
-    <p class="expl">The data says exactly that. Those added pairs run on a median of
-    <b>{T['floor']['n_fh_added']:.0f} sales</b> on the freehold side against
-    {T['floor']['n_fh_headline']:.0f} in the headline, <b>{T['floor']['thin_added']*100:.0f}%</b>
-    of them under ten a side against {T['floor']['thin_headline']*100:.0f}%, and fitted on their
-    own they read a directionless <b>+{T['floor']['added_pct']*100:.1f}%</b>. Freehold stock is
-    mostly boutique, so this floor bites harder here than it did on the lease study &mdash; and
-    a five-transaction minimum is a floor, not a volume.</p>
+    <p class="expl">Dropping it halves the answer, and the {T['floor']['added_pairs']} pairs it
+    lets in cannot carry one: a median <b>{T['floor']['n_fh_added']:.0f} sales</b> a side against
+    {T['floor']['n_fh_headline']:.0f} in the headline, and fitted on their own they read a
+    directionless <b>+{T['floor']['added_pct']*100:.1f}%</b>. Freehold stock is mostly boutique,
+    so the floor bites harder here than on the lease study.</p>
   </details>
 
   <details><summary>How much do the screens move it?</summary>
@@ -1492,30 +1450,25 @@ constant at all.</p>
     500 m apart, the same station, the same schools, 200+ units, sizes within 20% &mdash; across
     24 months of resale and sub-sale to {T['window'][1]}.</p>
     <div class="scroll">{ten_sens_table()}</div>
-    <p class="expl" style="margin-top:18px">Distance barely matters &mdash; widening to a
-    kilometre moves the figure less than the interval around it. The unit floor is the one that
-    does, for the reason above.</p>
+    <p class="expl" style="margin-top:18px">Distance barely matters. The unit floor is the one
+    that does.</p>
   </details>
 
   <details><summary>Does it hold across the island, and across bedrooms?</summary>
     <div class="scroll">{ten_slice_table('region', 'Region')}</div>
-    <p class="expl" style="margin-top:18px">The three regions agree closely, which is itself part
-    of the case for a percentage: the same ratio serves the island, where a flat dollar figure
-    would have to be roughly twice as large in the CCR as in the OCR.</p>
+    <p class="expl" style="margin-top:18px">The three regions agree closely &mdash; part of the
+    case for a percentage, since one ratio serves the island.</p>
     <div class="scroll" style="margin-top:14px">{ten_slice_table('bedroom', 'Bedroom')}</div>
     <p class="expl" style="margin-top:18px">Bedroom is the match, not the answer &mdash; it holds
-    size constant. Two- and three-bedroom read the same; one- and four-bedroom are too thin to
-    show.</p>
+    size constant. One- and four-bedroom are too thin to show.</p>
   </details>
 
   <div class="caveat" style="margin-top:22px"><b>The confound to know.</b> Freehold is the
   <b>older</b> side in {TOLDER} of the {T['counts']['cells']} cells, and the age adjustment that
-  removes it is a median <b>{TADJ/TBASE*100:.0f}% of the base</b> &mdash; the same size as the
-  premium being measured. This answer leans on the vintage rate being right. Fitting that rate
-  freely instead of importing the measured bands gives
+  removes it is as large as the premium being measured. Fit that rate freely instead of importing
+  the measured bands and the answer is
   +{[x for x in T['race'] if x['key']=='va' and x['rate']=='free'][0]['prem']*100:.1f}%, so read
-  the headline as the top of a range that starts there. Floor, facing and building quality stay
-  uncontrolled by ruling.</div>
+  the headline as the top of a range starting there.</div>
 </section>
 
 </div>

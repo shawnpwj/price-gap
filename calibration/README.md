@@ -15,7 +15,7 @@ main and pushed. Page live on offline staging, hidden behind a double-click on t
 | MRT distance | $50 / $200 / $250 | **+$66 / +$156 / +$243**, or **$23 per 100 m** | §11 |
 | Integrated | +5% | **+6.7%** (4.5–9.1), which CONTAINS the +5% | §12 |
 | Void · extra penthouse area | **none — 1.00× implicit** | resale buyer pays **52% less** for it than for the floor plate | §13 |
-| Tenure · FH vs LH | ÷1.15 | **+$310 psf**, and **+$191 → +$387** by the lease left | §10 |
+| Tenure · FH vs LH | ÷1.15 | **+$328 psf**, and **+$261 → +$387** by the lease left | §10 |
 
 GFA harmonisation (+7%) was **dropped from the study entirely** on his ruling, 2026-09-06.
 
@@ -288,16 +288,16 @@ the pattern is `property-analyzer/scripts/fetch-demand-ura.ts`, 60-month serving
 
 ### THE ANSWER — it is not a constant
 
-| lease left on the leasehold side | freehold is worth | in percent | 95% | pairs |
-|---|---|---|---|---|
-| 90+ years | **+$191** | +9.0% | 3.0–14.7 | 15 |
-| 75–89 | **+$323** | +20.3% | 15.9–25.1 | 43 |
-| 60–74 | **+$387** | +21.6% | 14.9–32.1 | 16 |
-| **all pairs, one figure** | **+$310** | +17.1% | 13.3–21.1 | 78 |
+| lease left on the leasehold side | freehold is worth | in percent | pairs |
+|---|---|---|---|
+| 90+ years | **+$261** | +11.3% | 15 |
+| 75–89 | **+$326** | +20.7% | 43 |
+| 60–74 | **+$387** | +21.6% | 16 |
+| **all pairs, one figure** | **+$328** | +18.1% ($271–386) | 78 |
 
 **THIS IS THE DOUBLE-COUNT, AND IT IS PROVEN.** Framing ruling 2 said lease and tenure are ONE
 curve. If they were separate, that column would be flat. It roughly doubles as the lease runs
-down, and it survives refitting the vintage rate freely (+5.6% → +24.3%). A flat ÷1.15
+down, and it survives refitting the vintage rate freely. A flat ÷1.15
 overcharges freehold against new leasehold and undercharges it against old.
 
 ### THE FOUR RULINGS THAT SHAPED IT (Shawn, 2026-09-08)
@@ -311,9 +311,11 @@ overcharges freehold against new leasehold and undercharges it against old.
    we could do 44psf per year adjustment then adjust by 15% premium. Whichever makes more
    sense. I want the data and number to tell."* So the rate, the form AND the order are all
    fitted and ranked on held-out error.
-4. **REUSE $25/$43 AS MEASURED**, read at the midpoint of the two lease-start equivalents
-   (TOP − 6, the engine's own `CONSTRUCTION_YEARS`). Derived from `lease-pairs.json`, never
-   a literal.
+4. **REUSE $25/$43 AS MEASURED**, read at the midpoint of the two lease-start equivalents.
+   Derived from `lease-pairs.json`, never a literal.
+5. **DERIVE THE SUBJECT'S REMAINING LEASE FROM ITS TOP YEAR** — *"can't the lease left on
+   subject be auto calculated? based on TOP year"* — which forced the build gap to be
+   measured. See below.
 
 ### THE RACE — held-out RMSE in psf, lower is better
 
@@ -323,19 +325,19 @@ overcharges freehold against new leasehold and undercharges it against old.
 | **$40/yr — the engine as written** | ÷1.15 after | 15.0% | **389** |
 | $40/yr | % after | +17.9% | 390 |
 | $10/yr | % after | +11.4% | 335 |
-| the measured $25/$43 | % after | +17.1% | 282 |
-| the measured $25/$43 | % **before** | +16.0% | 282 |
-| **the measured $25/$43** | **dollars** | **+$310** | **267** |
+| the measured $25/$43 | % after | +18.1% | 289 |
+| the measured $25/$43 | % **before** | +17.0% | 284 |
+| **the measured $25/$43** | **dollars** | **+$328** | **269** |
 | freely fitted ($13/yr) | none | — | 391 |
 
 * **THE ENGINE AS WRITTEN IS BARELY BETTER THAN DOING NOTHING** — 389 against 412 — and the
   $40 is why: on a completion-year clock it scores worse than $10 does.
-* **DOLLARS, NOT PERCENT.** Paired over 200 identical folds the dollar form wins **144** of
-  them (269.8 vs 285.8 psf, t = 9.8). Same answer the lease study reached.
-* **BEFORE OR AFTER DOES NOT MATTER** — 282.5 against 281.7, indistinguishable. And **a dollar
+* **DOLLARS, NOT PERCENT.** Paired over 200 identical folds the dollar form wins the large
+  majority of them, by roughly 16 psf of held-out error. Same answer the lease study reached.
+* **BEFORE OR AFTER DOES NOT MATTER** — 288.6 against 283.5, inside the noise. And **a dollar
   premium is order-free**, because two additions commute. Choosing dollars deletes the
   question he asked.
-* **A FREEHOLD PREMIUM GENUINELY EXISTS BEYOND VINTAGE** — the best no-premium row is 391.
+* **A FREEHOLD PREMIUM GENUINELY EXISTS BEYOND VINTAGE** — the best no-premium row is 387.
 
 ### THE CHECKS
 
@@ -345,30 +347,49 @@ overcharges freehold against new leasehold and undercharges it against old.
   estimator bias and it must not be reported as one.
 * **BY-PRODUCT — the engine's `AGE_PSF_PER_YEAR = 10` reads $18.** FH×FH pairs measure it
   directly, since nothing else separates them.
-* **REGION:** +17.2 / +17.7 / +16.5% CCR/RCR/OCR — flat in percent, $448/$370/$227 in dollars.
+* **REGION:** flat in percent across CCR/RCR/OCR, but roughly double in the CCR in dollars.
   This is the ONE reading that argues for the percentage form, which is why the percentage
-  stays on the page beside every dollar figure. **Bedroom:** 2BR +$299, 3BR +$320; 1BR and
-  4BR+ too thin.
+  stays on the page beside every dollar figure. **Bedroom:** 2BR and 3BR agree; 1BR and 4BR+
+  too thin.
 
 ### THE 200-UNIT FLOOR STANDS — and this one needed proving
 
-Dropping it to 100 units HALVES the premium (+17.1% → +10.0%), so it could not be waved
-through. **His ruling:** *"the problem with <200 units is that there are little to no
+Dropping it to 100 units nearly HALVES the premium (+18.1% → +10.9%), so it could not be
+waved through. **His ruling:** *"the problem with <200 units is that there are little to no
 transaction volume which might make it inaccurate due to lack of volume averages."*
 
 The data says exactly that. The 81 pairs the lower floor adds run on a median of **6 sales**
 on the freehold side against 9 in the headline, **93% of them under ten a side** against 65%,
-and fitted alone they read a directionless **+$87**. Freehold stock is mostly boutique, so this
+and fitted alone they read a directionless **+$99**. Freehold stock is mostly boutique, so this
 floor bites harder here than on the lease study. **A five-transaction cell minimum is a floor,
-not a volume.** Distance, by contrast, barely moves it: 800 m gives +$269, 1 km +$259.
+not a volume.** Distance, by contrast, barely moves it: 800 m gives +$283, 1 km +$271.
+
+### A FIFTH CONSTANT FELL OUT: THE BUILD GAP IS 4 YEARS, NOT 6
+
+He asked whether the calculator could work out the subject's remaining lease from its TOP year.
+It can, and answering it measured something nobody had checked: **`CONSTRUCTION_YEARS = 6` in
+the engine is 4 in the market.** Across the **573** leasehold developments carrying both dates
+the median TOP-minus-lease-start gap is **4 years** (quartiles 4–5), and **98%** of leasehold
+stock is on a 99-year lease. So `lease left = 99 − (this year − TOP) − 4`, good to a year or
+two against gradient steps fifteen years wide. The page derives it and says `FROM TOP`; typing
+in the field takes it over and the tag flips to `ENTERED`.
+
+**The engine uses that 6 elsewhere** — to invent a TOP year for any development with no
+completion year on record — so it is worth fixing there whatever is done with the tenure
+figure. Both figures are DERIVED in `tenure-pairs.py` (`BUILD`), never literals.
+
+**It barely moves this study**, which is why the headline could be restated on the measured
+gap without argument: premium +$310 at an offset of 6, **+$328 at the measured 4**, +$332 at 3;
+held-out 267 / 269 / 267 respectively.
 
 ### THE CONFOUND TO KNOW, AND IT IS THE REAL LIMIT
 
 **Freehold is the OLDER side in 73 of the 102 cells**, median 6 years, and the age adjustment
 that removes it is a median **$224 psf — 12% of the base, the same size as the premium being
 measured**. The answer leans on the vintage rate being right. Fitting that rate freely instead
-of importing the measured bands gives **+14.6%**, so read +17.1% as the top of a range that
-starts there. Floor, facing and building quality stay uncontrolled by ruling.
+of importing the measured bands gives **+14.6%**, so read +18.1% as the top of a range that
+starts there. **The 90+ step is the unsettled one** — it moved $191 → $261 when the build gap
+was measured (below). The climb is the finding; that step's level is not. Floor, facing and building quality stay uncontrolled by ruling.
 
 ## 11. MRT WALK BAND — MEASURED
 

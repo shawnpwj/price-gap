@@ -59,7 +59,7 @@ MIN_N         = 5
 SIZE_TOL      = 0.20
 EC_PRIVATISE  = 5
 SCHOOL_KM     = 1000
-CONSTRUCTION_YEARS = 6          # engine's own lease-start -> TOP offset
+# CONSTRUCTION_YEARS is MEASURED below, not imported. The engine assumes 6.
 BEDS          = ['1BR', '2BR', '3BR', '4BR+']
 WINDOW        = 24
 
@@ -111,6 +111,31 @@ det     = J('pg-project-details.json')['projects']
 psf     = J('psf-history.json')['projects']
 qh      = J('quantum-history.json')['projects']
 mrt     = [s for s in J('mrt-stations.json')['stations'] if s.get('status') == 'operational']
+
+# ── HOW LONG A LEASEHOLD TAKES TO BUILD — measured, not assumed ───────────────────────
+# Needed twice: to put a freehold's TOP year on the same footing as a lease start when the
+# band is read, and to let the page's calculator DERIVE the lease a subject has left from
+# its completion year (Shawn asked for that, 2026-09-08).
+#
+# THE ENGINE ASSUMES 6 YEARS. THE MARKET TAKES 4. Across every leasehold development with
+# both dates on record the median gap is 4 years, quartiles 4-5, and 565 of 573 are 99-year
+# leases -- so lease left = 99 - (this year - TOP) - 4 is a sound default and a poor rule to
+# override with an assumption. The tenure answer barely notices which is used ($310 at 6,
+# $328 at 4, held-out 267 against 269), so this is about being right rather than about the
+# headline.
+_gaps = sorted(d['completionYear'] - (base[n].get('tenure') or {}).get('leaseStart')
+               for n, d in det.items()
+               if (base.get(n, {}).get('tenure') or {}).get('type') == 'LH'
+               and (base[n]['tenure'] or {}).get('leaseStart') and d.get('completionYear')
+               and -5 < d['completionYear'] - base[n]['tenure']['leaseStart'] < 30)
+_terms = collections.Counter((v.get('tenure') or {}).get('years') for v in base.values()
+                             if (v.get('tenure') or {}).get('type') == 'LH')
+BUILD_YEARS = int(st.median(_gaps))
+LEASE_TERM  = _terms.most_common(1)[0][0]
+CONSTRUCTION_YEARS = BUILD_YEARS
+BUILD = dict(median=BUILD_YEARS, n=len(_gaps), p25=_gaps[len(_gaps)//4],
+             p75=_gaps[3*len(_gaps)//4], engine=6, term=LEASE_TERM,
+             term_share=_terms[LEASE_TERM]/sum(_terms.values()))
 
 LAST = max(m for p in psf.values() for b in p.values() for m in b)
 NOW  = int(LAST[:4])
@@ -473,7 +498,7 @@ print(f'  the pairs the 100-unit floor ADDS, fitted alone: {FLOOR["added_pairs"]
       f'(headline {FLOOR["n_fh_headline"]:.0f}), {FLOOR["thin_added"]:.0%} under ten a side')
 
 json.dump(dict(window=[CUT, LAST], bands=BANDR, band_bound=BAND_BOUND,
-               construction_years=CONSTRUCTION_YEARS, counts=D, race=RACE, headline=HL,
+               construction_years=CONSTRUCTION_YEARS, build=BUILD, counts=D, race=RACE, headline=HL,
                placebo=PLACEBO, fh_age_rate=af, floor=FLOOR,
                slices=SLICES, sens=SENS, scale_test=SCALE_T,
                mixed=MIXED, placebo_lh=PLA_L, placebo_fh=PLA_F,

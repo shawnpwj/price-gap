@@ -414,6 +414,12 @@ font-size:11.5px;color:var(--slate-600);display:flex;justify-content:space-betwe
 @media (max-width:640px){.wrap{padding:0 16px 64px}.vcell .val{font-size:30px}.note{display:none}}
 """
 CSS += """
+/* The calculator's derived-field tag. A field that fills itself has to say so, and has to
+   say when it has stopped: 'from TOP' while it is inferring, 'entered' once typed over. */
+.calc label .auto{float:right;font-size:10px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--gold-soft);opacity:.85}
+.calc label .auto.off{color:var(--ink-3, #8b93a7)}
+
 .vcell.grow{flex:1 1 300px;min-width:260px}
 .two{display:flex;gap:30px;flex-wrap:wrap}
 .two .n{font:600 clamp(30px,4vw,42px)/1 Optima,Candara,sans-serif;color:var(--gold)}
@@ -499,7 +505,23 @@ JS = """
   function n(id){return parseFloat(document.getElementById(id).value);}
   function rate(a,b){return ((a+b)/2-TB[3]) < TB[2] ? TB[0] : TB[1];}
   function step(left){for(var i=0;i<TS.length;i++){if(left>=TS[i][0])return TS[i];}return TS[TS.length-1];}
+  // The lease a subject has left is DERIVED from its completion year, because that is the
+  // one date a buyer always has: term less the years since TOP less the years it took to
+  // build. Typing in the field takes it over -- an actual lease start beats an inference
+  // from a median -- and the field says which of the two is in force.
+  var touched=false;
+  function derive(){
+    var tl=n('tlT'); if(!tl) return null;
+    return Math.max(1, Math.min(TB[4], TB[4]-(TB[5]-tl)-TB[3]));
+  }
+  function sync(){
+    var d=derive(), f=document.getElementById('tlL'), tag=document.getElementById('tlA');
+    if(!touched&&d!==null) f.value=d;
+    tag.textContent = touched ? 'entered' : 'from TOP';
+    tag.className = touched ? 'auto off' : 'auto';
+  }
   function go(){
+    sync();
     var p=n('tfP'), tf=n('tfT'), tl=n('tlT'), lf=n('tlL'), o=document.getElementById('tenOut');
     if(!p||!tf||!tl||!lf){o.className='cout bad';
       o.innerHTML='Fill in all four.';return;}
@@ -513,11 +535,16 @@ JS = """
         Math.round(st[1]).toLocaleString()+'</b></div>'+
       '<div class="crow big"><span>Restated as leasehold</span><b>$'+
         Math.round(out).toLocaleString()+' psf</b></div>'+
-      '<p class="chint">The engine would take $40 a year of age and then divide by 1.15, '+
-      'which gives $'+Math.round((p+40*dv)/1.15).toLocaleString()+'.</p>';
+      '<p class="chint">'+(touched?'Lease left as entered.':
+        'Lease left worked out from the completion year: '+TB[4]+' \u2212 ('+TB[5]+' \u2212 '+
+        tl+') \u2212 '+TB[3]+' years of building = '+lf+'. Type over it if you have the '+
+        'actual lease start.')+' The engine would take $40 a year of age and then divide by '+
+      '1.15, which gives $'+Math.round((p+40*dv)/1.15).toLocaleString()+'.</p>';
   }
-  ['tfP','tfT','tlT','tlL'].forEach(function(id){
+  ['tfP','tfT','tlT'].forEach(function(id){
     var e=document.getElementById(id); if(e) e.addEventListener('input',go);});
+  var lf=document.getElementById('tlL');
+  if(lf) lf.addEventListener('input',function(){touched=true;go();});
   go();
 })();
 
@@ -880,8 +907,12 @@ def ten_sens_table():
     return ''.join(r)
 
 # [older rate, newer rate, the boundary year, the lease-start offset] — all four DERIVED.
-TENB_JS = ('[%.2f,%.2f,%d,%d]' % (T['bands']['old'], T['bands']['new'],
-                                  T['band_bound'], T['construction_years'])) if T else '[0,0,0,0]'
+# [older rate, newer rate, boundary year, measured build years, lease term, this year] —
+# all six DERIVED. The build gap and the 99-year term are what let the calculator work out
+# the lease a subject has left from nothing but its completion year.
+TENB_JS = ('[%.2f,%.2f,%d,%d,%d,%d]' % (T['bands']['old'], T['bands']['new'], T['band_bound'],
+                                        T['build']['median'], T['build']['term'],
+                                        datetime.date.today().year)) if T else '[0,0,0,0,99,2026]'
 TENS_JS = '[' + ','.join(f'[{g["min_left"]},{g["dol"]:.2f},"{g["label"]}"]'
                          for g in TGL) + ']' if TGL else '[]'
 BANDS_JS = '[' + ','.join(f'[{hi},{BANDR[nm]:.2f},"{nm}"]' for _, hi, nm in BANDS) + ']'
@@ -1365,7 +1396,7 @@ constant at all.</p>
       <label>Freehold comparable &mdash; psf<input id="tfP" type="number" value="2100" min="200" max="9000" step="10"></label>
       <label>Freehold TOP year<input id="tfT" type="number" value="2005" min="1960" max="2035" step="1"></label>
       <label>Leasehold subject &mdash; TOP year<input id="tlT" type="number" value="2015" min="1960" max="2035" step="1"></label>
-      <label>Lease years left on the subject<input id="tlL" type="number" value="85" min="20" max="99" step="1"></label>
+      <label>Lease left on the subject <span class="auto" id="tlA">from TOP</span><input id="tlL" type="number" value="85" min="20" max="99" step="1"></label>
     </div>
     <div id="tenOut" class="cout"></div>
   </div>
@@ -1410,7 +1441,7 @@ constant at all.</p>
 
 <section>
   <div class="sechead"><h2 class="disp">Behind it</h2>
-  <p>Six questions, answered once each.</p></div>
+  <p>Seven questions, answered once each.</p></div>
 
   <details><summary>Dollars or a percentage?</summary>
     <p class="expl"><b>Dollars.</b> Scored on {T['scale_test']['folds']} identical held-out folds,
@@ -1439,6 +1470,23 @@ constant at all.</p>
     random</b> and averaged over many draws. That matters: assigning it alphabetically read a
     false +2.9% on the freehold set, purely because alphabetically-earlier freeholds happened to
     sit newer.</p>
+  </details>
+
+  <details><summary>Where the calculator gets the subject's remaining lease</summary>
+    <p class="expl"><b>From the completion year, which is the one date a buyer always has.</b>
+    {T['build']['term']}-year term, less the years since TOP, less the years it took to build.
+    Across the {T['build']['n']} leasehold developments with both dates on record the build gap
+    is a median <b>{T['build']['median']} years</b> (quartiles {T['build']['p25']}&ndash;{T['build']['p75']}),
+    and {T['build']['term_share']*100:.0f}% of leasehold stock is on a {T['build']['term']}-year
+    lease &mdash; so the inference is good to a year or two, against gradient steps fifteen years
+    wide.</p>
+    <p class="expl"><b>The engine assumes {T['build']['engine']} years, not
+    {T['build']['median']}.</b> That is a fifth constant nobody had checked. It barely touches
+    this answer &mdash; the premium reads +${THD['p']:,.0f} on the measured gap against
+    +$310 on the engine's &mdash; but it is wrong, and it is used elsewhere to invent a TOP year
+    for any development that has no completion year on record.</p>
+    <p class="expl">Type in the field and it stops inferring: an actual lease start always beats
+    an inference from a median, and the field says which of the two is in force.</p>
   </details>
 
   <details><summary>What does this say about the engine's $10 age adjustment?</summary>

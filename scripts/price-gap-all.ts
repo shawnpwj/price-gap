@@ -72,7 +72,10 @@ function packSide(r: any, S: any, bed: string) {
       u: c.units ?? null, mo: c.psf.months, fb: c.psf.fellBack ? 1 : undefined,
       // [label, delta, note] — the note is what lets the panel explain a bar without
       // the reader having to reconstruct the arithmetic.
-      s: c.steps.map((s: any) => [s.label, s.delta, s.note]),
+      // [label, delta, subtotal-it-applied-to, structured arithmetic]. The engine's prose
+      // note is NOT carried: the panel builds both the working line and the chart tooltip
+      // from `calc`, so the wording lives in one place and the shards stay small.
+      s: c.steps.map((s: any) => [s.label, s.delta, s.base, s.calc ?? null]),
     })),
     med: r.result.medianAdjusted, mean: r.result.meanAdjusted,
     gap: r.result.gap, pct: Math.round(r.result.gapPct * 1000) / 10, v: r.result.verdict,

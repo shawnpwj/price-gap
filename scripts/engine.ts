@@ -514,9 +514,15 @@ export function adjust(K: Constants, S: any, pool: any[]) {
     const c = { ...c0 };
     const steps: any[] = [];
     let running = c.psf.psf;
-    const add = (label: string, delta: number, note: string) => {
+    // `calc` is the arithmetic in structured form — how many years at what rate, or what
+    // percentage of which subtotal — so the panel can print the working instead of asking
+    // the reader to take the delta on trust. Shawn, 2026-09-09: "show the calculation for
+    // each Like Lease 429 is based on how many years etc."
+    // `base` is the running subtotal the step was applied TO, which is what a percentage
+    // step needs: they compound on the subtotal, not on the raw transacted price.
+    const add = (label: string, delta: number, note: string, calc?: any) => {
       if (!Math.round(delta)) return;
-      steps.push({ label, delta: Math.round(delta), note });
+      steps.push({ label, delta: Math.round(delta), note, base: Math.round(running), calc });
       running += delta;
     };
 
@@ -537,14 +543,18 @@ export function adjust(K: Constants, S: any, pool: any[]) {
       const rate = K.leaseRate(mid);
       add("Lease", yrs * rate,
         `${yrs > 0 ? "+" : ""}${yrs} yrs lease vs subject (${c.tenure.leaseStart} vs ${S.tenure.leaseStart}) x $${Math.round(rate)}/yr` +
-        (K.key === "measured" ? ` (midpoint ${Math.round(mid)})` : ""));
+        (K.key === "measured" ? ` (midpoint ${Math.round(mid)})` : ""),
+        { kind: "rate", yrs, rate, from: c.tenure.leaseStart, to: S.tenure.leaseStart,
+          midpoint: K.key === "measured" ? Math.round(mid) : null, clock: "lease start" });
     } else if (S.top && c.top) {
       const rate = bothFH ? K.ageRateFH : K.leaseRate((S.top.year + c.top.year) / 2);
       const yrs = S.top.year - c.top.year;
       add("Age (TOP)", yrs * rate,
         `TOP ${c.top.year} vs subject ${S.top.year} — ${Math.abs(yrs)} yrs ${yrs > 0 ? "older" : "newer"} x $${Math.round(rate)}/yr` +
         (bothFH ? " (freehold vs freehold)" : "") +
-        (c.top.estimated || S.top.estimated ? " (estimated TOP)" : ""));
+        (c.top.estimated || S.top.estimated ? " (estimated TOP)" : ""),
+        { kind: "rate", yrs, rate, from: c.top.year, to: S.top.year, clock: "TOP",
+          estimated: !!(c.top.estimated || S.top.estimated) });
     }
 
     // 2. Tenure — applied AFTER vintage, and as a DIVISION rather than a haircut. A
@@ -558,14 +568,17 @@ export function adjust(K: Constants, S: any, pool: any[]) {
       add("Tenure", target - running,
         c.tenure.type === "FH"
           ? `comparable is freehold, subject is leasehold — divide by ${(1 + p).toFixed(3)}${leftNote}`
-          : `comparable is leasehold, subject is freehold — multiply by ${(1 + p).toFixed(3)}${leftNote}`);
+          : `comparable is leasehold, subject is freehold — multiply by ${(1 + p).toFixed(3)}${leftNote}`,
+        { kind: c.tenure.type === "FH" ? "divide" : "multiply", factor: 1 + p, pct: p, leaseLeft: left });
     }
 
     // 3. MRT/LRT walk band. Labelled for both rails — the station named in the reason
     // can be either, and a fixed "MRT" would misdescribe an LRT one. (Shawn, 2026-08-04)
     const cBand = K.mrtBandOf(c.mrt.metres);
     add("MRT / LRT access", mrtDelta(K, sBand, cBand),
-      `${c.mrt.metres}m (${c.mrt.minutes}min) to ${c.mrt.station} vs subject ${S.mrt.metres}m (${S.mrt.minutes}min) to ${S.mrt.station}`);
+      `${c.mrt.metres}m (${c.mrt.minutes}min) to ${c.mrt.station} vs subject ${S.mrt.metres}m (${S.mrt.minutes}min) to ${S.mrt.station}`,
+      { kind: "band", compBand: cBand, subjBand: sBand, compM: c.mrt.metres, subjM: S.mrt.metres,
+        compStation: c.mrt.station, subjStation: S.mrt.station, cuts: K.mrtBandCutLabel });
 
     // 4. Harmonisation. Keyed on LEASE START, not launch or transaction date. Pre-rule
     // projects quote a larger strata area (voids counted in GFA), which understates
@@ -575,7 +588,8 @@ export function adjust(K: Constants, S: any, pool: any[]) {
     const compPre = c.tenure?.leaseStart != null && c.tenure.leaseStart < HARMONISATION_FROM;
     if (subjPost && compPre) {
       add("Harmonisation", K.harmonisationUplift * running,
-        `lease start ${c.tenure.leaseStart} predates the Jun-2023 GFA harmonisation — +${(K.harmonisationUplift * 100).toFixed(0)}%`);
+        `lease start ${c.tenure.leaseStart} predates the Jun-2023 GFA harmonisation — +${(K.harmonisationUplift * 100).toFixed(0)}%`,
+        { kind: "pct", pct: K.harmonisationUplift, why: `lease start ${c.tenure.leaseStart} is pre-Jun-2023` });
     }
 
     // 5. Integrated.
@@ -584,7 +598,9 @@ export function adjust(K: Constants, S: any, pool: any[]) {
       add("Integrated", dir * K.integratedPremium * running,
         c.integrated
           ? `comparable is integrated, subject is not — discount ${(K.integratedPremium * 100).toFixed(1)}%`
-          : `subject is integrated, comparable is not — uplift ${(K.integratedPremium * 100).toFixed(1)}%`);
+          : `subject is integrated, comparable is not — uplift ${(K.integratedPremium * 100).toFixed(1)}%`,
+        { kind: "pct", pct: dir * K.integratedPremium,
+          why: c.integrated ? "the comparable is integrated and this is not" : "this is integrated and the comparable is not" });
     }
 
     c.steps = steps;

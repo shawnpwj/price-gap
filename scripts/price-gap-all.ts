@@ -26,7 +26,7 @@ import { fileURLToPath } from "url";
 import {
   loadData, loadMeasured, factsFor, screen, neighbours, runOne, JUDGEMENT,
   BEDS, MIN_UNITS, MAX_RADIUS_M, MIN_COMPS, OUTLIER_BAND, AGE_EXCLUDE_YEARS,
-  PSF_WINDOW_MONTHS, type Constants,
+  LEASE_GAP_EXCLUDE_YEARS, PSF_WINDOW_MONTHS, type Constants,
 } from "./engine.ts";
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
@@ -50,6 +50,7 @@ function caveatCodes(r: any, S: any, bed: string) {
   if (S.top?.estimated) out.push(["estTop", S.top.year, S.top.source]);
   if (r.comps.some((c: any) => c.steps.some((s: any) => s.label === "Age (TOP)"))) out.push(["ageProxy"]);
   if (r.ageExcluded.length) out.push(["ageExcl", r.ageExcluded.map((a: any) => [a.name, a.top])]);
+  if (r.leaseExcluded.length) out.push(["leaseExcl", r.leaseExcluded.map((l: any) => [l.name, l.leaseStart])]);
   if (r.bandExcluded.length) out.push(["bandExcl", r.bandExcluded.map((b: any) => [b.name, b.adjusted])]);
   if (r.comps.length < MIN_COMPS) out.push(["fewComps", r.comps.length]);
   const near = r.comps.filter((c: any) => Math.abs(c.gapPct) > OUTLIER_BAND * 0.75).map((c: any) => c.name);
@@ -153,7 +154,8 @@ async function main() {
     window: `${PSF_WINDOW_MONTHS} months from ${data.cutoff}`,
     method: "Adjustments are applied TO THE COMPARABLE, never to the subject. A comparable landing ABOVE the subject's PSF implies the subject is undervalued.",
     screens: { minUnits: MIN_UNITS, maxRadiusM: MAX_RADIUS_M, minComps: MIN_COMPS,
-               outlierBand: OUTLIER_BAND, ageExcludeYears: AGE_EXCLUDE_YEARS },
+               outlierBand: OUTLIER_BAND, ageExcludeYears: AGE_EXCLUDE_YEARS,
+               leaseGapExcludeYears: LEASE_GAP_EXCLUDE_YEARS },
     sets: { judgement: setMeta(JUDGEMENT), measured: setMeta(MEASURED) },
     counts: { developments: developments.length, skipped: skipped.length, subjects: subjects.length },
     skipped: skipped.slice(0, 200),

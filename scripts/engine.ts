@@ -28,6 +28,18 @@ export const D = (f: string) => path.join(UPSTREAM, "data", f);
 // These are "is this even a comparable building", not "what is a year of lease worth",
 // so calibrating a constant never moves them.
 export const AGE_EXCLUDE_YEARS = 15;
+// The LEASEHOLD twin of the age screen above, and it closes the hole that screen left.
+// A freehold comparable more than 15 years older than the subject was already dropped; a
+// LEASEHOLD one 30 years older was not, so distance-ranked selection kept handing the
+// ladder projects it had to rebuild rather than adjust. AMO RESIDENCE is the case that
+// found it: BISHAN PARK CONDOMINIUM (lease 1991 vs 2021) sat 390 m away and needed 83% of
+// its own price added to stand in for a 2021 launch, while THE PANORAMA (2013, 757 m) and
+// LENTORIA (2022, 1,448 m) needed 15% and 2% and were never reached. The old comparables
+// were also manufacturing most of the apparent disagreement between the two constant sets:
+// vintage-matched, the two sets agree on Amo. Same 15 years, same "only while MIN_COMPS
+// survive" guard, same disclosure. Constant-set INDEPENDENT by design, so both columns
+// still see the identical pool. (Shawn, 2026-09-09.)
+export const LEASE_GAP_EXCLUDE_YEARS = 15;
 export const MIN_COMPS = 2;
 export const OUTLIER_BAND = 0.20;
 export const CONSTRUCTION_YEARS = 6;
@@ -347,19 +359,35 @@ export function screen(data: Data, S: any, bed: string, precomputed?: ReturnType
   // while at least MIN_COMPS survive — an imperfect comparable beats none.
   const tooOld = (c: any) =>
     c.tenure?.type === "FH" && c.top && S.top && (S.top.year - c.top.year) > AGE_EXCLUDE_YEARS;
-  const fresh = eligible.filter((c) => !tooOld(c));
+  // Pass 2b — the same idea on the leasehold side, priced off lease start rather than TOP.
+  // Symmetric: a comparable far NEWER than the subject is as poor a like-for-like as one
+  // far older, and the ladder is doing just as much work either way.
+  const tooFarLease = (c: any) =>
+    S.tenure?.type === "LH" && c.tenure?.type === "LH" &&
+    S.tenure.leaseStart != null && c.tenure.leaseStart != null &&
+    Math.abs(S.tenure.leaseStart - c.tenure.leaseStart) > LEASE_GAP_EXCLUDE_YEARS;
+
   const ageExcluded: any[] = [];
-  let pool = eligible;
-  if (fresh.length >= MIN_COMPS) {
-    pool = fresh;
-    for (const c of eligible) {
-      if (tooOld(c) && ageExcluded.length < 8) {
-        ageExcluded.push({ name: c.name, dist: c.dist, top: c.top.year,
-          why: [`freehold, TOP ${c.top.year} — ${S.top.year - c.top.year} yrs older than subject (limit ${AGE_EXCLUDE_YEARS})`] });
-      }
+  const leaseExcluded: any[] = [];
+  // Both screens together where the pool can afford it; the age screen alone where it
+  // cannot; everything where even that is too thin. An imperfect comparable beats none,
+  // and the tighter screen is the first thing to give way rather than the last.
+  const both = eligible.filter((c) => !tooOld(c) && !tooFarLease(c));
+  const ageOnly = eligible.filter((c) => !tooOld(c));
+  const pool = both.length >= MIN_COMPS ? both : ageOnly.length >= MIN_COMPS ? ageOnly : eligible;
+
+  for (const c of eligible) {
+    if (pool.includes(c)) continue;
+    if (tooOld(c) && ageExcluded.length < 8)
+      ageExcluded.push({ name: c.name, dist: c.dist, top: c.top.year,
+        why: [`freehold, TOP ${c.top.year} — ${S.top.year - c.top.year} yrs older than subject (limit ${AGE_EXCLUDE_YEARS})`] });
+    else if (tooFarLease(c) && leaseExcluded.length < 8) {
+      const d = S.tenure.leaseStart - c.tenure.leaseStart;
+      leaseExcluded.push({ name: c.name, dist: c.dist, leaseStart: c.tenure.leaseStart,
+        why: [`lease starts ${c.tenure.leaseStart} — ${Math.abs(d)} yrs ${d > 0 ? "older" : "newer"} than subject's ${S.tenure.leaseStart} (limit ${LEASE_GAP_EXCLUDE_YEARS})`] });
     }
   }
-  return { rejected, eligible, pool, ageExcluded };
+  return { rejected, eligible, pool, ageExcluded, leaseExcluded };
 }
 
 // Remaining lease of the LEASEHOLD side of a mixed pair — the input to the measured
@@ -469,7 +497,7 @@ export function adjust(K: Constants, S: any, pool: any[]) {
 // `screened` is passed in so a batch can screen once and run both constant sets
 // against the identical pool.
 export function runOne(data: Data, K: Constants, S: any, bed: string, screened: ReturnType<typeof screen>, nComps = 3) {
-  const { rejected, ageExcluded } = screened;
+  const { rejected, ageExcluded, leaseExcluded } = screened;
   // Every survivor of the age screen is adjusted, not just the nComps nearest, because
   // the outlier band below can only judge a comparable AFTER it has been restated.
   const pool = adjust(K, S, screened.pool);
@@ -523,6 +551,7 @@ export function runOne(data: Data, K: Constants, S: any, bed: string, screened: 
   if (S.top?.estimated) caveats.push(`${S.name} has no completion year on record — TOP estimated as ${S.top.year} (${S.top.source}). Any age adjustment against a freehold comparable inherits that estimate.`);
   if (comps.some((c) => c.steps.some((s: any) => s.label === "Age (TOP)")))
     caveats.push(`Age is adjusted at $${Math.round(K.ageRateFH)} psf per year of TOP difference for freehold comparisons — a condition/obsolescence proxy only. It cannot see renovation state, en-bloc potential, or how well a specific building has been maintained.`);
+  if (leaseExcluded.length) caveats.push(`${leaseExcluded.length} leasehold comparable(s) were EXCLUDED for a lease start more than ${LEASE_GAP_EXCLUDE_YEARS} years from the subject's (${leaseExcluded.map((l: any) => `${l.name}, lease ${l.leaseStart}`).join("; ")}). Restating a lease that far apart is the constant doing the valuation rather than the market.`);
   if (ageExcluded.length) caveats.push(`${ageExcluded.length} freehold comparable(s) were EXCLUDED for being more than ${AGE_EXCLUDE_YEARS} years older than the subject (${ageExcluded.map((a: any) => `${a.name}, TOP ${a.top}`).join("; ")}). They are listed under comparable selection.`);
   if (bandExcluded.length) caveats.push(`${bandExcluded.length} comparable(s) were EXCLUDED for landing more than ${Math.round(OUTLIER_BAND * 100)}% from the subject even after adjustment (${bandExcluded.map((b) => `${b.name} $${b.adjusted}`).join("; ")}) — the adjustments could not bridge them, which usually means a different submarket. Note this screen is applied to the same quantity being measured; the exclusions are listed so you can overrule them.`);
   if (comps.length < MIN_COMPS) caveats.push(`Only ${comps.length} comparable(s) cleared screening — too few for a stable median. Treat the verdict as directional.`);
@@ -556,7 +585,7 @@ export function runOne(data: Data, K: Constants, S: any, bed: string, screened: 
     generatedAt: new Date().toISOString(),
     subject: S, bedroom: bed, constants: K.key,
     window: `${PSF_WINDOW_MONTHS} months from ${data.cutoff}`,
-    comps, rejected: rejected.slice(0, 12), ageExcluded, bandExcluded,
+    comps, rejected: rejected.slice(0, 12), ageExcluded, leaseExcluded, bandExcluded,
     result: { medianAdjusted: Math.round(medianAdj), meanAdjusted: Math.round(meanAdj), basis: "median", gap, gapPct, verdict },
     layout, caveats,
     assumptions: {
@@ -565,7 +594,8 @@ export function runOne(data: Data, K: Constants, S: any, bed: string, screened: 
       mrtCuts: K.mrtBandCutLabel, mrtBands: K.mrtBandPsf,
       integratedPremium: K.integratedPremium, harmonisationUplift: K.harmonisationUplift,
       minUnits: MIN_UNITS, maxRadiusM: MAX_RADIUS_M,
-      ageExcludeYears: AGE_EXCLUDE_YEARS, minComps: MIN_COMPS, outlierBand: OUTLIER_BAND,
+      ageExcludeYears: AGE_EXCLUDE_YEARS, leaseGapExcludeYears: LEASE_GAP_EXCLUDE_YEARS,
+      minComps: MIN_COMPS, outlierBand: OUTLIER_BAND,
     },
   };
 }

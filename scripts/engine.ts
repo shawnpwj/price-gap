@@ -117,10 +117,19 @@ export interface Constants {
 
 const roundTo = (x: number, n: number) => Math.round(x * 10 ** n) / 10 ** n;
 
+// RETIRED 2026-09-09 on Shawn's audit. Kept, not deleted: it is the record of what the
+// engine used to charge, it is what the calibration page compares against, and the reasoning
+// behind each figure is worth more than the figure. It is no longer a live option — nothing
+// runs against it, and the workup no longer offers it as a second column.
+//
+// Why it was retired: on held-out pairs of real neighbouring projects the measured form is
+// 26% closer to the market (error 289 against this set's 389; no adjustment at all is 412).
+// Its $200 mid-to-far rail band sits OUTSIDE the measured 95% range of $120-194; the rest of
+// its figures are inside their ranges but centred wrong.
 export const JUDGEMENT: Constants = {
   key: "judgement",
-  label: "Engine constants",
-  blurb: "The set the Price Gap engine has always used. Every figure set by judgement, none measured.",
+  label: "Engine constants (retired)",
+  blurb: "What the engine charged before the calibration study. Retired 2026-09-09; kept as the record of what was replaced.",
   leaseRate: () => 40,
   leaseRateLabel: "$40 psf per year, flat",
   ageRateFH: 10,
@@ -139,6 +148,12 @@ export const JUDGEMENT: Constants = {
 // Every measured figure below is READ FROM the calibration JSONs at load time by
 // loadMeasured(), never hardcoded — an earlier calibration script copied 25/44 in as
 // literals and they went stale the moment the fit was re-run. These are the shapes only.
+// THE constants. Measured against the market by the calibration study and adopted on
+// Shawn's audit, 2026-09-09 — the ruling the study had been waiting on since it opened.
+// Read from the calibration JSONs at load time and never hardcoded here: an earlier script
+// copied 25/44 in as literals and they went stale the moment the fit was re-run.
+export const loadConstants = () => loadMeasured();
+
 export async function loadMeasured(): Promise<Constants> {
   const C = (f: string) => path.join(ROOT, "calibration", f);
   const [lease, mrt, tenure, integ] = await Promise.all(
@@ -171,7 +186,7 @@ export async function loadMeasured(): Promise<Constants> {
   return {
     key: "measured",
     label: "Measured constants",
-    blurb: "Each figure fitted against the market by the calibration study. Not written into the engine — this column is the audit.",
+    blurb: "Each figure fitted against matched pairs of real neighbouring projects. Adopted on Shawn's audit, 2026-09-09.",
     leaseRate: (mid) => (mid >= bound ? bands.new : bands.old),
     leaseRateLabel: `$${Math.round(bands.old)} / $${Math.round(bands.new)} psf per year, by the midpoint of the two lease starts (${bound} boundary)`,
     // Freehold-vs-freehold age, measured alongside the tenure fit.

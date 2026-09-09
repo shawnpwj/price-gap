@@ -6,9 +6,9 @@
 // one-project workup and the all-developments batch cannot drift apart. Read the
 // header of engine.ts for the adjustment ladder and every ruling behind it.
 //
-// --set picks the constant set: `judgement` (default — what the engine has always
-// used) or `measured` (what the calibration study fitted). Neither is written into
-// the other; the set is a parameter. See engine.ts and calibration/README.md.
+// Runs on the MEASURED constants — the ones the calibration study fitted, adopted on
+// Shawn's audit of 2026-09-09. `--set judgement` resolves the retired pre-calibration
+// figures for comparison only. See engine.ts and calibration/README.md.
 
 import { promises as fs } from "fs";
 import { D, loadData, loadMeasured, factsFor, screen, runOne, JUDGEMENT, PSF_WINDOW_MONTHS } from "./engine.ts";
@@ -22,7 +22,10 @@ async function main() {
   };
   const wantBed = flag("bed", "All");
   const nComps = parseInt(flag("comps", "3"), 10);
-  const setName = flag("set", "judgement");
+  // Measured is THE set (Shawn's audit, 2026-09-09). `--set judgement` still resolves the
+  // retired figures for a one-off comparison against what the engine used to charge; nothing
+  // reaches a client through it.
+  const setName = flag("set", "measured");
   const outFile = flag("out", D("price-gap.json"));
 
   const data = await loadData();

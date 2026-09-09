@@ -4,15 +4,18 @@
 //        [--out FILE] [--only "NAME,NAME"] [--limit N]
 //
 // Runs the Price Gap engine across every development in dsi-index, for all five bedroom
-// views, under BOTH constant sets, and writes one compact dataset for the calculator's
+// views, on the MEASURED constants, and writes one compact dataset for the calculator's
 // hidden Price Gap panel to fetch.
 //
 // WHY A SEPARATE RUNNER. The single-project CLI re-reads ~4 MB of JSON per invocation,
-// which is why one workup takes a minute; at 1,845 developments x 5 bedrooms x 2 sets
-// that is days. This loads the data once, builds the neighbour index once per site, and
-// screens once per (development, bedroom) — the two constant sets then run against the
-// IDENTICAL pool, so any difference between the two columns is an adjustment difference
-// and never a selection difference.
+// which is why one workup takes a minute; at 1,845 developments x 5 bedrooms that is days.
+// This loads the data once, builds the neighbour index once per site, and screens once per
+// (development, bedroom).
+//
+// It ran BOTH constant sets side by side until 2026-09-09, when Shawn audited the
+// calibration and adopted the measured set. The engine set is retired, not deleted — its
+// figures still travel in the payload as `retired`, so the panel can say what these numbers
+// replaced.
 //
 // The output is deliberately COMPACT: field names are short and the per-comparable
 // adjustment steps are stored as tuples, because this file is fetched by the browser.
@@ -24,7 +27,7 @@ import { promises as fs } from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import {
-  loadData, loadMeasured, factsFor, screen, neighbours, runOne, JUDGEMENT,
+  loadData, loadConstants, factsFor, screen, neighbours, runOne, JUDGEMENT,
   BEDS, MIN_UNITS, MAX_RADIUS_M, MIN_COMPS, OUTLIER_BAND, AGE_EXCLUDE_YEARS,
   LEASE_GAP_EXCLUDE_YEARS, PSF_WINDOW_MONTHS, type Constants,
 } from "./engine.ts";
@@ -103,8 +106,9 @@ async function main() {
   const limit = parseInt(flag("limit", "0"), 10);
 
   const data = await loadData();
-  const MEASURED = await loadMeasured();
-  const sets: Constants[] = [JUDGEMENT, MEASURED];
+  // ONE set. The engine constants were retired on Shawn's audit, 2026-09-09 — the workup no
+  // longer carries a second column, and the shards halve because of it.
+  const K = await loadConstants();
 
   // ── Sites that exist ONLY in the GLS pipeline ──────────────────────────────
   // Shawn, 2026-09-09: "why is thomson reserve not having ANY form of comparable? all
@@ -219,7 +223,7 @@ async function main() {
     for (const bed of BEDS) {
       const S = factsFor(data, name, node, bed, true);
       if (!S.psf) continue;
-      // Screen ONCE — both constant sets then see the identical pool.
+      // Screen once per bedroom view; the ladder then runs against that pool.
       const screened = screen(data, S, bed, nb);
       const rec: any = {
         psf: S.psf.psf, src: S.psfSource, mo: S.psf.months,
@@ -229,12 +233,8 @@ async function main() {
         win: S.psfWindow, rad: screened.radius,
         rej: screened.rejected.slice(0, 8).map((r: any) => [r.name, r.dist, r.why[0]]),
       };
-      for (const K of sets) {
-        const r = runOne(data, K, S, bed, screened, 3);
-        rec[K.key === "judgement" ? "j" : "m"] = packSide(r, S, bed);
-      }
-      // A bedroom view with no comparable at all carries no verdict either way.
-      if (!rec.j.c.length && !rec.m.c.length) continue;
+      rec.pg = packSide(runOne(data, K, S, bed, screened, 3), S, bed);
+      if (!rec.pg.c.length) continue;      // no comparable at all is no reading
       beds[bed] = rec;
     }
     if (!Object.keys(beds).length) { skipped.push({ n: name, why: "no bedroom view produced a comparable" }); continue; }
@@ -261,7 +261,9 @@ async function main() {
     screens: { minUnits: MIN_UNITS, maxRadiusM: MAX_RADIUS_M, minComps: MIN_COMPS,
                outlierBand: OUTLIER_BAND, ageExcludeYears: AGE_EXCLUDE_YEARS,
                leaseGapExcludeYears: LEASE_GAP_EXCLUDE_YEARS },
-    sets: { judgement: setMeta(JUDGEMENT), measured: setMeta(MEASURED) },
+    constants: setMeta(K),
+    // The retired set travels with the data so the panel can say what these figures replaced.
+    retired: setMeta(JUDGEMENT),
     counts: { developments: developments.length, skipped: skipped.length, subjects: subjects.length },
     skipped: skipped.slice(0, 200),
     developments,
@@ -289,7 +291,8 @@ async function main() {
 
   const index: any = {
     generatedAt: payload.generatedAt, window: payload.window, method: payload.method,
-    screens: payload.screens, sets: payload.sets, counts: payload.counts,
+    screens: payload.screens, constants: payload.constants, retired: payload.retired,
+    counts: payload.counts,
     // name -> [slug, district, region, {bed: [judgement gap%, measured gap%]}]. Small
     // enough to load with the panel, so a verdict shows before the shard arrives.
     dev: {} as Record<string, any>,
@@ -297,7 +300,7 @@ async function main() {
   for (const d of developments) {
     const slug = slugOf(d.n);
     const heads: Record<string, number[]> = {};
-    for (const [bed, b] of Object.entries<any>(d.beds)) heads[bed] = [b.j.pct, b.m.pct];
+    for (const [bed, b] of Object.entries<any>(d.beds)) heads[bed] = b.pg.pct;
     index.dev[d.n] = [slug, d.d, d.r, heads];
     await fs.writeFile(path.join(siteDir, `${slug}.json`), JSON.stringify(d));
   }

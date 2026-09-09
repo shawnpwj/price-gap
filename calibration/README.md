@@ -23,6 +23,8 @@ GFA harmonisation (+7%) was **dropped from the study entirely** on his ruling, 2
 
 ## 1. STATUS
 
+**All five are measured, and as of 2026-09-09 all five are LIVE in the engine.**
+
 | | |
 |---|---|
 | **Lease / vintage term** | **MEASURED AND SHIPPED.** See §3. |
@@ -31,9 +33,21 @@ GFA harmonisation (+7%) was **dropped from the study entirely** on his ruling, 2
 | **Void · extra penthouse area** | **MEASURED AND SHIPPED.** See §13. No engine constant exists. |
 | **Tenure · FH vs LH (÷1.15)** | **MEASURED AND SHIPPED.** See §10. |
 
-**NOTHING HAS BEEN WRITTEN BACK TO `../scripts/price-gap.ts` AND NOTHING MAY BE** until
-Shawn audits. This folder is a validation table that sits BESIDE the constants. That is
-framing ruling 3 and it is the one that matters most.
+**AUDITED AND ADOPTED — Shawn, 2026-09-09.** The measured constants are now THE constants:
+`engine.ts` exports `loadConstants()` (which resolves the measured set), the CLI defaults to
+it, the all-developments batch emits a single column, and the workup panel no longer carries a
+toggle. Framing ruling 3 — "results sit BESIDE the constants and never write back until Shawn
+audits" — is DISCHARGED by that audit, not overridden.
+
+The figures are still READ FROM the JSONs in this folder at load time and are not hardcoded in
+the engine, so re-running a fit still moves the engine. That part of the rule stands forever.
+
+The pre-calibration set is RETIRED, not deleted: `JUDGEMENT` remains in `engine.ts`, travels in
+the dataset as `retired`, and the workup shows it beside the live figure under "Replaced".
+
+WHAT DECIDED IT: on held-out pairs of real neighbouring projects the measured form lands 26%
+closer to the market — error 289 against the engine set's 389, where no adjustment at all is
+412. The engine's $200 mid-to-far rail band sits OUTSIDE the measured 95% range of $120–194.
 
 ---
 

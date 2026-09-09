@@ -27,7 +27,7 @@ import { promises as fs } from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import {
-  loadData, loadConstants, factsFor, screen, neighbours, runOne, JUDGEMENT,
+  loadData, loadConstants, factsFor, screen, neighbours, runOne, JUDGEMENT, vintageGap,
   BEDS, MIN_UNITS, MAX_RADIUS_M, MIN_COMPS, OUTLIER_BAND, AGE_EXCLUDE_YEARS,
   LEASE_GAP_EXCLUDE_YEARS, PSF_WINDOW_MONTHS, type Constants,
 } from "./engine.ts";
@@ -70,7 +70,11 @@ function caveatCodes(r: any, S: any, bed: string) {
 function packSide(r: any, S: any, bed: string) {
   return {
     c: r.comps.map((c: any) => ({
+      // vg = the vintage gap in years, and dm = metres of difference in station access.
+      // These are the two terms that decide the ORDER, and without them on the page a
+      // reader sees a nearer comparable ranked second and assumes the sort is broken.
       n: c.name, d: c.dist, b: c.psf.psf, a: c.adjusted, g: c.gap,
+      vg: vintageGap(S, c), dm: Math.abs((S.mrt?.metres ?? 0) - (c.mrt?.metres ?? 0)),
       t: c.tenure?.type ?? null, ls: c.tenure?.leaseStart ?? null, top: c.top?.year ?? null,
       u: c.units ?? null, mo: c.psf.months, fb: c.psf.fellBack ? 1 : undefined,
       // [label, delta, note] — the note is what lets the panel explain a bar without
@@ -258,7 +262,7 @@ async function main() {
     generatedAt: new Date().toISOString(),
     window: `${PSF_WINDOW_MONTHS} months from ${data.cutoff}`,
     method: "Adjustments are applied TO THE COMPARABLE, never to the subject. A comparable landing ABOVE the subject's PSF implies the subject is undervalued.",
-    screens: { minUnits: MIN_UNITS, maxRadiusM: MAX_RADIUS_M, minComps: MIN_COMPS,
+    screens: { leaseGapYears: LEASE_GAP_EXCLUDE_YEARS, minUnits: MIN_UNITS, maxRadiusM: MAX_RADIUS_M, minComps: MIN_COMPS,
                outlierBand: OUTLIER_BAND, ageExcludeYears: AGE_EXCLUDE_YEARS,
                leaseGapExcludeYears: LEASE_GAP_EXCLUDE_YEARS },
     constants: setMeta(K),

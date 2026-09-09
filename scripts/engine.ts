@@ -362,6 +362,17 @@ export function factsFor(data: Data, name: string, node: any, bed: string, widen
     // Set by the batch for a site that exists only in the GLS pipeline, so the caveats can
     // say that the lease start is an estimate off the award date rather than a fact.
     _glsOnly: ov._glsOnly ?? false, _awardEstimated: ov._awardEstimated ?? false,
+    _tenureFromGls: ov._tenureFromGls ?? false,
+    // With neither a tenure nor a TOP there is no clock to difference against, so the
+    // vintage term — the largest adjustment on the ladder — cannot run at all and every
+    // comparable passes through untouched. A gap computed that way is not a weak reading,
+    // it is not a reading: it compares a 2026 launch to a 2002 lease as if they were the
+    // same thing. Flagged here and the verdict is suppressed downstream.
+    // The real test is not "has a tenure" but "has a CLOCK to difference against". A
+    // freehold with no completion year has a tenure and still cannot be restated: the
+    // vintage term reads off TOP for anything involving a freehold, and there is no TOP.
+    // MANDALAY MANSION reported +29.9% that way, off comparables nothing had touched.
+    _unadjustable: !top && !(tenure?.type === "LH" && tenure.leaseStart != null),
   };
 }
 
@@ -629,7 +640,8 @@ export function runOne(data: Data, K: Constants, S: any, bed: string, screened: 
   const meanAdj = comps.length ? comps.reduce((s, c) => s + c.adjusted, 0) / comps.length : 0;
   const gap = Math.round(medianAdj - S.psf.psf);
   const gapPct = medianAdj ? gap / medianAdj : 0;
-  const verdict = Math.abs(gapPct) < 0.03 ? "fairly valued" : gapPct > 0 ? "undervalued" : "overvalued";
+  const verdict = S._unadjustable ? "not assessable"
+    : Math.abs(gapPct) < 0.03 ? "fairly valued" : gapPct > 0 ? "undervalued" : "overvalued";
 
   // ── Caveats — these travel WITH the numbers, not as a footnote ─────────────
   const caveats: string[] = [];
@@ -638,6 +650,7 @@ export function runOne(data: Data, K: Constants, S: any, bed: string, screened: 
     if (c.psf.fellBack) caveats.push(`${c.name} had too few ${bed} caveats — its figure uses ALL bedroom types instead, so unit-mix differences are baked into it.`);
     if (c.psf.months < 4) caveats.push(`${c.name} priced off only ${c.psf.months} month(s) of caveats — a thin sample that one atypical unit can move.`);
   }
+  if (S._unadjustable) caveats.push(`${S.name} has no date to difference against — no completion year on record, and no lease start either — so the vintage adjustment — the largest term on the ladder — could not run and the comparables below are UNRESTATED. No verdict is given: the figures show what the neighbours transact at, not what this is worth.`);
   if (S.psfWindow > PSF_WINDOW_MONTHS) caveats.push(`${S.name} has no transactions in the last ${PSF_WINDOW_MONTHS} months — its figure reaches back ${S.psfWindow} months. The comparables are all priced off the last ${PSF_WINDOW_MONTHS}, so the subject's side of this comparison is older than theirs and the gap carries whatever the market did in between.`);
   if (S.psfSource === "new sale") caveats.push(`${S.name} is priced off DEVELOPER (new sale) transactions; comparables are priced off the RESALE market. Developer pricing carries a primary-market premium that resale does not.`);
   if (S.psfSource.startsWith("projected")) caveats.push(`${S.name} has NOT transacted — its figure is a PROJECTED launch price (GLS forecast), not an observed one. Every number downstream of it is a forecast, and the gap should be treated as indicative only until real caveats appear.`);

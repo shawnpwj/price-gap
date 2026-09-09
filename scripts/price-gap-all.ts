@@ -50,6 +50,8 @@ function caveatCodes(r: any, S: any, bed: string) {
   if (S.top?.estimated) out.push(["estTop", S.top.year, S.top.source]);
   if (S.psfWindow > 12) out.push(["wideWindow", S.psfWindow]);
   if (S._glsOnly) out.push(["glsSite", S.tenure?.leaseStart ?? null, S._awardEstimated ? 1 : 0]);
+  else if (S._tenureFromGls) out.push(["tenureFromGls", S.tenure?.leaseStart ?? null]);
+  if (S._unadjustable) out.push(["unadjustable"]);
   if (r.comps.some((c: any) => c.steps.some((s: any) => s.label === "Age (TOP)"))) out.push(["ageProxy"]);
   if (r.ageExcluded.length) out.push(["ageExcl", r.ageExcluded.map((a: any) => [a.name, a.top])]);
   if (r.leaseExcluded.length) out.push(["leaseExcl", r.leaseExcluded.map((l: any) => [l.name, l.leaseStart])]);
@@ -141,6 +143,36 @@ async function main() {
     const hits = [...dsiByCanon.keys()].filter((k) => k.startsWith(c) && c.length >= 6);
     return hits.length === 1 ? dsiByCanon.get(hits[0]) : null;
   };
+  // A 99-year lease on a fresh site commences at award; the sheet's award date is the only
+  // record of it for a project that has never transacted.
+  const awardYearOf = (site: any) =>
+    Number(String(site.awardDate || "").match(/\b(20\d{2})\b/)?.[1])
+    || (Number(site.launchYear) ? Number(site.launchYear) - 1 : null);
+
+  // ── Subjects in dsi-index that have NO tenure of their own ────────────────
+  // pricegap-base derives tenure from CAVEATS, so a development that has never transacted
+  // has none — and without a tenure or a TOP the vintage term cannot run at all. Every
+  // comparable then passes through completely unadjusted and the gap is nonsense: LUCERNE
+  // GRAND read -55.3% against 2002-2010 leases that were never restated, and the lease-gap
+  // screen could not fire either because it needs the subject's own lease start.
+  // Where the GLS sheet knows the award date, that is the missing lease start. Found while
+  // tracing the sheet's margin change, 2026-09-09.
+  for (const [gname, site] of data.gls) {
+    const target = dsiNames.has(gname) ? gname
+      : dsiByCanon.get(canon(gname)) ?? prefixMatch(canon(gname));
+    if (!target) continue;
+    if (data.base[target]?.tenure?.type || data.overrides[target]?.tenure) continue;
+    const y = awardYearOf(site);
+    if (!y) continue;
+    data.overrides[target] = {
+      ...(data.overrides[target] || {}),
+      tenure: { raw: `99 yrs lease commencing from ${y}`, type: "LH", years: 99, leaseStart: y },
+      units: data.overrides[target]?.units ?? site.units ?? undefined,
+      _tenureFromGls: true, _awardEstimated: !String(site.awardDate || "").match(/\b20\d{2}\b/),
+    };
+    process.stderr.write(`  ~ ${target}: no tenure of its own, taking lease start ${y} from the GLS award date\n`);
+  }
+
   const glsOnly: any[] = [];
   for (const [gname, site] of data.gls) {
     if (dsiNames.has(gname) || !site.lat || !site.lng) continue;
@@ -151,8 +183,7 @@ async function main() {
     // A 99-year lease on a fresh site commences at award. Where the sheet carries no award
     // date, launch year minus one is the working estimate and is flagged as one — it moves
     // the vintage term by a single year, which is $43 psf at the measured rate.
-    const awardYear = Number(String(site.awardDate || "").match(/\b(20\d{2})\b/)?.[1])
-      || (Number(site.launchYear) ? Number(site.launchYear) - 1 : null);
+    const awardYear = awardYearOf(site);
     if (!awardYear) continue;
     data.overrides[gname] = {
       ...(data.overrides[gname] || {}),

@@ -45,8 +45,43 @@ export const OUTLIER_BAND = 0.20;
 export const CONSTRUCTION_YEARS = 6;
 export const MIN_UNITS = 200;
 export const MIN_MONTHS_IN_WINDOW = 2;
-export const MAX_RADIUS_M = 1500;
+// EXPANDING RADIUS. A fixed 1.5 km treats a dense stretch of D15 and a thin pocket of D20
+// the same way: in the dense one it reaches past every good comparable, in the thin one it
+// runs out. Start tight, widen only while short of comparables, and report which ring was
+// used. Shawn's instinct, 2026-09-09 — he reached for "1 km from Mayflower, or 1 km from
+// Ai Tong" when Amo's own surroundings looked thin. Measured, neither of those catchments
+// adds a single project the 1.5 km ring did not already contain (they sit INSIDE it, Amo
+// being 562 m from the station), so the honest form of the idea is not a different anchor
+// but a wider ring when the tight one is short.
+export const RADIUS_LADDER = [1000, 1500, 2000];
+export const MAX_RADIUS_M = RADIUS_LADDER[RADIUS_LADDER.length - 1];
+// How many comparables the ladder is trying to reach before it stops widening.
+export const TARGET_COMPS = 3;
+
+// COMPARABILITY RANKING. The engine used to rank candidates by DISTANCE and stop at three,
+// which is what let a 1991 lease 390 m away beat a 2013 lease 757 m away and left the ladder
+// rebuilding a comparable rather than adjusting one. Shawn, 2026-09-09: "what you should
+// ALWAYS be doing is finding within 1km - 1.5km, what is the most comparable 3 based on age
+// ..., size (>200 units), and similar attributes like nearby to mrt".
+//
+// Every term is read off RAW ATTRIBUTES — years, metres, tenure class — and never off an
+// adjusted figure, so the score does not depend on which constant set is running and both
+// columns still see the identical pool. Lower is better.
+//
+// Vintage is weighted hardest because it is the term that was actually going wrong, and it
+// is normalised on the same 15 years as the hard gate: a comparable at the gate contributes
+// a full 2.0, one of the same vintage contributes nothing.
+export const RANK_WEIGHTS = { vintage: 2.0, distance: 1.0, station: 0.6, tenure: 0.8 };
 export const PSF_WINDOW_MONTHS = 12;
+// A SUBJECT with nothing in the last 12 months used to be skipped outright, which is how 73
+// developments ended up with no workup at all. Shawn, 2026-09-09: "all development should
+// have [one] even if there is no transaction for the specific development yet." So the
+// subject's own window widens until it finds a price, and the window it had to use travels
+// with the figure — a development priced off 2022 caveats is a different quality of reading
+// and must say so. COMPARABLES are NOT widened: two months of caveats inside twelve is a
+// quality bar on the evidence, and relaxing it there would weaken every workup to rescue a
+// few. (27 of the 73 are rescued at 24 months, 14 more at 36, 6 more at 60.)
+export const SUBJECT_WINDOW_LADDER = [12, 24, 36, 60];
 export const HARMONISATION_FROM = 2023;   // lease starts from this year are post-rule
 export const BEDS = ["All", "1BR", "2BR", "3BR", "4BR+"];
 
@@ -222,7 +257,7 @@ export interface Data {
   dsi: any[]; byName: Map<string, any>;
   psfHist: Record<string, any>; base: Record<string, any>; mix: Record<string, any>;
   stations: any[]; overrides: Record<string, any>; details: Record<string, any>;
-  gls: Map<string, any>; cutoff: string;
+  gls: Map<string, any>; cutoff: string; cutoffs: Record<number, string>;
 }
 
 export async function loadData(): Promise<Data> {
@@ -243,8 +278,12 @@ export async function loadData(): Promise<Data> {
   const mrtAll = JSON.parse(mrtRaw);
   const glsRaw2 = JSON.parse(glsRaw);
   const glsArr = (Array.isArray(glsRaw2) ? glsRaw2 : glsRaw2.sites || []) as any[];
-  const cutoffD = new Date();
-  cutoffD.setMonth(cutoffD.getMonth() - PSF_WINDOW_MONTHS);
+  const monthsAgo = (n: number) => {
+    const d = new Date(); d.setMonth(d.getMonth() - n);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  };
+  const cutoffs: Record<number, string> = {};
+  for (const m of SUBJECT_WINDOW_LADDER) cutoffs[m] = monthsAgo(m);
   return {
     dsi,
     byName: new Map(dsi.filter((p) => p.lat).map((p) => [p.project.toUpperCase().trim(), p])),
@@ -255,7 +294,7 @@ export async function loadData(): Promise<Data> {
     overrides: JSON.parse(overrideRaw),
     details: JSON.parse(detailRaw).projects,
     gls: new Map(glsArr.filter((g) => g.devName).map((g) => [String(g.devName).toUpperCase().trim(), g])),
-    cutoff: `${cutoffD.getFullYear()}-${String(cutoffD.getMonth() + 1).padStart(2, "0")}`,
+    cutoff: cutoffs[PSF_WINDOW_MONTHS], cutoffs,
   };
 }
 
@@ -277,16 +316,21 @@ function nearestStation(data: Data, name: string, node: any) {
 // Facts for any development: tenure, units, MRT, integrated flag, psf series.
 // Constant-set-independent by design — the MRT BAND is applied later, because the two
 // sets cut the bands differently and the underlying metres are the same either way.
-export function factsFor(data: Data, name: string, node: any, bed: string) {
+export function factsFor(data: Data, name: string, node: any, bed: string, widen = false) {
   const ov = data.overrides[name] || {};
   const b = data.base[name] || {};
   const nearest = nearestStation(data, name, node);
   // A still-selling launch has no resale history, so its own primary-market psf is
   // the only honest read of what it costs today. Resale is preferred when it exists.
-  const resale = avgPsf(data.psfHist[name], bed, data.cutoff);
-  const newSale = avgPsf(b.newSale, bed, data.cutoff);
-  let psf = resale && resale.months >= MIN_MONTHS_IN_WINDOW ? resale : (newSale || resale);
-  let psfSource = psf === resale ? "resale+subsale" : "new sale";
+  // Widening applies to the SUBJECT only, and stops at the first window that finds a price.
+  const windows = widen ? SUBJECT_WINDOW_LADDER : [PSF_WINDOW_MONTHS];
+  let psf: PsfPick | null = null, psfSource = "", psfWindow = PSF_WINDOW_MONTHS;
+  for (const w of windows) {
+    const resale = avgPsf(data.psfHist[name], bed, data.cutoffs[w] ?? data.cutoff);
+    const newSale = avgPsf(b.newSale, bed, data.cutoffs[w] ?? data.cutoff);
+    const pick = resale && resale.months >= MIN_MONTHS_IN_WINDOW ? resale : (newSale || resale);
+    if (pick) { psf = pick; psfSource = pick === resale ? "resale+subsale" : "new sale"; psfWindow = w; break; }
+  }
   // Last resort for a launch that has not transacted at all: the GLS projected price.
   // This is a FORECAST, not a transaction, and is caveated loudly downstream.
   if (!psf) {
@@ -314,7 +358,10 @@ export function factsFor(data: Data, name: string, node: any, bed: string) {
     mixSizes: data.mix[name]?.bedrooms || null,
     mrt: { station: nearest.name, metres: nearest.m, minutes: Math.round(walkMinutes(nearest.m) * 10) / 10 },
     integrated: ov.integrated ?? false,
-    psf, psfSource,
+    psf, psfSource, psfWindow,
+    // Set by the batch for a site that exists only in the GLS pipeline, so the caveats can
+    // say that the lease start is an estimate off the award date rather than a fact.
+    _glsOnly: ov._glsOnly ?? false, _awardEstimated: ov._awardEstimated ?? false,
   };
 }
 
@@ -325,17 +372,43 @@ export function factsFor(data: Data, name: string, node: any, bed: string) {
 // `candidates` may be supplied precomputed: which developments are within the radius
 // is a property of the SITE and does not change with the bedroom, so the batch builds
 // the neighbour index once instead of 1,845 x 1,845 haversines per bedroom view.
-export function neighbours(data: Data, S: any) {
+export function neighbours(data: Data, S: any, radius = MAX_RADIUS_M) {
   return data.dsi
     .filter((p) => p.lat && p.project.toUpperCase().trim() !== S.name)
     .map((p) => ({ node: p, name: p.project.toUpperCase().trim(), dist: Math.round(haversine(S.lat, S.lng, p.lat, p.lng)) }))
-    .filter((c) => c.dist <= MAX_RADIUS_M)
+    .filter((c) => c.dist <= radius)
     .sort((a, b) => a.dist - b.dist);
 }
 
-export function screen(data: Data, S: any, bed: string, precomputed?: ReturnType<typeof neighbours>) {
+// Vintage distance in years between two developments, on whichever clock they share — the
+// same rule the vintage ADJUSTMENT uses, so ranking and adjusting agree about what "far
+// apart" means. Null where neither clock is readable.
+export function vintageGap(S: any, c: any): number | null {
+  if (S.tenure?.type === "LH" && c.tenure?.type === "LH" &&
+      S.tenure.leaseStart != null && c.tenure.leaseStart != null)
+    return Math.abs(S.tenure.leaseStart - c.tenure.leaseStart);
+  if (S.top && c.top) return Math.abs(S.top.year - c.top.year);
+  return null;
+}
+
+// How comparable this candidate is, before any adjustment is applied. Lower is better.
+export function comparability(S: any, c: any): number {
+  const W = RANK_WEIGHTS;
+  const v = vintageGap(S, c);
+  // An unreadable vintage is treated as sitting AT the gate rather than as free: it is a
+  // real unknown and should not outrank a comparable whose vintage is known and close.
+  const vintage = (v == null ? LEASE_GAP_EXCLUDE_YEARS : v) / LEASE_GAP_EXCLUDE_YEARS;
+  const dist = c.dist / MAX_RADIUS_M;
+  // Rail access as raw METRES apart, not as a band: the two constant sets cut the bands
+  // differently, and ranking must not depend on which one is running.
+  const station = Math.abs((S.mrt?.metres ?? 0) - (c.mrt?.metres ?? 0)) / 500;
+  const tenure = S.tenure?.type && c.tenure?.type && S.tenure.type !== c.tenure.type ? 1 : 0;
+  return W.vintage * vintage + W.distance * dist + W.station * station + W.tenure * tenure;
+}
+
+// Screen at ONE radius. `screen()` below drives this up the ladder.
+function screenAt(data: Data, S: any, bed: string, candidates: ReturnType<typeof neighbours>, radius: number) {
   const rejected: any[] = [];
-  const candidates = precomputed ?? neighbours(data, S);
 
   // Pass 1 — hard screens (data quality and "is this a real cross-shopped condo").
   // The whole eligible set is built rather than stopping at nComps, because the age
@@ -387,7 +460,26 @@ export function screen(data: Data, S: any, bed: string, precomputed?: ReturnType
         why: [`lease starts ${c.tenure.leaseStart} — ${Math.abs(d)} yrs ${d > 0 ? "older" : "newer"} than subject's ${S.tenure.leaseStart} (limit ${LEASE_GAP_EXCLUDE_YEARS})`] });
     }
   }
-  return { rejected, eligible, pool, ageExcluded, leaseExcluded };
+  // RANK BY COMPARABILITY, not by distance. This is the line that changes which three
+  // comparables a development is judged against; everything above only decides who is
+  // eligible at all. (Shawn, 2026-09-09.)
+  const ranked = [...pool].sort((a, b) => comparability(S, a) - comparability(S, b));
+  return { rejected, eligible, pool: ranked, ageExcluded, leaseExcluded, radius };
+}
+
+// Walk the radius ladder: take the tightest ring that yields TARGET_COMPS, and if none does,
+// keep the widest attempt — a comparable 1.8 km away beats no comparable at all. The ring
+// actually used travels with the result, because "we had to go to 2 km to find three" is
+// itself information about how unusual the development is.
+export function screen(data: Data, S: any, bed: string, precomputed?: ReturnType<typeof neighbours>) {
+  let last: ReturnType<typeof screenAt> | null = null;
+  for (const radius of RADIUS_LADDER) {
+    const cands = (precomputed ?? neighbours(data, S, MAX_RADIUS_M)).filter((c) => c.dist <= radius);
+    const got = screenAt(data, S, bed, cands, radius);
+    last = got;
+    if (got.pool.length >= TARGET_COMPS) return got;
+  }
+  return last!;
 }
 
 // Remaining lease of the LEASEHOLD side of a mixed pair — the input to the measured
@@ -546,6 +638,7 @@ export function runOne(data: Data, K: Constants, S: any, bed: string, screened: 
     if (c.psf.fellBack) caveats.push(`${c.name} had too few ${bed} caveats — its figure uses ALL bedroom types instead, so unit-mix differences are baked into it.`);
     if (c.psf.months < 4) caveats.push(`${c.name} priced off only ${c.psf.months} month(s) of caveats — a thin sample that one atypical unit can move.`);
   }
+  if (S.psfWindow > PSF_WINDOW_MONTHS) caveats.push(`${S.name} has no transactions in the last ${PSF_WINDOW_MONTHS} months — its figure reaches back ${S.psfWindow} months. The comparables are all priced off the last ${PSF_WINDOW_MONTHS}, so the subject's side of this comparison is older than theirs and the gap carries whatever the market did in between.`);
   if (S.psfSource === "new sale") caveats.push(`${S.name} is priced off DEVELOPER (new sale) transactions; comparables are priced off the RESALE market. Developer pricing carries a primary-market premium that resale does not.`);
   if (S.psfSource.startsWith("projected")) caveats.push(`${S.name} has NOT transacted — its figure is a PROJECTED launch price (GLS forecast), not an observed one. Every number downstream of it is a forecast, and the gap should be treated as indicative only until real caveats appear.`);
   if (S.top?.estimated) caveats.push(`${S.name} has no completion year on record — TOP estimated as ${S.top.year} (${S.top.source}). Any age adjustment against a freehold comparable inherits that estimate.`);
@@ -585,6 +678,7 @@ export function runOne(data: Data, K: Constants, S: any, bed: string, screened: 
     generatedAt: new Date().toISOString(),
     subject: S, bedroom: bed, constants: K.key,
     window: `${PSF_WINDOW_MONTHS} months from ${data.cutoff}`,
+    radius: screened.radius,
     comps, rejected: rejected.slice(0, 12), ageExcluded, leaseExcluded, bandExcluded,
     result: { medianAdjusted: Math.round(medianAdj), meanAdjusted: Math.round(meanAdj), basis: "median", gap, gapPct, verdict },
     layout, caveats,

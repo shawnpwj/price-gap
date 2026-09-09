@@ -48,6 +48,8 @@ function caveatCodes(r: any, S: any, bed: string) {
   if (S.psfSource === "new sale") out.push(["newSale"]);
   if (S.psfSource.startsWith("projected")) out.push(["projected"]);
   if (S.top?.estimated) out.push(["estTop", S.top.year, S.top.source]);
+  if (S.psfWindow > 12) out.push(["wideWindow", S.psfWindow]);
+  if (S._glsOnly) out.push(["glsSite", S.tenure?.leaseStart ?? null, S._awardEstimated ? 1 : 0]);
   if (r.comps.some((c: any) => c.steps.some((s: any) => s.label === "Age (TOP)"))) out.push(["ageProxy"]);
   if (r.ageExcluded.length) out.push(["ageExcl", r.ageExcluded.map((a: any) => [a.name, a.top])]);
   if (r.leaseExcluded.length) out.push(["leaseExcl", r.leaseExcluded.map((l: any) => [l.name, l.leaseStart])]);
@@ -99,7 +101,72 @@ async function main() {
   const MEASURED = await loadMeasured();
   const sets: Constants[] = [JUDGEMENT, MEASURED];
 
-  let subjects = data.dsi.filter((p) => p.lat);
+  // ── Sites that exist ONLY in the GLS pipeline ──────────────────────────────
+  // Shawn, 2026-09-09: "why is thomson reserve not having ANY form of comparable? all
+  // development should have even if there is no transaction for the specific development
+  // yet (not launch yet)." He is right, and the cause was narrow: the batch iterates
+  // dsi-index, and an un-launched site is not in it. THOMSON RESERVE (the Thomson View
+  // en-bloc, 1,240 units, launching 2026) lives only in gls-forward.json.
+  //
+  // Only TWO sites are genuinely in this class. Six other unmatched GLS names — Continuum,
+  // The Botany, Parktown Residences, Upperhouse, RiverGreen, Rivelle — are just the sheet's
+  // short forms of developments that ARE in dsi-index and already have workups under their
+  // real names, so they are matched here rather than duplicated.
+  //
+  // The subject price is the sheet's PROJECTED psf, at Shawn's call. Note this is NOT what
+  // the New Launches table shows: that cell prefers breakeven x margin, which puts Thomson
+  // Reserve at $2,753 (2,202 x 1.25) against the sheet's projected $2,532. Left alone here —
+  // the discrepancy is real and is his to rule on, not something to quietly reconcile.
+  const dsiNames = new Set(data.dsi.map((p) => p.project.toUpperCase().trim()));
+  // The same canonical form the calculator's New Launches table uses to match a sheet name
+  // to a scored development: drop a leading "The", drop a trailing " at <location>" or
+  // " @ <x>", fold Residences/Residence together, then strip punctuation. Without the last
+  // two, "Parktown Residences" and "Rivelle" read as brand-new sites when PARKTOWN RESIDENCE
+  // and RIVELLE TAMPINES are already in dsi-index with workups of their own.
+  const canon = (n: string) => n.toUpperCase().trim()
+    .replace(/^THE\s+/, "")
+    .replace(/\s+(?:AT|@)\s+.*$/, "")
+    .replace(/RESIDENCES\b/, "RESIDENCE")
+    .replace(/[^A-Z0-9]/g, "");
+  const dsiByCanon = new Map<string, string>();
+  for (const p of data.dsi) {
+    const full = p.project.toUpperCase().trim();
+    for (const k of new Set([canon(p.project), canon(full.replace(/\s+(?:AT|@)\s+.*$/, ""))])) {
+      if (!dsiByCanon.has(k)) dsiByCanon.set(k, full);
+    }
+  }
+  // A sheet name that is a PREFIX of exactly one dsi name is that development —
+  // "Rivelle" -> RIVELLE TAMPINES, "Upperhouse" -> UPPERHOUSE AT ORCHARD BOULEVARD.
+  const prefixMatch = (c: string) => {
+    const hits = [...dsiByCanon.keys()].filter((k) => k.startsWith(c) && c.length >= 6);
+    return hits.length === 1 ? dsiByCanon.get(hits[0]) : null;
+  };
+  const glsOnly: any[] = [];
+  for (const [gname, site] of data.gls) {
+    if (dsiNames.has(gname) || !site.lat || !site.lng) continue;
+    // A name the sheet writes differently is not a missing development.
+    const c = canon(gname);
+    if (dsiByCanon.has(c) || prefixMatch(c)) continue;
+    if (!(site.projectedPsf?.avg)) continue;
+    // A 99-year lease on a fresh site commences at award. Where the sheet carries no award
+    // date, launch year minus one is the working estimate and is flagged as one — it moves
+    // the vintage term by a single year, which is $43 psf at the measured rate.
+    const awardYear = Number(String(site.awardDate || "").match(/\b(20\d{2})\b/)?.[1])
+      || (Number(site.launchYear) ? Number(site.launchYear) - 1 : null);
+    if (!awardYear) continue;
+    data.overrides[gname] = {
+      ...(data.overrides[gname] || {}),
+      tenure: { raw: `99 yrs lease commencing from ${awardYear}`, type: "LH", years: 99, leaseStart: awardYear },
+      units: site.units ?? null,
+      top: undefined,
+      _glsOnly: true, _awardEstimated: !String(site.awardDate || "").match(/\b20\d{2}\b/),
+    };
+    glsOnly.push({ project: gname, street: site.siteName || site.location || "", district: "",
+                   region: site.region || "", lat: site.lat, lng: site.lng, _gls: true });
+  }
+  if (glsOnly.length) process.stderr.write(`  + ${glsOnly.length} GLS-only site(s): ${glsOnly.map((g) => g.project).join(", ")}\n`);
+
+  let subjects = data.dsi.filter((p) => p.lat).concat(glsOnly);
   if (only.length) subjects = subjects.filter((p) => only.includes(p.project.toUpperCase().trim()));
   if (limit) subjects = subjects.slice(0, limit);
 
@@ -110,19 +177,22 @@ async function main() {
   for (const node of subjects) {
     const name = node.project.toUpperCase().trim();
     // Facts that do not vary by bedroom, read once off the "All" view.
-    const S0 = factsFor(data, name, node, "All");
+    const S0 = factsFor(data, name, node, "All", true);
     if (!S0.psf) { skipped.push({ n: name, why: "no transactions in the window" }); continue; }
     const nb = neighbours(data, S0);
 
     const beds: Record<string, any> = {};
     for (const bed of BEDS) {
-      const S = factsFor(data, name, node, bed);
+      const S = factsFor(data, name, node, bed, true);
       if (!S.psf) continue;
       // Screen ONCE — both constant sets then see the identical pool.
       const screened = screen(data, S, bed, nb);
       const rec: any = {
         psf: S.psf.psf, src: S.psfSource, mo: S.psf.months,
         fb: S.psf.fellBack ? 1 : undefined,
+        // The window the subject's own price had to reach back to, and the ring the
+        // comparables were found in. Both are quality information, not bookkeeping.
+        win: S.psfWindow, rad: screened.radius,
         rej: screened.rejected.slice(0, 8).map((r: any) => [r.name, r.dist, r.why[0]]),
       };
       for (const K of sets) {
@@ -137,6 +207,7 @@ async function main() {
 
     developments.push({
       n: name, st: node.street, d: node.district, r: node.region,
+      gls: node._gls ? 1 : undefined,
       lat: Math.round(node.lat * 1e5) / 1e5, lng: Math.round(node.lng * 1e5) / 1e5,
       t: S0.tenure?.type ?? null, ls: S0.tenure?.leaseStart ?? null, yrs: S0.tenure?.years ?? null,
       raw: S0.tenure?.raw ?? null,

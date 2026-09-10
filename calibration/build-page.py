@@ -251,21 +251,69 @@ def why_table():
                  f'<td class="num quiet">{npairs(a)+npairs(b)}</td></tr>')
     return ''.join(h) + '</tbody></table>'
 
+# ── does the rate actually fit a pair? (Shawn, 2026-09-10) ──────────────────
+# The pair table used to lead with each cell's own $/yr — its difference divided by its own
+# gap. At a one-year gap that divides the pair's whole floor-and-facing noise by 1, so the
+# column swung between -$302 and +$168 beside a $43 band and read as a contradiction. It is
+# not one: the rate is the slope through every cell, not the average of that column.
+# This table is the demonstration. Compare TOTALS at the same gap, never a single per-year.
+GBUCKETS = [('One year apart', 1, 1), ('Two years', 2, 2), ('Three to four years', 3, 4),
+            ('Five to nine years', 5, 9), ('Ten years and over', 10, 999)]
+
+def holds_table():
+    h = ['<table class="fig look"><thead><tr><th>How far apart the two leases are</th>'
+         '<th class="num">cells</th><th class="num">what the market shows</th>'
+         '<th class="num">what the rate predicts</th><th class="num">off by</th>'
+         '</tr></thead><tbody>']
+    for _, _, nm in BANDS:
+        rows = rows_in(nm)
+        h.append(f'<tr class="sep"><th colspan="5">{nm} &mdash; ${BANDR[nm]:,.0f} a year</th></tr>')
+        for lab, lo, hi in GBUCKETS:
+            s_ = [r for r in rows if lo <= r['gap'] <= hi]
+            if not s_: continue
+            obs  = st.median(r['diff'] for r in s_)
+            pred = BANDR[nm] * st.median(r['gap'] for r in s_)
+            thin = len(s_) < 10
+            h.append(f'<tr{" class=dim" if thin else ""}><th>{lab}</th>'
+                     f'<td class="num quiet">{len(s_)}</td>'
+                     f'<td class="num big">{obs:+,.0f}</td>'
+                     f'<td class="num">${pred:,.0f}</td>'
+                     f'<td class="num quiet">{obs-pred:+,.0f}</td></tr>')
+    return ''.join(h) + '</tbody></table>'
+
+RESID  = [r['diff'] - rate(mid(r)) * r['gap'] for r in ALL]
+WITHIN = sum(1 for x in RESID if abs(x) <= 200)
+ONEY   = [r for r in ALL if r['gap'] == 1]
+
+# Developments the integrated pass measures a premium on. They are NOT screened out of the
+# lease pairs, so their rows carry a mall on top of a year — the single loudest reason a row
+# disagrees with its band. Tagged rather than hidden.
+INTNAMES = {d['name'] for d in (G or {}).get('devs', [])}
+INTMAX   = max([d['adj'] for d in (G or {}).get('devs', [])] or [0])
+
 def pairtable():
     rows = sorted(ALL, key=lambda r: (-r['gap'], r['older']))
+    def nm_(x):
+        t = html.escape(x.title())
+        return t + '<i class="age">integrated</i>' if x in INTNAMES else t
     h = ['<table class="fig pairs"><thead><tr><th>older</th><th class="num">lease</th>'
          '<th>newer</th><th class="num">lease</th><th class="num">gap</th><th>bed</th>'
-         '<th class="num">psf</th><th class="num">psf</th><th class="num">$ / yr</th>'
-         '<th class="num">band says</th><th class="num">apart</th><th>station</th>'
+         '<th class="num">psf</th><th class="num">psf</th>'
+         '<th class="num">the market&rsquo;s difference</th>'
+         '<th class="num">the rate predicts</th><th class="num">off by</th>'
+         '<th class="num">distance</th><th>station</th>'
          '</tr></thead><tbody>']
     for r in rows:
+        pred = rate(mid(r)) * r['gap']
+        off  = r['diff'] - pred
         h.append(
-            f'<tr><td>{html.escape(r["older"].title())}</td><td class="num quiet">{r["ls_old"]}</td>'
-            f'<td>{html.escape(r["newer"].title())}</td><td class="num quiet">{r["ls_new"]}</td>'
+            f'<tr><td>{nm_(r["older"])}</td><td class="num quiet">{r["ls_old"]}</td>'
+            f'<td>{nm_(r["newer"])}</td><td class="num quiet">{r["ls_new"]}</td>'
             f'<td class="num">{r["gap"]}y</td><td class="quiet">{r["bed"]}</td>'
             f'<td class="num quiet">${r["psf_old"]:,.0f}</td><td class="num quiet">${r["psf_new"]:,.0f}</td>'
-            f'<td class="num big">{r["per_yr"]:+,.0f}</td>'
-            f'<td class="num quiet">${rate(mid(r)):,.0f}</td>'
+            f'<td class="num big">{r["diff"]:+,.0f}</td>'
+            f'<td class="num quiet">${pred:,.0f}</td>'
+            f'<td class="num quiet">{off:+,.0f}</td>'
             f'<td class="num quiet">{r["metres"]}m</td>'
             f'<td class="quiet">{html.escape((r["station"] or "").replace(" MRT Station","").replace(" LRT Station"," LRT"))}</td></tr>')
     return ''.join(h) + '</tbody></table>'
@@ -1132,7 +1180,27 @@ the first one measured against the market.</p>
 
 <section>
   <div class="sechead"><h2 class="disp">Behind it</h2>
-  <p>Three questions, answered once each.</p></div>
+  <p>Four questions, answered once each.</p></div>
+
+  <details><summary>Does the rate actually fit a pair?</summary>
+    <p class="expl"><b>Yes, once you compare totals rather than a single year.</b> A pair two
+    years apart should sit about two years&rsquo; worth of rate apart, one ten years apart about
+    ten. Compare a pair&rsquo;s whole difference against its own gap and the rate is what the
+    market is doing &mdash; not a figure imposed on it.</p>
+    <div class="scroll">{holds_table()}</div>
+    <p class="expl"><b>Two-year, five-to-nine-year and ten-year-plus pairs land on it almost
+    exactly</b> &mdash; within about a year&rsquo;s worth, on a difference of several hundred
+    dollars. The two that miss go in opposite directions and neither moves the answer: the rate
+    is the slope through all {len(ALL)} cells, <b>not the average of the per-pair figures</b>.
+    {WITHIN} of {len(ALL)} cells land within $200 of what their band predicts, and the misses
+    cancel &mdash; the median cell is ${st.median(RESID):,.0f} off.</p>
+    <p class="expl"><b>The one-year row is the bigger miss, and it is the reason the pair table
+    looks noisy.</b> {len(ONEY)} cells sit one year apart, where a single year of newness is
+    worth ${BANDR[NEW_NM]:,.0f} but the floor, the stack and the sales mix &mdash; none of them
+    controlled here &mdash; are worth several hundred. The signal is real but buried. Those
+    cells cannot mislead the rate, because this estimator fits the difference against the gap:
+    a one-year pair carries one year of leverage and cannot shout.</p>
+  </details>
 
   <details><summary>Do the bands move as the stock ages?</summary>
     <p class="expl"><b>No. They are fixed calendar years.</b> If this were really an age effect,
@@ -1181,7 +1249,15 @@ the first one measured against the market.</p>
         <li><b>facing</b> &mdash; same</li>
         <li>lease start and building age are<br>confounded: this is blended vintage</li></ul></div>
     </div>
-    <div class="scroll" style="margin-top:16px">{pairtable()}</div>
+    <p class="expl" style="margin-top:18px">Every cell, widest lease gap first. <b>The
+    difference is what the market shows; beside it is what the band predicts for that gap.</b>
+    Nothing in a row is adjusted for anything &mdash; a row that misses by a few hundred dollars
+    is floor, stack and mix, which this study does not control. Developments tagged
+    <i class="age" style="margin-left:0">integrated</i> carry a mall on top of a year &mdash;
+    the integrated pass measures the strongest of them at
+    <b>+${INTMAX:,.0f} psf</b> against these same neighbours, and that lands in this column
+    too.</p>
+    <div class="scroll" style="margin-top:12px">{pairtable()}</div>
   </details>
 </section>
 

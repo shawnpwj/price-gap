@@ -285,29 +285,74 @@ RESID  = [r['diff'] - rate(mid(r)) * r['gap'] for r in ALL]
 WITHIN = sum(1 for x in RESID if abs(x) <= 200)
 ONEY   = [r for r in ALL if r['gap'] == 1]
 
-# Developments the integrated pass measures a premium on. They are NOT screened out of the
-# lease pairs, so their rows carry a mall on top of a year — the single loudest reason a row
-# disagrees with its band. Tagged rather than hidden.
+# ── THE CELLS OUTSIDE THE CENTRAL 95% (Shawn, 2026-09-10) ───────────────────
+# He asked for the outliers to be removed and the clustered core shown. They are IDENTIFIED
+# and shown apart — but they stay in the fit, because the client-facing argument is stronger
+# with them in: taking all of them out moves the rate by less than a dollar, and a study that
+# deletes the cells that disagree is the first thing a sceptical reader attacks.
+# The cut is the central 95% of each band's residual distribution — 2.5% off each tail.
+TRIMQ    = 0.025
 INTNAMES = {d['name'] for d in (G or {}).get('devs', [])}
 INTMAX   = max([d['adj'] for d in (G or {}).get('devs', [])] or [0])
+HIPSF    = 2200
+
+def resid(r): return r['diff'] - rate(mid(r)) * r['gap']
+
+def _cuts(nm):
+    v = sorted(resid(r) for r in rows_in(nm))
+    return v[int(TRIMQ*len(v))], v[int((1-TRIMQ)*len(v))-1]
+CUTS = {nm: _cuts(nm) for _, _, nm in BANDS}
+def outside(r):
+    lo, hi = CUTS[band_of(mid(r))]
+    return not (lo <= resid(r) <= hi)
+
+def tags(r):
+    t = []
+    if r['region'] == 'CCR':                              t.append('CCR')
+    if min(r['n_old'], r['n_new']) < 8:                   t.append('thin')
+    if r['older'] in INTNAMES or r['newer'] in INTNAMES:  t.append('integrated')
+    if (r['psf_old'] + r['psf_new']) / 2 >= HIPSF:        t.append('high psf')
+    return t
+
+MISSES = sorted([r for r in ALL if outside(r)], key=lambda r: -abs(resid(r)))
+KEPT   = [r for r in ALL if not outside(r)]
+TRIMR  = {nm: fit([r for r in rows_in(nm) if not outside(r)]) for _, _, nm in BANDS}
+TRIMCI = {nm: ci([r for r in rows_in(nm) if not outside(r)]) for _, _, nm in BANDS}
+
+def miss_table():
+    """Every cell outside the central 95%, and why it is a candidate to sit there. He asked
+    for the outliers to be legible; they are named here and kept in the fit."""
+    h = ['<table class="fig"><thead><tr><th>older</th><th>newer</th><th class="num">gap</th>'
+         '<th>bed</th><th class="num">the market</th><th class="num">the rate</th>'
+         '<th class="num">off by</th><th>why it is a candidate to miss</th>'
+         '</tr></thead><tbody>']
+    for r in MISSES:
+        t = tags(r)
+        h.append(f'<tr><td>{html.escape(r["older"].title())}</td>'
+                 f'<td>{html.escape(r["newer"].title())}</td>'
+                 f'<td class="num">{r["gap"]}y</td><td class="quiet">{r["bed"]}</td>'
+                 f'<td class="num">{r["diff"]:+,.0f}</td>'
+                 f'<td class="num quiet">${rate(mid(r))*r["gap"]:,.0f}</td>'
+                 f'<td class="num big">{resid(r):+,.0f}</td>'
+                 f'<td class="quiet">{" &middot; ".join(t) if t else "nothing flagged"}</td></tr>')
+    return ''.join(h) + '</tbody></table>'
 
 def pairtable():
     rows = sorted(ALL, key=lambda r: (-r['gap'], r['older']))
-    def nm_(x):
-        t = html.escape(x.title())
-        return t + '<i class="age">integrated</i>' if x in INTNAMES else t
+    def nm_(x): return html.escape(x.title())
     h = ['<table class="fig pairs"><thead><tr><th>older</th><th class="num">lease</th>'
          '<th>newer</th><th class="num">lease</th><th class="num">gap</th><th>bed</th>'
          '<th class="num">psf</th><th class="num">psf</th>'
          '<th class="num">the market&rsquo;s difference</th>'
          '<th class="num">the rate predicts</th><th class="num">off by</th>'
-         '<th class="num">distance</th><th>station</th>'
+         '<th class="num">distance</th><th>station</th><th>flags</th>'
          '</tr></thead><tbody>']
     for r in rows:
         pred = rate(mid(r)) * r['gap']
         off  = r['diff'] - pred
+        t    = tags(r)
         h.append(
-            f'<tr><td>{nm_(r["older"])}</td><td class="num quiet">{r["ls_old"]}</td>'
+            f'<tr{" class=flag" if outside(r) else ""}><td>{nm_(r["older"])}</td><td class="num quiet">{r["ls_old"]}</td>'
             f'<td>{nm_(r["newer"])}</td><td class="num quiet">{r["ls_new"]}</td>'
             f'<td class="num">{r["gap"]}y</td><td class="quiet">{r["bed"]}</td>'
             f'<td class="num quiet">${r["psf_old"]:,.0f}</td><td class="num quiet">${r["psf_new"]:,.0f}</td>'
@@ -315,7 +360,8 @@ def pairtable():
             f'<td class="num quiet">${pred:,.0f}</td>'
             f'<td class="num quiet">{off:+,.0f}</td>'
             f'<td class="num quiet">{r["metres"]}m</td>'
-            f'<td class="quiet">{html.escape((r["station"] or "").replace(" MRT Station","").replace(" LRT Station"," LRT"))}</td></tr>')
+            f'<td class="quiet">{html.escape((r["station"] or "").replace(" MRT Station","").replace(" LRT Station"," LRT"))}</td>'
+            f'<td class="quiet">{" &middot; ".join(t)}</td></tr>')
     return ''.join(h) + '</tbody></table>'
 CSS = """
 *{box-sizing:border-box;margin:0;padding:0}
@@ -1194,6 +1240,26 @@ the first one measured against the market.</p>
     is the slope through all {len(ALL)} cells, <b>not the average of the per-pair figures</b>.
     {WITHIN} of {len(ALL)} cells land within $200 of what their band predicts, and the misses
     cancel &mdash; the median cell is ${st.median(RESID):,.0f} off.</p>
+    <p class="expl"><b>{len(MISSES)} of {len(ALL)} cells sit outside the central 95%</b>
+    &mdash; the widest 2.5% of misses at each end. <b>They are named here rather than removed,
+    because taking them out changes almost nothing:</b> ${BANDR[OLD_NM]:,.2f} becomes
+    ${TRIMR[OLD_NM]:,.2f}, and ${BANDR[NEW_NM]:,.2f} becomes ${TRIMR[NEW_NM]:,.2f} &mdash; both
+    still well inside the interval the full sample already publishes. That is the
+    argument for the rate, and it is worth more than a tidier table. The typical cell misses by
+    ${st.median(abs(x) for x in RESID):,.0f}; three in four are inside
+    ${sorted(abs(x) for x in RESID)[int(.75*len(RESID))]:,.0f}.</p>
+    <div class="scroll">{miss_table()}</div>
+    <p class="expl">Four things put a cell on that list. <b>Price level does the most work</b>
+    &mdash; the study is measured in dollars, so the same percentage error is a bigger miss on a
+    dear pair; these cells run
+    ${st.median((r['psf_old']+r['psf_new'])/2 for r in MISSES):,.0f} psf against
+    ${st.median((r['psf_old']+r['psf_new'])/2 for r in KEPT):,.0f} for the rest. <b>The Marina
+    Bay cluster</b> is the loudest group: this page already calls the CCR not measurable &mdash;
+    a submarket rather than a region &mdash; and those {len(CCR)} cells are still inside the
+    fitted figure. Then <b>thin cells</b>, and last the two things nobody controls, floor and
+    facing, worth several hundred dollars at $2,000 psf between a high unit with a view and a
+    low one facing a wall.</p>
+
     <p class="expl"><b>The one-year row is the bigger miss, and it is the reason the pair table
     looks noisy.</b> {len(ONEY)} cells sit one year apart, where a single year of newness is
     worth ${BANDR[NEW_NM]:,.0f} but the floor, the stack and the sales mix &mdash; none of them
@@ -1251,12 +1317,8 @@ the first one measured against the market.</p>
     </div>
     <p class="expl" style="margin-top:18px">Every cell, widest lease gap first. <b>The
     difference is what the market shows; beside it is what the band predicts for that gap.</b>
-    Nothing in a row is adjusted for anything &mdash; a row that misses by a few hundred dollars
-    is floor, stack and mix, which this study does not control. Developments tagged
-    <i class="age" style="margin-left:0">integrated</i> carry a mall on top of a year &mdash;
-    the integrated pass measures the strongest of them at
-    <b>+${INTMAX:,.0f} psf</b> against these same neighbours, and that lands in this column
-    too.</p>
+    Nothing in a row is adjusted for anything. The last column carries the reasons a row is a
+    candidate to miss, and the {len(MISSES)} that sit outside the central 95% are marked.</p>
     <div class="scroll" style="margin-top:12px">{pairtable()}</div>
   </details>
 </section>

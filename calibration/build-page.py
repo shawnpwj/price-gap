@@ -1114,6 +1114,114 @@ JS = """
   }
 })();
 """
+# ── THE OTHER THREE PANELS, GIVEN THE LEASE PANEL'S TREATMENT ───────────────
+# Shawn, 2026-09-10: "continue for the rest of the data pooling for MRT distance, integrated,
+# fh / leasehold. I want there to be similar data to look at below." Same three things the lease
+# panel got: the transaction base on the hero, every pair listed with what it rests on, and the
+# sales counts visible so nobody has to guess whether a row is one sale or forty.
+def _tx(rows, a_name, a_bed, a_n, b_name, b_bed, b_n):
+    """Distinct <project x bedroom> sides and the transactions under them."""
+    s = {}
+    for r in rows:
+        s[(r[a_name], r[a_bed])] = r[a_n]
+        s[(r[b_name], r[b_bed])] = r[b_n]
+    return sum(s.values()), len(s)
+
+MROWS = M['rows'] if M else []
+GROWS = [r for r in (G['rows'] if G else []) if 'n_i' in r]
+TROWS = T['mixed'] if T else []
+
+MTX, MSIDES = _tx(MROWS, 'closer', 'bed', 'n_close', 'further', 'bed', 'n_far') if MROWS else (0, 0)
+GTX, GSIDES = _tx(GROWS, 'a', 'bed', 'n_i', 'b', 'bed', 'n_n') if GROWS else (0, 0)
+TTX, TSIDES = _tx(TROWS, 'fh', 'bed', 'n_fh', 'lh', 'bed', 'n_lh') if TROWS else (0, 0)
+ndev2 = lambda rows, a, b: len({x for r in rows for x in (r[a], r[b])})
+
+def _nm(x): return html.escape(str(x).title())
+
+def int_cut_tx(cut):
+    """Transactions behind one integrated cut. The cut records its own rule (lgmax/dgmax), so
+    the subset is reproduced exactly as integrated-pairs.py cut it. An earlier version read
+    cut['lo']/['hi'] — those are the BOOTSTRAP INTERVAL, not the rule, and it produced a
+    broadest-cut count smaller than a tighter one. That impossibility is what caught it."""
+    rs = [r for r in GROWS
+          if abs(r['lg']) <= cut['lgmax'] and abs(r['dg']) <= cut['dgmax']]
+    return _tx(rs, 'a', 'bed', 'n_i', 'b', 'bed', 'n_n')[0] if rs else 0
+
+def ten_slice_tx(g, nxt):
+    """Transactions behind one lease-left step: pairs whose leasehold side has that much left."""
+    lo = g.get('min_left') or 0
+    hi = (nxt.get('min_left') if nxt else None) or 9999
+    rs = [r for r in TROWS if r.get('left') is not None and lo <= r['left'] < max(hi, lo + 1)]
+    return _tx(rs, 'fh', 'bed', 'n_fh', 'lh', 'bed', 'n_lh')[0] if rs else 0
+
+def mrt_band_tx(key):
+    """Transactions behind one walk band's pairs — the hero shows it beside the development count."""
+    rs = [r for r in MROWS if r['pairkey'] == key]
+    return _tx(rs, 'closer', 'bed', 'n_close', 'further', 'bed', 'n_far')[0] if rs else 0
+
+def mrt_pairtable():
+    """Every walk-distance pair, closest-fitting first. `adj` is the difference AFTER the lease
+    gap between the two is removed at the measured lease rate — that is the figure the bands are
+    fitted on, so it is the one shown, with the raw difference beside it."""
+    rows = sorted(MROWS, key=lambda r: (r['pairkey'], -r['adj']))
+    h = ['<table class="fig pairs"><thead><tr><th class="num">#</th><th>closer</th>'
+         '<th>further</th><th class="num">walk</th><th>bed</th>'
+         '<th class="num">difference</th><th class="num">after lease</th>'
+         '<th class="num">sales</th><th>station</th></tr></thead><tbody>']
+    for i, r in enumerate(rows, 1):
+        h.append(f'<tr><td class="num quiet">{i}</td>'
+                 f'<td>{_nm(r["closer"])} <i class="age">{r["m_close"]}m</i></td>'
+                 f'<td>{_nm(r["further"])} <i class="age">{r["m_far"]}m</i></td>'
+                 f'<td class="num">{r["m_far"]-r["m_close"]:+,.0f}m</td>'
+                 f'<td class="quiet">{r["bed"]}</td>'
+                 f'<td class="num quiet">{r["raw"]:+,.0f}</td>'
+                 f'<td class="num big">{r["adj"]:+,.0f}</td>'
+                 f'<td class="num quiet">{r["n_close"]} / {r["n_far"]}</td>'
+                 f'<td class="quiet">{html.escape(str(r["station"]).replace(" MRT Station","").replace(" LRT Station"," LRT"))}</td></tr>')
+    return ''.join(h) + '</tbody></table>'
+
+def int_pairtable():
+    """Every integrated-vs-plain pair. `adj` is what is left after BOTH the lease gap and the
+    walk difference are removed at their own measured rates — the premium itself."""
+    rows = sorted(GROWS, key=lambda r: -r['adj'])
+    h = ['<table class="fig pairs"><thead><tr><th class="num">#</th><th>integrated</th>'
+         '<th>plain neighbour</th><th>bed</th><th class="num">psf</th><th class="num">psf</th>'
+         '<th class="num">difference</th><th class="num">after lease &amp; walk</th>'
+         '<th class="num">sales</th><th>station</th></tr></thead><tbody>']
+    for i, r in enumerate(rows, 1):
+        h.append(f'<tr><td class="num quiet">{i}</td>'
+                 f'<td>{_nm(r["a"])} <i class="age">{r["ls_i"]}</i></td>'
+                 f'<td>{_nm(r["b"])} <i class="age">{r["ls_n"]}</i></td>'
+                 f'<td class="quiet">{r["bed"]}</td>'
+                 f'<td class="num quiet">${r["psf_i"]:,.0f}</td>'
+                 f'<td class="num quiet">${r["psf_n"]:,.0f}</td>'
+                 f'<td class="num quiet">{r["raw"]:+,.0f}</td>'
+                 f'<td class="num big">{r["adj"]:+,.0f}</td>'
+                 f'<td class="num quiet">{r["n_i"]} / {r["n_n"]}</td>'
+                 f'<td class="quiet">{html.escape(str(r["station"]))}</td></tr>')
+    return ''.join(h) + '</tbody></table>'
+
+def ten_pairtable():
+    """Every freehold-against-leasehold pair. Shown in PERCENT throughout — his ruling of
+    2026-09-08 makes this panel the one explicit exception to dollars-never-percent."""
+    rows = sorted(TROWS, key=lambda r: -(r['psf_fh'] / r['psf_lh'] - 1))
+    h = ['<table class="fig pairs"><thead><tr><th class="num">#</th><th>freehold</th>'
+         '<th>leasehold</th><th>bed</th><th class="num">psf</th><th class="num">psf</th>'
+         '<th class="num">premium</th><th class="num">lease left</th>'
+         '<th class="num">sales</th><th>station</th></tr></thead><tbody>']
+    for i, r in enumerate(rows, 1):
+        h.append(f'<tr><td class="num quiet">{i}</td>'
+                 f'<td>{_nm(r["fh"])} <i class="age">{r["top_fh"]}</i></td>'
+                 f'<td>{_nm(r["lh"])} <i class="age">{r["top_lh"]}</i></td>'
+                 f'<td class="quiet">{r["bed"]}</td>'
+                 f'<td class="num quiet">${r["psf_fh"]:,.0f}</td>'
+                 f'<td class="num quiet">${r["psf_lh"]:,.0f}</td>'
+                 f'<td class="num big">{r["psf_fh"]/r["psf_lh"]-1:+.1%}</td>'
+                 f'<td class="num quiet">{r["left"]:,.0f} yrs</td>'
+                 f'<td class="num quiet">{r["n_fh"]} / {r["n_lh"]}</td>'
+                 f'<td class="quiet">{html.escape(str(r["station"]).replace(" MRT Station","").replace(" LRT Station"," LRT"))}</td></tr>')
+    return ''.join(h) + '</tbody></table>'
+
 def mrt_table():
     if not M: return ''
     r = ['<table class="fig look"><thead><tr><th>Walk to the nearest station</th>'
@@ -1682,12 +1790,13 @@ the first one measured against the market.</p>
 
 <div class="panel" data-p="mrt" hidden>
 <h1 class="disp">What the market pays for the walk to the station</h1>
-<p class="lede">Each development paired with a leasehold neighbour on the same nearest station,
+<p class="lede"><b>{ndev2(MROWS,'closer','further')} developments &middot; {len(MROWS):,} comparisons, resting on
+{MTX:,} transactions.</b> Each development paired with a leasehold neighbour on the same nearest station,
 over the same 24 months. The lease difference between them is removed at the measured lease rate,
 so what is left is the walk.</p>
 
 {hero(' / '.join(f"${M['engine'][b['key']]}" for b in M['bands']), 'three fixed band steps',
-      [(f"+${b['adj']:,.0f}", lab, b['devs'])
+      [(f"+${b['adj']:,.0f}", lab, b['devs'], mrt_band_tx(b['key']))
        for b, lab in zip(M['bands'], ('under 5 vs 5-10 min', '5-10 vs over 10 min',
                                       'under 5 vs over 10 min'))],
       '')}
@@ -1736,19 +1845,29 @@ so what is left is the walk.</p>
         <li>bus and shuttle access</li></ul></div>
     </div>
   </details>
+
+  <details><summary>Every pair</summary>
+    <p class="expl">All {len(MROWS):,} comparisons, grouped by which two walk bands they span.
+    <b>Difference</b> is the raw psf gap between the two; <b>after lease</b> is what is left once
+    the lease gap between them is removed at the measured rate &mdash; that is the figure the
+    bands are fitted on. <b>Sales</b> is the transactions behind each side.</p>
+    <div class="scroll">{mrt_pairtable()}</div>
+  </details>
 </section>
 
 </div>
 
 <div class="panel" data-p="integrated" hidden>
 <h1 class="disp">What the market pays for being on top of the station</h1>
-<p class="lede">An integrated development against an ordinary condo a short walk away at the
+<p class="lede"><b>{ndev2(GROWS,'a','b')} developments &middot; {len(GROWS)} comparisons, resting on {GTX:,} transactions.</b> An integrated development against an ordinary condo a short walk away at the
 <b>same station</b>. The lease difference between them is taken out, and so is the difference in
 the walk. What is left is the building sitting on the station.</p>
 
 {hero('+5%', 'flat, on an integrated project',
-      [(f"+{G['cuts'][4]['pct']:.1f}%", '&lt;5 yr gap, within 400 m', G['cuts'][4]['devs']),
-       (f"+{G['cuts'][0]['pct']:.1f}%", 'every pair', G['cuts'][0]['devs'])],
+      [(f"+{G['cuts'][4]['pct']:.1f}%", '&lt;5 yr gap, within 400 m', G['cuts'][4]['devs'],
+        int_cut_tx(G['cuts'][4])),
+       (f"+{G['cuts'][0]['pct']:.1f}%", 'every pair', G['cuts'][0]['devs'],
+        int_cut_tx(G['cuts'][0]))],
       '')}
 
 <section>
@@ -1803,16 +1922,26 @@ the walk. What is left is the building sitting on the station.</p>
         <li>whether the plain neighbour is itself mixed-use</li></ul></div>
     </div>
   </details>
+
+  <details><summary>Every pair</summary>
+    <p class="expl">All {len(GROWS)} comparisons. <b>Difference</b> is the raw psf gap;
+    <b>after lease &amp; walk</b> is what survives once BOTH the lease gap and the difference in
+    walking distance are removed at their own measured rates &mdash; that residue is the premium
+    itself. It is the thinnest panel here, and the sales column is the reason to read it
+    carefully.</p>
+    <div class="scroll">{int_pairtable()}</div>
+  </details>
 </section>
 </div>
 
 <div class="panel" data-p="tenure" hidden>
 <h1 class="disp">What the market pays for freehold</h1>
-<p class="lede">The last constant on judgement, and the only one that turned out not to be a
+<p class="lede"><b>{ndev2(TROWS,'fh','lh')} developments &middot; {len(TROWS)} comparisons, resting on {TTX:,} transactions.</b> The last constant on judgement, and the only one that turned out not to be a
 constant at all.</p>
 
 {hero('&divide; 1.15', 'flat, every freehold comparable',
-      [(f'+{g["pct"]*100:.0f}%', ten_step_label(g), g['devs']) for g in TGL],
+      [(f'+{g["pct"]*100:.0f}%', ten_step_label(g), g['devs'],
+        ten_slice_tx(g, TGL[i-1] if i else None)) for i, g in enumerate(TGL)],
       '')}
 
 <section>
@@ -1871,6 +2000,15 @@ constant at all.</p>
     <div class="scroll" style="margin-top:14px">{ten_slice_table('bedroom', 'Bedroom')}</div>
     <p class="expl" style="margin-top:18px">Bedroom is the match, not the answer &mdash; it holds
     size constant. One- and four-bedroom are too thin to show.</p>
+  </details>
+
+  <details><summary>Every pair</summary>
+    <p class="expl">All {len(TROWS)} comparisons &mdash; a freehold development against a
+    leasehold neighbour on the same station, matched bedroom by bedroom. Shown in <b>percent</b>
+    throughout, which is this panel&rsquo;s standing exception to the dollars rule.
+    <b>Lease left</b> is what the leasehold side has remaining, and it is the thing the premium
+    widens against. <b>Sales</b> is the transactions behind each side.</p>
+    <div class="scroll">{ten_pairtable()}</div>
   </details>
 
 </section>

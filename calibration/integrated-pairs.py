@@ -148,6 +148,9 @@ def build(kind):
                              station=I['station'].replace(' MRT Station', '').replace(' LRT Station', ''),
                              m_i=I['metres'], m_n=N['metres'], ls_i=I['ls'], ls_n=N['ls'],
                              lg=lg, dg=dg, base=cn['psf'],
+                             # transaction counts carried so the page can show what each pair
+                             # rests on, the same as every other panel (Shawn, 2026-09-10)
+                             psf_i=ci['psf'], psf_n=cn['psf'], n_i=ci['n'], n_n=cn['n'],
                              raw=raw, lease=lease, dist=dist, adj=raw - lease - dist))
     return rows
 
@@ -181,7 +184,12 @@ def summary():
         g = [r for r in T if abs(r['lg']) <= lgmax and abs(r['dg']) <= dgmax]
         if prs(g) < 3: continue
         lo, hi = boot(g); plo, phi = boot(g, pct=True)
-        out['cuts'].append(dict(label=lab, adj=st.mean([r['adj'] for r in g]), lo=lo, hi=hi,
+        out['cuts'].append(dict(label=lab,
+                                # the RULE that defines this cut, recorded so the page can
+                                # reproduce the row subset instead of re-deriving it from the
+                                # label — no constant is ever hardcoded across scripts
+                                lgmax=lgmax, dgmax=dgmax,
+                                adj=st.mean([r['adj'] for r in g]), lo=lo, hi=hi,
                                 pct=100*st.mean([r['adj'] for r in g])/st.mean([r['base'] for r in g]),
                                 pct_lo=plo, pct_hi=phi,
                                 load=st.mean([abs(r['lease'])+abs(r['dist']) for r in g]),

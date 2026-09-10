@@ -5,7 +5,8 @@ they build.** Everything below is either a ruling Shawn gave or a result measure
 market. Nothing here is a default.
 
 Last worked **2026-09-08**. Commits `price-gap 5a82f7c`, `kya-maps-calculator a254024`, both on
-main and pushed. Page live on offline staging, hidden behind a double-click on the Live Data chip.
+main and pushed. Page live on offline staging, hidden behind a **double-tap on the "K" brand mark** (it was the
+Live Data chip until 2026-09-10; that chip is xl-only and never rendered on a phone).
 
 **ALL FOUR CONSTANTS ARE MEASURED.** The tenure pass closed on 2026-09-08 — see §10.
 
@@ -16,6 +17,8 @@ main and pushed. Page live on offline staging, hidden behind a double-click on t
 | Integrated | +5% | **+6.7%** (4.5–9.1), which CONTAINS the +5% | §12 |
 | Void · extra penthouse area | **none — 1.00× implicit** | resale buyer pays **52% less** for it than for the floor plate | §13 |
 | Tenure · FH vs LH | ÷1.15 | **+18%**, and **+11% → +22%** by the lease left | §10 |
+
+| EC vs private condo | **no constant — reference only** | **+29.4%** at launch, **−0.7%** at resale | §14 |
 
 GFA harmonisation (+7%) was **dropped from the study entirely** on his ruling, 2026-09-06.
 
@@ -742,3 +745,39 @@ panel above as evidence and out of the calculator.
 
 `void-pairs.py` **depends on none of the other three and they depend on none of it**, so it may be
 run at any point in the mandatory order. `void-evidence.csv` is the flat pair-level export.
+
+
+---
+
+## 14. EC vs PRIVATE CONDO — reference only, never a constant
+
+**Shawn's ruling, 2026-09-10: back pocket.** It exists to normalise a new EC onto private pricing
+when he judges what one is worth paying. It does **not** travel downstream into the engine, into a
+constant, or into a client figure. The panel says so on its face and nothing reads `ec-pairs.json`
+but `build-page.py`.
+
+`ec-pairs.py` → `ec-pairs.json` → the **EC vs Private** panel.
+
+| | |
+|---|---|
+| At launch | private is **+29.4%** over the EC beside it — 11,768 pairs, 16 EC launches, 95% [17, 34] |
+| At resale | **−0.7%** — 24,210 pairs, 56 ECs, 95% [−3.5, +2.3], an interval covering zero |
+| By EC age | 5–10 yr **−2.3%** · 10–15 yr **+1.6%** · 15 yr+ **+6.0%** — a mature EC trades *above* |
+
+**THE DATA IS PULLED HERE, NOT READ OFF DISK.** The floor study's REALIS files
+(`launch-picker/floor-study/data/realis-{newsale,resale}-all-sg.json`) were pulled as
+"Apartment + Condominium" and contain **zero EC transactions**. `ec-pairs.py` calls URA PMI
+directly (all four batches, five years, every sale type) and caches the raw pull to
+`.ura-raw.json`, which is gitignored — delete it to re-pull.
+
+**THE LAUNCH CUT MATCHES ON DISTRICT, NOT DISTANCE**, because the URA feed carries no coordinates
+for an uncompleted project: Rivelle, Aurelle, Copen Grand, Lumina Grand, Novo Place and Otto Place
+all read blank. A distance match drops exactly the launches this exists to measure.
+
+**THE BOOTSTRAP IS CLUSTERED BY EC PROJECT.** One EC caveat contributes three comparables and one
+project contributes hundreds of caveats, so a pair-level bootstrap returned ±0.2% — a statement
+about the resampling, not about the market.
+
+His three slides read 25–36%; the measured column runs +12% to +47% with a median of +29.4%, so
+the slides sit mid-market. Rivelle against Pinery size-for-size is +31.6%, and on the two headline
+PSFs the slide quotes ($1,934 against $2,548) it is +32%.

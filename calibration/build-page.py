@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Renders the lease-term finding as ../../kya-maps-calculator/calibration.html.
 
-HIDDEN PAGE. Not in the nav, nothing links to it: the only way in is a DOUBLE-CLICK on
-the "Live Data" chip at the top right of the calculator. A working document, never a
-client view. Self-contained, no Tailwind.
+HIDDEN PAGE. Not in the nav, nothing links to it: the only way in is a DOUBLE-TAP on the
+"K" brand mark at the top left of the calculator. (It was the Live Data chip until
+2026-09-10 — that chip is xl-only, so on an iPhone there was nothing to double-click.)
+A working document, never a client view. Self-contained, no Tailwind.
 
 RULINGS BEHIND THE SHAPE OF THIS PAGE (Shawn, 2026-09-06, in the order he gave them):
   * QUANTUM ONLY — no percentages anywhere.
@@ -34,6 +35,8 @@ VOIDP = os.path.join(HERE, 'void-pairs.json')
 V    = json.load(open(VOIDP)) if os.path.exists(VOIDP) else None
 TENP = os.path.join(HERE, 'tenure-pairs.json')
 T    = json.load(open(TENP)) if os.path.exists(TENP) else None
+ECP  = os.path.join(HERE, 'ec-pairs.json')
+E    = json.load(open(ECP)) if os.path.exists(ECP) else None
 ALL  = D['24']                       # 24 months. No gap screen.
 POOL = D.get('pooled24', [])
 
@@ -390,6 +393,7 @@ tr.dim td.big{color:var(--slate-500);font-weight:400}
    including iPad landscape at 1024. (The figure tables above are narrower and stay two-up there.) */
 .wins.pairwide{grid-template-columns:repeat(auto-fit,minmax(520px,1fr))}
 .win .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.sub2{display:block;font-size:11.5px;color:var(--slate-600);margin-top:3px;white-space:nowrap}
 table.fig a{color:inherit;text-decoration:none;border-bottom:1px solid rgba(201,169,106,.35)}
 table.fig a:hover{color:var(--gold-soft);border-bottom-color:var(--gold)}
 .winhead{margin-bottom:8px}
@@ -748,6 +752,51 @@ def void_spread_names(k=3):
     d = sorted(V['resale']['devs'], key=lambda r: -r['spread'])[:k]
     return ', '.join(f'<b>{html.escape(nice(x["proj"]))}</b> {x["spread"]:.2f}' for x in d)
 
+def ec_launch_table():
+    """Every EC launch in the window, and the private launch beside it. Ordered by the
+    premium, smallest first, so the spread is the shape of the column rather than a range
+    stated in prose."""
+    r = ['<table class="fig"><thead><tr><th>EC launch</th><th class="num">EC psf</th>'
+         '<th class="num">Private psf</th><th class="num">Private is</th>'
+         '<th>Compared against</th></tr></thead><tbody>']
+    for d in sorted(E['launch']['by'], key=lambda d: d['pct']):
+        r.append(f'<tr><th>{nice(d["ec"])}</th>'
+                 f'<td class="num">${d["ecpsf"]:,.0f}</td>'
+                 f'<td class="num">${d["pvpsf"]:,.0f}</td>'
+                 f'<td class="num big" style="color:var(--gold-soft)">+{d["pct"]:.0f}%</td>'
+                 f'<td>{", ".join(nice(c) for c in d["comps"])}'
+                 f'<span class="sub2">{d["pairs"]:,} pairs</span></td></tr>')
+    return ''.join(r) + '</tbody></table>'
+
+def ec_age_table():
+    """The same resale cut, sliced by how long the EC has been standing. TOP is not in the
+    caveat, so it is taken as lease start + 4 — the median gap between the two."""
+    r = ['<table class="fig"><thead><tr><th>Years since the EC was built</th>'
+         '<th class="num">Private is</th><th class="num">Could really be</th>'
+         '<th class="num">Pairs</th><th class="num">Developments</th></tr></thead><tbody>']
+    for a in E['ages']:
+        r.append(f'<tr><th>{a["key"]} years<span class="sub2">{a["label"]}</span></th>'
+                 f'<td class="num big" style="color:var(--gold-soft)">{a["pct"]:+.1f}%</td>'
+                 f'<td class="num">{a["ci"][0]:+.1f}% to {a["ci"][1]:+.1f}%</td>'
+                 f'<td class="num">{a["pairs"]:,}</td>'
+                 f'<td class="num">{a["projects"]}</td></tr>')
+    return ''.join(r) + '</tbody></table>'
+
+def ec_resale_table():
+    """Every EC carrying 100 pairs or more. A NEGATIVE figure is the EC trading above the
+    private condo beside it."""
+    r = ['<table class="fig"><thead><tr><th>EC</th><th class="num">Years built</th>'
+         '<th class="num">EC psf</th><th class="num">Private psf</th>'
+         '<th class="num">Private is</th></tr></thead><tbody>']
+    for d in sorted(E['resale']['by'], key=lambda d: d['pct']):
+        age = f'{d["age"]:.0f}' if d['age'] is not None else '&mdash;'
+        r.append(f'<tr><th>{nice(d["ec"])}<span class="sub2">{d["pairs"]:,} pairs</span></th>'
+                 f'<td class="num">{age}</td>'
+                 f'<td class="num">${d["ecpsf"]:,.0f}</td>'
+                 f'<td class="num">${d["pvpsf"]:,.0f}</td>'
+                 f'<td class="num big" style="color:var(--gold-soft)">{d["pct"]:+.1f}%</td></tr>')
+    return ''.join(r) + '</tbody></table>'
+
 def hero(was, was_sub, answers, call):
     """The verdict block every panel opens with. `answers` is a list of
     (figure, what it is, how many developments).
@@ -998,8 +1047,9 @@ A1, A2 = age_label(OLD_NM); B1, B2 = age_label(NEW_NM)
 BODY = f"""
 <div class="panel" data-p="summary">
 <h1 class="disp">Where the constants now stand</h1>
-<p class="lede">Five constants set by judgement, each now measured against the market. This is
-the whole study on one screen; every figure below has a panel of its own.</p>
+<p class="lede">Five constants set by judgement, each now measured against the market, and one
+reference figure that is measured but deliberately not wired to anything. This is the whole study
+on one screen; every figure below has a panel of its own.</p>
 
 <section>
   <div class="scroll"><table class="fig"><thead><tr><th>Term</th><th class="num">Constant</th><th>Measured</th></tr></thead><tbody>
@@ -1018,6 +1068,10 @@ the whole study on one screen; every figure below has a panel of its own.</p>
     <td class="num big">1.00&times; &mdash; full price</td>
     <td style="color:var(--gold-soft)">a resale buyer pays {VR['discount']:.0f}% less for it than
     for the floor plate; there is no constant for it today</td></tr>
+  <tr><th><a href="#ec">EC vs private condo &middot; reference</a></th>
+    <td class="num big">none</td>
+    <td style="color:var(--gold-soft)">private launches +{E['launch']['pct']:.0f}% over the EC
+    beside them; by resale the gap is {E['resale']['pct']:+.1f}% &mdash; no difference</td></tr>
   </tbody></table></div>
   <div class="caveat" style="margin-top:18px"><b>Nothing has been written back yet.</b>
   Every figure on this page sits beside its constant, not in place of it.</div>
@@ -1417,6 +1471,95 @@ plate of the ones below it. The extra strata area is void or roof. Floor is take
 </section>
 </div>
 
+<div class="panel" data-p="ec" hidden>
+<h1 class="disp">What a buyer pays to skip the EC</h1>
+<p class="lede">An EC and a private condo <b>launching in the same district at the same time</b>,
+size for size. Then the same two, years later, in the <b>resale</b> market. The first figure is
+what the private badge costs on the day. The second is what is left of it.</p>
+
+{hero('none &mdash; not a constant',
+      'nothing in the engine reads this',
+      [(f"+{E['launch']['pct']:.0f}%", 'at launch, private over EC', E['launch']['projects']),
+       (f"{E['resale']['pct']:+.1f}%", 'at resale, same two', E['resale']['projects'])],
+      'Reference only, at Shawn&rsquo;s ruling of 10 September 2026 &mdash; it is here to '
+      'normalise a new EC onto private pricing when he judges what one is worth paying, and it '
+      'does not travel downstream into the engine, a constant, or a client figure.')}
+
+<section>
+  <div class="sechead"><h2 class="disp">At launch</h2>
+  <p><b>{E['launch']['pairs']:,} pairs across {E['launch']['projects']} EC launches.</b> Every EC
+  that sold in the window, set against the private launches selling beside it.</p></div>
+  <div class="scroll">{ec_launch_table()}</div>
+  <p class="expl">The three slides read <b>25% to 36%</b>. The column runs from
+  +{min(d['pct'] for d in E['launch']['by']):.0f}% to
+  +{max(d['pct'] for d in E['launch']['by']):.0f}% with a median of
+  <b>+{E['launch']['pct']:.1f}%</b> ({E['launch']['ci'][0]:.0f} to {E['launch']['ci'][1]:.0f}),
+  so the slides sit in the middle of the market rather than at one end of it. Rivelle against Parktown reads +{next(d['pct'] for d in E['launch']['by']
+  if 'RIVELLE' in d['ec']):.0f}% here; against {nice(E['slides'][0]['pv'])} alone, size for size,
+  it is +{E['slides'][0]['pct']:.1f}%, and on the two headline PSFs the slide quotes
+  (${E['slides'][0]['ecpsf']:,.0f} against ${E['slides'][0]['pvpsf']:,.0f}),
+  +{E['slides'][0]['raw_pct']:.0f}%.</p>
+</section>
+
+<section>
+  <div class="sechead"><h2 class="disp">At resale</h2>
+  <p><b>{E['resale']['pairs']:,} pairs across {E['resale']['projects']} ECs.</b> The same
+  comparison in the secondary market, against leasehold private of the same vintage within
+  {E['meta']['km']:g} km.</p></div>
+
+  <div class="scroll">{ec_age_table()}</div>
+  <p class="expl">The premium is <b>{E['resale']['pct']:+.1f}%</b> overall, and could really be
+  anywhere from {E['resale']['ci'][0]:+.1f}% to {E['resale']['ci'][1]:+.1f}% &mdash; an interval
+  that covers zero, and a figure inside 1%. There is <b>no difference</b> between the two. It does not merely close: past privatisation the
+  sign turns over, and a mature EC trades <b>above</b> the private condo beside it. Held against
+  every private comparable with no tenure or vintage control the figure is
+  {E['resale_raw']['pct']:+.1f}%.</p>
+
+  <details><summary>Every EC in the resale cut</summary>
+    <p class="expl">A <b>negative</b> figure is the EC trading above its private neighbour. Read
+    the years-built column beside the premium: the ECs at the top of the list are the young ones
+    still carrying their launch pricing forward.</p>
+    <div class="scroll">{ec_resale_table()}</div>
+  </details>
+
+  <details><summary>How a pair is built</summary>
+    <div class="cards" style="margin-top:6px">
+      <div class="card"><h4>Held constant</h4><ul>
+        <li>floor area within <b>{E['meta']['sizetol']*100:.0f}%</b></li>
+        <li>contract date within <b>{E['meta']['months']} months</b></li>
+        <li>launch: <b>same district</b> &middot; resale: <b>within {E['meta']['km']:g} km</b></li>
+        <li>resale only: <b>leasehold</b> comparables, lease start within
+            <b>{E['meta']['lstol']} years</b></li></ul></div>
+      <div class="card"><h4>How it is read</h4><ul>
+        <li>the <b>nearest {E['meta']['near']}</b> comparables per EC transaction</li>
+        <li>the <b>median of the pair ratios</b>, never a difference of two medians</li>
+        <li>years built is <b>lease start + 4</b>, the median gap to TOP</li></ul></div>
+      <div class="card"><h4>Not controlled</h4><ul>
+        <li><b>floor</b> and <b>facing</b></li>
+        <li>walking distance to the station, on either leg</li>
+        <li>the EC income ceiling and resale restrictions themselves</li></ul></div>
+    </div>
+  </details>
+
+  <details><summary>Why the launch cut is matched on district, not distance</summary>
+    <p class="expl">The URA feed carries <b>no coordinates for an uncompleted project</b> &mdash;
+    Rivelle, Aurelle, Copen Grand, Lumina Grand, Novo Place and Otto Place all read blank. A
+    distance match would drop exactly the launches this measures, so the launch cut holds the
+    district and the resale cut, where both legs are built, holds the {E['meta']['km']:g} km.</p>
+  </details>
+
+  <details><summary>Where the data comes from &mdash; not the MAPS refresh</summary>
+    <p class="expl">A <b>direct URA PMI pull</b>, all four batches:
+    {E['meta']['window'][0]} to {E['meta']['window'][1]}, {E['meta']['rows']:,} strata
+    transactions of which <b>{E['meta']['ec_rows']:,} are EC</b> across
+    {E['meta']['ec_projects']} projects, every sale type. The floor study&rsquo;s REALIS files
+    were pulled as &ldquo;Apartment + Condominium&rdquo; and hold <b>no EC at all</b>, so this is
+    the only cut of the corpus that can answer it. Rebuild with
+    <b>ec-pairs.py</b>.</p>
+  </details>
+</section>
+</div>
+
 """
 
 HTML = f"""<!doctype html>
@@ -1435,7 +1578,7 @@ HTML = f"""<!doctype html>
   <nav class="terms" aria-label="The constants">
     <button type="button" class="done" data-go="summary" aria-current="true">
       <span class="tn">Summary</span>
-      <span class="ts">all five, side by side</span></button>
+      <span class="ts">five constants and one reference</span></button>
     <button type="button" class="done" data-go="lease">
       <span class="tn">Lease Difference</span>
       <span class="ts">${BANDR[OLD_NM]:,.0f} / ${BANDR[NEW_NM]:,.0f} a year</span></button>
@@ -1452,6 +1595,9 @@ HTML = f"""<!doctype html>
     <button type="button" class="done" data-go="void">
       <span class="tn">Void Space</span>
       <span class="ts">{VR['discount']:.0f}% off</span></button>
+    <button type="button" class="done" data-go="ec">
+      <span class="tn">EC vs Private</span>
+      <span class="ts">+{E['launch']['pct']:.0f}% at launch, nil at resale</span></button>
   </nav>
 </header>
 <div class="wrap">

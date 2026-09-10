@@ -1,0 +1,980 @@
+{
+ "meta": {
+  "window": [
+   "2021-09",
+   "2026-09"
+  ],
+  "rows": 120577,
+  "ec_rows": 16554,
+  "months": 6,
+  "sizetol": 0.15,
+  "near": 3,
+  "km": 1.5,
+  "lstol": 5,
+  "ec_projects": 82
+ },
+ "launch": {
+  "pct": 29.380372644726464,
+  "pairs": 11768,
+  "projects": 16,
+  "lo": 17.74257425742576,
+  "hi": 35.613143024254015,
+  "ci": [
+   16.934153643925455,
+   33.62543047413959
+  ],
+  "by": [
+   {
+    "ec": "OLA",
+    "n": 375,
+    "pairs": 375,
+    "ecpsf": 1182.615073309572,
+    "pvpsf": 1743.3966430788823,
+    "pct": 46.93544897577863,
+    "comps": [
+     "SENGKANG GRAND RESIDENCES",
+     "THE FLORENCE RESIDENCES"
+    ],
+    "age": -1
+   },
+   {
+    "ec": "RIVERCOVE RESIDENCES",
+    "n": 6,
+    "pairs": 6,
+    "ecpsf": 1192.4116723492416,
+    "pvpsf": 1743.3966430788823,
+    "pct": 46.208167685757786,
+    "comps": [
+     "SENGKANG GRAND RESIDENCES"
+    ],
+    "age": 1.0
+   },
+   {
+    "ec": "PIERMONT GRAND",
+    "n": 78,
+    "pairs": 78,
+    "ecpsf": 1166.3656162861841,
+    "pvpsf": 1714.5539587251683,
+    "pct": 43.25178619932663,
+    "comps": [
+     "SENGKANG GRAND RESIDENCES",
+     "THE FLORENCE RESIDENCES"
+    ],
+    "age": -1.0
+   },
+   {
+    "ec": "ALTURA",
+    "n": 1080,
+    "pairs": 1080,
+    "ecpsf": 1481.4093180205837,
+    "pvpsf": 2044.8365988783496,
+    "pct": 38.13997080130932,
+    "comps": [
+     "THE BOTANY AT DAIRY FARM",
+     "THE MYST"
+    ],
+    "age": -3
+   },
+   {
+    "ec": "TENET",
+    "n": 1824,
+    "pairs": 1824,
+    "ecpsf": 1386.8310596877986,
+    "pvpsf": 1874.9540762937395,
+    "pct": 34.35287664579727,
+    "comps": [
+     "PASIR RIS 8",
+     "PARKTOWN RESIDENCE"
+    ],
+    "age": -3
+   },
+   {
+    "ec": "AURELLE OF TAMPINES",
+    "n": 2256,
+    "pairs": 2256,
+    "ecpsf": 1768.209935825274,
+    "pvpsf": 2370.6315907162225,
+    "pct": 33.03446576300803,
+    "comps": [
+     "PARKTOWN RESIDENCE"
+    ],
+    "age": -3.0
+   },
+   {
+    "ec": "LUMINA GRAND",
+    "n": 1536,
+    "pairs": 1536,
+    "ecpsf": 1521.2052062379305,
+    "pvpsf": 1990.5355796621975,
+    "pct": 32.07507873066254,
+    "comps": [
+     "THE MYST",
+     "THE BOTANY AT DAIRY FARM"
+    ],
+    "age": -2.0
+   },
+   {
+    "ec": "COPEN GRAND",
+    "n": 3,
+    "pairs": 3,
+    "ecpsf": 1691.6111570465478,
+    "pvpsf": 2232.0777849074702,
+    "pct": 31.949814566401017,
+    "comps": [
+     "TENGAH GARDEN RESIDENCES"
+    ],
+    "age": 0
+   },
+   {
+    "ec": "NOVO PLACE",
+    "n": 18,
+    "pairs": 18,
+    "ecpsf": 1674.6822420950266,
+    "pvpsf": 2045.9333719397453,
+    "pct": 25.620627226797808,
+    "comps": [
+     "TENGAH GARDEN RESIDENCES"
+    ],
+    "age": -1.5
+   },
+   {
+    "ec": "RIVELLE TAMPINES",
+    "n": 966,
+    "pairs": 966,
+    "ecpsf": 1937.436146010167,
+    "pvpsf": 2375.05131177499,
+    "pct": 22.385546218789543,
+    "comps": [
+     "PARKTOWN RESIDENCE"
+    ],
+    "age": -3.0
+   },
+   {
+    "ec": "PARC CANBERRA",
+    "n": 7,
+    "pairs": 7,
+    "ecpsf": 1242.5793624987227,
+    "pvpsf": 1462.9798141057267,
+    "pct": 19.710175364906007,
+    "comps": [
+     "THE COMMODORE",
+     "THE WATERGARDENS AT CANBERRA"
+    ],
+    "age": 1
+   },
+   {
+    "ec": "PROVENCE RESIDENCE",
+    "n": 391,
+    "pairs": 391,
+    "ecpsf": 1227.1855299270148,
+    "pvpsf": 1466.087748660636,
+    "pct": 18.518518518518505,
+    "comps": [
+     "THE COMMODORE",
+     "CANBERRA CRESCENT RESIDENCES"
+    ],
+    "age": -3
+   },
+   {
+    "ec": "PARC CENTRAL RESIDENCES",
+    "n": 169,
+    "pairs": 169,
+    "ecpsf": 1218.5240877908036,
+    "pvpsf": 1455.744806754404,
+    "pct": 17.781018836269325,
+    "comps": [
+     "TREASURE AT TAMPINES",
+     "PASIR RIS 8"
+    ],
+    "age": -2
+   },
+   {
+    "ec": "OTTO PLACE",
+    "n": 291,
+    "pairs": 291,
+    "ecpsf": 1751.8875925215634,
+    "pvpsf": 2045.9333719397453,
+    "pct": 17.278106508875737,
+    "comps": [
+     "TENGAH GARDEN RESIDENCES"
+    ],
+    "age": -3
+   },
+   {
+    "ec": "COASTAL CABANA",
+    "n": 1857,
+    "pairs": 1857,
+    "ecpsf": 1794.4067498596992,
+    "pvpsf": 2069.3066197019225,
+    "pct": 13.18470429547422,
+    "comps": [
+     "KASSIA",
+     "THE SHOREFRONT"
+    ],
+    "age": -2
+   },
+   {
+    "ec": "NORTH GAIA",
+    "n": 911,
+    "pairs": 911,
+    "ecpsf": 1306.6375690067966,
+    "pvpsf": 1462.9798141057267,
+    "pct": 12.150382152447861,
+    "comps": [
+     "THE WATERGARDENS AT CANBERRA",
+     "THE COMMODORE"
+    ],
+    "age": -3
+   }
+  ]
+ },
+ "resale": {
+  "pct": -0.6691996939841829,
+  "pairs": 24210,
+  "projects": 56,
+  "lo": -8.457078475307952,
+  "hi": 7.715609408410543,
+  "ci": [
+   -3.457446808510639,
+   2.347569734990131
+  ],
+  "by": [
+   {
+    "ec": "BLOSSOM RESIDENCES",
+    "n": 164,
+    "pairs": 164,
+    "ecpsf": 1238.7083987526207,
+    "pvpsf": 1796.1271781913001,
+    "pct": 47.32078395459561,
+    "comps": [
+     "HILLION RESIDENCES"
+    ],
+    "age": 9.0
+   },
+   {
+    "ec": "PARK GREEN",
+    "n": 163,
+    "pairs": 163,
+    "ecpsf": 1016.0003329882262,
+    "pvpsf": 1265.5308247098624,
+    "pct": 26.777721117343773,
+    "comps": [
+     "THE QUARTZ",
+     "COMPASS HEIGHTS"
+    ],
+    "age": 18
+   },
+   {
+    "ec": "SUMMERDALE",
+    "n": 179,
+    "pairs": 179,
+    "ecpsf": 974.6881849372583,
+    "pvpsf": 1229.3646931585815,
+    "pct": 26.344217271895005,
+    "comps": [
+     "LAKEHOLMZ",
+     "PARC VISTA"
+    ],
+    "age": 23
+   },
+   {
+    "ec": "PINEVALE",
+    "n": 139,
+    "pairs": 139,
+    "ecpsf": 959.999009033281,
+    "pvpsf": 1137.4574513763193,
+    "pct": 18.795417348608837,
+    "comps": [
+     "THE TROPICA"
+    ],
+    "age": 22
+   },
+   {
+    "ec": "LAKE LIFE",
+    "n": 475,
+    "pairs": 475,
+    "ecpsf": 1235.4329678905344,
+    "pvpsf": 1393.5469485966983,
+    "pct": 12.920353982300895,
+    "comps": [
+     "THE LAKEFRONT RESIDENCES",
+     "CASPIAN"
+    ],
+    "age": 6
+   },
+   {
+    "ec": "THE QUINTET",
+    "n": 153,
+    "pairs": 153,
+    "ecpsf": 967.7409365254849,
+    "pvpsf": 1073.547278918938,
+    "pct": 12.51138779228667,
+    "comps": [
+     "YEWTEE RESIDENCES"
+    ],
+    "age": 16
+   },
+   {
+    "ec": "WATERBAY",
+    "n": 400,
+    "pairs": 400,
+    "ecpsf": 1275.1409987159332,
+    "pvpsf": 1403.2088741069688,
+    "pct": 10.638492427432794,
+    "comps": [
+     "PARC CENTROS",
+     "RIVER ISLES"
+    ],
+    "age": 7.0
+   },
+   {
+    "ec": "LUSH ACRES",
+    "n": 387,
+    "pairs": 387,
+    "ecpsf": 1278.3470675127046,
+    "pvpsf": 1435.7756440087196,
+    "pct": 10.050017539081722,
+    "comps": [
+     "RIVERTREES RESIDENCES",
+     "RIVERBANK @ FERNVALE"
+    ],
+    "age": 6
+   },
+   {
+    "ec": "CHESTERVALE",
+    "n": 147,
+    "pairs": 147,
+    "ecpsf": 923.7527121379629,
+    "pvpsf": 990.9667190020966,
+    "pct": 9.166666666666657,
+    "comps": [
+     "MAYSPRINGS"
+    ],
+    "age": 22
+   },
+   {
+    "ec": "WESTMERE",
+    "n": 105,
+    "pairs": 105,
+    "ecpsf": 1068.3859939241354,
+    "pvpsf": 1161.289123830582,
+    "pct": 8.920187793427232,
+    "comps": [
+     "PARC OASIS"
+    ],
+    "age": 24
+   },
+   {
+    "ec": "NUOVO",
+    "n": 108,
+    "pairs": 108,
+    "ecpsf": 1191.5800918857433,
+    "pvpsf": 1286.9104694558296,
+    "pct": 8.87808967711345,
+    "comps": [
+     "GRANDEUR 8"
+    ],
+    "age": 18.0
+   },
+   {
+    "ec": "TREASURE CREST",
+    "n": 558,
+    "pairs": 558,
+    "ecpsf": 1430.708200559277,
+    "pvpsf": 1548.3854984407758,
+    "pct": 8.783860480323739,
+    "comps": [
+     "LA FIESTA",
+     "THE LUXURIE"
+    ],
+    "age": 5.0
+   },
+   {
+    "ec": "THE FLORIDA",
+    "n": 266,
+    "pairs": 266,
+    "ecpsf": 1013.5473408543578,
+    "pvpsf": 1101.2224450117587,
+    "pct": 8.749612292260124,
+    "comps": [
+     "RIO VISTA",
+     "EVERGREEN PARK"
+    ],
+    "age": 23.0
+   },
+   {
+    "ec": "ECOPOLITAN",
+    "n": 666,
+    "pairs": 666,
+    "ecpsf": 1186.7396962815114,
+    "pvpsf": 1250.8742848117984,
+    "pct": 8.625612981979287,
+    "comps": [
+     "A TREASURE TROVE",
+     "PARC CENTROS"
+    ],
+    "age": 6.0
+   },
+   {
+    "ec": "THE CANOPY",
+    "n": 290,
+    "pairs": 290,
+    "ecpsf": 1093.8594327694514,
+    "pvpsf": 1166.4504088253846,
+    "pct": 8.034653465346537,
+    "comps": [
+     "SKIES MILTONIA",
+     "THE MILTONIA RESIDENCES"
+    ],
+    "age": 10.0
+   },
+   {
+    "ec": "PRIVE",
+    "n": 627,
+    "pairs": 627,
+    "ecpsf": 1344.8834043599882,
+    "pvpsf": 1472.426964555002,
+    "pct": 7.897384305835018,
+    "comps": [
+     "PARC CENTROS",
+     "WATERTOWN"
+    ],
+    "age": 10
+   },
+   {
+    "ec": "THE VALES",
+    "n": 781,
+    "pairs": 781,
+    "ecpsf": 1327.1875700920937,
+    "pvpsf": 1399.5022774368551,
+    "pct": 7.563636363636377,
+    "comps": [
+     "LA FIESTA",
+     "THE LUXURIE"
+    ],
+    "age": 5
+   },
+   {
+    "ec": "ARC AT TAMPINES",
+    "n": 481,
+    "pairs": 481,
+    "ecpsf": 1282.0631927089623,
+    "pvpsf": 1327.9682686627361,
+    "pct": 7.246376811594217,
+    "comps": [
+     "THE SANTORINI",
+     "Q BAY RESIDENCES"
+    ],
+    "age": 9
+   },
+   {
+    "ec": "SIMEI GREEN CONDOMINIUM",
+    "n": 298,
+    "pairs": 298,
+    "ecpsf": 1009.1202041562298,
+    "pvpsf": 1026.5795854662344,
+    "pct": 6.320078057296996,
+    "comps": [
+     "TROPICAL SPRING",
+     "MELVILLE PARK"
+    ],
+    "age": 23.0
+   },
+   {
+    "ec": "THE RIVERVALE",
+    "n": 276,
+    "pairs": 276,
+    "ecpsf": 1060.1306920508189,
+    "pvpsf": 1095.9122023915438,
+    "pct": 5.172413793103445,
+    "comps": [
+     "RIO VISTA",
+     "COMPASS HEIGHTS"
+    ],
+    "age": 23.0
+   },
+   {
+    "ec": "WATERCOLOURS",
+    "n": 418,
+    "pairs": 418,
+    "ecpsf": 1180.416238811321,
+    "pvpsf": 1231.2462999649542,
+    "pct": 4.944684573428006,
+    "comps": [
+     "SEASTRAND",
+     "RIPPLE BAY"
+    ],
+    "age": 8.0
+   },
+   {
+    "ec": "TWIN WATERFALLS",
+    "n": 558,
+    "pairs": 558,
+    "ecpsf": 1358.1991903196383,
+    "pvpsf": 1417.4910542426899,
+    "pct": 3.6247226313205942,
+    "comps": [
+     "A TREASURE TROVE",
+     "THE LUXURIE"
+    ],
+    "age": 9.0
+   },
+   {
+    "ec": "HUNDRED PALMS RESIDENCES",
+    "n": 402,
+    "pairs": 402,
+    "ecpsf": 1842.755329725978,
+    "pvpsf": 1934.2700805122836,
+    "pct": 3.416436194731048,
+    "comps": [
+     "AFFINITY AT SERANGOON",
+     "THE FLORENCE RESIDENCES"
+    ],
+    "age": 5.0
+   },
+   {
+    "ec": "AUSTVILLE RESIDENCES",
+    "n": 558,
+    "pairs": 558,
+    "ecpsf": 1296.5836612942667,
+    "pvpsf": 1316.1276736746595,
+    "pct": 3.372411781860606,
+    "comps": [
+     "RIVERSOUND RESIDENCE",
+     "RIVERSAILS"
+    ],
+    "age": 10.0
+   },
+   {
+    "ec": "ESPARINA RESIDENCES",
+    "n": 537,
+    "pairs": 537,
+    "ecpsf": 1604.690425656804,
+    "pvpsf": 1645.1595920933241,
+    "pct": 3.2986111111111,
+    "comps": [
+     "JEWEL @ BUANGKOK",
+     "THE LUXURIE"
+    ],
+    "age": 10
+   },
+   {
+    "ec": "SEA HORIZON",
+    "n": 489,
+    "pairs": 489,
+    "ecpsf": 1171.1028347361923,
+    "pvpsf": 1212.630327199934,
+    "pct": 3.2514136581122273,
+    "comps": [
+     "SEA ESTA",
+     "RIPPLE BAY"
+    ],
+    "age": 6
+   },
+   {
+    "ec": "WINDERMERE",
+    "n": 176,
+    "pairs": 176,
+    "ecpsf": 901.2990214804516,
+    "pvpsf": 900.5500475602994,
+    "pct": 1.3776200756357753,
+    "comps": [
+     "REGENT GROVE",
+     "NORTHVALE"
+    ],
+    "age": 22.0
+   },
+   {
+    "ec": "HERON BAY",
+    "n": 461,
+    "pairs": 461,
+    "ecpsf": 1271.3059881934792,
+    "pvpsf": 1276.408219584222,
+    "pct": 0.9147809340394986,
+    "comps": [
+     "BOATHOUSE RESIDENCES",
+     "RIVERSAILS"
+    ],
+    "age": 8
+   },
+   {
+    "ec": "BELLEWATERS",
+    "n": 985,
+    "pairs": 985,
+    "ecpsf": 1288.6563180571618,
+    "pvpsf": 1293.4974240820634,
+    "pct": 0.8865979381443339,
+    "comps": [
+     "RIVERBANK @ FERNVALE",
+     "RIVERTREES RESIDENCES"
+    ],
+    "age": 6
+   },
+   {
+    "ec": "1 CANBERRA",
+    "n": 487,
+    "pairs": 487,
+    "ecpsf": 1183.092919624952,
+    "pvpsf": 1205.418110536144,
+    "pct": 0.6572719879477802,
+    "comps": [
+     "EIGHT COURTYARDS",
+     "CANBERRA RESIDENCES"
+    ],
+    "age": 8
+   },
+   {
+    "ec": "LA CASA",
+    "n": 351,
+    "pairs": 351,
+    "ecpsf": 986.5819105109368,
+    "pvpsf": 937.5545219916626,
+    "pct": -1.274181547619051,
+    "comps": [
+     "ROSEWOOD",
+     "ROSEWOOD SUITES"
+    ],
+    "age": 15
+   },
+   {
+    "ec": "THE EDEN AT TAMPINES",
+    "n": 229,
+    "pairs": 229,
+    "ecpsf": 1105.2268902663468,
+    "pvpsf": 1064.7506540582308,
+    "pct": -1.8117336560348036,
+    "comps": [
+     "SAVANNAH CONDOPARK",
+     "CHANGI RISE CONDOMINIUM"
+    ],
+    "age": 19
+   },
+   {
+    "ec": "THE AMORE",
+    "n": 531,
+    "pairs": 531,
+    "ecpsf": 1218.7292310308042,
+    "pvpsf": 1153.371243440828,
+    "pct": -2.302631325301192,
+    "comps": [
+     "RIVER ISLES",
+     "FLO RESIDENCE"
+    ],
+    "age": 5
+   },
+   {
+    "ec": "RIVERPARC RESIDENCE",
+    "n": 402,
+    "pairs": 402,
+    "ecpsf": 1345.8297468012713,
+    "pvpsf": 1297.2858742358019,
+    "pct": -2.5081029584274006,
+    "comps": [
+     "RIVER ISLES",
+     "FLO RESIDENCE"
+    ],
+    "age": 10.0
+   },
+   {
+    "ec": "WATERWOODS",
+    "n": 318,
+    "pairs": 318,
+    "ecpsf": 1264.731684440701,
+    "pvpsf": 1189.1600628025158,
+    "pct": -2.8344479275513805,
+    "comps": [
+     "FLO RESIDENCE",
+     "RIVER ISLES"
+    ],
+    "age": 6.0
+   },
+   {
+    "ec": "THE TOPIARY",
+    "n": 867,
+    "pairs": 867,
+    "ecpsf": 1315.3611462001838,
+    "pvpsf": 1269.6761087214363,
+    "pct": -4.025593175153304,
+    "comps": [
+     "THE GREENWICH",
+     "SELETAR PARK RESIDENCE"
+    ],
+    "age": 7
+   },
+   {
+    "ec": "SIGNATURE AT YISHUN",
+    "n": 654,
+    "pairs": 654,
+    "ecpsf": 1211.3839487801365,
+    "pvpsf": 1151.190957536403,
+    "pct": -4.051434533124663,
+    "comps": [
+     "SKIES MILTONIA",
+     "THE WISTERIA"
+    ],
+    "age": 5.0
+   },
+   {
+    "ec": "CITYLIFE@TAMPINES",
+    "n": 473,
+    "pairs": 473,
+    "ecpsf": 1333.3319569906682,
+    "pvpsf": 1285.6291714326442,
+    "pct": -4.39932318104907,
+    "comps": [
+     "THE PALETTE",
+     "D'NEST"
+    ],
+    "age": 7
+   },
+   {
+    "ec": "YEW MEI GREEN",
+    "n": 292,
+    "pairs": 292,
+    "ecpsf": 957.3986669748309,
+    "pvpsf": 892.9023041008475,
+    "pct": -4.706668706472016,
+    "comps": [
+     "REGENT GROVE",
+     "NORTHVALE"
+    ],
+    "age": 22.0
+   },
+   {
+    "ec": "SOL ACRES",
+    "n": 1651,
+    "pairs": 1651,
+    "ecpsf": 1403.8679604625315,
+    "pvpsf": 1329.4758245232867,
+    "pct": -5.5049722797215,
+    "comps": [
+     "HILLSTA",
+     "HILLION RESIDENCES"
+    ],
+    "age": 6
+   },
+   {
+    "ec": "BISHAN LOFT",
+    "n": 119,
+    "pairs": 119,
+    "ecpsf": 1596.7725452670502,
+    "pvpsf": 1563.491698425564,
+    "pct": -5.5476056864945775,
+    "comps": [
+     "RAFFLESIA CONDOMINIUM",
+     "BISHAN 8"
+    ],
+    "age": 20
+   },
+   {
+    "ec": "THE TERRACE",
+    "n": 895,
+    "pairs": 895,
+    "ecpsf": 1298.64590191807,
+    "pvpsf": 1201.8413400347458,
+    "pct": -5.627705627705652,
+    "comps": [
+     "RIVER ISLES",
+     "PARC CENTROS"
+    ],
+    "age": 6
+   },
+   {
+    "ec": "BELYSA",
+    "n": 273,
+    "pairs": 273,
+    "ecpsf": 1303.640693848524,
+    "pvpsf": 1213.2055787783022,
+    "pct": -6.434023991275893,
+    "comps": [
+     "LIVIA",
+     "NV RESIDENCES"
+    ],
+    "age": 9
+   },
+   {
+    "ec": "THE TAMPINES TRILLIANT",
+    "n": 639,
+    "pairs": 639,
+    "ecpsf": 1475.3496529169036,
+    "pvpsf": 1398.8862089361492,
+    "pct": -7.068302028767377,
+    "comps": [
+     "THE ALPS RESIDENCES",
+     "THE PALETTE"
+    ],
+    "age": 9
+   },
+   {
+    "ec": "THE CRITERION",
+    "n": 720,
+    "pairs": 720,
+    "ecpsf": 1276.1415357895526,
+    "pvpsf": 1179.8697498118713,
+    "pct": -7.773946360153261,
+    "comps": [
+     "SKIES MILTONIA",
+     "THE MILTONIA RESIDENCES"
+    ],
+    "age": 6.0
+   },
+   {
+    "ec": "RIVERCOVE RESIDENCES",
+    "n": 387,
+    "pairs": 387,
+    "ecpsf": 1628.4144118433328,
+    "pvpsf": 1484.5345500514657,
+    "pct": -7.835623678646925,
+    "comps": [
+     "RIVERBANK @ FERNVALE",
+     "RIVERTREES RESIDENCES"
+    ],
+    "age": 6
+   },
+   {
+    "ec": "PARC LIFE",
+    "n": 756,
+    "pairs": 756,
+    "ecpsf": 1322.8710665813,
+    "pvpsf": 1221.0125644847262,
+    "pct": -8.038539529838957,
+    "comps": [
+     "THE NAUTICAL",
+     "CANBERRA RESIDENCES"
+    ],
+    "age": 6.0
+   },
+   {
+    "ec": "WANDERVALE",
+    "n": 323,
+    "pairs": 323,
+    "ecpsf": 1433.362575699461,
+    "pvpsf": 1327.1875700920937,
+    "pct": -8.132530120481917,
+    "comps": [
+     "HILLSTA",
+     "PHOENIX RESIDENCES"
+    ],
+    "age": 6
+   },
+   {
+    "ec": "SKYPARK RESIDENCES",
+    "n": 512,
+    "pairs": 512,
+    "ecpsf": 1219.2576057143563,
+    "pvpsf": 1098.758171008935,
+    "pct": -12.93898306236892,
+    "comps": [
+     "THE NAUTICAL",
+     "CANBERRA RESIDENCES"
+    ],
+    "age": 5.0
+   },
+   {
+    "ec": "THE RAINFOREST",
+    "n": 297,
+    "pairs": 297,
+    "ecpsf": 1349.9986064530515,
+    "pvpsf": 1151.6916930551224,
+    "pct": -13.883888388838898,
+    "comps": [
+     "MI CASA",
+     "HILLSTA"
+    ],
+    "age": 9
+   },
+   {
+    "ec": "THE BROWNSTONE",
+    "n": 804,
+    "pairs": 804,
+    "ecpsf": 1346.795864161018,
+    "pvpsf": 1136.957351712227,
+    "pct": -16.102860720072385,
+    "comps": [
+     "CANBERRA RESIDENCES",
+     "THE NAUTICAL"
+    ],
+    "age": 5.0
+   },
+   {
+    "ec": "THE VISIONAIRE",
+    "n": 857,
+    "pairs": 857,
+    "ecpsf": 1367.2536099439305,
+    "pvpsf": 1121.8491158514303,
+    "pct": -17.680864415584423,
+    "comps": [
+     "CANBERRA RESIDENCES",
+     "THE NAUTICAL"
+    ],
+    "age": 5
+   }
+  ]
+ },
+ "resale_raw": {
+  "pct": -4.394084843504004,
+  "pairs": 26512,
+  "projects": 64
+ },
+ "slides": [
+  {
+   "ec": "RIVELLE TAMPINES",
+   "pv": "PINERY RESIDENCES",
+   "pairs": 88423,
+   "pct": 31.561804008908695,
+   "ecpsf": 1933.725971970264,
+   "pvpsf": 2548.4043172799106,
+   "raw_pct": 31.787251876404895
+  },
+  {
+   "ec": "AURELLE OF TAMPINES",
+   "pv": "PARKTOWN RESIDENCE",
+   "pairs": 212948,
+   "pct": 32.56694638251898,
+   "ecpsf": 1768.7326655265786,
+   "pvpsf": 2361.4034362787834,
+   "raw_pct": 33.508216493291116
+  }
+ ],
+ "ages": [
+  {
+   "key": "5-10",
+   "label": "post-MOP, citizen-only",
+   "pct": -2.2988505747126453,
+   "pairs": 16541,
+   "projects": 37,
+   "lo": -9.3803786574871,
+   "hi": 6.252983293556085,
+   "ci": [
+    -5.009615384615387,
+    1.4788218111003033
+   ]
+  },
+  {
+   "key": "10-15",
+   "label": "privatised",
+   "pct": 1.6301691945968457,
+   "pairs": 2717,
+   "projects": 20,
+   "lo": -5.415217640539609,
+   "hi": 7.492838709514871,
+   "ci": [
+    -2.562081198265659,
+    4.476757499427535
+   ]
+  },
+  {
+   "key": "15+",
+   "label": "privatised",
+   "pct": 5.95465140919687,
+   "pairs": 2983,
+   "projects": 17,
+   "lo": -2.0270270270270174,
+   "hi": 15.20737327188941,
+   "ci": [
+    1.6483516483516638,
+    11.26414511212576
+   ]
+  }
+ ]
+}

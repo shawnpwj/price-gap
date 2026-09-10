@@ -121,6 +121,68 @@ qfit = lambda rs: (sum(r['diff'] * (r['sqft_old'] + r['sqft_new']) / 2 * r['gap'
                    / sum(r['gap'] ** 2 for r in rs)) if rs else None
 BANDQ = {nm: qfit(rows_in(nm)) for _, _, nm in BANDS}
 
+# ── WHAT EACH PAIR READS ON ITS OWN (Shawn, 2026-09-10) ─────────────────────
+# "the range you're showing is 38 to 46 psf. can we show ALL the development that is that range.
+# and that SHOW the psf... you show the difference and the n show in the psf per year"
+#
+# THE TRAP THIS MUST NOT FALL INTO. $38-46 is the precision of the AVERAGE, not the range
+# individual pairs sit in. Individual cells in that band run -$64 to +$109 at the 10th and 90th
+# percentile, and only 10% land inside the interval. Showing the 23 that agree, on their own,
+# would read as "this is the evidence" when it is the 10% that happens to match — the same
+# circular filter that collapsed the sample to 48 cells with a fake +/-$1 interval when it was
+# tested as a screen. So the cells inside are shown WITH the count they are drawn from, and
+# beside the convergence table, which is the honest version of the same idea.
+def own(r): return r['diff'] / r['gap']
+dol = lambda v: ('-$' if v < 0 else '$') + f'{abs(v):,.0f}'
+
+def inside_band(nm):
+    lo, hi = BANDCI[nm]
+    return [r for r in rows_in(nm) if lo <= own(r) <= hi]
+
+GAPCUTS = [('One year', 1, 1), ('Two years', 2, 2), ('Three to four', 3, 4),
+           ('Five to nine', 5, 9), ('Ten and over', 10, 999)]
+
+def converge_table(nm):
+    """How often a pair's OWN reading lands inside the interval, by how far apart it is.
+    The point of the table: the wider the gap, the more a single pair converges on the rate.
+    That is what a real effect buried under uncontrolled noise looks like."""
+    lo, hi = BANDCI[nm]
+    rs = rows_in(nm)
+    h = ['<table class="fig"><thead><tr><th>Lease gap</th><th class="num">pairs</th>'
+         f'<th class="num">reading ${lo:,.0f}&ndash;${hi:,.0f} a year</th>'
+         '<th class="num">share</th></tr></thead><tbody>']
+    for lab, a, b in GAPCUTS:
+        s = [r for r in rs if a <= r['gap'] <= b]
+        if not s: continue
+        k = sum(1 for r in s if lo <= own(r) <= hi)
+        h.append(f'<tr><th>{lab}</th><td class="num quiet">{len(s)}</td>'
+                 f'<td class="num big">{k}</td>'
+                 f'<td class="num quiet">{k/len(s):.0%}</td></tr>')
+    return ''.join(h) + '</tbody></table>'
+
+def onrate_table(nm):
+    """Every pair whose own psf-per-year lands inside the band's interval, dearest first."""
+    rs = sorted(inside_band(nm), key=lambda r: -own(r))
+    h = ['<table class="fig"><thead><tr><th>older</th><th class="num">lease</th><th>newer</th>'
+         '<th class="num">lease</th><th class="num">gap</th><th>bed</th>'
+         '<th class="num">difference</th><th class="num">$ / yr</th>'
+         '<th class="num">sales</th><th>station</th></tr></thead><tbody>']
+    for r in rs:
+        h.append(f'<tr><td>{html.escape(r["older"].title())}</td>'
+                 f'<td class="num quiet">{r["ls_old"]}</td>'
+                 f'<td>{html.escape(r["newer"].title())}</td>'
+                 f'<td class="num quiet">{r["ls_new"]}</td>'
+                 f'<td class="num">{r["gap"]}y</td><td class="quiet">{r["bed"]}</td>'
+                 f'<td class="num quiet">{r["diff"]:+,.0f}</td>'
+                 f'<td class="num big">${own(r):,.0f}</td>'
+                 f'<td class="num quiet">{r["n_old"]} / {r["n_new"]}</td>'
+                 f'<td class="quiet">{html.escape((r["station"] or "").replace(" MRT Station","").replace(" LRT Station"," LRT"))}</td></tr>')
+    return ''.join(h) + '</tbody></table>'
+
+OWNPCT = {nm: sorted(own(r) for r in rows_in(nm)) for _, _, nm in BANDS}
+def ownp(nm, q): 
+    v = OWNPCT[nm]; return v[int(q * len(v))]
+
 def sizes_by_vintage(bed):
     """Median size of that bedroom type, split on each PROJECT's OWN lease start —
     not on the pair midpoint, which would mix a pre-2011 block into the newer band."""
@@ -1496,7 +1558,7 @@ the first one measured against the market.</p>
 
 <section>
   <div class="sechead"><h2 class="disp">Behind it</h2>
-  <p>Five questions, answered once each.</p></div>
+  <p>Six questions, answered once each.</p></div>
 
   <details><summary>Does the rate actually fit a pair?</summary>
     <p class="expl"><b>Yes, once you compare totals rather than a single year.</b> A pair two
@@ -1542,6 +1604,40 @@ the first one measured against the market.</p>
     controlled here &mdash; are worth several hundred. The signal is real but buried. Those
     cells cannot mislead the rate, because this estimator fits the difference against the gap:
     a one-year pair carries one year of leverage and cannot shout.</p>
+  </details>
+
+  <details><summary>What does each pair read on its own?</summary>
+    <p class="expl"><b>First, what the interval is.</b> ${BANDR[NEW_NM]:,.0f} with a range of
+    ${BANDCI[NEW_NM][0]:,.0f}&ndash;${BANDCI[NEW_NM][1]:,.0f} is <b>how precisely the average is
+    known</b>. It is not the range individual pairs sit in. Those run
+    {dol(ownp(NEW_NM,.10))} to {dol(ownp(NEW_NM,.90))} a year between the tenth and ninetieth
+    percentile, because a single pair carries floor, stack and mix that nobody here controls.
+    Reading the interval as the spread of pairs is the one mistake this page most needs to
+    prevent.</p>
+    <p class="expl">So <b>only {len(inside_band(NEW_NM))} of {len(rows_in(NEW_NM))} pairs in the
+    newer band land inside it</b>, and that is expected, not a weakness. What matters is that
+    they are not scattered at random: <b>the wider the lease gap, the more a single pair
+    converges on the rate.</b></p>
+    <div class="scroll">{converge_table(NEW_NM)}</div>
+    <p class="expl">A one-year pair almost never reads the rate, because one year of newness is
+    worth ${BANDR[NEW_NM]:,.0f} and the noise around it is worth several hundred. Ten years of
+    newness is worth ${BANDR[NEW_NM]*10:,.0f}, and the same noise no longer hides it. That is
+    what a real effect buried under uncontrolled variation looks like &mdash; and it is the
+    reason the estimator fits the difference against the gap rather than averaging these
+    per-year figures, which would let the noisiest pairs shout loudest.</p>
+    <p class="expl"><b>Every pair reading ${BANDCI[NEW_NM][0]:,.0f}&ndash;${BANDCI[NEW_NM][1]:,.0f}
+    a year, 2011 onward</b> &mdash; the difference, the per-year figure it works out to, and the
+    sales behind each side.</p>
+    <div class="scroll">{onrate_table(NEW_NM)}</div>
+    <p class="expl">And the same for the older band, reading
+    ${BANDCI[OLD_NM][0]:,.0f}&ndash;${BANDCI[OLD_NM][1]:,.0f} a year &mdash;
+    {len(inside_band(OLD_NM))} of {len(rows_in(OLD_NM))} pairs.</p>
+    <div class="scroll">{onrate_table(OLD_NM)}</div>
+    <p class="expl"><b>These are not the evidence base &mdash; the other
+    {len(ALL)-len(inside_band(OLD_NM))-len(inside_band(NEW_NM))} comparisons are not wrong.</b>
+    They are the pairs that happen to land on the average, shown because it is worth seeing which
+    ones do. The rate is fitted on all {len(ALL)}, and selecting only the agreeing cells was
+    tested as a screen and rejected: it collapses the sample and manufactures a false precision.</p>
   </details>
 
   <details><summary>Does it matter when each side sold?</summary>

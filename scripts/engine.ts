@@ -87,15 +87,16 @@ export const PSF_WINDOW_MONTHS = 12;
 // developments with no workup at all against 74 at twelve. 6 -> 9 -> 12 keeps the freshness
 // where the data supports it and the coverage where it does not.
 export const WORKUP_WINDOW_LADDER = [6, 9, 12];
-// A SUBJECT with nothing in the last 12 months used to be skipped outright, which is how 73
-// developments ended up with no workup at all. Shawn, 2026-09-09: "all development should
-// have [one] even if there is no transaction for the specific development yet." So the
-// subject's own window widens until it finds a price, and the window it had to use travels
-// with the figure — a development priced off 2022 caveats is a different quality of reading
-// and must say so. COMPARABLES are NOT widened: two months of caveats inside twelve is a
-// quality bar on the evidence, and relaxing it there would weaken every workup to rescue a
-// few. (27 of the 73 are rescued at 24 months, 14 more at 36, 6 more at 60.)
-export const SUBJECT_WINDOW_LADDER = [12, 24, 36, 60];
+// TWELVE MONTHS IS A HARD CEILING. Shawn, 2026-09-10, choosing it over the rescue with the
+// cost stated: nothing is ever averaged over more than a year.
+//
+// This REVERSES his 2026-09-09 ruling that every development should carry a workup even
+// before it transacts. That rescue reached back 24, 36 and 60 months and covered 285
+// bedroom views across roughly 60 developments; they now carry no workup at all rather than
+// a figure built on caveats up to five years old. He was shown that trade and took it.
+//
+// The subject walks the SAME ladder as the workup, never past it — see WORKUP_WINDOW_LADDER.
+export const SUBJECT_WINDOW_LADDER = WORKUP_WINDOW_LADDER;
 export const HARMONISATION_FROM = 2023;   // lease starts from this year are post-rule
 export const BEDS = ["All", "1BR", "2BR", "3BR", "4BR+"];
 
@@ -518,14 +519,21 @@ function screenAt(data: Data, S: any, bed: string, candidates: ReturnType<typeof
 // building read over 12 months beats a further one read over 6. Inside a ring, the freshest
 // window that yields a full set wins, so most workups land on 6 months and only the thin
 // ones reach for 12. Everything a workup shows is read over the SAME window.
-export function screen(data: Data, S: any, bed: string, precomputed?: ReturnType<typeof neighbours>) {
+export function screen(data: Data, S: any, bed: string, precomputed?: ReturnType<typeof neighbours>,
+                       subjectNode?: any) {
   let last: ReturnType<typeof screenAt> | null = null;
+  // A window only qualifies if the SUBJECT can be priced in it too. Without this the ring
+  // could settle on 6 months off its comparables while the subject had nothing until 12,
+  // and the workup would compare two different periods — the exact thing one window per
+  // workup exists to prevent.
+  const subjectPriced = (windowMonths: number) =>
+    !subjectNode || !!factsFor(data, S.name, subjectNode, bed, false, windowMonths).psf;
   for (const radius of RADIUS_LADDER) {
     const cands = (precomputed ?? neighbours(data, S, MAX_RADIUS_M)).filter((c) => c.dist <= radius);
     for (const windowMonths of WORKUP_WINDOW_LADDER) {
       const got = screenAt(data, S, bed, cands, radius, windowMonths);
       last = got;
-      if (got.pool.length >= TARGET_COMPS) return got;
+      if (got.pool.length >= TARGET_COMPS && subjectPriced(windowMonths)) return got;
     }
   }
   return last!;

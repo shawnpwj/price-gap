@@ -251,7 +251,7 @@ async function main() {
       // tenure, TOP and station, never its price, so a provisional read is safe here.
       const Sprov = factsFor(data, name, node, bed, true);
       if (!Sprov.psf) continue;
-      const screened = screen(data, Sprov, bed, nb);
+      const screened = screen(data, Sprov, bed, nb, node);
       // Then re-read the subject on the window the workup settled on, so every figure in
       // this workup covers the same months.
       const S = factsFor(data, name, node, bed, true, screened.windowMonths);

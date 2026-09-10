@@ -22,7 +22,12 @@ moment the pair screen changed. If you add a claim, compute it.
 
   python3 lease-pairs.py && python3 build-page.py
 """
-import json, math, os, html, random, statistics as st, datetime
+import json, math, os, html, random, statistics as st, datetime, sys
+
+# A page is only true for the data it was cut from. This REFUSES TO BUILD when any calibration
+# JSON is older than the data behind it — see freshness.py for the seven hours that earned it.
+import freshness
+freshness.gate(sys.argv)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT  = os.path.join(HERE, '..', '..', 'kya-maps-calculator', 'calibration.html')

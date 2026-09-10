@@ -97,7 +97,16 @@ lease bands out of `lease-pairs.json`, and `integrated-pairs.py` reads both the 
 the $/100 m slope out of `mrt-pairs.json`. Run them out of order and you will silently calibrate
 against stale inputs.
 
+**CHECK FIRST, ALWAYS: `python3 freshness.py`.** It answers the one question that cost a session
+on 2026-09-10 — are these figures still the data's answer, or an old snapshot's? It compares every
+calibration JSON against the source files behind it two ways: source-file mtime, and the JSON's own
+window end against the last month in `psf-history.json`. `build-page.py` runs the same gate and
+**REFUSES TO BUILD** when anything is stale, so the page can no longer disagree with its data.
+Deliberately re-cutting an older window is `python3 build-page.py --stale-ok`, which says so loudly
+rather than going quiet.
+
 ```bash
+python3 freshness.py          # are the figures current? run before quoting ANY of them
 python3 lease-pairs.py        # -> lease-pairs.json
 python3 mrt-pairs.py          # -> mrt-pairs.json        (needs lease-pairs.json)
 python3 integrated-pairs.py   # -> integrated-pairs.json (needs both of the above)

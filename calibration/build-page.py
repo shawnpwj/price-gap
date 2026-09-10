@@ -1584,8 +1584,7 @@ HTML = f"""<!doctype html>
   </div>
   <nav class="terms" aria-label="The constants">
     <button type="button" class="done" data-go="summary" aria-current="true">
-      <span class="tn">Summary</span>
-      <span class="ts">five constants and one reference</span></button>
+      <span class="tn">Summary</span></button>
     <button type="button" class="done" data-go="lease">
       <span class="tn">Lease Difference</span>
       <span class="ts">${BANDR[OLD_NM]:,.0f} / ${BANDR[NEW_NM]:,.0f} a year</span></button>

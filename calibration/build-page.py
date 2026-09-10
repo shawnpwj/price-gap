@@ -655,7 +655,8 @@ def pairtable():
     nm_ = lambda x, ls: f'{html.escape(x.title())} <i class="age">{ls}</i>'
     h = ['<table class="fig pairs"><thead><tr><th class="num">#</th><th>older</th><th>newer</th>'
          '<th class="num">gap</th><th>bed</th><th class="num">difference</th>'
-         '<th class="num">$ / yr</th><th class="num">sales</th></tr></thead><tbody>']
+         '<th class="num">$ / yr</th><th class="num">the rate says</th>'
+         '<th class="num">off by</th><th class="num">sales</th></tr></thead><tbody>']
     for i, r in enumerate(rows, 1):
         h.append(
             f'<tr data-q="{i-1}" tabindex="0"><td class="num quiet">{i}</td>'
@@ -664,6 +665,8 @@ def pairtable():
             f'<td class="num">{r["gap"]}y</td><td class="quiet">{r["bed"]}</td>'
             f'<td class="num">{r["diff"]:+,.0f}</td>'
             f'<td class="num big">{dol(own(r))}</td>'
+            f'<td class="num quiet">${rate(mid(r)):,.0f}</td>'
+            f'<td class="num quiet">{dol(own(r) - rate(mid(r)))}</td>'
             f'<td class="num quiet">{r["n_old"]} / {r["n_new"]}</td></tr>')
     return ''.join(h) + '</tbody></table>'
 
@@ -1159,67 +1162,121 @@ def mrt_band_tx(key):
     rs = [r for r in MROWS if r['pairkey'] == key]
     return _tx(rs, 'closer', 'bed', 'n_close', 'further', 'bed', 'n_far')[0] if rs else 0
 
+# ── EVERY PAIR TIED BACK TO THE HEADLINE (Shawn, 2026-09-10) ────────────────
+# "I want the top rows to be the ones closest to the average, and I want the clients to be able
+# to link the numbers up to what we are showing." So each table carries, on every row: what THIS
+# pair reads, what the published figure says it should read, and the gap between the two — and
+# the table opens on the pairs that land on the figure and walks out to the ones that do not.
+# Exactly the shape of the lease panel's table, which is the one he signed off.
+MBAND = {b['key']: b['adj'] for b in (M['bands'] if M else [])}
+MBLAB = {'near|mid': 'under 5 vs 5&ndash;10 min', 'mid|far': '5&ndash;10 vs over 10 min',
+         'near|far': 'under 5 vs over 10 min'}
+TSTEP = [g for g in (T['slices']['gradient'] if T else []) if not g.get('thin') and g.get('pct')]
+INT_HEAD = (G['cuts'][-1] if G else None)          # the cut the engine actually uses
+
+def ten_step_of(left):
+    """The measured premium for the step this pair's remaining lease falls in."""
+    if left is None: return None
+    for g in sorted(TSTEP, key=lambda x: -x['min_left']):
+        if left >= g['min_left']: return g
+    return TSTEP[-1] if TSTEP else None
+
 def mrt_pairtable():
-    """Every walk-distance pair, closest-fitting first. `adj` is the difference AFTER the lease
-    gap between the two is removed at the measured lease rate — that is the figure the bands are
-    fitted on, so it is the one shown, with the raw difference beside it."""
-    rows = sorted(MROWS, key=lambda r: (r['pairkey'], -r['adj']))
+    """Every walk-distance pair, CLOSEST TO ITS BAND FIRST.
+
+    THE TREATMENT AND THE PLACEBO ARE DIFFERENT THINGS AND MUST NOT BE MIXED. Only pairs
+    spanning two DIFFERENT walk bands are evidence for a band step; same-band pairs
+    (near|near, mid|mid, far|far) are built deliberately as a placebo and should read about
+    nothing once the lease is removed. An earlier version of this table sorted them together
+    and, having no band figure to compare a same-band row against, silently scored it against
+    $0 — which floated the placebo to the top as if it were the best-fitting evidence.
+    They now sit below their own divider, sorted by how close to zero they land, which is what
+    a placebo is judged on."""
+    def off(r): return r['adj'] - MBAND.get(r['pairkey'], 0)
+    treat = sorted([r for r in MROWS if r['pairkey'] in MBAND], key=lambda r: abs(off(r)))
+    plac  = sorted([r for r in MROWS if r['pairkey'] not in MBAND], key=lambda r: abs(r['adj']))
     h = ['<table class="fig pairs"><thead><tr><th class="num">#</th><th>closer</th>'
          '<th>further</th><th class="num">walk</th><th>bed</th>'
-         '<th class="num">difference</th><th class="num">after lease</th>'
-         '<th class="num">sales</th><th>station</th></tr></thead><tbody>']
-    for i, r in enumerate(rows, 1):
-        h.append(f'<tr><td class="num quiet">{i}</td>'
-                 f'<td>{_nm(r["closer"])} <i class="age">{r["m_close"]}m</i></td>'
-                 f'<td>{_nm(r["further"])} <i class="age">{r["m_far"]}m</i></td>'
-                 f'<td class="num">{r["m_far"]-r["m_close"]:+,.0f}m</td>'
-                 f'<td class="quiet">{r["bed"]}</td>'
-                 f'<td class="num quiet">{r["raw"]:+,.0f}</td>'
-                 f'<td class="num big">{r["adj"]:+,.0f}</td>'
-                 f'<td class="num quiet">{r["n_close"]} / {r["n_far"]}</td>'
-                 f'<td class="quiet">{html.escape(str(r["station"]).replace(" MRT Station","").replace(" LRT Station"," LRT"))}</td></tr>')
+         '<th class="num">after lease</th><th>band</th><th class="num">the band says</th>'
+         '<th class="num">off by</th><th class="num">sales</th></tr></thead><tbody>']
+    def emit(rows, start, placebo):
+        out = []
+        for i, r in enumerate(rows, start):
+            band = MBLAB.get(r['pairkey'], r['pairkey'].replace('|', ' vs '))
+            says = '&mdash;' if placebo else f'+${MBAND[r["pairkey"]]:,.0f}'
+            offv = '&mdash;' if placebo else f'{off(r):+,.0f}'
+            out.append(f'<tr><td class="num quiet">{i}</td>'
+                       f'<td>{_nm(r["closer"])} <i class="age">{r["m_close"]}m</i></td>'
+                       f'<td>{_nm(r["further"])} <i class="age">{r["m_far"]}m</i></td>'
+                       f'<td class="num">{r["m_far"]-r["m_close"]:+,.0f}m</td>'
+                       f'<td class="quiet">{r["bed"]}</td>'
+                       f'<td class="num big">{r["adj"]:+,.0f}</td>'
+                       f'<td class="quiet">{band}</td>'
+                       f'<td class="num quiet">{says}</td>'
+                       f'<td class="num quiet">{offv}</td>'
+                       f'<td class="num quiet">{r["n_close"]} / {r["n_far"]}</td></tr>')
+        return ''.join(out)
+    h.append(emit(treat, 1, False))
+    if plac:
+        h.append('<tr class="sep"><th colspan="10">Same band on both sides &mdash; the placebo, '
+                 'which should read about nothing</th></tr>')
+        h.append(emit(plac, 1, True))
     return ''.join(h) + '</tbody></table>'
 
 def int_pairtable():
-    """Every integrated-vs-plain pair. `adj` is what is left after BOTH the lease gap and the
-    walk difference are removed at their own measured rates — the premium itself."""
-    rows = sorted(GROWS, key=lambda r: -r['adj'])
+    """Every integrated-vs-plain pair, CLOSEST TO THE PUBLISHED PREMIUM FIRST. Each row's own
+    reading is the residue after lease and walk, as a share of the plain neighbour's psf — the
+    same construction as the headline, so the two are directly comparable."""
+    pc  = lambda r: 100 * r['adj'] / r['base']
+    hd  = INT_HEAD['pct'] if INT_HEAD else 0
+    tight = lambda r: abs(r['lg']) <= INT_HEAD['lgmax'] and abs(r['dg']) <= INT_HEAD['dgmax']
+    rows = sorted(GROWS, key=lambda r: abs(pc(r) - hd))
     h = ['<table class="fig pairs"><thead><tr><th class="num">#</th><th>integrated</th>'
-         '<th>plain neighbour</th><th>bed</th><th class="num">psf</th><th class="num">psf</th>'
-         '<th class="num">difference</th><th class="num">after lease &amp; walk</th>'
-         '<th class="num">sales</th><th>station</th></tr></thead><tbody>']
+         '<th>plain neighbour</th><th>bed</th><th class="num">after lease &amp; walk</th>'
+         '<th class="num">as a premium</th><th class="num">the figure says</th>'
+         '<th class="num">off by</th><th class="num">sales</th><th>in the headline cut</th>'
+         '</tr></thead><tbody>']
     for i, r in enumerate(rows, 1):
         h.append(f'<tr><td class="num quiet">{i}</td>'
                  f'<td>{_nm(r["a"])} <i class="age">{r["ls_i"]}</i></td>'
                  f'<td>{_nm(r["b"])} <i class="age">{r["ls_n"]}</i></td>'
                  f'<td class="quiet">{r["bed"]}</td>'
-                 f'<td class="num quiet">${r["psf_i"]:,.0f}</td>'
-                 f'<td class="num quiet">${r["psf_n"]:,.0f}</td>'
-                 f'<td class="num quiet">{r["raw"]:+,.0f}</td>'
-                 f'<td class="num big">{r["adj"]:+,.0f}</td>'
+                 f'<td class="num quiet">{r["adj"]:+,.0f}</td>'
+                 f'<td class="num big">{pc(r):+.1f}%</td>'
+                 f'<td class="num quiet">+{hd:.1f}%</td>'
+                 f'<td class="num quiet">{pc(r)-hd:+.1f}%</td>'
                  f'<td class="num quiet">{r["n_i"]} / {r["n_n"]}</td>'
-                 f'<td class="quiet">{html.escape(str(r["station"]))}</td></tr>')
+                 f'<td class="quiet">{"yes" if tight(r) else "&mdash;"}</td></tr>')
     return ''.join(h) + '</tbody></table>'
 
 def ten_pairtable():
-    """Every freehold-against-leasehold pair. Shown in PERCENT throughout — his ruling of
-    2026-09-08 makes this panel the one explicit exception to dollars-never-percent."""
-    rows = sorted(TROWS, key=lambda r: -(r['psf_fh'] / r['psf_lh'] - 1))
+    """Every freehold-against-leasehold pair, CLOSEST TO ITS OWN STEP FIRST. The premium is not
+    one number — it widens as the lease shortens — so each row is compared against the step its
+    leasehold side falls in, not against the headline."""
+    prem = lambda r: 100 * (r['psf_fh'] / r['psf_lh'] - 1)
+    def exp(r):
+        g = ten_step_of(r.get('left'))
+        return (g['pct'] * 100 if g else None), (g['label'] if g else '&mdash;')
+    def off(r):
+        e, _ = exp(r)
+        return 1e9 if e is None else prem(r) - e
+    rows = sorted(TROWS, key=lambda r: abs(off(r)))
     h = ['<table class="fig pairs"><thead><tr><th class="num">#</th><th>freehold</th>'
-         '<th>leasehold</th><th>bed</th><th class="num">psf</th><th class="num">psf</th>'
-         '<th class="num">premium</th><th class="num">lease left</th>'
-         '<th class="num">sales</th><th>station</th></tr></thead><tbody>']
+         '<th>leasehold</th><th>bed</th><th class="num">premium</th>'
+         '<th class="num">lease left</th><th>step</th><th class="num">the step says</th>'
+         '<th class="num">off by</th><th class="num">sales</th></tr></thead><tbody>']
     for i, r in enumerate(rows, 1):
+        e, lab = exp(r)
         h.append(f'<tr><td class="num quiet">{i}</td>'
                  f'<td>{_nm(r["fh"])} <i class="age">{r["top_fh"]}</i></td>'
                  f'<td>{_nm(r["lh"])} <i class="age">{r["top_lh"]}</i></td>'
                  f'<td class="quiet">{r["bed"]}</td>'
-                 f'<td class="num quiet">${r["psf_fh"]:,.0f}</td>'
-                 f'<td class="num quiet">${r["psf_lh"]:,.0f}</td>'
-                 f'<td class="num big">{r["psf_fh"]/r["psf_lh"]-1:+.1%}</td>'
+                 f'<td class="num big">{prem(r):+.1f}%</td>'
                  f'<td class="num quiet">{r["left"]:,.0f} yrs</td>'
-                 f'<td class="num quiet">{r["n_fh"]} / {r["n_lh"]}</td>'
-                 f'<td class="quiet">{html.escape(str(r["station"]).replace(" MRT Station","").replace(" LRT Station"," LRT"))}</td></tr>')
+                 f'<td class="quiet">{lab}</td>'
+                 f'<td class="num quiet">{"&mdash;" if e is None else f"+{e:.0f}%"}</td>'
+                 f'<td class="num quiet">{"&mdash;" if e is None else f"{prem(r)-e:+.0f}%"}</td>'
+                 f'<td class="num quiet">{r["n_fh"]} / {r["n_lh"]}</td></tr>')
     return ''.join(h) + '</tbody></table>'
 
 def mrt_table():
@@ -1779,9 +1836,11 @@ the first one measured against the market.</p>
     </div>
     <p class="expl" style="margin-top:18px">All {len(ALL)} comparisons, numbered, <b>closest to
     the rate first</b> and walking out to the furthest. <b>Difference</b> is what the market
-    shows between the two; <b>$ / yr</b> is that difference over the lease gap; <b>sales</b> is
-    the transactions behind each side. Nothing in a row is adjusted for anything.
-    <b>Click any row</b> to open the quarters behind it.</p>
+    shows between the two; <b>$ / yr</b> is that difference over the lease gap; <b>the rate
+    says</b> is the published figure for this pair&rsquo;s band &mdash; the same
+    ${BANDR[OLD_NM]:,.0f} and ${BANDR[NEW_NM]:,.0f} on the panel above &mdash; so every row ties
+    straight back to the headline. <b>Sales</b> is the transactions behind each side. Nothing in
+    a row is adjusted for anything. <b>Click any row</b> to open the quarters behind it.</p>
     <div class="scroll" style="margin-top:12px">{PAIRTABLE}</div>
   </details>
 </section>
@@ -1847,10 +1906,16 @@ so what is left is the walk.</p>
   </details>
 
   <details><summary>Every pair</summary>
-    <p class="expl">All {len(MROWS):,} comparisons, grouped by which two walk bands they span.
-    <b>Difference</b> is the raw psf gap between the two; <b>after lease</b> is what is left once
-    the lease gap between them is removed at the measured rate &mdash; that is the figure the
-    bands are fitted on. <b>Sales</b> is the transactions behind each side.</p>
+    <p class="expl"><b>{len([r for r in MROWS if r['pairkey'] in MBAND]):,} comparisons that
+    span two different walk bands</b>, closest to their own band first. <b>After lease</b> is
+    the psf gap once the lease difference between the two is removed at the measured rate &mdash;
+    that is the figure the bands are fitted on, so it is the one compared against what the band
+    says. <b>Sales</b> is the transactions behind each side.</p>
+    <p class="expl">Below the divider sit the other
+    {len([r for r in MROWS if r['pairkey'] not in MBAND]):,}: pairs with <b>both</b> projects in
+    the same walk band. They are not evidence for a step &mdash; they are the <b>placebo</b>,
+    built on purpose, and once the lease is out they should read about nothing. Across them the
+    method reads <b>${M['placebo']['adj']:+,.0f}</b>.</p>
     <div class="scroll">{mrt_pairtable()}</div>
   </details>
 </section>
@@ -1924,11 +1989,13 @@ the walk. What is left is the building sitting on the station.</p>
   </details>
 
   <details><summary>Every pair</summary>
-    <p class="expl">All {len(GROWS)} comparisons. <b>Difference</b> is the raw psf gap;
-    <b>after lease &amp; walk</b> is what survives once BOTH the lease gap and the difference in
-    walking distance are removed at their own measured rates &mdash; that residue is the premium
-    itself. It is the thinnest panel here, and the sales column is the reason to read it
-    carefully.</p>
+    <p class="expl">All {len(GROWS)} comparisons, <b>closest to the published premium first</b>.
+    <b>After lease &amp; walk</b> is what survives once BOTH the lease gap and the difference in
+    walking distance are removed at their own measured rates; <b>as a premium</b> expresses that
+    residue against the plain neighbour&rsquo;s psf &mdash; the same construction as the headline,
+    so the two numbers are directly comparable. The last column says whether the pair is inside
+    the cut the published figure is computed from. This is the thinnest panel here, and the sales
+    column is the reason to read it carefully.</p>
     <div class="scroll">{int_pairtable()}</div>
   </details>
 </section>
@@ -2004,10 +2071,11 @@ constant at all.</p>
 
   <details><summary>Every pair</summary>
     <p class="expl">All {len(TROWS)} comparisons &mdash; a freehold development against a
-    leasehold neighbour on the same station, matched bedroom by bedroom. Shown in <b>percent</b>
-    throughout, which is this panel&rsquo;s standing exception to the dollars rule.
-    <b>Lease left</b> is what the leasehold side has remaining, and it is the thing the premium
-    widens against. <b>Sales</b> is the transactions behind each side.</p>
+    leasehold neighbour on the same station, matched bedroom by bedroom, <b>closest to its own
+    step first</b>. Shown in <b>percent</b> throughout, which is this panel&rsquo;s standing
+    exception to the dollars rule. The premium is not one number &mdash; it widens as the lease
+    shortens &mdash; so each row is compared against <b>the step its leasehold side falls in</b>,
+    never against the headline. <b>Sales</b> is the transactions behind each side.</p>
     <div class="scroll">{ten_pairtable()}</div>
   </details>
 

@@ -82,7 +82,8 @@ def _bands():
     o = {}
     for lo, hi, nm in ((0, 2011, 'old'), (2011, 9999, 'new')):
         rs = [r for r in LEASE if lo <= mid(r) < hi]
-        o[nm] = sum(r['diff'] for r in rs) / sum(r['gap'] for r in rs)
+        o[nm] = (sum(r['diff'] * r['gap'] for r in rs)  # least squares through the origin —
+                     / sum(r['gap'] ** 2 for r in rs))    # matches lease-pairs.py fitted()
     return o
 LB = _bands()
 lease_rate = lambda m: LB['old'] if m <= 2010.5 else LB['new']

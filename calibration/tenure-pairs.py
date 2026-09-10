@@ -80,7 +80,10 @@ BANDS = _lease_bands(LP)
 BAND_BOUND = 2011               # the shape ruled on the lease study; the RATES are derived below
 
 def fitted(rows, dk='diff', gk='gap'):
-    return sum(r[dk] for r in rows) / sum(r[gk] for r in rows) if rows else None
+    """Least squares through the origin — the same estimator as lease-pairs.py fitted().
+    Changed from the ratio form on Shawn's ruling, 2026-09-10; see that docstring."""
+    if not rows: return None
+    return sum(r[dk] * r[gk] for r in rows) / sum(r[gk] ** 2 for r in rows)
 
 _lp = LP['24']
 BANDR = {}

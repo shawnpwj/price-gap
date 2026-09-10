@@ -230,15 +230,29 @@ def build(window):
     return cut, rows
 
 def fitted(rows):
-    """sum(difference) / sum(gap) — each pair weighted by its lease separation."""
+    """LEAST SQUARES THROUGH THE ORIGIN — sum(difference x gap) / sum(gap^2).
+
+    CHANGED 2026-09-10 on Shawn's ruling, from the ratio form sum(diff)/sum(gap).
+    Tested, not assumed: the residual spread is FLAT across gap widths (sd ~$110-180
+    whether a pair is one year apart or twenty), so the variance is constant and this is
+    the efficient estimator. The ratio form is optimal only if variance GROWS with the
+    gap, which the data contradicts. It moved the bands $24.9 -> $25.4 and $42.9 -> $44.0
+    and held-out prediction is identical to the dollar ($111.4 vs $111.5), so this is a
+    defensibility fix, not an accuracy one.
+
+    The shape is right either way: fitted with an intercept it lands at -$11 (t=-0.6) and
+    -$10 (t=-0.7), indistinguishable from zero. Two identical projects, same lease start,
+    same price. DO NOT use the mean of the per-cell $/yr — it reads $35 in the newer band
+    because the one-year cells dominate it."""
     if not rows: return None
-    return sum(r['diff'] for r in rows) / sum(r['gap'] for r in rows)
+    return (sum(r['diff'] * r['gap'] for r in rows)
+            / sum(r['gap'] ** 2 for r in rows))
 
 def fitted_pct(rows):
-    """Same weighting, on the ratio scale: geometric, so it composes over years."""
+    """Same weighting as fitted(), on the ratio scale: geometric, so it composes over years."""
     if not rows: return None
-    tot = sum(math.log(r['psf_new'] / r['psf_old']) for r in rows)
-    return math.exp(tot / sum(r['gap'] for r in rows)) - 1
+    tot = sum(math.log(r['psf_new'] / r['psf_old']) * r['gap'] for r in rows)
+    return math.exp(tot / sum(r['gap'] ** 2 for r in rows)) - 1
 
 def summarise(rows, label):
     if not rows: return f'{label:28s}     —      —       —       —      0'

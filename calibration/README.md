@@ -12,15 +12,51 @@ Live Data chip until 2026-09-10; that chip is xl-only and never rendered on a ph
 
 | constant | engine says | measured | where |
 |---|---|---|---|
-| Lease difference | $40 flat | **$25 / $43** by midpoint | §3 |
-| MRT distance | $50 / $200 / $250 | **+$66 / +$156 / +$243**, or **$23 per 100 m** | §11 |
-| Integrated | +5% | **+6.7%** (4.5–9.1), which CONTAINS the +5% | §12 |
+| Lease difference | $40 flat | **$25 / $42** by midpoint | §3 |
+| MRT distance | $50 / $200 / $250 | **+$67 / +$144 / +$215**, or **$23 per 100 m** | §11 |
+| Integrated | +5% | **+11.0%** — MOVED from +6.7% on one month of new data, see §12a | §12 |
 | Void · extra penthouse area | **none — 1.00× implicit** | resale buyer pays **52% less** for it than for the floor plate | §13 |
-| Tenure · FH vs LH | ÷1.15 | **+18%**, and **+11% → +22%** by the lease left | §10 |
+| Tenure · FH vs LH | ÷1.15 | **+17%**, and **+11% → +22%** by the lease left | §10 |
 
 | EC vs private condo | **no constant — reference only** | **+29.4%** at launch, **−0.7%** at resale | §14 |
 
 GFA harmonisation (+7%) was **dropped from the study entirely** on his ruling, 2026-09-06.
+
+---
+
+## 0. RE-RUN OF 2026-09-10 — READ BEFORE QUOTING ANY FIGURE BELOW
+
+Two things happened in one run and they must not be confused.
+
+**1. The estimator changed, on Shawn's ruling.** `fitted()` was the ratio form
+`sum(diff)/sum(gap)`; it is now **least squares through the origin**, `sum(diff*gap)/sum(gap^2)`.
+Tested, not assumed: the residual spread is FLAT across gap widths (sd ~$100-170 whether a pair
+is one year apart or twenty), so variance is constant and this is the efficient estimator. The
+ratio form is optimal only if variance grows with the gap. Held-out prediction is identical to
+the dollar, so this is a defensibility fix, not an accuracy one. Fitted with an intercept it
+lands indistinguishable from zero (t = -0.6, -0.7), so through-origin is the right shape.
+
+**2. The 24-month window rolled forward a month** — `2024-09..2026-08` became
+`2024-10..2026-09` — because upstream now carries 2026-09. Nobody asked for this; it happens
+automatically on any re-run. It moved everything.
+
+| lease band | up to 2010 | 2011 onward |
+|---|---|---|
+| old window, ratio — **what was published until today** | $24.9 | $42.9 |
+| old window, OLS — the figure Shawn approved as "25/44" | $25.4 | $44.0 |
+| new window, ratio | $23.9 | $39.9 |
+| **new window, OLS — WHAT IS LIVE NOW** | **$24.7** | **$42.3** |
+
+The estimator adds about +$0.8 / +$2.4; the window roll takes off about -$0.7 / -$1.7. **The
+headline is $25 / $42, not the $25 / $44 that was approved.** Both effects are real; they
+happened to point opposite ways.
+
+**THE INTEGRATED PREMIUM IS THE WARNING.** One extra month moved it **+6.7% -> +11.0%** on a cut
+that went from 7 pairs to 8. Every cut moved the same way (every pair 5.95 -> 9.07). It is the
+thinnest figure in the study and it is not stable enough to put in front of a client without
+saying so. MRT moved +$66/+$156/+$243 -> +$67/+$144/+$215; tenure +18% -> +17.2%.
+
+**Any figure quoted below this line predates the re-run unless it says otherwise.**
 
 ---
 

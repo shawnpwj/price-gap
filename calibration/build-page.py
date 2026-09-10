@@ -44,9 +44,13 @@ POOL = D.get('pooled24', [])
 BANDS = [(1900, 2011, 'up to 2010'), (2011, 3000, '2011 onward')]
 
 mid    = lambda r: (r['ls_old'] + r['ls_new']) / 2
-fit    = lambda rs: sum(r['diff'] for r in rs) / sum(r['gap'] for r in rs) if rs else None
-fpct   = lambda rs: math.exp(sum(math.log(r['psf_new']/r['psf_old']) for r in rs)
-                             / sum(r['gap'] for r in rs)) - 1
+# LEAST SQUARES THROUGH THE ORIGIN, matching lease-pairs.py fitted(). Changed from the ratio
+# form sum(diff)/sum(gap) on Shawn's ruling, 2026-09-10: the residual spread is flat across gap
+# widths, so the variance is constant and this is the efficient estimator. See that docstring.
+fit    = lambda rs: (sum(r['diff'] * r['gap'] for r in rs)
+                     / sum(r['gap'] ** 2 for r in rs)) if rs else None
+fpct   = lambda rs: math.exp(sum(math.log(r['psf_new']/r['psf_old']) * r['gap'] for r in rs)
+                             / sum(r['gap'] ** 2 for r in rs)) - 1
 npairs = lambda rs: len({(r['older'], r['newer']) for r in rs})
 ndev   = lambda rs: len({x for r in rs for x in (r['older'], r['newer'])})
 money  = lambda v: '—' if v is None else f'{v:+,.0f}'
@@ -89,8 +93,8 @@ CCR    = [r for r in ALL if r['region'] == 'CCR']
 # The psf gap read as DOLLARS PER HOME. Same estimator, each cell's psf difference
 # valued at the pair's own mean size. This is what makes the gap legible to a layman:
 # part of the per-foot jump is simply that the newer box is smaller.
-qfit = lambda rs: (sum(r['diff'] * (r['sqft_old'] + r['sqft_new']) / 2 for r in rs)
-                   / sum(r['gap'] for r in rs)) if rs else None
+qfit = lambda rs: (sum(r['diff'] * (r['sqft_old'] + r['sqft_new']) / 2 * r['gap'] for r in rs)
+                   / sum(r['gap'] ** 2 for r in rs)) if rs else None
 BANDQ = {nm: qfit(rows_in(nm)) for _, _, nm in BANDS}
 
 def sizes_by_vintage(bed):
@@ -319,22 +323,72 @@ KEPT   = [r for r in ALL if not outside(r)]
 TRIMR  = {nm: fit([r for r in rows_in(nm) if not outside(r)]) for _, _, nm in BANDS}
 TRIMCI = {nm: ci([r for r in rows_in(nm) if not outside(r)]) for _, _, nm in BANDS}
 
+def spread():
+    """WHERE THE BULK SITS (Shawn, 2026-09-10: "what is wrong with just showing the 95%
+    confidence interval, where the main bulk normal distribution volume sits"). Nothing is
+    wrong with it — this is that picture. Every cell's miss, the central 95% shaded, and the
+    check that the shape is near enough normal for the band to mean what a reader thinks."""
+    R = sorted(RESID)
+    n = len(R); m = st.mean(R); sd = st.pstdev(R)
+    lo, hi = R[int(.025*n)], R[int(.975*n)-1]
+    W, H, PAD = 760, 210, 34
+    xlo, xhi = -500, 500
+    X = lambda v: PAD + (min(max(v, xlo), xhi) - xlo) / (xhi - xlo) * (W - 2*PAD)
+    NB, bw = 40, (xhi - xlo) / 40
+    bins = [0]*NB
+    for x in R: bins[min(NB-1, max(0, int((x - xlo)//bw)))] += 1
+    top = max(bins)
+    g = [f'<svg viewBox="0 0 {W} {H}" class="spread" role="img" '
+         f'aria-label="Distribution of how far each cell sits from the rate">']
+    g.append(f'<rect x="{X(lo):.1f}" y="18" width="{X(hi)-X(lo):.1f}" height="{H-52}" '
+             f'fill="rgba(201,169,106,.10)" stroke="rgba(201,169,106,.34)" stroke-width="1"/>')
+    for i, c in enumerate(bins):
+        if not c: continue
+        h = (c / top) * (H - 62)
+        g.append(f'<rect x="{X(xlo+i*bw):.1f}" y="{H-34-h:.1f}" '
+                 f'width="{(W-2*PAD)/NB-1.4:.1f}" height="{h:.1f}" fill="#3D5170"/>')
+    g.append(f'<line x1="{X(0):.1f}" y1="14" x2="{X(0):.1f}" y2="{H-34}" '
+             f'stroke="#C9A96A" stroke-width="1.2"/>')
+    for v in (xlo, -250, 0, 250, xhi):
+        g.append(f'<text x="{X(v):.1f}" y="{H-14}" fill="#7A8CA5" font-size="11" '
+                 f'text-anchor="middle">{"+" if v>0 else ""}{v:,}</text>')
+    g.append(f'<text x="{X(lo):.1f}" y="12" fill="#C9A96A" font-size="11" '
+             f'text-anchor="middle">{lo:+,.0f}</text>')
+    g.append(f'<text x="{X(hi):.1f}" y="12" fill="#C9A96A" font-size="11" '
+             f'text-anchor="middle">{hi:+,.0f}</text>')
+    g.append('</svg>')
+    return ''.join(g), m, sd, lo, hi
+
+SPREAD_SVG, RES_MEAN, RES_SD, RES_LO, RES_HI = spread()
+NORM1 = 100*sum(1 for x in RESID if abs(x-RES_MEAN) <   RES_SD)/len(RESID)
+NORM2 = 100*sum(1 for x in RESID if abs(x-RES_MEAN) < 2*RES_SD)/len(RESID)
+
 def miss_table():
-    """Every cell outside the central 95%, and why it is a candidate to sit there. He asked
-    for the outliers to be legible; they are named here and kept in the fit."""
+    """Every cell outside the central 95%. CCR LAST, under its own divider — Shawn, 2026-09-10:
+    the CCR is NOT ruled out of the fit, but it must not be the data on show. It is the loudest
+    group here and it is a submarket, so it sits apart rather than leading the table."""
+    def blk(rows):
+        h = []
+        for r in rows:
+            t = [x for x in tags(r) if x != 'CCR']
+            h.append(f'<tr><td>{html.escape(r["older"].title())}</td>'
+                     f'<td>{html.escape(r["newer"].title())}</td>'
+                     f'<td class="num">{r["gap"]}y</td><td class="quiet">{r["bed"]}</td>'
+                     f'<td class="num">{r["diff"]:+,.0f}</td>'
+                     f'<td class="num quiet">${rate(mid(r))*r["gap"]:,.0f}</td>'
+                     f'<td class="num big">{resid(r):+,.0f}</td>'
+                     f'<td class="quiet">{" &middot; ".join(t) if t else "nothing flagged"}</td></tr>')
+        return ''.join(h)
+    main = [r for r in MISSES if r['region'] != 'CCR']
+    ccr  = [r for r in MISSES if r['region'] == 'CCR']
     h = ['<table class="fig"><thead><tr><th>older</th><th>newer</th><th class="num">gap</th>'
          '<th>bed</th><th class="num">the market</th><th class="num">the rate</th>'
          '<th class="num">off by</th><th>why it is a candidate to miss</th>'
-         '</tr></thead><tbody>']
-    for r in MISSES:
-        t = tags(r)
-        h.append(f'<tr><td>{html.escape(r["older"].title())}</td>'
-                 f'<td>{html.escape(r["newer"].title())}</td>'
-                 f'<td class="num">{r["gap"]}y</td><td class="quiet">{r["bed"]}</td>'
-                 f'<td class="num">{r["diff"]:+,.0f}</td>'
-                 f'<td class="num quiet">${rate(mid(r))*r["gap"]:,.0f}</td>'
-                 f'<td class="num big">{resid(r):+,.0f}</td>'
-                 f'<td class="quiet">{" &middot; ".join(t) if t else "nothing flagged"}</td></tr>')
+         '</tr></thead><tbody>', blk(main)]
+    if ccr:
+        h.append(f'<tr class="sep"><th colspan="8">The CCR &mdash; counted in the fit, '
+                 f'shown apart</th></tr>')
+        h.append(blk(ccr))
     return ''.join(h) + '</tbody></table>'
 
 def pairtable():
@@ -457,6 +511,8 @@ text-transform:uppercase;color:var(--slate-600);display:block;margin-top:3px}
 .verdict .call{margin-top:22px;padding-top:18px;border-top:1px solid var(--ink);
 font-size:15px;color:var(--slate-300);max-width:72ch}
 .verdict .call b{color:var(--gold-soft);font-weight:600}
+.spread{width:100%;height:auto;display:block;margin:12px 0 4px;
+border:1px solid var(--ink);border-radius:11px;background:var(--navy-900);padding:4px}
 /* tables */
 table.fig{width:100%;border-collapse:collapse;font-size:13px;margin-top:4px}
 table.fig th,table.fig td{padding:8px 12px;text-align:left;border-bottom:1px solid rgba(36,48,80,.55);
@@ -1240,25 +1296,31 @@ the first one measured against the market.</p>
     is the slope through all {len(ALL)} cells, <b>not the average of the per-pair figures</b>.
     {WITHIN} of {len(ALL)} cells land within $200 of what their band predicts, and the misses
     cancel &mdash; the median cell is ${st.median(RESID):,.0f} off.</p>
-    <p class="expl"><b>{len(MISSES)} of {len(ALL)} cells sit outside the central 95%</b>
-    &mdash; the widest 2.5% of misses at each end. <b>They are named here rather than removed,
-    because taking them out changes almost nothing:</b> ${BANDR[OLD_NM]:,.2f} becomes
+    <p class="expl"><b>This is the whole sample, cell by cell &mdash; how far each one sits
+    from the rate.</b> The shaded band is the middle 95%; the gold line is a perfect fit.</p>
+    {SPREAD_SVG}
+    <p class="expl">The bulk is where it should be: the middle of the distribution is
+    ${RES_MEAN:+,.0f} &mdash; the misses cancel &mdash; and <b>95% of cells sit between
+    {RES_LO:+,.0f} and {RES_HI:+,.0f}</b>. The shape is close enough to a normal one for that
+    band to mean what it looks like it means: {NORM1:.0f}% of cells fall within one standard
+    deviation and {NORM2:.0f}% within two, against 68% and 95% for a textbook curve. The tails
+    are slightly heavier than normal, and that is the Marina Bay handful below.</p>
+    <p class="expl"><b>The {len(MISSES)} cells outside that band are named rather than
+    removed</b>, because taking them out changes almost nothing: ${BANDR[OLD_NM]:,.2f} becomes
     ${TRIMR[OLD_NM]:,.2f}, and ${BANDR[NEW_NM]:,.2f} becomes ${TRIMR[NEW_NM]:,.2f} &mdash; both
-    still well inside the interval the full sample already publishes. That is the
-    argument for the rate, and it is worth more than a tidier table. The typical cell misses by
-    ${st.median(abs(x) for x in RESID):,.0f}; three in four are inside
-    ${sorted(abs(x) for x in RESID)[int(.75*len(RESID))]:,.0f}.</p>
+    inside the interval the full sample already publishes. That is the argument for the rate,
+    and it is worth more than a tidier table.</p>
     <div class="scroll">{miss_table()}</div>
     <p class="expl">Four things put a cell on that list. <b>Price level does the most work</b>
     &mdash; the study is measured in dollars, so the same percentage error is a bigger miss on a
     dear pair; these cells run
     ${st.median((r['psf_old']+r['psf_new'])/2 for r in MISSES):,.0f} psf against
-    ${st.median((r['psf_old']+r['psf_new'])/2 for r in KEPT):,.0f} for the rest. <b>The Marina
-    Bay cluster</b> is the loudest group: this page already calls the CCR not measurable &mdash;
-    a submarket rather than a region &mdash; and those {len(CCR)} cells are still inside the
-    fitted figure. Then <b>thin cells</b>, and last the two things nobody controls, floor and
-    facing, worth several hundred dollars at $2,000 psf between a high unit with a view and a
-    low one facing a wall.</p>
+    ${st.median((r['psf_old']+r['psf_new'])/2 for r in KEPT):,.0f} for the rest. Then <b>thin
+    cells</b>, and last the two things nobody controls, floor and facing, worth several hundred
+    dollars at $2,000 psf between a high unit with a view and a low one facing a wall. <b>The
+    {len(CCR)} CCR cells stay in the fit but sit apart</b> &mdash; every qualifying pair there is
+    Marina Bay or Sentosa, a submarket rather than a region, so they are counted and not
+    showcased.</p>
 
     <p class="expl"><b>The one-year row is the bigger miss, and it is the reason the pair table
     looks noisy.</b> {len(ONEY)} cells sit one year apart, where a single year of newness is

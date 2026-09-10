@@ -115,7 +115,8 @@ def _lease_bands():
     out = {}
     for lo, hi, nm in ((0, 2011, 'old'), (2011, 9999, 'new')):
         rs = [r for r in lp if lo <= mid(r) < hi]
-        out[nm] = sum(r['diff'] for r in rs) / sum(r['gap'] for r in rs)
+        out[nm] = (sum(r['diff'] * r['gap'] for r in rs)  # least squares through the origin —
+                     / sum(r['gap'] ** 2 for r in rs))    # matches lease-pairs.py fitted()
     return out
 
 LEASE = _lease_bands()

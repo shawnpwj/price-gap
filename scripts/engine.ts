@@ -58,20 +58,21 @@ export const MAX_RADIUS_M = RADIUS_LADDER[RADIUS_LADDER.length - 1];
 // How many comparables the ladder is trying to reach before it stops widening.
 export const TARGET_COMPS = 3;
 
-// COMPARABILITY RANKING. The engine used to rank candidates by DISTANCE and stop at three,
-// which is what let a 1991 lease 390 m away beat a 2013 lease 757 m away and left the ladder
-// rebuilding a comparable rather than adjusting one. Shawn, 2026-09-09: "what you should
-// ALWAYS be doing is finding within 1km - 1.5km, what is the most comparable 3 based on age
-// ..., size (>200 units), and similar attributes like nearby to mrt".
+// RANKING IS BY DISTANCE. Shawn, 2026-09-10: "I want the closest match to be based on
+// distance, not tenure. because tenure is already filtered to <15 years, so that is fine."
 //
-// Every term is read off RAW ATTRIBUTES — years, metres, tenure class — and never off an
-// adjusted figure, so the score does not depend on which constant set is running and both
-// columns still see the identical pool. Lower is better.
+// The reasoning is that the SCREENS already do the comparability work — a leasehold more
+// than 15 years apart in lease start is excluded outright, as is a freehold more than 15
+// years older — so everything that survives is acceptable on vintage, and among acceptable
+// candidates the nearest building is the truest comparable. Location is the dominant term
+// in what a home is worth, and the screens mean distance can no longer surface the 1991
+// lease that started this.
 //
-// Vintage is weighted hardest because it is the term that was actually going wrong, and it
-// is normalised on the same 15 years as the hard gate: a comparable at the gate contributes
-// a full 2.0, one of the same vintage contributes nothing.
-export const RANK_WEIGHTS = { vintage: 2.0, distance: 1.0, station: 0.6, tenure: 0.8 };
+// This REPLACES a weighted comparability score (vintage 2.0 / distance 1.0 / station 0.6 /
+// tenure 0.8) that ran from 2026-09-09 to 2026-09-10. That score is gone rather than
+// retired-in-place: a second ordering nothing calls is a trap, not a record. What it cost
+// is measured — median adjustment load rises from 7.7% to 11.3% under distance, because a
+// nearer building can be further apart in vintage.
 export const PSF_WINDOW_MONTHS = 12;
 // A SUBJECT with nothing in the last 12 months used to be skipped outright, which is how 73
 // developments ended up with no workup at all. Shawn, 2026-09-09: "all development should
@@ -417,19 +418,12 @@ export function vintageGap(S: any, c: any): number | null {
   return null;
 }
 
-// How comparable this candidate is, before any adjustment is applied. Lower is better.
+// How comparable this candidate is, once the screens have had their say. Lower is better,
+// and it is simply the distance: the screens decide WHETHER a candidate is comparable, and
+// among those that are, the nearest wins. Kept as a function rather than inlining `dist` so
+// the ordering has one definition and the panel can name what it sorted on.
 export function comparability(S: any, c: any): number {
-  const W = RANK_WEIGHTS;
-  const v = vintageGap(S, c);
-  // An unreadable vintage is treated as sitting AT the gate rather than as free: it is a
-  // real unknown and should not outrank a comparable whose vintage is known and close.
-  const vintage = (v == null ? LEASE_GAP_EXCLUDE_YEARS : v) / LEASE_GAP_EXCLUDE_YEARS;
-  const dist = c.dist / MAX_RADIUS_M;
-  // Rail access as raw METRES apart, not as a band: the two constant sets cut the bands
-  // differently, and ranking must not depend on which one is running.
-  const station = Math.abs((S.mrt?.metres ?? 0) - (c.mrt?.metres ?? 0)) / 500;
-  const tenure = S.tenure?.type && c.tenure?.type && S.tenure.type !== c.tenure.type ? 1 : 0;
-  return W.vintage * vintage + W.distance * dist + W.station * station + W.tenure * tenure;
+  return c.dist;
 }
 
 // Screen at ONE radius. `screen()` below drives this up the ladder.
@@ -486,9 +480,9 @@ function screenAt(data: Data, S: any, bed: string, candidates: ReturnType<typeof
         why: [`lease starts ${c.tenure.leaseStart} — ${Math.abs(d)} yrs ${d > 0 ? "older" : "newer"} than subject's ${S.tenure.leaseStart} (limit ${LEASE_GAP_EXCLUDE_YEARS})`] });
     }
   }
-  // RANK BY COMPARABILITY, not by distance. This is the line that changes which three
-  // comparables a development is judged against; everything above only decides who is
-  // eligible at all. (Shawn, 2026-09-09.)
+  // RANK BY DISTANCE. Everything above decides who is ELIGIBLE; this decides which three of
+  // the eligible a development is judged against, and among candidates the screens have
+  // already accepted, the nearest is the truest. (Shawn, 2026-09-10.)
   const ranked = [...pool].sort((a, b) => comparability(S, a) - comparability(S, b));
   return { rejected, eligible, pool: ranked, ageExcluded, leaseExcluded, radius };
 }

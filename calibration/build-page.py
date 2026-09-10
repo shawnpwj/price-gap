@@ -174,7 +174,7 @@ def onrate_table(nm):
                  f'<td class="num quiet">{r["ls_new"]}</td>'
                  f'<td class="num">{r["gap"]}y</td><td class="quiet">{r["bed"]}</td>'
                  f'<td class="num quiet">{r["diff"]:+,.0f}</td>'
-                 f'<td class="num big">${own(r):,.0f}</td>'
+                 f'<td class="num big">{dol(own(r))}</td>'
                  f'<td class="num quiet">{r["n_old"]} / {r["n_new"]}</td>'
                  f'<td class="quiet">{html.escape((r["station"] or "").replace(" MRT Station","").replace(" LRT Station"," LRT"))}</td></tr>')
     return ''.join(h) + '</tbody></table>'
@@ -459,6 +459,17 @@ def why_table():
 GBUCKETS = [('One year apart', 1, 1), ('Two years', 2, 2), ('Three to four years', 3, 4),
             ('Five to nine years', 5, 9), ('Ten years and over', 10, 999)]
 
+# ── NOT RENDERED. Shawn removed three explain blocks from the lease panel on 2026-09-10:
+# "Does the rate actually fit a pair?", "What does each pair read on its own?" and "Does it
+# matter when each side sold?". The renderers below are kept, like tested_table() above, because
+# they are the record of what was measured — put any of them back by calling it from a details
+# block. The FINDINGS they carried are not lost: they are in README section 6 and in the
+# checks printed at the end of this build, which still run on every re-cut.
+#   holds_table()   the rate against the market by gap width
+#   spread()        the residual distribution with the central 95%
+#   miss_table()    the cells outside that band, and why each is a candidate
+#   converge_table()/onrate_table()  what each pair reads on its own
+# The pair table still uses resid(), outside() and tags() for its flags column.
 def holds_table():
     h = ['<table class="fig look"><thead><tr><th>How far apart the two leases are</th>'
          '<th class="num">cells</th><th class="num">what the market shows</th>'
@@ -587,38 +598,37 @@ def miss_table():
     return ''.join(h) + '</tbody></table>'
 
 def pairtable():
-    """NUMBERED, AND SORTED LEAST-MISS FIRST — Shawn, 2026-09-10: "i want you to number each
-    pair, then i want you to sort by [least] 'off by' all the way to max 'off by'." So the
-    table opens on the pairs the rate lands on and walks out to the ones it does not; the
-    outliers are where a reader arrives last, having already seen how tight the core is."""
+    """Every comparison, in the shape Shawn asked for on 2026-09-10:
+
+        older | newer | gap | bed | difference | $ / yr | sales
+
+    The lease start rides inside the name ("Sims Urban Oasis 2014"), which is how he reads a
+    pair, and the psf columns, the predicted figure, the miss, the distance and the flags all
+    come off — they were scaffolding for explain blocks that are no longer on the page.
+
+    STILL SORTED CLOSEST TO THE RATE FIRST (his instruction, same day). The ordering column is
+    no longer shown, so the header says what the order is: the table opens on the pairs reading
+    about the band rate and walks out to the ones that do not.
+
+    Every row opens its quarters on click — see the drill-down block above."""
     rows = sorted(ALL, key=lambda r: abs(resid(r)))
     global QDATA
     QDATA = [quarters(r) for r in rows]
-    def nm_(x): return html.escape(x.title())
-    h = ['<table class="fig pairs"><thead><tr><th class="num">#</th>'
-         '<th>older</th><th class="num">lease</th>'
-         '<th>newer</th><th class="num">lease</th><th class="num">gap</th><th>bed</th>'
-         '<th class="num">psf</th><th class="num">psf</th>'
-         '<th class="num">the market&rsquo;s difference</th>'
-         '<th class="num">the rate predicts</th><th class="num">off by</th>'
-         '<th class="num">distance</th><th>station</th><th>flags</th>'
-         '</tr></thead><tbody>']
+    nm_ = lambda x, ls: f'{html.escape(x.title())} <i class="age">{ls}</i>'
+    h = ['<table class="fig pairs"><thead><tr><th class="num">#</th><th>older</th><th>newer</th>'
+         '<th class="num">gap</th><th>bed</th><th class="num">difference</th>'
+         '<th class="num">$ / yr</th><th class="num">sales</th></tr></thead><tbody>']
     for i, r in enumerate(rows, 1):
-        pred = rate(mid(r)) * r['gap']
-        off  = r['diff'] - pred
-        t    = tags(r)
         h.append(
-            f'<tr{" class=flag" if outside(r) else ""} data-q="{i-1}" tabindex="0"><td class="num quiet">{i}</td><td>{nm_(r["older"])}</td><td class="num quiet">{r["ls_old"]}</td>'
-            f'<td>{nm_(r["newer"])}</td><td class="num quiet">{r["ls_new"]}</td>'
+            f'<tr data-q="{i-1}" tabindex="0"><td class="num quiet">{i}</td>'
+            f'<td>{nm_(r["older"], r["ls_old"])}</td>'
+            f'<td>{nm_(r["newer"], r["ls_new"])}</td>'
             f'<td class="num">{r["gap"]}y</td><td class="quiet">{r["bed"]}</td>'
-            f'<td class="num quiet">${r["psf_old"]:,.0f}</td><td class="num quiet">${r["psf_new"]:,.0f}</td>'
-            f'<td class="num big">{r["diff"]:+,.0f}</td>'
-            f'<td class="num quiet">${pred:,.0f}</td>'
-            f'<td class="num quiet">{off:+,.0f}</td>'
-            f'<td class="num quiet">{r["metres"]}m</td>'
-            f'<td class="quiet">{html.escape((r["station"] or "").replace(" MRT Station","").replace(" LRT Station"," LRT"))}</td>'
-            f'<td class="quiet">{" &middot; ".join(t)}</td></tr>')
+            f'<td class="num">{r["diff"]:+,.0f}</td>'
+            f'<td class="num big">{dol(own(r))}</td>'
+            f'<td class="num quiet">{r["n_old"]} / {r["n_new"]}</td></tr>')
     return ''.join(h) + '</tbody></table>'
+
 CSS = """
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--navy-950:#0B111E;--navy-900:#101727;--navy-850:#141C2F;--navy-800:#182238;
@@ -1558,106 +1568,7 @@ the first one measured against the market.</p>
 
 <section>
   <div class="sechead"><h2 class="disp">Behind it</h2>
-  <p>Six questions, answered once each.</p></div>
-
-  <details><summary>Does the rate actually fit a pair?</summary>
-    <p class="expl"><b>Yes, once you compare totals rather than a single year.</b> A pair two
-    years apart should sit about two years&rsquo; worth of rate apart, one ten years apart about
-    ten. Compare a pair&rsquo;s whole difference against its own gap and the rate is what the
-    market is doing &mdash; not a figure imposed on it.</p>
-    <div class="scroll">{holds_table()}</div>
-    <p class="expl"><b>Two-year, five-to-nine-year and ten-year-plus pairs land on it almost
-    exactly</b> &mdash; within about a year&rsquo;s worth, on a difference of several hundred
-    dollars. The two that miss go in opposite directions and neither moves the answer: the rate
-    is the slope through all {len(ALL)} cells, <b>not the average of the per-pair figures</b>.
-    {WITHIN} of {len(ALL)} cells land within $200 of what their band predicts, and the misses
-    cancel &mdash; the median cell is ${st.median(RESID):,.0f} off.</p>
-    <p class="expl"><b>This is the whole sample, cell by cell &mdash; how far each one sits
-    from the rate.</b> The shaded band is the middle 95%; the gold line is a perfect fit.</p>
-    {SPREAD_SVG}
-    <p class="expl">The bulk is where it should be: the middle of the distribution is
-    ${RES_MEAN:+,.0f} &mdash; the misses cancel &mdash; and <b>95% of cells sit between
-    {RES_LO:+,.0f} and {RES_HI:+,.0f}</b>. The shape is close enough to a normal one for that
-    band to mean what it looks like it means: {NORM1:.0f}% of cells fall within one standard
-    deviation and {NORM2:.0f}% within two, against 68% and 95% for a textbook curve. The tails
-    are slightly heavier than normal, and that is the Marina Bay handful below.</p>
-    <p class="expl"><b>The {len(MISSES)} cells outside that band are named rather than
-    removed</b>, because taking them out changes almost nothing: ${BANDR[OLD_NM]:,.2f} becomes
-    ${TRIMR[OLD_NM]:,.2f}, and ${BANDR[NEW_NM]:,.2f} becomes ${TRIMR[NEW_NM]:,.2f} &mdash; both
-    inside the interval the full sample already publishes. That is the argument for the rate,
-    and it is worth more than a tidier table.</p>
-    <div class="scroll">{miss_table()}</div>
-    <p class="expl">Four things put a cell on that list. <b>Price level does the most work</b>
-    &mdash; the study is measured in dollars, so the same percentage error is a bigger miss on a
-    dear pair; these cells run
-    ${st.median((r['psf_old']+r['psf_new'])/2 for r in MISSES):,.0f} psf against
-    ${st.median((r['psf_old']+r['psf_new'])/2 for r in KEPT):,.0f} for the rest. Then <b>thin
-    cells</b>, and last the two things nobody controls, floor and facing, worth several hundred
-    dollars at $2,000 psf between a high unit with a view and a low one facing a wall. <b>The
-    {len(CCR)} CCR cells stay in the fit but sit apart</b> &mdash; every qualifying pair there is
-    Marina Bay or Sentosa, a submarket rather than a region, so they are counted and not
-    showcased.</p>
-
-    <p class="expl"><b>The one-year row is the bigger miss, and it is the reason the pair table
-    looks noisy.</b> {len(ONEY)} cells sit one year apart, where a single year of newness is
-    worth ${BANDR[NEW_NM]:,.0f} but the floor, the stack and the sales mix &mdash; none of them
-    controlled here &mdash; are worth several hundred. The signal is real but buried. Those
-    cells cannot mislead the rate, because this estimator fits the difference against the gap:
-    a one-year pair carries one year of leverage and cannot shout.</p>
-  </details>
-
-  <details><summary>What does each pair read on its own?</summary>
-    <p class="expl"><b>First, what the interval is.</b> ${BANDR[NEW_NM]:,.0f} with a range of
-    ${BANDCI[NEW_NM][0]:,.0f}&ndash;${BANDCI[NEW_NM][1]:,.0f} is <b>how precisely the average is
-    known</b>. It is not the range individual pairs sit in. Those run
-    {dol(ownp(NEW_NM,.10))} to {dol(ownp(NEW_NM,.90))} a year between the tenth and ninetieth
-    percentile, because a single pair carries floor, stack and mix that nobody here controls.
-    Reading the interval as the spread of pairs is the one mistake this page most needs to
-    prevent.</p>
-    <p class="expl">So <b>only {len(inside_band(NEW_NM))} of {len(rows_in(NEW_NM))} pairs in the
-    newer band land inside it</b>, and that is expected, not a weakness. What matters is that
-    they are not scattered at random: <b>the wider the lease gap, the more a single pair
-    converges on the rate.</b></p>
-    <div class="scroll">{converge_table(NEW_NM)}</div>
-    <p class="expl">A one-year pair almost never reads the rate, because one year of newness is
-    worth ${BANDR[NEW_NM]:,.0f} and the noise around it is worth several hundred. Ten years of
-    newness is worth ${BANDR[NEW_NM]*10:,.0f}, and the same noise no longer hides it. That is
-    what a real effect buried under uncontrolled variation looks like &mdash; and it is the
-    reason the estimator fits the difference against the gap rather than averaging these
-    per-year figures, which would let the noisiest pairs shout loudest.</p>
-    <p class="expl"><b>Every pair reading ${BANDCI[NEW_NM][0]:,.0f}&ndash;${BANDCI[NEW_NM][1]:,.0f}
-    a year, 2011 onward</b> &mdash; the difference, the per-year figure it works out to, and the
-    sales behind each side.</p>
-    <div class="scroll">{onrate_table(NEW_NM)}</div>
-    <p class="expl">And the same for the older band, reading
-    ${BANDCI[OLD_NM][0]:,.0f}&ndash;${BANDCI[OLD_NM][1]:,.0f} a year &mdash;
-    {len(inside_band(OLD_NM))} of {len(rows_in(OLD_NM))} pairs.</p>
-    <div class="scroll">{onrate_table(OLD_NM)}</div>
-    <p class="expl"><b>These are not the evidence base &mdash; the other
-    {len(ALL)-len(inside_band(OLD_NM))-len(inside_band(NEW_NM))} comparisons are not wrong.</b>
-    They are the pairs that happen to land on the average, shown because it is worth seeing which
-    ones do. The rate is fitted on all {len(ALL)}, and selecting only the agreeing cells was
-    tested as a screen and rejected: it collapses the sample and manufactures a false precision.</p>
-  </details>
-
-  <details><summary>Does it matter when each side sold?</summary>
-    <p class="expl">A comparison pools 24 months on each side. So in principle one project could
-    have sold early in the window and its neighbour late, and part of the difference between them
-    would be the market moving rather than the lease. <b>It is worth real money: across this
-    window the island median rose ${DRIFT:,.0f} psf a month</b>, so six months of mismatch would
-    be worth about ${abs(DRIFT)*6:,.0f}.</p>
-    <p class="expl"><b>Measured, and it is not happening.</b> Weighting each side by its own
-    transactions, the newer project sells on average <b>{OFF_ME:+.1f} months</b> apart from the
-    older one across {len(OFFS)} comparisons &mdash; the two trade together. {OFF_3} comparisons
-    are offset by more than three months, and they scatter both ways rather than leaning.</p>
-    <p class="expl">Rebuilt from scratch comparing the two sides <b>only inside quarters both of
-    them traded in</b>, the rate reads <b>${MATCHQ[OLD_NM]:,.0f}</b> and
-    <b>${MATCHQ[NEW_NM]:,.0f}</b> on {MATCHN} comparisons, against ${BANDR[OLD_NM]:,.0f} and
-    ${BANDR[NEW_NM]:,.0f} pooled. No movement worth the name, and matching is the worse method
-    here because each quarter's median rests on a handful of sales instead of the window's
-    whole count. <b>The check stays in the build</b> &mdash; it is cheap, and a future cut could
-    come out offset even though this one does not.</p>
-  </details>
+  <p>Three questions, answered once each.</p></div>
 
   <details><summary>Do the bands move as the stock ages?</summary>
     <p class="expl"><b>No. They are fixed calendar years.</b> If this were really an age effect,
@@ -1706,11 +1617,11 @@ the first one measured against the market.</p>
         <li><b>facing</b> &mdash; same</li>
         <li>lease start and building age are<br>confounded: this is blended vintage</li></ul></div>
     </div>
-    <p class="expl" style="margin-top:18px">Every cell, numbered, <b>closest to the rate
-    first</b> and walking out to the furthest. <b>The
-    difference is what the market shows; beside it is what the band predicts for that gap.</b>
-    Nothing in a row is adjusted for anything. The last column carries the reasons a row is a
-    candidate to miss, and the {len(MISSES)} that sit outside the central 95% are marked.</p>
+    <p class="expl" style="margin-top:18px">All {len(ALL)} comparisons, numbered, <b>closest to
+    the rate first</b> and walking out to the furthest. <b>Difference</b> is what the market
+    shows between the two; <b>$ / yr</b> is that difference over the lease gap; <b>sales</b> is
+    the transactions behind each side. Nothing in a row is adjusted for anything.
+    <b>Click any row</b> to open the quarters behind it.</p>
     <div class="scroll" style="margin-top:12px">{PAIRTABLE}</div>
   </details>
 </section>
@@ -2160,3 +2071,11 @@ for _, _, nm in BANDS:
     print(f'    {nm:14s} ${BANDR[nm]:5.1f}/yr  95% [{c[0]:.1f}, {c[1]:.1f}]  {ndev(rows_in(nm)):3d} devs')
 print(f'  held-out: flat {CV_FLAT/1000:.1f}k · TWO {CV_TWO/1000:.1f}k · three {CV_THREE/1000:.1f}k')
 print(f'  region in the newer band: RCR ${fit(RCR_NEW):.0f} vs OCR ${fit(OCR_NEW):.0f}, p={P_RNEW[1]:.3f}')
+# The three removed explain blocks were also CHECKS. They still run, here, so a future re-cut
+# cannot quietly break one without anybody seeing it.
+_med = st.median(abs(x) for x in RESID)
+print(f'  fit: {WITHIN}/{len(ALL)} cells within $200 of their band; median miss ${_med:,.0f}')
+print(f'  timing: sides offset {OFF_ME:+.2f} months on average; quarter-matched reads '
+      f'${MATCHQ[OLD_NM]:.1f}/${MATCHQ[NEW_NM]:.1f} against ${BANDR[OLD_NM]:.1f}/${BANDR[NEW_NM]:.1f}')
+print(f'  outside the central 95%: {len(MISSES)} cells; dropping them gives '
+      f'${TRIMR[OLD_NM]:.1f}/${TRIMR[NEW_NM]:.1f}')

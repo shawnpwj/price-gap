@@ -119,7 +119,8 @@ qh      = J('quantum-history.json')['projects']
 # 2026-09-06.)
 mrt     = [s for s in J('mrt-stations.json')['stations'] if s.get('status') == 'operational']
 
-LAST = max(m for p in psf.values() for b in p.values() for m in b)
+import cut                      # THE PINNED CUT — a crawl must not move the figures
+LAST = cut.last_month(psf)      # Shawn, 2026-09-10: the study is a dated cut, not a live feed
 def months_back(mo, n):
     y, m = map(int, mo.split('-')); t = y*12 + m - 1 - n
     return f'{t//12:04d}-{t%12+1:02d}'

@@ -107,7 +107,10 @@ def rows():
                             sale=int(t['typeOfSale']), ls=lease_start(t['tenure'])))
     return out
 
-R = rows()
+import cut                       # THE PINNED CUT — see cut.py
+# Shawn, 2026-09-10: the study is a dated cut, not a live feed. The URA pull returns whatever
+# is current, so the upper bound is applied here rather than left to the API.
+R = [r for r in rows() if r['mk'] <= cut.CUT_END]
 
 # ── pairing ─────────────────────────────────────────────────────────────────
 def gap(a, b):

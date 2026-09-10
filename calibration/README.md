@@ -97,16 +97,22 @@ lease bands out of `lease-pairs.json`, and `integrated-pairs.py` reads both the 
 the $/100 m slope out of `mrt-pairs.json`. Run them out of order and you will silently calibrate
 against stale inputs.
 
-**CHECK FIRST, ALWAYS: `python3 freshness.py`.** It answers the one question that cost a session
-on 2026-09-10 — are these figures still the data's answer, or an old snapshot's? It compares every
-calibration JSON against the source files behind it two ways: source-file mtime, and the JSON's own
-window end against the last month in `psf-history.json`. `build-page.py` runs the same gate and
-**REFUSES TO BUILD** when anything is stale, so the page can no longer disagree with its data.
-Deliberately re-cutting an older window is `python3 build-page.py --stale-ok`, which says so loudly
-rather than going quiet.
+## THE FIGURES ARE PINNED — "as of 2H2026"
+
+**Shawn's ruling, 2026-09-10: the constants are a DATED CUT, not a live feed.** `cut.py` holds
+`CUT_END = '2026-09'` and `VINTAGE = '2H2026'`, and all six scripts end their window there. **A
+crawl bringing newer months does NOT move a single figure.** Re-cutting is a deliberate act:
+change both values in `cut.py` together, re-run the chain, and READ WHAT MOVED before publishing —
+the last unintended re-cut moved the integrated premium 65%.
+
+**CHECK FIRST, ALWAYS: `python3 freshness.py`.** It prints the declared cut, how far the data has run
+past it, and whether every JSON actually sits at that cut. **Only the last of those is an error** —
+data running ahead of the pin is the normal, expected state. `build-page.py` runs the same gate and
+refuses to build when a JSON is out of step with `cut.py`, which is what a half-run chain looks
+like.
 
 ```bash
-python3 freshness.py          # are the figures current? run before quoting ANY of them
+python3 freshness.py          # at the declared cut? run before quoting ANY figure
 python3 lease-pairs.py        # -> lease-pairs.json
 python3 mrt-pairs.py          # -> mrt-pairs.json        (needs lease-pairs.json)
 python3 integrated-pairs.py   # -> integrated-pairs.json (needs both of the above)

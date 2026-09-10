@@ -140,7 +140,8 @@ BUILD = dict(median=BUILD_YEARS, n=len(_gaps), p25=_gaps[len(_gaps)//4],
              p75=_gaps[3*len(_gaps)//4], engine=6, term=LEASE_TERM,
              term_share=_terms[LEASE_TERM]/sum(_terms.values()))
 
-LAST = max(m for p in psf.values() for b in p.values() for m in b)
+import cut                      # THE PINNED CUT — a crawl must not move the figures
+LAST = cut.last_month(psf)      # Shawn, 2026-09-10: the study is a dated cut, not a live feed
 NOW  = int(LAST[:4])
 def months_back(mo, n):
     y, m = map(int, mo.split('-')); t = y*12 + m - 1 - n

@@ -88,7 +88,8 @@ def _bands():
 LB = _bands()
 lease_rate = lambda m: LB['old'] if m <= 2010.5 else LB['new']
 
-LAST = max(m for p in psf.values() for b in p.values() for m in b)
+import cut                      # THE PINNED CUT — a crawl must not move the figures
+LAST = cut.last_month(psf)      # Shawn, 2026-09-10: the study is a dated cut, not a live feed
 y, mo = map(int, LAST.split('-')); t = y*12 + mo - 1 - 23
 CUT = f'{t//12:04d}-{t%12+1:02d}'
 

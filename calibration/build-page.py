@@ -26,7 +26,7 @@ import json, math, os, html, random, statistics as st, datetime, sys
 
 # A page is only true for the data it was cut from. This REFUSES TO BUILD when any calibration
 # JSON is older than the data behind it — see freshness.py for the seven hours that earned it.
-import freshness
+import freshness, cut
 freshness.gate(sys.argv)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -397,21 +397,26 @@ def miss_table():
     return ''.join(h) + '</tbody></table>'
 
 def pairtable():
-    rows = sorted(ALL, key=lambda r: (-r['gap'], r['older']))
+    """NUMBERED, AND SORTED LEAST-MISS FIRST — Shawn, 2026-09-10: "i want you to number each
+    pair, then i want you to sort by [least] 'off by' all the way to max 'off by'." So the
+    table opens on the pairs the rate lands on and walks out to the ones it does not; the
+    outliers are where a reader arrives last, having already seen how tight the core is."""
+    rows = sorted(ALL, key=lambda r: abs(resid(r)))
     def nm_(x): return html.escape(x.title())
-    h = ['<table class="fig pairs"><thead><tr><th>older</th><th class="num">lease</th>'
+    h = ['<table class="fig pairs"><thead><tr><th class="num">#</th>'
+         '<th>older</th><th class="num">lease</th>'
          '<th>newer</th><th class="num">lease</th><th class="num">gap</th><th>bed</th>'
          '<th class="num">psf</th><th class="num">psf</th>'
          '<th class="num">the market&rsquo;s difference</th>'
          '<th class="num">the rate predicts</th><th class="num">off by</th>'
          '<th class="num">distance</th><th>station</th><th>flags</th>'
          '</tr></thead><tbody>']
-    for r in rows:
+    for i, r in enumerate(rows, 1):
         pred = rate(mid(r)) * r['gap']
         off  = r['diff'] - pred
         t    = tags(r)
         h.append(
-            f'<tr{" class=flag" if outside(r) else ""}><td>{nm_(r["older"])}</td><td class="num quiet">{r["ls_old"]}</td>'
+            f'<tr{" class=flag" if outside(r) else ""}><td class="num quiet">{i}</td><td>{nm_(r["older"])}</td><td class="num quiet">{r["ls_old"]}</td>'
             f'<td>{nm_(r["newer"])}</td><td class="num quiet">{r["ls_new"]}</td>'
             f'<td class="num">{r["gap"]}y</td><td class="quiet">{r["bed"]}</td>'
             f'<td class="num quiet">${r["psf_old"]:,.0f}</td><td class="num quiet">${r["psf_new"]:,.0f}</td>'
@@ -516,6 +521,7 @@ text-transform:uppercase;color:var(--slate-600);display:block;margin-top:3px}
 .verdict .call{margin-top:22px;padding-top:18px;border-top:1px solid var(--ink);
 font-size:15px;color:var(--slate-300);max-width:72ch}
 .verdict .call b{color:var(--gold-soft);font-weight:600}
+.chip.asof{border-color:rgba(201,169,106,.45);color:var(--gold-soft);letter-spacing:.1em}
 .spread{width:100%;height:auto;display:block;margin:12px 0 4px;
 border:1px solid var(--ink);border-radius:11px;background:var(--navy-900);padding:4px}
 /* tables */
@@ -1382,7 +1388,8 @@ the first one measured against the market.</p>
         <li><b>facing</b> &mdash; same</li>
         <li>lease start and building age are<br>confounded: this is blended vintage</li></ul></div>
     </div>
-    <p class="expl" style="margin-top:18px">Every cell, widest lease gap first. <b>The
+    <p class="expl" style="margin-top:18px">Every cell, numbered, <b>closest to the rate
+    first</b> and walking out to the furthest. <b>The
     difference is what the market shows; beside it is what the band predicts for that gap.</b>
     Nothing in a row is adjusted for anything. The last column carries the reasons a row is a
     candidate to miss, and the {len(MISSES)} that sit outside the central 95% are marked.</p>
@@ -1786,6 +1793,7 @@ HTML = f"""<!doctype html>
     <div class="brand"><div class="mark">K</div>
       <div><p>KYA REAL ESTATE</p><p>Private Client Advisory</p></div></div>
     <span class="chip"><b></b> Internal — Constant Calibration</span>
+    <span class="chip asof">Figures as of {cut.VINTAGE}</span>
   </div>
   <nav class="terms" aria-label="The constants">
     <button type="button" class="done" data-go="summary" aria-current="true">
@@ -1816,6 +1824,8 @@ HTML = f"""<!doctype html>
 <footer>
   <span>URA caveats via the MAPS refresh · resale and sub-sale only, new sale excluded ·
   Void Space reads the REALIS unit-level pull instead, both tracks ·
+  <b>all figures as of {cut.VINTAGE}</b>, cut at {cut.CUT_END} and pinned there —
+  a data refresh does not move them; re-cutting is deliberate ·
   generated {datetime.date.today().isoformat()}</span>
   <span>price-gap/calibration/ · regenerate with build-page.py</span>
 </footer>

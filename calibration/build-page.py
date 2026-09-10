@@ -1181,6 +1181,35 @@ def ten_step_of(left):
         if left >= g['min_left']: return g
     return TSTEP[-1] if TSTEP else None
 
+def mrt_repl_table():
+    """The walk bands measured again on an earlier, non-overlapping two years — with THAT
+    window's own lease bands removed, not today's, or the current cut would be smuggled back in.
+
+    THIS ONE DOES NOT REPLICATE THE WAY THE LEASE RATE DOES, and the page says so. The near
+    band reads +$22 [-3, +47] on 2021-23 against +$67 [+40, +98] now: an interval that includes
+    zero, against one that does not."""
+    E = M.get('early') if M else None
+    if not E: return ''
+    cur = {b['key']: b for b in M['bands']}
+    h = ['<table class="fig look"><thead><tr><th>Transactions used</th>']
+    for b in M['bands']: h.append(f'<th class="num">{b["label"]}</th>')
+    h.append('<th class="num">pairs</th></tr></thead><tbody>')
+    h.append(f'<tr class="head"><th>{M["window"][0]} to {M["window"][1]} &mdash; the published cut</th>'
+             + ''.join(f'<td class="num big">+${b["adj"]:,.0f}</td>' for b in M['bands'])
+             + f'<td class="num quiet">{M["pairs"]}</td></tr>')
+    eb = {b['key']: b for b in E['bands']}
+    h.append(f'<tr><th>{E["window"][0]} to {E["window"][1]} &mdash; three years earlier</th>'
+             + ''.join(f'<td class="num big">+${eb[b["key"]]["adj"]:,.0f}</td>'
+                       if b['key'] in eb else '<td class="num nil">&mdash;</td>'
+                       for b in M['bands'])
+             + f'<td class="num quiet">{E["pairs"]}</td></tr>')
+    h.append('<tr class="dim"><th>the earlier reading&rsquo;s range</th>'
+             + ''.join(f'<td class="num">{eb[b["key"]]["lo"]:+,.0f} to {eb[b["key"]]["hi"]:+,.0f}</td>'
+                       if b['key'] in eb else '<td class="num nil">&mdash;</td>'
+                       for b in M['bands'])
+             + '<td class="num quiet"></td></tr>')
+    return ''.join(h) + '</tbody></table>'
+
 def mrt_pairtable():
     """Every walk-distance pair, CLOSEST TO ITS BAND FIRST.
 
@@ -1862,6 +1891,24 @@ so what is left is the walk.</p>
 
 <section>
   <div class="scroll">{mrt_table()}</div>
+
+  <h3 class="disp sub">Run it again on a different two years</h3>
+  <p class="expl">The same method on an earlier, non-overlapping two years, with <b>that</b>
+  window&rsquo;s own lease bands taken out rather than today&rsquo;s. It is the check that
+  settled the lease rate.</p>
+  <div class="scroll">{mrt_repl_table()}</div>
+  <p class="expl"><b>This one does not hold the way the lease rate does, and that is worth
+  knowing before the figure is used.</b> The nearest band reads
+  +${M['early']['bands'][0]['adj']:,.0f} on the earlier cut, with a range of
+  {M['early']['bands'][0]['lo']:+,.0f} to {M['early']['bands'][0]['hi']:+,.0f} &mdash; an
+  interval that <b>includes zero</b> &mdash; against +${M['bands'][0]['adj']:,.0f}
+  [{M['bands'][0]['lo']:+,.0f} to {M['bands'][0]['hi']:+,.0f}] today. The widest band reads
+  +${M['early']['bands'][2]['adj']:,.0f} then against +${M['bands'][2]['adj']:,.0f} now.</p>
+  <p class="expl">Two readings are possible and the study cannot separate them: either
+  <b>proximity to a station has genuinely become worth more</b> over these three years, or the
+  band figures are less firmly measured than their intervals suggest. Either way this is a
+  <b>dated figure in a way the lease rate is not</b> &mdash; quote it as of {cut.VINTAGE}, and
+  re-cut it before leaning on it.</p>
 
   <details><summary>How the lease is taken out, and the check that it worked</summary>
     <p class="expl">Each pair shares its nearest station but sits at a different distance from it.

@@ -121,8 +121,24 @@ def _lease_bands():
 
 LEASE = _lease_bands()
 
+def _early_lease_bands():
+    """The lease bands fitted on the SAME earlier window, from lease-pairs.json's early cut.
+    Replicating with today's lease rate would smuggle the current window back in."""
+    lp = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                     'lease-pairs.json'))).get('early24') or []
+    mid = lambda r: (r['ls_old'] + r['ls_new']) / 2
+    o = {}
+    for lo, hi, nm in ((0, 2011, 'old'), (2011, 9999, 'new')):
+        rs = [r for r in lp if lo <= mid(r) < hi]
+        o[nm] = (sum(r['diff'] * r['gap'] for r in rs)
+                 / sum(r['gap'] ** 2 for r in rs)) if rs else 0
+    return o
+EARLY_LEASE = _early_lease_bands()
+LEASE_NOW = [LEASE]          # swapped alongside WIN
+
 def lease_rate(mid):
-    return LEASE['old'] if mid <= 2010.5 else LEASE['new']
+    L = LEASE_NOW[0]
+    return L['old'] if mid <= 2010.5 else L['new']
 
 R = 6371000
 def hav(a, b, c, d):
@@ -147,6 +163,16 @@ import cut                      # THE PINNED CUT — a crawl must not move the f
 LAST = cut.last_month(psf)      # Shawn, 2026-09-10: the study is a dated cut, not a live feed
 y, mo = map(int, LAST.split('-')); t = y*12 + mo - 1 - (WINDOW - 1)
 CUT = f'{t//12:04d}-{t%12+1:02d}'
+
+# THE REPLICATION WINDOW (Shawn, 2026-09-10). The same method on an earlier, non-overlapping
+# two years — the check that made the lease panel convincing, now run here too. WIN is what
+# cell() reads, so summary() can be run twice without touching anything else.
+EARLY_BACK = 36                                   # months earlier; 3 years, as the lease study uses
+_t2 = y*12 + mo - 1 - EARLY_BACK
+EARLY_LAST = f'{_t2//12:04d}-{_t2%12+1:02d}'
+_t3 = _t2 - 23
+EARLY_CUT  = f'{_t3//12:04d}-{_t3%12+1:02d}'
+WIN = [CUT, LAST]
 
 P, rej = {}, collections.Counter()
 for p in projs:
@@ -176,7 +202,7 @@ for p in projs:
 def cell(name, bed):
     s, q = psf.get(name, {}).get(bed), qh.get(name, {}).get(bed)
     if not s or not q: return None
-    ms = [m for m in s if CUT <= m <= LAST and m in q]
+    ms = [m for m in s if WIN[0] <= m <= WIN[1] and m in q]
     if not ms: return None
     n = sum(q[m][2] for m in ms)
     if n < MIN_N: return None
@@ -279,6 +305,28 @@ def summary():
     out['rows'] = rows
     return out
 
+def replication():
+    """summary() again over the earlier window, with that window's own lease bands."""
+    global WIN
+    keep, keepL = WIN, LEASE_NOW[0]
+    WIN, LEASE_NOW[0] = [EARLY_CUT, EARLY_LAST], EARLY_LEASE
+    try:
+        rows = build(CATCHMENT)
+        out = dict(window=[EARLY_CUT, EARLY_LAST], cells=len(rows), pairs=pair_count(rows),
+                   devs=dev_count(rows), lease=EARLY_LEASE, bands=[])
+        for k, label in KEYS:
+            g = [r for r in rows if r['pairkey'] == k]
+            if not g: continue
+            lo, hi = boot(g)
+            out['bands'].append(dict(key=k, label=label, adj=st.mean([r['adj'] for r in g]),
+                                     lo=lo, hi=hi, cells=len(g), pairs=pair_count(g),
+                                     devs=dev_count(g)))
+        tp = [r for r in rows if r['b_close'] == r['b_far'] and (r['m_far'] - r['m_close']) < 50]
+        if tp: out['placebo'] = st.mean([r['adj'] for r in tp])
+        return out
+    finally:
+        WIN, LEASE_NOW[0] = keep, keepL
+
 if __name__ == '__main__':
     print('window %s..%s   near <%.0fm  mid %.0f-%.0fm  far >%.0fm' % (CUT, LAST, NEAR_M, NEAR_M, FAR_M, FAR_M))
     print('eligible universe: %d leasehold developments' % len(P))
@@ -309,6 +357,7 @@ if __name__ == '__main__':
     if not ex: print('   (no qualifying cell)')
 
     S = summary()
+    S['early'] = replication()
     json.dump(S, open(os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                    'mrt-pairs.json'), 'w'), indent=1)
     print('\nwrote mrt-pairs.json  —  %d cells / %d pairs / %d developments' %
@@ -317,3 +366,9 @@ if __name__ == '__main__':
         print('  %-28s %+5.0f  [%+4.0f,%+4.0f]  %3d pairs  %3d devs  %5.1f psf/100m'
               % (b['label'], b['adj'], b['lo'], b['hi'], b['pairs'], b['devs'], b['per100']))
     print('  placebo %+.1f  ·  slope %+.1f psf per 100 m' % (S['placebo']['adj'], S['slope100']))
+    E = S['early']
+    print('  REPLICATION %s..%s  %d cells / %d pairs / %d devs' %
+          (E['window'][0], E['window'][1], E['cells'], E['pairs'], E['devs']))
+    for b in E['bands']:
+        print('    %-28s %+5.0f  [%+4.0f,%+4.0f]  %3d pairs  %3d devs'
+              % (b['label'], b['adj'], b['lo'], b['hi'], b['pairs'], b['devs']))

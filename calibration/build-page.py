@@ -1265,8 +1265,8 @@ def int_pairtable():
     h = ['<table class="fig pairs"><thead><tr><th class="num">#</th><th>integrated</th>'
          '<th>plain neighbour</th><th class="num">apart</th><th>bed</th>'
          '<th class="num">after lease &amp; walk</th>'
-         '<th class="num">as a premium</th><th class="num">the figure says</th>'
-         '<th class="num">off by</th><th class="num">sales</th><th>next door</th>'
+         '<th class="num">the premium</th><th class="num">the figure says</th>'
+         '<th class="num">sales</th><th>next door</th>'
          '</tr></thead><tbody>']
     for i, r in enumerate(rows, 1):
         h.append(f'<tr><td class="num quiet">{i}</td>'
@@ -1277,7 +1277,6 @@ def int_pairtable():
                  f'<td class="num quiet">{r["adj"]:+,.0f}</td>'
                  f'<td class="num big">{pc(r):+.1f}%</td>'
                  f'<td class="num quiet">+{hd:.1f}%</td>'
-                 f'<td class="num quiet">{pc(r)-hd:+.1f}%</td>'
                  f'<td class="num quiet">{r["n_i"]} / {r["n_n"]}</td>'
                  f'<td class="quiet">{"yes" if tight(r) else "&mdash;"}</td></tr>')
     return ''.join(h) + '</tbody></table>'
@@ -1516,6 +1515,23 @@ def int_table():
                  f'<td class="num quiet">${c["load"]:,.0f}</td>'
                  f'<td class="num quiet">+${c["adj"]:,.0f}</td></tr>')
     return ''.join(r) + '</tbody></table>'
+
+def apart_table():
+    """The premium against how far apart the two projects ACTUALLY are — the screen Shawn asked
+    for on 2026-09-10. Not to be confused with dsweep_table(), which sweeps the difference in
+    the two walks TO THE STATION; that is a different quantity and the old label conflated them."""
+    if not G or not G.get('apartsweep'): return ''
+    h = ['<table class="fig look"><thead><tr><th>Both projects within</th>'
+         '<th class="num">the premium</th><th class="num">pairs</th>'
+         '<th class="num">developments</th></tr></thead><tbody>']
+    hd = INT_HEAD['apmax'] if INT_HEAD else None
+    for r in G['apartsweep']:
+        head = ' class="head"' if r['cap'] == hd else ''
+        h.append(f'<tr{head}><th>{r["cap"]:,} m of each other</th>'
+                 f'<td class="num big">+{r["pct"]:.1f}%</td>'
+                 f'<td class="num quiet">{r["pairs"]}</td>'
+                 f'<td class="num quiet">{r["devs"]}</td></tr>')
+    return ''.join(h) + '</tbody></table>'
 
 def dsweep_table():
     if not G or not G.get('dsweep'): return ''
@@ -1906,7 +1922,7 @@ so what is left is the walk.</p>
     station point, so the error largely cancels in the gap between them.</p>
   </details>
 
-  <details><summary>How a pair is built</summary>
+  <details><summary>How a pair is built, and every pair</summary>
     <div class="cards" style="margin-top:6px">
       <div class="card"><h4>Held constant</h4><ul>
         <li>same <b>nearest station</b>, and it must be nearest for both</li>
@@ -1924,9 +1940,7 @@ so what is left is the walk.</p>
         <li>which <b>side</b> of the station the project sits on</li>
         <li>bus and shuttle access</li></ul></div>
     </div>
-  </details>
-
-  <details><summary>Every pair</summary>
+  
     <p class="expl"><b>{len([r for r in MROWS if r['pairkey'] in MBAND]):,} comparisons that
     span two different walk bands</b>, closest to their own band first. <b>After lease</b> is
     the psf gap once the lease difference between the two is removed at the measured rate &mdash;
@@ -1939,6 +1953,8 @@ so what is left is the walk.</p>
     method reads <b>${M['placebo']['adj']:+,.0f}</b>.</p>
     <div class="scroll">{mrt_pairtable()}</div>
   </details>
+
+  
 </section>
 
 </div>
@@ -1960,15 +1976,25 @@ the walk. What is left is the building sitting on the station.</p>
   <div class="scroll">{int_table()}</div>
 
   <details><summary>Does it matter how far apart the two sit?</summary>
-    <p class="expl">The pairs are not all the same distance from their station, so some carry a
-    bigger walking correction than others. Holding the lease gap fixed and sweeping that limit:</p>
+    <p class="expl"><b>Yes, and it is the screen that decides this figure.</b> An integrated
+    project and a plain one on the same station can be next door or most of a kilometre apart,
+    and the further apart they are the more of the gap between them is simply a different
+    location. Sweeping the limit on <b>how far apart the two actually sit</b>:</p>
+    <div class="scroll">{apart_table()}</div>
+    <p class="expl">The premium is <b>flat across every tight limit</b> &mdash;
+    +{G['apartsweep'][0]['pct']:.1f}% at {G['apartsweep'][0]['cap']:,} m through
+    +{G['apartsweep'][3]['pct']:.1f}% at {G['apartsweep'][3]['cap']:,} m &mdash; and only drifts
+    upward once distant comparables are let in. <b>That is why the published figure is the
+    under-{INT_HEAD['apmax']:,} m cut.</b> Shawn&rsquo;s own examples sit inside it: Sengkang
+    Grand against Esparina is 230 m, against Jewel @ Buangkok 256 m, Watertown against Parc
+    Centros 406 m.</p>
+    <p class="expl">A separate limit, on how differently the two walk <b>to the station</b>,
+    behaves the same way: inside the tight lease-gap column the premium climbs from
+    +{G['dsweep'][1]['rows'][0]['pct']:.1f}% to +{G['dsweep'][1]['rows'][-1]['pct']:.1f}% as it
+    loosens, while the like-for-like check beside it stays flat &mdash; unremoved walking effect
+    leaking in. <b>These two limits are different things</b>, and an earlier version of this
+    page labelled the second as though it were the first.</p>
     <div class="scroll">{dsweep_table()}</div>
-    <p class="expl"><b>It is not neutral.</b> Inside the tight lease-gap column the premium climbs
-    from +{G['dsweep'][1]['rows'][0]['pct']:.1f}% to +{G['dsweep'][1]['rows'][-1]['pct']:.1f}% as
-    the limit loosens, while the like-for-like check beside it stays flat. That is what unremoved walking
-    effect leaking into the answer would look like &mdash; the further apart the two sit, the more
-    of the gap between them is the walk rather than the building. <b>The tighter rows are the
-    conservative ones</b>, and they sit near +7%.</p>
   </details>
 
   <details><summary>The check that the adjustments are working</summary>
@@ -1992,7 +2018,7 @@ the walk. What is left is the building sitting on the station.</p>
     which is why it is not evidence that being on the station is worth nothing.</p>
   </details>
 
-  <details><summary>How a pair is built</summary>
+  <details><summary>How a pair is built, and every pair</summary>
     <div class="cards" style="margin-top:6px">
       <div class="card"><h4>Held constant</h4><ul>
         <li>same <b>nearest station</b>, nearest for both</li>
@@ -2007,18 +2033,19 @@ the walk. What is left is the building sitting on the station.</p>
         <li>the quality of the mall attached</li>
         <li>whether the plain neighbour is itself mixed-use</li></ul></div>
     </div>
-  </details>
-
-  <details><summary>Every pair</summary>
+  
     <p class="expl">All {len(GROWS)} comparisons, <b>closest to the published premium first</b>.
-    <b>After lease &amp; walk</b> is what survives once BOTH the lease gap and the difference in
-    walking distance are removed at their own measured rates; <b>as a premium</b> expresses that
-    residue against the plain neighbour&rsquo;s psf &mdash; the same construction as the headline,
-    so the two numbers are directly comparable. The last column says whether the pair is inside
-    the cut the published figure is computed from. This is the thinnest panel here, and the sales
+    <b>After lease &amp; walk</b> is what survives in dollars once BOTH the lease gap and the
+    difference in walking distance are removed at their own measured rates; <b>the premium</b> is
+    that same residue as a share of the plain neighbour&rsquo;s psf &mdash; <b>this pair&rsquo;s
+    own integrated premium, after every adjustment</b>, built exactly the way the headline is, so
+    the two sit side by side. <b>Next door</b> says whether the pair is inside the under-500 m cut
+    the published figure is computed from. This is the thinnest panel here, and the sales
     column is the reason to read it carefully.</p>
     <div class="scroll">{int_pairtable()}</div>
   </details>
+
+  
 </section>
 </div>
 
@@ -2090,15 +2117,30 @@ constant at all.</p>
     size constant. One- and four-bedroom are too thin to show.</p>
   </details>
 
-  <details><summary>Every pair</summary>
-    <p class="expl">All {len(TROWS)} comparisons &mdash; a freehold development against a
+  <details><summary>How a pair is built, and every pair</summary>
+    <div class="cards" style="margin-top:6px">
+      <div class="card"><h4>Held constant</h4><ul>
+        <li>same <b>nearest MRT station</b></li>
+        <li>within <b>{T['screens']['radius_m']:,} m</b> of each other</li>
+        <li>median sizes within <b>20%</b>, bedroom by bedroom</li></ul></div>
+      <div class="card"><h4>Both sides must be</h4><ul>
+        <li>one <b>freehold</b> (or 999-year), one <b>leasehold</b></li>
+        <li><b>{T['screens']['min_units']:,} units</b> or more</li>
+        <li><b>{T['screens']['min_n']}+ transactions</b> in the window</li></ul></div>
+      <div class="card"><h4>Not controlled</h4><ul>
+        <li><b>floor</b> and <b>facing</b></li>
+        <li>the age gap between the two, beyond the lease rate</li></ul></div>
+    </div>
+<p class="expl">All {len(TROWS)} comparisons &mdash; a freehold development against a
     leasehold neighbour on the same station, matched bedroom by bedroom, <b>closest to its own
     step first</b>. Shown in <b>percent</b> throughout, which is this panel&rsquo;s standing
     exception to the dollars rule. The premium is not one number &mdash; it widens as the lease
     shortens &mdash; so each row is compared against <b>the step its leasehold side falls in</b>,
     never against the headline. <b>Sales</b> is the transactions behind each side.</p>
     <div class="scroll">{ten_pairtable()}</div>
-  </details>
+    </details>
+
+  
 
 </section>
 
@@ -2166,14 +2208,18 @@ plate of the ones below it. The extra strata area is void or roof. Floor is take
   <p class="expl"><b>The advice is not &ldquo;penthouses are good value&rdquo; &mdash; it is find
   the stack where the void was given away.</b></p>
 
-  <details><summary>Every development, cheapest void first</summary>
-    <div class="scroll">{void_devs(n=30)}</div>
-    <p class="expl">Developments with at least two matched penthouse resales.</p>
-  </details>
+  
 </section>
 
 <section>
-  <details><summary>How a pair is built</summary>
+  
+  <details><summary>Where the data comes from &mdash; not the MAPS refresh</summary>
+    <p class="expl">The <b>REALIS unit-level pull</b> held by the floor study &mdash; the only
+    dataset here carrying a <b>unit number</b>, and without that there is no stack.
+    {V['meta']['window']}, all Singapore, strata, <b>resale only</b>.</p>
+  </details>
+
+  <details><summary>How a pair is built, and every development</summary>
     <div class="cards" style="margin-top:6px">
       <div class="card"><h4>Held constant</h4><ul>
         <li>same project, same <b>block</b>, same <b>stack</b></li>
@@ -2191,11 +2237,10 @@ plate of the ones below it. The extra strata area is void or roof. Floor is take
         <li><b>renovation and fit-out</b>, on either leg</li>
         <li>the top floor&rsquo;s own view, beyond the floor step and the check above</li></ul></div>
     </div>
-  </details>
-  <details><summary>Where the data comes from &mdash; not the MAPS refresh</summary>
-    <p class="expl">The <b>REALIS unit-level pull</b> held by the floor study &mdash; the only
-    dataset here carrying a <b>unit number</b>, and without that there is no stack.
-    {V['meta']['window']}, all Singapore, strata, <b>resale only</b>.</p>
+  
+    
+    <div class="scroll">{void_devs(n=30)}</div>
+    <p class="expl">Developments with at least two matched penthouse resales.</p>
   </details>
 </section>
 </div>
@@ -2242,31 +2287,9 @@ what the private badge costs on the day. The second is what is left of it.</p>
   every private comparable with no tenure or vintage control the figure is
   {E['resale_raw']['pct']:+.1f}%.</p>
 
-  <details><summary>Every EC in the resale cut</summary>
-    <p class="expl">A <b>negative</b> figure is the EC trading above its private neighbour. Read
-    the years-built column beside the premium: the ECs at the top of the list are the young ones
-    still carrying their launch pricing forward.</p>
-    <div class="scroll">{ec_resale_table()}</div>
-  </details>
+  
 
-  <details><summary>How a pair is built</summary>
-    <div class="cards" style="margin-top:6px">
-      <div class="card"><h4>Held constant</h4><ul>
-        <li>floor area within <b>{E['meta']['sizetol']*100:.0f}%</b></li>
-        <li>contract date within <b>{E['meta']['months']} months</b></li>
-        <li>launch: <b>same district</b> &middot; resale: <b>within {E['meta']['km']:g} km</b></li>
-        <li>resale only: <b>leasehold</b> comparables, lease start within
-            <b>{E['meta']['lstol']} years</b></li></ul></div>
-      <div class="card"><h4>How it is read</h4><ul>
-        <li>the <b>nearest {E['meta']['near']}</b> comparables per EC transaction</li>
-        <li>the <b>median of the pair ratios</b>, never a difference of two medians</li>
-        <li>years built is <b>lease start + 4</b>, the median gap to TOP</li></ul></div>
-      <div class="card"><h4>Not controlled</h4><ul>
-        <li><b>floor</b> and <b>facing</b></li>
-        <li>walking distance to the station, on either leg</li>
-        <li>the EC income ceiling and resale restrictions themselves</li></ul></div>
-    </div>
-  </details>
+  
 
   <details><summary>Why the launch cut is matched on district, not distance</summary>
     <p class="expl">The URA feed carries <b>no coordinates for an uncompleted project</b> &mdash;
@@ -2283,6 +2306,30 @@ what the private badge costs on the day. The second is what is left of it.</p>
     were pulled as &ldquo;Apartment + Condominium&rdquo; and hold <b>no EC at all</b>, so this is
     the only cut of the corpus that can answer it. Rebuild with
     <b>ec-pairs.py</b>.</p>
+  </details>
+
+  <details><summary>How a pair is built, and every EC</summary>
+    <div class="cards" style="margin-top:6px">
+      <div class="card"><h4>Held constant</h4><ul>
+        <li>floor area within <b>{E['meta']['sizetol']*100:.0f}%</b></li>
+        <li>contract date within <b>{E['meta']['months']} months</b></li>
+        <li>launch: <b>same district</b> &middot; resale: <b>within {E['meta']['km']:g} km</b></li>
+        <li>resale only: <b>leasehold</b> comparables, lease start within
+            <b>{E['meta']['lstol']} years</b></li></ul></div>
+      <div class="card"><h4>How it is read</h4><ul>
+        <li>the <b>nearest {E['meta']['near']}</b> comparables per EC transaction</li>
+        <li>the <b>median of the pair ratios</b>, never a difference of two medians</li>
+        <li>years built is <b>lease start + 4</b>, the median gap to TOP</li></ul></div>
+      <div class="card"><h4>Not controlled</h4><ul>
+        <li><b>floor</b> and <b>facing</b></li>
+        <li>walking distance to the station, on either leg</li>
+        <li>the EC income ceiling and resale restrictions themselves</li></ul></div>
+    </div>
+  
+    <p class="expl">A <b>negative</b> figure is the EC trading above its private neighbour. Read
+    the years-built column beside the premium: the ECs at the top of the list are the young ones
+    still carrying their launch pricing forward.</p>
+    <div class="scroll">{ec_resale_table()}</div>
   </details>
 </section>
 </div>

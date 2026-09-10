@@ -539,7 +539,10 @@ print(f'  the pairs the 100-unit floor ADDS, fitted alone: {FLOOR["added_pairs"]
       f'{add_p:+.2%}   ${add_d:+,.0f}   median {FLOOR["n_fh_added"]:.0f} freehold sales '
       f'(headline {FLOOR["n_fh_headline"]:.0f}), {FLOOR["thin_added"]:.0%} under ten a side')
 
-json.dump(dict(window=[CUT, LAST], bands=BANDR, band_bound=BAND_BOUND,
+json.dump(dict(window=[CUT, LAST],
+               # the screens, written out so the page states them instead of hardcoding
+               screens=dict(radius_m=RADIUS_M, min_units=MIN_UNITS, min_n=MIN_N, size_tol=SIZE_TOL),
+               bands=BANDR, band_bound=BAND_BOUND,
                construction_years=CONSTRUCTION_YEARS, build=BUILD, counts=D, race=RACE, headline=HL,
                placebo=PLACEBO, fh_age_rate=af, floor=FLOOR,
                slices=SLICES, sens=SENS, scale_test=SCALE_T, transfer=TRANSFER,

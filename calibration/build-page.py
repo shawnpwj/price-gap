@@ -1147,7 +1147,8 @@ def int_cut_tx(cut):
     cut['lo']/['hi'] — those are the BOOTSTRAP INTERVAL, not the rule, and it produced a
     broadest-cut count smaller than a tighter one. That impossibility is what caught it."""
     rs = [r for r in GROWS
-          if abs(r['lg']) <= cut['lgmax'] and abs(r['dg']) <= cut['dgmax']]
+          if abs(r['lg']) <= cut['lgmax'] and abs(r['dg']) <= cut['dgmax']
+          and r.get('apart', 0) <= cut.get('apmax', 99999)]
     return _tx(rs, 'a', 'bed', 'n_i', 'b', 'bed', 'n_n')[0] if rs else 0
 
 def ten_slice_tx(g, nxt):
@@ -1258,17 +1259,20 @@ def int_pairtable():
     same construction as the headline, so the two are directly comparable."""
     pc  = lambda r: 100 * r['adj'] / r['base']
     hd  = INT_HEAD['pct'] if INT_HEAD else 0
-    tight = lambda r: abs(r['lg']) <= INT_HEAD['lgmax'] and abs(r['dg']) <= INT_HEAD['dgmax']
+    tight = (lambda r: abs(r['lg']) <= INT_HEAD['lgmax'] and abs(r['dg']) <= INT_HEAD['dgmax']
+             and r.get('apart', 0) <= INT_HEAD.get('apmax', 99999))
     rows = sorted(GROWS, key=lambda r: abs(pc(r) - hd))
     h = ['<table class="fig pairs"><thead><tr><th class="num">#</th><th>integrated</th>'
-         '<th>plain neighbour</th><th>bed</th><th class="num">after lease &amp; walk</th>'
+         '<th>plain neighbour</th><th class="num">apart</th><th>bed</th>'
+         '<th class="num">after lease &amp; walk</th>'
          '<th class="num">as a premium</th><th class="num">the figure says</th>'
-         '<th class="num">off by</th><th class="num">sales</th><th>in the headline cut</th>'
+         '<th class="num">off by</th><th class="num">sales</th><th>next door</th>'
          '</tr></thead><tbody>']
     for i, r in enumerate(rows, 1):
         h.append(f'<tr><td class="num quiet">{i}</td>'
                  f'<td>{_nm(r["a"])} <i class="age">{r["ls_i"]}</i></td>'
                  f'<td>{_nm(r["b"])} <i class="age">{r["ls_n"]}</i></td>'
+                 f'<td class="num">{r.get("apart", 0):,.0f}m</td>'
                  f'<td class="quiet">{r["bed"]}</td>'
                  f'<td class="num quiet">{r["adj"]:+,.0f}</td>'
                  f'<td class="num big">{pc(r):+.1f}%</td>'
@@ -1946,8 +1950,8 @@ so what is left is the walk.</p>
 the walk. What is left is the building sitting on the station.</p>
 
 {hero('+5%', 'flat, on an integrated project',
-      [(f"+{G['cuts'][4]['pct']:.1f}%", '&lt;5 yr gap, within 400 m', G['cuts'][4]['devs'],
-        int_cut_tx(G['cuts'][4])),
+      [(f"+{G['cuts'][-1]['pct']:.1f}%", G['cuts'][-1]['label'], G['cuts'][-1]['devs'],
+        int_cut_tx(G['cuts'][-1])),
        (f"+{G['cuts'][0]['pct']:.1f}%", 'every pair', G['cuts'][0]['devs'],
         int_cut_tx(G['cuts'][0]))],
       '')}
@@ -2311,7 +2315,7 @@ HTML = f"""<!doctype html>
         ${M['bands'][2]['adj']:,.0f}</span></button>
     <button type="button" class="done" data-go="integrated">
       <span class="tn">Integrated</span>
-      <span class="ts">+{G['cuts'][4]['pct']:.1f}%</span></button>
+      <span class="ts">+{G['cuts'][-1]['pct']:.1f}%</span></button>
     <button type="button" class="done" data-go="tenure">
       <span class="tn">Freehold vs Leasehold</span>
       <span class="ts">+{TGL[0]['pct']*100:.0f}% to +{TGL[-1]['pct']*100:.0f}%</span></button>

@@ -54,9 +54,22 @@ INTEGRATED = {
 
 MIN_UNITS, MIN_N, SIZE_TOL, PAIR_CAP = 200, 3, 0.20, 1500
 EC_PRIVATISE, BEDS = 5, ['1BR', '2BR', '3BR', '4BR+']
-CUTS = [(99, 99999, 'every pair'), (10, 99999, '&lt;10 yr lease gap'),
-        (5, 99999, '&lt;5 yr lease gap'), (10, 400, '&lt;10 yr gap, within 400 m'),
-        (5, 400, '&lt;5 yr gap, within 400 m')]
+# CUTS: (max lease gap, max difference in STATION distance, max metres BETWEEN the two, label)
+#
+# THE THIRD FIGURE IS NEW AND IT IS THE ONE THAT MATTERS. Shawn, 2026-09-10: "USE NEXT DOOR
+# Comparables. Dont use SUCH far comparables like pasir ris 8 and stratum. Use things like
+# watertown, parc centros, SKG and Jewel @ buangkok, SKG and esparina." The pairs he named sit
+# 230-406 m apart; the ones he rejected sit 847-1494 m apart. Nothing was screening that.
+#
+# AND THE OLD LABEL WAS WRONG. "within 400 m" described dgmax — the difference between the two
+# projects' walks TO THE STATION — which a reader takes as "the two are 400 m apart". They are
+# different things: Pasir Ris 8 vs Stratum differ by 331 m in station distance and sit 847 m
+# apart. That mislabel is why far comparables looked screened when they were not.
+CUTS = [(99, 99999, 99999, 'every pair'),
+        (10, 99999, 99999, '&lt;10 yr lease gap'),
+        (5,  99999, 99999, '&lt;5 yr lease gap'),
+        (99, 99999, 800,   'neighbours, under 800 m apart'),
+        (99, 99999, 500,   'next door, under 500 m apart')]
 DSWEEP = [150, 200, 300, 400, 500, 600, 800, 99999]
 
 R = 6371000
@@ -128,7 +141,8 @@ def build(kind):
     for a, b in itertools.combinations(list(P), 2):
         A, B = P[a], P[b]
         if A['station'] != B['station']: continue
-        if hav(A['lat'], A['lng'], B['lat'], B['lng']) > PAIR_CAP: continue
+        apart = hav(A['lat'], A['lng'], B['lat'], B['lng'])
+        if apart > PAIR_CAP: continue
         if kind == 'treat':
             if A['integrated'] == B['integrated']: continue
             I, N = (A, B) if A['integrated'] else (B, A)
@@ -146,7 +160,8 @@ def build(kind):
             dist  = SLOPE / 100 * dg
             rows.append(dict(a=I['name'], b=N['name'], bed=bd, region=I['region'],
                              station=I['station'].replace(' MRT Station', '').replace(' LRT Station', ''),
-                             m_i=I['metres'], m_n=N['metres'], ls_i=I['ls'], ls_n=N['ls'],
+                             m_i=I['metres'], m_n=N['metres'], apart=apart,
+                             ls_i=I['ls'], ls_n=N['ls'],
                              lg=lg, dg=dg, base=cn['psf'],
                              # transaction counts carried so the page can show what each pair
                              # rests on, the same as every other panel (Shawn, 2026-09-10)
@@ -180,20 +195,30 @@ def summary():
     out = dict(window=[CUT, LAST], slope=SLOPE, pair_cap=PAIR_CAP,
                lease_old=LB['old'], lease_new=LB['new'],
                n_integrated=len({r['a'] for r in T}), missing=sorted(MISSING), cuts=[])
-    for lgmax, dgmax, lab in CUTS:
-        g = [r for r in T if abs(r['lg']) <= lgmax and abs(r['dg']) <= dgmax]
+    for lgmax, dgmax, apmax, lab in CUTS:
+        g = [r for r in T if abs(r['lg']) <= lgmax and abs(r['dg']) <= dgmax
+             and r['apart'] <= apmax]
         if prs(g) < 3: continue
         lo, hi = boot(g); plo, phi = boot(g, pct=True)
         out['cuts'].append(dict(label=lab,
                                 # the RULE that defines this cut, recorded so the page can
                                 # reproduce the row subset instead of re-deriving it from the
                                 # label — no constant is ever hardcoded across scripts
-                                lgmax=lgmax, dgmax=dgmax,
+                                lgmax=lgmax, dgmax=dgmax, apmax=apmax,
                                 adj=st.mean([r['adj'] for r in g]), lo=lo, hi=hi,
                                 pct=100*st.mean([r['adj'] for r in g])/st.mean([r['base'] for r in g]),
                                 pct_lo=plo, pct_hi=phi,
                                 load=st.mean([abs(r['lease'])+abs(r['dist']) for r in g]),
                                 cells=len(g), pairs=prs(g), devs=dvs(g)))
+    # HOW THE PREMIUM MOVES AS FAR COMPARABLES ARE LET IN. The reason the headline cut is a
+    # proximity one: it is flat across every tight cap and only drifts once distant pairs enter.
+    out['apartsweep'] = []
+    for cap in (300, 400, 500, 600, 800, 1000, 1200, PAIR_CAP):
+        g = [r for r in T if r['apart'] <= cap]
+        if prs(g) < 3: continue
+        out['apartsweep'].append(dict(cap=cap, cells=len(g), pairs=prs(g), devs=dvs(g),
+                                      pct=100*st.mean([r['adj'] for r in g])
+                                          / st.mean([r['base'] for r in g])))
     pl = [r for r in PL if abs(r['lg']) <= 5 and abs(r['dg']) <= 400]
     plo, phi = boot(pl); ppl, pph = boot(pl, pct=True)
     out['placebo'] = dict(adj=st.mean([r['adj'] for r in pl]), lo=plo, hi=phi,

@@ -170,7 +170,7 @@
 <script>
 const DATA = __DATA__;
 
-const COLORS = { "Base PSF":"--s-base", "Lease":"--s-lease", "Tenure":"--s-tenure",
+const COLORS = { "Base PSF":"--s-base", "Lease":"--s-lease", "Freehold":"--s-tenure", "Tenure":"--s-tenure",
                  "Age (TOP)":"--s-age", "MRT access":"--s-mrt", "Harmonisation":"--s-harm",
                  "Integrated":"--s-integ" };
 // Fills these hues carry white labels; the yellow needs dark ink to stay legible.
@@ -387,7 +387,7 @@ function tip(node, html) {
 }
 
 function drawSteps(S, comps) {
-  const keys = ["Lease", "Tenure", "Age (TOP)", "MRT access", "Harmonisation", "Integrated"];
+  const keys = ["Lease", "Freehold", "Tenure", "Age (TOP)", "MRT access", "Harmonisation", "Integrated"];
   const rows = comps.map((c) => {
     const m = Object.fromEntries(c.steps.map((s) => [s.label, s.delta]));
     const cells = keys.map((k) => m[k] == null ? '<td class="muted">—</td>'

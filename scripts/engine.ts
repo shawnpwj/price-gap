@@ -631,7 +631,10 @@ export function adjust(K: Constants, S: any, pool: any[]) {
       const p = K.tenurePremium(left);
       const target = c.tenure.type === "FH" ? running / (1 + p) : running * (1 + p);
       const leftNote = left != null && K.key === "measured" ? `, ${left} yrs of lease left` : "";
-      add("Tenure", target - running,
+      // LABELLED "Freehold", not "Tenure" (Shawn, 2026-09-10). The step only ever exists
+      // because one side of the pair is freehold, and "Tenure +$324" left the reader to
+      // work out which way it ran; "Freehold" names the thing being priced.
+      add("Freehold", target - running,
         c.tenure.type === "FH"
           ? `comparable is freehold, subject is leasehold — divide by ${(1 + p).toFixed(3)}${leftNote}`
           : `comparable is leasehold, subject is freehold — multiply by ${(1 + p).toFixed(3)}${leftNote}`,

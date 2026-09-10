@@ -1798,18 +1798,6 @@ the first one measured against the market.</p>
   months, so one penthouse or one fire-sale cannot move it.</p></div>
   <div class="scroll">{answer_table()}</div>
 
-  <h3 class="disp sub">Run it again on a different two years</h3>
-  <p class="expl">The same method, the same screens, an entirely separate set of transactions
-  &mdash; {EW[0]} to {EW[1]}, fourteen months before this cut opens, sharing not one sale with
-  it. If the figures were an artefact of one market window, this is where they would fall apart.</p>
-  <div class="scroll">{repl_table()}</div>
-  <p class="expl"><b>${fit(rows_in(OLD_NM)):,.0f} comes back as ${fit(EARLY_O):,.0f}, and
-  ${fit(rows_in(NEW_NM)):,.0f} as ${fit(EARLY_N):,.0f}</b>, on {txof(EARLY):,} different
-  transactions. The two readings of the older band agree across
-  ${OVERLAP[OLD_NM][0]:,.0f}&ndash;${OVERLAP[OLD_NM][1]:,.0f}, and the newer band across
-  ${OVERLAP[NEW_NM][0]:,.0f}&ndash;${OVERLAP[NEW_NM][1]:,.0f} &mdash; most of the length of
-  either interval. The newer band is the looser of the two, as it is on every cut. <b>The rate is
-  a property of how Singapore prices vintage, not of the two years it was measured in.</b></p>
 </section>
 
 <section>

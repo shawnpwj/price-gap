@@ -160,6 +160,28 @@ async function main() {
     Number(String(site.awardDate || "").match(/\b(20\d{2})\b/)?.[1])
     || (Number(site.launchYear) ? Number(site.launchYear) - 1 : null);
 
+  // ── The integrated / mixed-use flag ───────────────────────────────────────
+  // Shawn, 2026-09-10: "for example Pinery Residences, why are you not adding the
+  // integrated premium?" Because the flag was never set. `integrated` read only from
+  // pricegap-overrides.json, which carries one hand-written entry for GRAND DUNMAN and no
+  // integrated flag at all — so across 1,831 developments the term fired ZERO times. The
+  // measured +6.7% has never once reached a number.
+  //
+  // The signal was already in the pipeline: the GLS sheet's zoning column types a parcel
+  // "Mixed Development" or "Resi with 1st Storey Commercial", and sync-gls-forward carries
+  // that through as type "mixed". PINERY RESIDENCES is one of the three.
+  //
+  // NOTE this only reaches developments the GLS sheet knows about. An integrated project
+  // already standing — Watertown, Bedok Residences, Lentor Modern and the rest — has no
+  // flag in any dataset here, so it stays false until the list is given. Raised with Shawn.
+  for (const [gname, site] of data.gls) {
+    if (site.type !== "mixed") continue;
+    const target = dsiNames.has(gname) ? gname
+      : dsiByCanon.get(canon(gname)) ?? prefixMatch(canon(gname)) ?? gname;
+    data.overrides[target] = { ...(data.overrides[target] || {}), integrated: true };
+    process.stderr.write(`  ~ ${target}: integrated (mixed-use zoning on the GLS sheet)\n`);
+  }
+
   // ── Subjects in dsi-index that have NO tenure of their own ────────────────
   // pricegap-base derives tenure from CAVEATS, so a development that has never transacted
   // has none — and without a tenure or a TOP the vintage term cannot run at all. Every
@@ -225,10 +247,15 @@ async function main() {
 
     const beds: Record<string, any> = {};
     for (const bed of BEDS) {
-      const S = factsFor(data, name, node, bed, true);
+      // Screen first: it picks the ring AND the window. Screening reads only the subject's
+      // tenure, TOP and station, never its price, so a provisional read is safe here.
+      const Sprov = factsFor(data, name, node, bed, true);
+      if (!Sprov.psf) continue;
+      const screened = screen(data, Sprov, bed, nb);
+      // Then re-read the subject on the window the workup settled on, so every figure in
+      // this workup covers the same months.
+      const S = factsFor(data, name, node, bed, true, screened.windowMonths);
       if (!S.psf) continue;
-      // Screen once per bedroom view; the ladder then runs against that pool.
-      const screened = screen(data, S, bed, nb);
       const rec: any = {
         psf: S.psf.psf, src: S.psfSource, mo: S.psf.months,
         fb: S.psf.fellBack ? 1 : undefined,

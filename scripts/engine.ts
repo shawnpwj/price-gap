@@ -74,6 +74,19 @@ export const TARGET_COMPS = 3;
 // is measured — median adjustment load rises from 7.7% to 11.3% under distance, because a
 // nearer building can be further apart in vintage.
 export const PSF_WINDOW_MONTHS = 12;
+// THE WORKUP WINDOW LADDER. Shawn, 2026-09-10: "can we use the last 6 - MAXIMUM 12 months
+// average psf as the gauge?" It was already 12, never 24 — but 12 flat, so a development
+// with plenty of recent trade was still being averaged over a year.
+//
+// ONE window per workup, never a mix: the subject and all three comparables are read over
+// the SAME months, because comparing a subject's last 6 months against a comparable's last
+// 12 prices whatever the market did in between. The ladder takes the freshest window that
+// yields a full set, and the window travels with the figures.
+//
+// 6 alone was measured and rejected: on the 3BR view a hard 6-month window leaves 411
+// developments with no workup at all against 74 at twelve. 6 -> 9 -> 12 keeps the freshness
+// where the data supports it and the coverage where it does not.
+export const WORKUP_WINDOW_LADDER = [6, 9, 12];
 // A SUBJECT with nothing in the last 12 months used to be skipped outright, which is how 73
 // developments ended up with no workup at all. Shawn, 2026-09-09: "all development should
 // have [one] even if there is no transaction for the specific development yet." So the
@@ -228,6 +241,12 @@ function mrtDelta(K: Constants, subject: Band, comp: Band): number {
   return order[comp] > order[subject] ? mag : -mag;
 }
 
+// A month key N months back from today, in the "YYYY-MM" form the psf series is keyed on.
+export function monthsAgoFrom(n: number): string {
+  const d = new Date(); d.setMonth(d.getMonth() - n);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
 // ── Bedroom-bucket PSF over the trailing window ───────────────────────────────
 export interface PsfPick { psf: number; months: number; bucket: string; fellBack: boolean; window: string[] }
 
@@ -294,12 +313,8 @@ export async function loadData(): Promise<Data> {
   const mrtAll = JSON.parse(mrtRaw);
   const glsRaw2 = JSON.parse(glsRaw);
   const glsArr = (Array.isArray(glsRaw2) ? glsRaw2 : glsRaw2.sites || []) as any[];
-  const monthsAgo = (n: number) => {
-    const d = new Date(); d.setMonth(d.getMonth() - n);
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-  };
   const cutoffs: Record<number, string> = {};
-  for (const m of SUBJECT_WINDOW_LADDER) cutoffs[m] = monthsAgo(m);
+  for (const m of [...new Set([...SUBJECT_WINDOW_LADDER, ...WORKUP_WINDOW_LADDER])]) cutoffs[m] = monthsAgoFrom(m);
   return {
     dsi,
     byName: new Map(dsi.filter((p) => p.lat).map((p) => [p.project.toUpperCase().trim(), p])),
@@ -332,18 +347,25 @@ function nearestStation(data: Data, name: string, node: any) {
 // Facts for any development: tenure, units, MRT, integrated flag, psf series.
 // Constant-set-independent by design — the MRT BAND is applied later, because the two
 // sets cut the bands differently and the underlying metres are the same either way.
-export function factsFor(data: Data, name: string, node: any, bed: string, widen = false) {
+export function factsFor(data: Data, name: string, node: any, bed: string, widen = false, windowMonths = PSF_WINDOW_MONTHS) {
   const ov = data.overrides[name] || {};
   const b = data.base[name] || {};
   const nearest = nearestStation(data, name, node);
   // A still-selling launch has no resale history, so its own primary-market psf is
   // the only honest read of what it costs today. Resale is preferred when it exists.
   // Widening applies to the SUBJECT only, and stops at the first window that finds a price.
-  const windows = widen ? SUBJECT_WINDOW_LADDER : [PSF_WINDOW_MONTHS];
+  // `window` is the workup's own window; the widening ladder is the deeper rescue beyond it.
+  // The subject starts on the workup's own window and only reaches past it as a rescue —
+  // filtering the ladder alone would have read the subject at 12 while its comparables sat
+  // at 6, which is exactly the mixed-period comparison the single window exists to prevent.
+  const windows = widen
+    ? [windowMonths, ...SUBJECT_WINDOW_LADDER.filter((w) => w > windowMonths)]
+    : [windowMonths];
   let psf: PsfPick | null = null, psfSource = "", psfWindow = PSF_WINDOW_MONTHS;
   for (const w of windows) {
-    const resale = avgPsf(data.psfHist[name], bed, data.cutoffs[w] ?? data.cutoff);
-    const newSale = avgPsf(b.newSale, bed, data.cutoffs[w] ?? data.cutoff);
+    const cut = data.cutoffs[w] ?? monthsAgoFrom(w);
+    const resale = avgPsf(data.psfHist[name], bed, cut);
+    const newSale = avgPsf(b.newSale, bed, cut);
     const pick = resale && resale.months >= MIN_MONTHS_IN_WINDOW ? resale : (newSale || resale);
     if (pick) { psf = pick; psfSource = pick === resale ? "resale+subsale" : "new sale"; psfWindow = w; break; }
   }
@@ -427,7 +449,7 @@ export function comparability(S: any, c: any): number {
 }
 
 // Screen at ONE radius. `screen()` below drives this up the ladder.
-function screenAt(data: Data, S: any, bed: string, candidates: ReturnType<typeof neighbours>, radius: number) {
+function screenAt(data: Data, S: any, bed: string, candidates: ReturnType<typeof neighbours>, radius: number, windowMonths: number) {
   const rejected: any[] = [];
 
   // Pass 1 — hard screens (data quality and "is this a real cross-shopped condo").
@@ -435,7 +457,7 @@ function screenAt(data: Data, S: any, bed: string, candidates: ReturnType<typeof
   // filter below needs to know how many alternatives exist before it may drop anything.
   const eligible: any[] = [];
   for (const c of candidates) {
-    const f = factsFor(data, c.name, c.node, bed);
+    const f = factsFor(data, c.name, c.node, bed, false, windowMonths);
     const why: string[] = [];
     if (!f.psf) why.push("no transactions in window");
     else if (f.psf.months < MIN_MONTHS_IN_WINDOW) why.push(`only ${f.psf.months} month(s) with caveats`);
@@ -484,20 +506,27 @@ function screenAt(data: Data, S: any, bed: string, candidates: ReturnType<typeof
   // the eligible a development is judged against, and among candidates the screens have
   // already accepted, the nearest is the truest. (Shawn, 2026-09-10.)
   const ranked = [...pool].sort((a, b) => comparability(S, a) - comparability(S, b));
-  return { rejected, eligible, pool: ranked, ageExcluded, leaseExcluded, radius };
+  return { rejected, eligible, pool: ranked, ageExcluded, leaseExcluded, radius, windowMonths };
 }
 
 // Walk the radius ladder: take the tightest ring that yields TARGET_COMPS, and if none does,
 // keep the widest attempt — a comparable 1.8 km away beats no comparable at all. The ring
 // actually used travels with the result, because "we had to go to 2 km to find three" is
 // itself information about how unusual the development is.
+// Walk the radius ladder, and inside each ring the WINDOW ladder. Radius is the outer loop
+// because distance is what makes a comparable comparable (Shawn, 2026-09-10) — a nearer
+// building read over 12 months beats a further one read over 6. Inside a ring, the freshest
+// window that yields a full set wins, so most workups land on 6 months and only the thin
+// ones reach for 12. Everything a workup shows is read over the SAME window.
 export function screen(data: Data, S: any, bed: string, precomputed?: ReturnType<typeof neighbours>) {
   let last: ReturnType<typeof screenAt> | null = null;
   for (const radius of RADIUS_LADDER) {
     const cands = (precomputed ?? neighbours(data, S, MAX_RADIUS_M)).filter((c) => c.dist <= radius);
-    const got = screenAt(data, S, bed, cands, radius);
-    last = got;
-    if (got.pool.length >= TARGET_COMPS) return got;
+    for (const windowMonths of WORKUP_WINDOW_LADDER) {
+      const got = screenAt(data, S, bed, cands, radius, windowMonths);
+      last = got;
+      if (got.pool.length >= TARGET_COMPS) return got;
+    }
   }
   return last!;
 }

@@ -82,6 +82,18 @@ def perm(A, B, N=8000, seed=11):
 BANDR  = {nm: fit(rows_in(nm)) for _, _, nm in BANDS}
 BANDCI = {nm: ci(rows_in(nm)) for _, _, nm in BANDS}
 NDEV   = ndev(ALL)
+# THE TRANSACTION BASE (Shawn, 2026-09-10: "is 440+ cells the number of cells we used overall?
+# that few?"). A cell is a COMPARISON, not a sale. Each side of one is a project x bedroom
+# median over the window, itself resting on many transactions — count them, and say so, because
+# "442 cells" reads as a small study and it is not one.
+SIDES  = {}
+for _r in ALL:
+    SIDES[(_r['older'], _r['bed'])] = _r['n_old']
+    SIDES[(_r['newer'], _r['bed'])] = _r['n_new']
+NTX    = sum(SIDES.values())
+NPRICE = len(SIDES)
+TXMED  = st.median(SIDES.values())
+TXPAIR = st.median(r['n_old'] + r['n_new'] for r in ALL)
 MIDS   = sorted(mid(r) for r in ALL)
 MID_LO, MID_HI = MIDS[int(.05*len(MIDS))], MIDS[int(.95*len(MIDS))]
 OLD_NM, NEW_NM = BANDS[0][2], BANDS[1][2]
@@ -158,6 +170,73 @@ CV_THREE = cv_bands([(1900, 2011, 'a'), (2011, 2014, 'b'), (2014, 3000, 'c')])
 # ── the vintage-vs-age test ─────────────────────────────────────────────────
 EARLY   = D.get('early24', [])
 EW, LW  = D.get('early_window', ['', '']), D.get('late_window', ['', ''])
+
+# ── DOES IT MATTER WHEN EACH SIDE SOLD? ─────────────────────────────────────
+# Shawn, 2026-09-10: "are we even considering the transactions? maybe we should dice and slice
+# the pairs up into transaction periods?" A fair question — a cell pools 24 months a side, so if
+# one project sold early in the window and its neighbour late, the comparison spans market drift
+# rather than vintage. MEASURED, NOT ASSUMED. The two sides turn out to transact contemporaneously
+# (mean offset near zero), so pooling adds spread but no tilt, and matching on period costs
+# precision without buying anything. COMPUTED HERE so it can never go stale, and kept rather than
+# deleted because the answer depends on the window: drift is real money, and a future cut could
+# come out offset.
+PSFH = json.load(open(os.path.join(HERE, '..', '..', 'property-analyzer', 'data',
+                                   'psf-history.json')))['projects']
+QH   = json.load(open(os.path.join(HERE, '..', '..', 'property-analyzer', 'data',
+                                   'quantum-history.json')))['projects']
+_mn  = lambda m: int(m[:4]) * 12 + int(m[5:7])
+
+def _series(name, bed):
+    a, q = PSFH.get(name, {}).get(bed), QH.get(name, {}).get(bed)
+    if not a or not q: return {}
+    return {m: (a[m], q[m][2]) for m in a if LW[0] <= m <= LW[1] and m in q}
+
+def _offset(r):
+    # Transaction-weighted mean month of each side, newer minus older.
+    a, b = _series(r['older'], r['bed']), _series(r['newer'], r['bed'])
+    if not a or not b: return None
+    w = lambda d: sum(_mn(m) * n for m, (_, n) in d.items()) / sum(n for _, n in d.values())
+    return w(b) - w(a)
+
+OFFS   = [o for o in (_offset(r) for r in ALL) if o is not None]
+OFF_ME = st.mean(OFFS) if OFFS else 0.0
+OFF_3  = sum(1 for o in OFFS if abs(o) > 3)
+
+def _drift():
+    # Island median psf against month over the window — what one month of market is worth.
+    by = {}
+    for nm, bs in PSFH.items():
+        for bed, ser in bs.items():
+            for m, v in ser.items():
+                if LW[0] <= m <= LW[1]: by.setdefault(m, []).append(v)
+    pts = [(_mn(m), st.median(v)) for m, v in sorted(by.items())]
+    mx = st.mean(x for x, _ in pts); my = st.mean(y for _, y in pts)
+    return sum((x - mx) * (y - my) for x, y in pts) / sum((x - mx) ** 2 for x, _ in pts)
+DRIFT = _drift()
+
+def _matched(r, width):
+    # The pair's difference computed only inside periods BOTH sides traded in.
+    a, b = _series(r['older'], r['bed']), _series(r['newer'], r['bed'])
+    if not a or not b: return None
+    A, B = {}, {}
+    for m, (v, n) in a.items(): A.setdefault(_mn(m) // width, []).append((v, n))
+    for m, (v, n) in b.items(): B.setdefault(_mn(m) // width, []).append((v, n))
+    num = den = 0
+    for k in set(A) & set(B):
+        wt = min(sum(n for _, n in A[k]), sum(n for _, n in B[k]))
+        num += (st.median([v for v, _ in B[k]]) - st.median([v for v, _ in A[k]])) * wt
+        den += wt
+    return num / den if den else None
+
+def matched_rate(width):
+    rows = []
+    for r in ALL:
+        d = _matched(r, width)
+        if d is not None: rows.append({**r, 'diff': d})
+    return ({nm: fit([r for r in rows if band_of(mid(r)) == nm]) for _, _, nm in BANDS},
+            len(rows))
+MATCHQ, MATCHN = matched_rate(3)
+
 NOW     = int(LW[1][:4]) if LW[1] else datetime.date.today().year
 EARLY_NOW = int(EW[1][:4]) if EW[1] else NOW - 3
 AGE_SLICES = [(1900, 2006), (2006, 2009), (2009, 2012), (2012, 2015), (2015, 3000)]
@@ -233,6 +312,15 @@ def tested_table():
                 f'{POOL_PAIRS} pairs against {npairs(ALL)}',
                 f'Loses pairs and lets the sales mix leak in, worth &minus;${abs(SIZE_LEAK):,.0f} psf per 100% of '
                 f'unmatched size. Bedroom is the better control.'))
+    h.append(r_('Matching the two sides on when they sold',
+                f'${MATCHQ[OLD_NM]:,.0f} &middot; ${MATCHQ[NEW_NM]:,.0f}',
+                f'A cell pools 24 months a side, so in principle one project could sell early and '
+                f'its neighbour late, making the comparison part market drift. Rebuilt comparing '
+                f'only inside quarters BOTH sides traded in: the rate does not move. The two sides '
+                f'already transact together &mdash; mean offset {OFF_ME:+.1f} months across '
+                f'{len(OFFS)} cells &mdash; so pooling adds spread but no tilt, and matching '
+                f'costs precision. <b>Kept as a check, because the market moves '
+                f'${DRIFT:,.0f} psf a month and a future cut could come out offset.</b>'))
     h.append(r_('A minimum lease gap', 'no change',
                 'It protected an estimator this page does not use. Removing it roughly tripled the sample.'))
     return ''.join(h) + '</tbody></table>'
@@ -1285,15 +1373,21 @@ the first one measured against the market.</p>
 
 <section>
   <div class="sechead"><h2 class="disp">The measurement</h2>
-  <p><b>{NDEV} developments &middot; {npairs(ALL)} pairs &middot; {len(ALL)} cells.</b> Each
-  paired with a leasehold neighbour and compared bedroom by bedroom, across 24 months of resale
-  and sub-sale to {LW[1]}.</p></div>
+  <p><b>{NDEV} developments &middot; {npairs(ALL)} pairs &middot; {len(ALL)} comparisons,
+  resting on {NTX:,} transactions.</b> Each development paired with a leasehold neighbour and
+  compared bedroom by bedroom, across 24 months of resale and sub-sale to {LW[1]}.</p>
+  <p class="expl" style="margin-bottom:0">A comparison is one pair at one bedroom &mdash; not one
+  sale. Each side of it is that project&rsquo;s median psf for that bedroom over the window,
+  built from a median of <b>{TXMED:,.0f} transactions</b> (the typical comparison has
+  {TXPAIR:,.0f} across its two sides, and no side has fewer than five). Nothing here is a mean:
+  each month is the median of that month&rsquo;s sales, and the cell is the median of those
+  months, so one penthouse or one fire-sale cannot move it.</p></div>
   <div class="scroll">{answer_table()}</div>
 </section>
 
 <section>
   <div class="sechead"><h2 class="disp">Behind it</h2>
-  <p>Four questions, answered once each.</p></div>
+  <p>Five questions, answered once each.</p></div>
 
   <details><summary>Does the rate actually fit a pair?</summary>
     <p class="expl"><b>Yes, once you compare totals rather than a single year.</b> A pair two
@@ -1339,6 +1433,25 @@ the first one measured against the market.</p>
     controlled here &mdash; are worth several hundred. The signal is real but buried. Those
     cells cannot mislead the rate, because this estimator fits the difference against the gap:
     a one-year pair carries one year of leverage and cannot shout.</p>
+  </details>
+
+  <details><summary>Does it matter when each side sold?</summary>
+    <p class="expl">A comparison pools 24 months on each side. So in principle one project could
+    have sold early in the window and its neighbour late, and part of the difference between them
+    would be the market moving rather than the lease. <b>It is worth real money: across this
+    window the island median rose ${DRIFT:,.0f} psf a month</b>, so six months of mismatch would
+    be worth about ${abs(DRIFT)*6:,.0f}.</p>
+    <p class="expl"><b>Measured, and it is not happening.</b> Weighting each side by its own
+    transactions, the newer project sells on average <b>{OFF_ME:+.1f} months</b> apart from the
+    older one across {len(OFFS)} comparisons &mdash; the two trade together. {OFF_3} comparisons
+    are offset by more than three months, and they scatter both ways rather than leaning.</p>
+    <p class="expl">Rebuilt from scratch comparing the two sides <b>only inside quarters both of
+    them traded in</b>, the rate reads <b>${MATCHQ[OLD_NM]:,.0f}</b> and
+    <b>${MATCHQ[NEW_NM]:,.0f}</b> on {MATCHN} comparisons, against ${BANDR[OLD_NM]:,.0f} and
+    ${BANDR[NEW_NM]:,.0f} pooled. No movement worth the name, and matching is the worse method
+    here because each quarter's median rests on a handful of sales instead of the window's
+    whole count. <b>The check stays in the build</b> &mdash; it is cheap, and a future cut could
+    come out offset even though this one does not.</p>
   </details>
 
   <details><summary>Do the bands move as the stock ages?</summary>

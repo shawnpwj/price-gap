@@ -345,7 +345,15 @@ export async function loadData(): Promise<Data> {
       }),
     overrides: JSON.parse(overrideRaw),
     details: JSON.parse(detailRaw).projects,
-    gls: new Map(glsArr.filter((g) => g.devName).map((g) => [String(g.devName).toUpperCase().trim(), g])),
+    // KEYED ON devName OR displayName (Shawn, 2026-09-10). 41 of the sheet's 83 sites carry
+    // devName: "" — the parcel is awarded but the developer has not named the project yet —
+    // and keying on devName alone deleted every one of them from Price Gap: not a subject, not
+    // in `skipped`, nowhere. CHUAN GROVE GLS was the case he found. It is the same defect as
+    // THOMSON RESERVE (2026-09-09): that fix added the GLS-only subject path but left this key
+    // untouched, so it only ever reached the 42 sites that happen to have a devName. 26 awarded
+    // parcels with a land price and a projected psf come back with this one word.
+    gls: new Map(glsArr.filter((g) => g.devName || g.displayName)
+      .map((g) => [String(g.devName || g.displayName).toUpperCase().trim(), g])),
     cutoff: cutoffs[PSF_WINDOW_MONTHS], cutoffs,
   };
 }

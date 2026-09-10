@@ -1892,24 +1892,6 @@ so what is left is the walk.</p>
 <section>
   <div class="scroll">{mrt_table()}</div>
 
-  <h3 class="disp sub">Run it again on a different two years</h3>
-  <p class="expl">The same method on an earlier, non-overlapping two years, with <b>that</b>
-  window&rsquo;s own lease bands taken out rather than today&rsquo;s. It is the check that
-  settled the lease rate.</p>
-  <div class="scroll">{mrt_repl_table()}</div>
-  <p class="expl"><b>This one does not hold the way the lease rate does, and that is worth
-  knowing before the figure is used.</b> The nearest band reads
-  +${M['early']['bands'][0]['adj']:,.0f} on the earlier cut, with a range of
-  {M['early']['bands'][0]['lo']:+,.0f} to {M['early']['bands'][0]['hi']:+,.0f} &mdash; an
-  interval that <b>includes zero</b> &mdash; against +${M['bands'][0]['adj']:,.0f}
-  [{M['bands'][0]['lo']:+,.0f} to {M['bands'][0]['hi']:+,.0f}] today. The widest band reads
-  +${M['early']['bands'][2]['adj']:,.0f} then against +${M['bands'][2]['adj']:,.0f} now.</p>
-  <p class="expl">Two readings are possible and the study cannot separate them: either
-  <b>proximity to a station has genuinely become worth more</b> over these three years, or the
-  band figures are less firmly measured than their intervals suggest. Either way this is a
-  <b>dated figure in a way the lease rate is not</b> &mdash; quote it as of {cut.VINTAGE}, and
-  re-cut it before leaning on it.</p>
-
   <details><summary>How the lease is taken out, and the check that it worked</summary>
     <p class="expl">Each pair shares its nearest station but sits at a different distance from it.
     Their price difference still contains whatever lease difference they carry, so the measured
@@ -2384,3 +2366,11 @@ print(f'  timing: sides offset {OFF_ME:+.2f} months on average; quarter-matched 
       f'${MATCHQ[OLD_NM]:.1f}/${MATCHQ[NEW_NM]:.1f} against ${BANDR[OLD_NM]:.1f}/${BANDR[NEW_NM]:.1f}')
 print(f'  outside the central 95%: {len(MISSES)} cells; dropping them gives '
       f'${TRIMR[OLD_NM]:.1f}/${TRIMR[NEW_NM]:.1f}')
+if M and M.get('early'):
+    # THE CHECK SURVIVES THE PAGE. Shawn took the MRT replication off the panel; the earlier
+    # window is still computed on every re-cut and reported here, so a band that fails to
+    # replicate cannot pass unnoticed just because it is no longer displayed.
+    _e = {b['key']: b for b in M['early']['bands']}
+    print('  MRT replication ' + M['early']['window'][0] + '..' + M['early']['window'][1]
+          + ': ' + ' · '.join(f"{b['key']} ${b['adj']:+,.0f} now vs ${_e[b['key']]['adj']:+,.0f} then"
+                              for b in M['bands'] if b['key'] in _e))

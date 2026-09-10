@@ -90,6 +90,13 @@ SIDES  = {}
 for _r in ALL:
     SIDES[(_r['older'], _r['bed'])] = _r['n_old']
     SIDES[(_r['newer'], _r['bed'])] = _r['n_new']
+def sides_of(rows):
+    d = {}
+    for r in rows:
+        d[(r['older'], r['bed'])] = r['n_old']
+        d[(r['newer'], r['bed'])] = r['n_new']
+    return d
+ntx    = lambda rows: sum(sides_of(rows).values())
 NTX    = sum(SIDES.values())
 NPRICE = len(SIDES)
 TXMED  = st.median(SIDES.values())
@@ -227,6 +234,39 @@ def _matched(r, width):
         num += (st.median([v for v, _ in B[k]]) - st.median([v for v, _ in A[k]])) * wt
         den += wt
     return num / den if den else None
+
+# ── THE QUARTERLY DRILL-DOWN (Shawn, 2026-09-10) ────────────────────────────
+# He asked whether slicing by transaction period would give MORE line items to justify the
+# figures with. It would — 2,385 quarters against 442 pooled comparisons — but they are WEAKER,
+# not stronger: most quarters rest on one or two sales and swing hundreds of dollars. Row #1,
+# the best-fitting comparison in the study, is made of quarters running -$85 to +$172, one of
+# them on a single sale.
+#
+# So the pooled rows STAY as the evidence and the quarters sit UNDER them, on demand, with the
+# sale count on every line. That turns the weakness into the argument: open any row and you can
+# see for yourself why a single quarter must not be read, and why pooling is the honest summary
+# rather than a way of hiding the spread.
+#
+# Emitted as compact JSON and drawn on click, not as 2,385 hidden table rows — the same content
+# as markup would roughly double the page.
+def _q(m): return (_mn(m) - 1) // 3
+def _qlab(k):
+    t = k * 3 + 1; y, mo = divmod(t - 1, 12)
+    return f'{str(y)[2:]}Q{mo // 3 + 1}'
+
+def quarters(r):
+    """[quarter, older psf, newer psf, older sales, newer sales] for every quarter BOTH traded."""
+    a, b = _series(r['older'], r['bed']), _series(r['newer'], r['bed'])
+    A, B = {}, {}
+    for m, (v, n) in a.items(): A.setdefault(_q(m), []).append((v, n))
+    for m, (v, n) in b.items(): B.setdefault(_q(m), []).append((v, n))
+    out = []
+    for k in sorted(set(A) & set(B)):
+        out.append([_qlab(k),
+                    round(st.median([v for v, _ in A[k]])),
+                    round(st.median([v for v, _ in B[k]])),
+                    sum(n for _, n in A[k]), sum(n for _, n in B[k])])
+    return out
 
 def matched_rate(width):
     rows = []
@@ -490,6 +530,8 @@ def pairtable():
     table opens on the pairs the rate lands on and walks out to the ones it does not; the
     outliers are where a reader arrives last, having already seen how tight the core is."""
     rows = sorted(ALL, key=lambda r: abs(resid(r)))
+    global QDATA
+    QDATA = [quarters(r) for r in rows]
     def nm_(x): return html.escape(x.title())
     h = ['<table class="fig pairs"><thead><tr><th class="num">#</th>'
          '<th>older</th><th class="num">lease</th>'
@@ -504,7 +546,7 @@ def pairtable():
         off  = r['diff'] - pred
         t    = tags(r)
         h.append(
-            f'<tr{" class=flag" if outside(r) else ""}><td class="num quiet">{i}</td><td>{nm_(r["older"])}</td><td class="num quiet">{r["ls_old"]}</td>'
+            f'<tr{" class=flag" if outside(r) else ""} data-q="{i-1}" tabindex="0"><td class="num quiet">{i}</td><td>{nm_(r["older"])}</td><td class="num quiet">{r["ls_old"]}</td>'
             f'<td>{nm_(r["newer"])}</td><td class="num quiet">{r["ls_new"]}</td>'
             f'<td class="num">{r["gap"]}y</td><td class="quiet">{r["bed"]}</td>'
             f'<td class="num quiet">${r["psf_old"]:,.0f}</td><td class="num quiet">${r["psf_new"]:,.0f}</td>'
@@ -610,6 +652,17 @@ text-transform:uppercase;color:var(--slate-600);display:block;margin-top:3px}
 font-size:15px;color:var(--slate-300);max-width:72ch}
 .verdict .call b{color:var(--gold-soft);font-weight:600}
 .chip.asof{border-color:rgba(201,169,106,.45);color:var(--gold-soft);letter-spacing:.1em}
+table.pairs tr[data-q]{cursor:pointer}
+table.pairs tr[data-q]:hover td{background:rgba(31,44,71,.5)}
+table.pairs tr[data-q]:focus-visible{outline:1px solid var(--gold);outline-offset:-1px}
+table.pairs tr[data-q].open td{background:rgba(31,44,71,.7)}
+tr.qd>td{padding:0;background:var(--navy-900)}
+.qdin{padding:14px 18px 16px;border-left:2px solid rgba(201,169,106,.45)}
+.qdin p{color:var(--slate-400);font-size:12.5px;max-width:78ch;margin-bottom:9px}
+.qdin p b{color:var(--slate-100);font-weight:600}
+table.qt{border-collapse:collapse;font-size:12.5px}
+table.qt th,table.qt td{padding:5px 14px 5px 0;text-align:left;border-bottom:1px solid rgba(36,48,80,.45)}
+table.qt thead th{color:var(--slate-600);font-weight:400;white-space:nowrap}
 .spread{width:100%;height:auto;display:block;margin:12px 0 4px;
 border:1px solid var(--ink);border-radius:11px;background:var(--navy-900);padding:4px}
 /* tables */
@@ -902,6 +955,53 @@ JS = """
   window.addEventListener('hashchange',function(){show(location.hash.slice(1),false);});
   show((location.hash||'#summary').slice(1),false);
 })();
+
+/* THE QUARTERLY DRILL-DOWN. Shawn, 2026-09-10: keep the 442 pooled rows as the evidence and put
+   the quarters underneath, on demand. The point of it is NOT that a quarter is better evidence —
+   it is worse, and openly so: most rest on one or two sales and swing hundreds of dollars. It is
+   there so a reader who doubts a pooled figure can see for themselves why pooling is the honest
+   summary. The sale count sits on every line for exactly that reason. */
+(function(){
+  var t=document.querySelector('table.pairs'); if(!t||!window.QD) return;
+  var money=function(v){return (v<0?'-$':'+$')+Math.abs(v).toLocaleString();};
+  t.addEventListener('click',function(e){
+    var tr=e.target.closest('tr[data-q]'); if(!tr) return; toggle(tr);
+  });
+  t.addEventListener('keydown',function(e){
+    if(e.key!=='Enter'&&e.key!==' ') return;
+    var tr=e.target.closest&&e.target.closest('tr[data-q]'); if(!tr) return;
+    e.preventDefault(); toggle(tr);
+  });
+  function toggle(tr){
+    var nx=tr.nextElementSibling;
+    if(nx&&nx.classList.contains('qd')){ nx.remove(); tr.classList.remove('open'); return; }
+    var rows=QD[+tr.getAttribute('data-q')]||[];
+    var cols=tr.children.length;
+    var d=document.createElement('tr'); d.className='qd';
+    var h='<td colspan="'+cols+'"><div class="qdin">';
+    if(!rows.length){ h+='<p>No quarter has sales on both sides. The pooled figure is the only reading this pair supports.</p>'; }
+    else{
+      var ds=rows.map(function(r){return r[2]-r[1];});
+      var lo=Math.min.apply(null,ds), hi=Math.max.apply(null,ds);
+      h+='<p>Quarter by quarter &mdash; <b>'+rows.length+'</b> quarters where both sides sold. '
+       + 'The difference swings <b>'+money(lo)+'</b> to <b>'+money(hi)+'</b>, on the handful of sales '
+       + 'shown at the right. <b>This is why the study pools:</b> a single quarter is one or two '
+       + 'transactions and cannot carry a reading.</p>'
+       + '<table class="qt"><thead><tr><th>quarter</th><th class="num">older</th>'
+       + '<th class="num">newer</th><th class="num">difference</th><th class="num">sales</th>'
+       + '</tr></thead><tbody>';
+      rows.forEach(function(r){
+        h+='<tr><td>'+r[0]+'</td><td class="num quiet">$'+r[1].toLocaleString()+'</td>'
+         + '<td class="num quiet">$'+r[2].toLocaleString()+'</td>'
+         + '<td class="num big">'+(r[2]-r[1]>=0?'+':'')+(r[2]-r[1]).toLocaleString()+'</td>'
+         + '<td class="num quiet">'+r[3]+' / '+r[4]+'</td></tr>';
+      });
+      h+='</tbody></table>';
+    }
+    d.innerHTML=h+'</div></td>';
+    tr.classList.add('open'); tr.parentNode.insertBefore(d,tr.nextSibling);
+  }
+})();
 """
 def mrt_table():
     if not M: return ''
@@ -1065,6 +1165,8 @@ def hero(was, was_sub, answers, call):
     cells = ''.join(
         '<div class="ans"><div class="n">' + a[0] + '</div><div class="w">' + a[1] + '</div>'
         + ('<div class="g">' + str(a[2]) + '<span>developments</span></div>' if a[2] else '')
+        + ('<div class="g">' + f'{a[3]:,}' + '<span>transactions</span></div>'
+           if len(a) > 3 and a[3] else '')
         + '</div>' for a in answers)
     call_p = ('<p class="call">' + call + '</p>') if call else ''
     return ('<div class="verdict"><div class="vgrid">'
@@ -1302,6 +1404,10 @@ TENS_JS = '[' + ','.join(f'[{g["min_left"]},{g["pct"]:.5f},"{g["label"]}"]'
 BANDS_JS = '[' + ','.join(f'[{hi},{BANDR[nm]:.2f},"{nm}"]' for _, hi, nm in BANDS) + ']'
 A1, A2 = age_label(OLD_NM); B1, B2 = age_label(NEW_NM)
 
+QDATA = []
+PAIRTABLE = pairtable()          # populates QDATA — must run before any template
+QJSON = json.dumps(QDATA, separators=(',', ':'))
+
 BODY = f"""
 <div class="panel" data-p="summary">
 <h1 class="disp">Where the constants now stand</h1>
@@ -1342,8 +1448,8 @@ on one screen; every figure below has a panel of its own.</p>
 the first one measured against the market.</p>
 
 {hero('$40', 'flat, every comparable',
-      [(f'${BANDR[OLD_NM]:,.0f}', OLD_NM, ndev(rows_in(OLD_NM))),
-       (f'${BANDR[NEW_NM]:,.0f}', NEW_NM, ndev(rows_in(NEW_NM)))],
+      [(f'${BANDR[OLD_NM]:,.0f}', OLD_NM, ndev(rows_in(OLD_NM)), ntx(rows_in(OLD_NM))),
+       (f'${BANDR[NEW_NM]:,.0f}', NEW_NM, ndev(rows_in(NEW_NM)), ntx(rows_in(NEW_NM)))],
       '')}
 
 <section>
@@ -1379,7 +1485,10 @@ the first one measured against the market.</p>
   <p class="expl" style="margin-bottom:0">A comparison is one pair at one bedroom &mdash; not one
   sale. Each side of it is that project&rsquo;s median psf for that bedroom over the window,
   built from a median of <b>{TXMED:,.0f} transactions</b> (the typical comparison has
-  {TXPAIR:,.0f} across its two sides, and no side has fewer than five). Nothing here is a mean:
+  {TXPAIR:,.0f} across its two sides, and no side has fewer than five). The two bands above count
+  {ntx(rows_in(OLD_NM)):,} and {ntx(rows_in(NEW_NM)):,} transactions; they overlap by
+  {ntx(rows_in(OLD_NM)) + ntx(rows_in(NEW_NM)) - NTX:,}, because a project can pair with an older
+  neighbour on one side of the boundary and a newer one on the other. Nothing here is a mean:
   each month is the median of that month&rsquo;s sales, and the cell is the median of those
   months, so one penthouse or one fire-sale cannot move it.</p></div>
   <div class="scroll">{answer_table()}</div>
@@ -1506,7 +1615,7 @@ the first one measured against the market.</p>
     difference is what the market shows; beside it is what the band predicts for that gap.</b>
     Nothing in a row is adjusted for anything. The last column carries the reasons a row is a
     candidate to miss, and the {len(MISSES)} that sit outside the central 95% are marked.</p>
-    <div class="scroll" style="margin-top:12px">{pairtable()}</div>
+    <div class="scroll" style="margin-top:12px">{PAIRTABLE}</div>
   </details>
 </section>
 
@@ -1943,6 +2052,7 @@ HTML = f"""<!doctype html>
   <span>price-gap/calibration/ · regenerate with build-page.py</span>
 </footer>
 </div>
+<script>var QD={QJSON};</script>
 <script>{JS.replace('%TENB%', TENB_JS).replace('%TENS%', TENS_JS).replace('%BANDS%', BANDS_JS).replace('%LO%', f'{MID_LO}').replace('%HI%', f'{MID_HI}').replace('%VLO%', f"{VR['lo']}").replace('%VHI%', f"{VR['hi']}").replace('%VMID%', f"{VR['ratio']}").replace('%VFS%', f"{V['meta']['floor_step']}")}</script>
 </body></html>
 """

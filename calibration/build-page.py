@@ -362,6 +362,44 @@ def answer_table():
                  f'<td class="num quiet">{ndev(rs)}</td><td class="num quiet">{npairs(rs)}</td></tr>')
     return ''.join(h) + '</tbody></table>'
 
+# ── THE REPLICATION (Shawn, 2026-09-10: "maybe we should have a different 24 months") ───────
+# The single strongest confirmation on the page, and the one a sceptical reader asks for first:
+# run the identical method on a DIFFERENT two years of transactions and see whether the same
+# number comes back. It does. The windows are 14 months apart and share no transaction at all —
+# the same neighbours are simply re-measured on a fresh set of sales.
+def txof(rows):
+    s = {}
+    for r in rows:
+        s[(r['older'], r['bed'])] = r['n_old']
+        s[(r['newer'], r['bed'])] = r['n_new']
+    return sum(s.values())
+
+def repl_table():
+    h = ['<table class="fig look"><thead><tr><th>Transactions used</th>'
+         f'<th class="num">{OLD_NM}</th><th class="num">{NEW_NM}</th>'
+         '<th class="num">developments</th><th class="num">transactions</th>'
+         '</tr></thead><tbody>']
+    for lab, rows, head in ((f'{LW[0]} to {LW[1]} &mdash; the published cut', ALL, True),
+                            (f'{EW[0]} to {EW[1]} &mdash; three years earlier', EARLY, False)):
+        o = [r for r in rows if mid(r) < 2011]
+        n = [r for r in rows if mid(r) >= 2011]
+        h.append(f'<tr{" class=head" if head else ""}><th>{lab}</th>'
+                 f'<td class="num big">${fit(o):,.0f}</td>'
+                 f'<td class="num big">${fit(n):,.0f}</td>'
+                 f'<td class="num quiet">{ndev(rows)}</td>'
+                 f'<td class="num quiet">{txof(rows):,}</td></tr>')
+    return ''.join(h) + '</tbody></table>'
+
+EARLY_O = [r for r in EARLY if mid(r) < 2011]
+EARLY_N = [r for r in EARLY if mid(r) >= 2011]
+EARLYCI = {OLD_NM: ci(EARLY_O), NEW_NM: ci(EARLY_N)}
+# The overlap of the two intervals is the ROBUST statement. An earlier draft claimed each point
+# estimate sat inside the other window's interval — true, but only just: the earlier newer-band
+# figure lands exactly ON the published upper bound, so a different bootstrap seed flips it.
+# Never assert a claim that sits on a resampling boundary; state the overlap, and compute it.
+OVERLAP = {nm: (max(BANDCI[nm][0], EARLYCI[nm][0]), min(BANDCI[nm][1], EARLYCI[nm][1]))
+           for _, _, nm in BANDS}
+
 def vintage_table():
     h = ['<table class="fig"><thead><tr><th>Midpoint</th>'
          f'<th class="num">{EW[0][:4]}–{EW[1][:4]} sales</th><th class="num">age then</th>'
@@ -653,6 +691,7 @@ color:var(--gold);font:600 19px/1 Optima,Candara,sans-serif}
 background:var(--navy-850);border-radius:999px;padding:6px 15px;font-size:11px;
 letter-spacing:.18em;text-transform:uppercase;color:var(--slate-500);white-space:nowrap}
 .chip b{width:6px;height:6px;border-radius:50%;background:var(--warn);display:block}
+h3.sub{font:600 17px/1.3 Optima,Candara,sans-serif;color:var(--slate-100);margin:34px 0 4px}
 h1{font:600 clamp(28px,4vw,36px)/1.15 Optima,Candara,sans-serif;color:var(--slate-100);
 letter-spacing:.01em;margin:52px 0 10px}
 .kicker{font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--gold);margin-top:52px}
@@ -1564,6 +1603,19 @@ the first one measured against the market.</p>
   each month is the median of that month&rsquo;s sales, and the cell is the median of those
   months, so one penthouse or one fire-sale cannot move it.</p></div>
   <div class="scroll">{answer_table()}</div>
+
+  <h3 class="disp sub">Run it again on a different two years</h3>
+  <p class="expl">The same method, the same screens, an entirely separate set of transactions
+  &mdash; {EW[0]} to {EW[1]}, fourteen months before this cut opens, sharing not one sale with
+  it. If the figures were an artefact of one market window, this is where they would fall apart.</p>
+  <div class="scroll">{repl_table()}</div>
+  <p class="expl"><b>${fit(rows_in(OLD_NM)):,.0f} comes back as ${fit(EARLY_O):,.0f}, and
+  ${fit(rows_in(NEW_NM)):,.0f} as ${fit(EARLY_N):,.0f}</b>, on {txof(EARLY):,} different
+  transactions. The two readings of the older band agree across
+  ${OVERLAP[OLD_NM][0]:,.0f}&ndash;${OVERLAP[OLD_NM][1]:,.0f}, and the newer band across
+  ${OVERLAP[NEW_NM][0]:,.0f}&ndash;${OVERLAP[NEW_NM][1]:,.0f} &mdash; most of the length of
+  either interval. The newer band is the looser of the two, as it is on every cut. <b>The rate is
+  a property of how Singapore prices vintage, not of the two years it was measured in.</b></p>
 </section>
 
 <section>

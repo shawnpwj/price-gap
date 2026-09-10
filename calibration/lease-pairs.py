@@ -198,7 +198,9 @@ def build_between(lo, hi):
             rows.append(dict(older=old['name'], newer=new['name'], region=A['region'],
                              ls_old=old['ls'], ls_new=new['ls'], gap=new['ls'] - old['ls'],
                              psf_old=co['psf'], psf_new=cn['psf'], diff=cn['psf'] - co['psf'],
-                             bed=bd))
+                             # carried so the REPLICATION can be quoted with its own
+                             # transaction base, not just its rate (Shawn, 2026-09-10)
+                             n_old=co['n'], n_new=cn['n'], bed=bd))
     return rows
 
 def build(window):

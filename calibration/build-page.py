@@ -768,6 +768,10 @@ def ec_launch_table():
                  f'<span class="sub2">{d["pairs"]:,} pairs</span></td></tr>')
     return ''.join(r) + '</tbody></table>'
 
+# Age bands measured but not shown on the page. (Shawn, 2026-09-10.)
+HIDDEN_AGE_BANDS = {'15+'}
+
+
 def ec_age_table():
     """The same resale cut, sliced by how long the EC has been standing. TOP is not in the
     caveat, so it is taken as lease start + 4 — the median gap between the two."""
@@ -775,6 +779,11 @@ def ec_age_table():
          '<th class="num">Private is</th><th class="num">Could really be</th>'
          '<th class="num">Pairs</th><th class="num">Developments</th></tr></thead><tbody>']
     for a in E['ages']:
+        # 15+ is hidden at Shawn's call, 2026-09-10. The band is still MEASURED and still in
+        # ec-pairs.json — only the row is withheld, so re-showing it is a one-line change and
+        # nothing downstream lost a figure.
+        if a['key'] in HIDDEN_AGE_BANDS:
+            continue
         r.append(f'<tr><th>{a["key"]} years<span class="sub2">{a["label"]}</span></th>'
                  f'<td class="num big" style="color:var(--gold-soft)">{a["pct"]:+.1f}%</td>'
                  f'<td class="num">{a["ci"][0]:+.1f}% to {a["ci"][1]:+.1f}%</td>'
@@ -1481,9 +1490,7 @@ what the private badge costs on the day. The second is what is left of it.</p>
       'nothing in the engine reads this',
       [(f"+{E['launch']['pct']:.0f}%", 'at launch, private over EC', E['launch']['projects']),
        (f"{E['resale']['pct']:+.1f}%", 'at resale, same two', E['resale']['projects'])],
-      'Reference only, at Shawn&rsquo;s ruling of 10 September 2026 &mdash; it is here to '
-      'normalise a new EC onto private pricing when he judges what one is worth paying, and it '
-      'does not travel downstream into the engine, a constant, or a client figure.')}
+      '')}
 
 <section>
   <div class="sechead"><h2 class="disp">At launch</h2>

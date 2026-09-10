@@ -87,6 +87,9 @@ export const PSF_WINDOW_MONTHS = 12;
 // developments with no workup at all against 74 at twelve. 6 -> 9 -> 12 keeps the freshness
 // where the data supports it and the coverage where it does not.
 export const WORKUP_WINDOW_LADDER = [6, 9, 12];
+
+// The LRT line codes. Punggol/Sengkang East-West-Central, and Bukit Panjang.
+export const LRT_LINES = new Set(["PE", "PW", "PTC", "SE", "SW", "STC", "BP"]);
 // TWELVE MONTHS IS A HARD CEILING. Shawn, 2026-09-10, choosing it over the rescue with the
 // cost stated: nothing is ever averaged over more than a year.
 //
@@ -322,7 +325,24 @@ export async function loadData(): Promise<Data> {
     psfHist: JSON.parse(psfRaw).projects,
     base: JSON.parse(baseRaw).projects,
     mix: JSON.parse(mixRaw).developments,
-    stations: (Array.isArray(mrtAll) ? mrtAll : mrtAll.stations).filter((s: any) => s.lat && s.lng),
+    // MRT ONLY — an LRT halt is not rail access for this purpose. Shawn, 2026-09-10: "i want
+    // you to look at MRT only dont consider LRT an MRT at all."
+    //
+    // It was taking the nearest station of ANY kind, so PRIVE was credited with 183 m to Cove
+    // LRT and read as having the same rail access as WATERTOWN, which sits on the Punggol
+    // MRT interchange. 53 developments (3%) had an LRT halt as their nearest station, and
+    // they cluster in Punggol and Sengkang — exactly where that comparison is made.
+    //
+    // A station counts as LRT only when EVERY one of its codes is an LRT line, so an
+    // interchange keeps its MRT identity: Bukit Panjang is ["DT1","BP6"] and stays MRT,
+    // while Cove is ["PE1"] and drops out.
+    stations: (Array.isArray(mrtAll) ? mrtAll : mrtAll.stations)
+      .filter((s: any) => s.lat && s.lng)
+      .filter((s: any) => {
+        const codes: string[] = s.codes || [];
+        if (!codes.length) return true;          // no codes recorded — keep it rather than guess
+        return !codes.every((c) => LRT_LINES.has(String(c).replace(/[^A-Za-z]/g, "").toUpperCase()));
+      }),
     overrides: JSON.parse(overrideRaw),
     details: JSON.parse(detailRaw).projects,
     gls: new Map(glsArr.filter((g) => g.devName).map((g) => [String(g.devName).toUpperCase().trim(), g])),
@@ -618,10 +638,11 @@ export function adjust(K: Constants, S: any, pool: any[]) {
         { kind: c.tenure.type === "FH" ? "divide" : "multiply", factor: 1 + p, pct: p, leaseLeft: left });
     }
 
-    // 3. MRT/LRT walk band. Labelled for both rails — the station named in the reason
-    // can be either, and a fixed "MRT" would misdescribe an LRT one. (Shawn, 2026-08-04)
+    // 3. MRT walk band. Labelled MRT and only MRT: an LRT halt is no longer counted as rail
+    // access at all, so the station named here is always an MRT one. This supersedes the
+    // both-rails labelling of 2026-08-04. (Shawn, 2026-09-10.)
     const cBand = K.mrtBandOf(c.mrt.metres);
-    add("MRT / LRT access", mrtDelta(K, sBand, cBand),
+    add("MRT access", mrtDelta(K, sBand, cBand),
       `${c.mrt.metres}m (${c.mrt.minutes}min) to ${c.mrt.station} vs subject ${S.mrt.metres}m (${S.mrt.minutes}min) to ${S.mrt.station}`,
       { kind: "band", compBand: cBand, subjBand: sBand, compM: c.mrt.metres, subjM: S.mrt.metres,
         compStation: c.mrt.station, subjStation: S.mrt.station, cuts: K.mrtBandCutLabel });

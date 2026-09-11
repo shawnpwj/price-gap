@@ -21,7 +21,7 @@ run `python3 freshness.py` before quoting any of them.*
 | Void · extra penthouse area | **none — 1.00× implicit** | resale buyer pays **52% less** for it than for the floor plate | §13 |
 | Tenure · FH vs LH | ÷1.15 | **+17.2%**, and **+10% → +23%** by the lease left | §10 |
 
-| EC vs private condo | **no constant — reference only** | **+29.4%** at launch, **−0.7%** at resale | §14 |
+| EC vs private condo | **no constant — reference only** | **+29.3%** at launch, **−0.7%** at resale | §14 |
 
 GFA harmonisation (+7%) was **dropped from the study entirely** on his ruling, 2026-09-06.
 
@@ -814,7 +814,7 @@ but `build-page.py`.
 
 | | |
 |---|---|
-| At launch | private is **+29.4%** over the EC beside it — 11,768 pairs, 16 EC launches, 95% [17, 34] |
+| At launch | private is **+29.3%** over the EC beside it — 11,254 pairs, 13 EC launches, 95% [18, 34] |
 | At resale | **−0.7%** — 24,210 pairs, 56 ECs, 95% [−3.5, +2.3], an interval covering zero |
 | By EC age | 5–10 yr **−2.3%** · 10–15 yr **+1.6%** · 15 yr+ **+6.0%** — a mature EC trades *above* |
 
@@ -824,14 +824,42 @@ but `build-page.py`.
 directly (all four batches, five years, every sale type) and caches the raw pull to
 `.ura-raw.json`, which is gitignored — delete it to re-pull.
 
-**THE LAUNCH CUT MATCHES ON DISTRICT, NOT DISTANCE**, because the URA feed carries no coordinates
-for an uncompleted project: Rivelle, Aurelle, Copen Grand, Lumina Grand, Novo Place and Otto Place
-all read blank. A distance match drops exactly the launches this exists to measure.
+**THE LAUNCH CUT MATCHES ON DISTANCE — Shawn's ruling, 2026-09-11.** It matched on DISTRICT until
+then, because the URA feed carries no coordinates for an uncompleted project (Rivelle, Aurelle,
+Copen Grand, Lumina Grand, Novo Place and Otto Place all read blank). District is a boundary, not
+a distance, and it broke on the case he found: URA files **PINERY RESIDENCES in district 16 and
+RIVELLE TAMPINES in 18** though they stand **259 m apart**, so Rivelle's only real comparable was
+structurally ineligible and it was read against **PARKTOWN RESIDENCE, 2.8 km away**.
+
+The coordinates come from `property-analyzer/data/dsi-index.json` — 1,835 verified lat/lng,
+covering **all 82 EC projects** in the window; the private names it misses hold 34 of 38,629
+new-sale caveats. Validated against URA's own x/y on the 1,773 projects carrying both: pairwise
+distances agree to a **median of 2 m** (p5/p95 −44/+63 m), so it substitutes for the missing
+coordinates rather than measuring something else.
+
+The rings are `LADDER = [1000, 1500, 2000]` — **the Price Gap engine's own `RADIUS_LADDER`**, not
+a new constant. Nearest-3 inside the first ring holding anything. A flat 2 km cap gives the
+identical result, because nearest-3 already takes the closest; the ladder is the more faithful
+statement of the rule.
+
+**WHAT IT MOVED.** The headline barely: +29.4% → **+29.3%**, and it is stable at every radius
+tested (+28.3% at 500 m, +29.7% at 1–1.5 km, +28.9% at 3 km), which is itself the finding — the
+premium is not an artefact of how the comparable is chosen. The ROWS moved: Rivelle **+22.4% →
++27.6%** on Pinery at 259 m instead of Parktown at 2.8 km; Altura **+38.1% → +25.7%**; Novo Place
+**+25.6% → +34.0%**; Otto Place **+17.3% → +20.9%**. Four launches now have **no** comparable
+inside 2 km and leave the table — NORTH GAIA, PARC CENTRAL RESIDENCES, PARC GREENWICH, PIERMONT
+GRAND — and the panel names them rather than quietly showing a shorter table. Parc Greenwich never
+had a district match either.
+
+**THE RESALE CUT IS UNCHANGED** and still measures on the feed's own x/y inside 1.5 km, where both
+legs are completed and carry coordinates. −0.7%, 24,210 pairs, and every age band identical.
+Unifying both cuts onto the local geocode is available and untested; it was not done because he
+asked about the launch panel.
 
 **THE BOOTSTRAP IS CLUSTERED BY EC PROJECT.** One EC caveat contributes three comparables and one
 project contributes hundreds of caveats, so a pair-level bootstrap returned ±0.2% — a statement
 about the resampling, not about the market.
 
-His three slides read 25–36%; the measured column runs +12% to +47% with a median of +29.4%, so
+His three slides read 25–36%; the measured column runs +10% to +51% with a median of +29.3%, so
 the slides sit mid-market. Rivelle against Pinery size-for-size is +31.6%, and on the two headline
 PSFs the slide quotes ($1,934 against $2,548) it is +32%.

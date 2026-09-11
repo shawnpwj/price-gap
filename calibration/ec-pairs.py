@@ -52,6 +52,37 @@ KM = 1.5            # distance cut, where coordinates exist
 LSTOL = 5           # lease-start tolerance, resale cut only
 SQM_TO_SQFT = 10.7639
 
+# The LAUNCH cut's rings. Not a new constant: this is the Price Gap engine's own
+# RADIUS_LADDER (engine.ts), which is what this workstream already means by "a
+# comparable". Nearest-NEAR inside the first ring that holds anything, so a launch with
+# something across the road is never paired against one 2 km away.
+LADDER = [1000, 1500, 2000]
+
+# ── THE GEOCODE, and why it is read off disk (Shawn, 2026-09-11) ─────────────
+# URA's PMI feed returns x/y = null for every UNCOMPLETED project, which is every launch
+# this panel exists to measure. That is why the launch cut used to match on DISTRICT, and
+# district is a boundary, not a distance: URA files PINERY RESIDENCES in 16 and RIVELLE
+# TAMPINES in 18 though they stand 259 m apart, so the one real comparable Rivelle had was
+# structurally ineligible and it was paired against PARKTOWN RESIDENCE, 2.8 km away.
+#
+# dsi-index.json carries a verified lat/lng for all 82 EC projects in the window and for
+# every private name that matters (the ones it misses hold 34 of 38,629 new-sale caveats).
+# Checked against URA's own coordinates on the 1,773 projects carrying both: pairwise
+# distances agree to a median of 2 m, p5/p95 -44/+63 m. So this is a substitute for the
+# feed's coordinates, not a different measurement.
+DSI = os.path.join(HERE, '..', '..', 'property-analyzer', 'data', 'dsi-index.json')
+
+def geocodes():
+    return {p['project'].upper().strip(): (p['lat'], p['lng'])
+            for p in json.load(open(DSI))['projects'] if p.get('lat') and p.get('lng')}
+
+def haversine(lat1, lng1, lat2, lng2):
+    R = 6371000.0
+    p1, p2 = math.radians(lat1), math.radians(lat2)
+    h = (math.sin((p2 - p1) / 2) ** 2
+         + math.cos(p1) * math.cos(p2) * math.sin(math.radians(lng2 - lng1) / 2) ** 2)
+    return 2 * R * math.asin(math.sqrt(h))
+
 # ── the pull ────────────────────────────────────────────────────────────────
 def pull():
     if os.path.exists(CACHE):
@@ -91,9 +122,14 @@ def lease_start(t):
 
 def rows():
     out = []
+    GEO = geocodes()
     for p in pull():
         try:    x, y = float(p['x']), float(p['y'])
         except (TypeError, ValueError, KeyError): x = y = None
+        # lat/lng is the LOCAL geocode and is what the launch cut measures on; x/y stays
+        # the feed's own SVY21 metres and is what the resale cut measures on. They are
+        # never mixed in one comparison — see the note above the ladder.
+        g = GEO.get(p['project'].upper().strip())
         for t in p['transaction']:
             pt = t['propertyType']
             if pt not in ('Apartment', 'Condominium', 'Executive Condominium'): continue
@@ -102,6 +138,7 @@ def rows():
             sqft = area * SQM_TO_SQFT
             mi, mk = contract(t['contractDate'])
             out.append(dict(proj=p['project'], dist=t['district'], x=x, y=y,
+                            lat=(g[0] if g else None), lng=(g[1] if g else None),
                             ec=(pt == 'Executive Condominium'), sqft=sqft,
                             psf=float(t['price']) / sqft, mi=mi, mk=mk,
                             sale=int(t['typeOfSale']), ls=lease_start(t['tenure'])))
@@ -118,26 +155,44 @@ def gap(a, b):
     return math.hypot(a['x'] - b['x'], a['y'] - b['y'])
 
 def pairs(sale, key, lhonly=False, agetol=None, maxkm=None):
-    """key: 'dist' matches on district, 'geo' on distance. One EC caveat, NEAR comparables."""
-    ec = [r for r in R if r['ec'] and r['sale'] == sale]
-    pv = [r for r in R if not r['ec'] and r['sale'] == sale and (r['ls'] or not lhonly)]
+    """key: 'near' matches on the LOCAL geocode through LADDER, 'geo' on the feed's own
+    x/y inside maxkm. One EC caveat, NEAR comparables, nearest first.
+
+    'near' is the launch cut and is what replaced the district match on 2026-09-11. It
+    walks LADDER outward and stops at the FIRST ring holding any candidate, so a launch
+    with a comparable across the road never reaches for one 2 km away; an EC with nothing
+    inside the last ring produces no pairs at all and drops off the panel, which is the
+    honest answer where the district match used to manufacture a comparable from 5 km."""
+    ec = [r for r in R if r['ec'] and r['sale'] == sale and (key != 'near' or r['lat'])]
+    pv = [r for r in R if not r['ec'] and r['sale'] == sale and (r['ls'] or not lhonly)
+          and (key != 'near' or r['lat'])]
     idx = defaultdict(list)
-    for r in pv: idx[(r['dist'] if key == 'dist' else 0, r['mi'] // 3)].append(r)
+    for r in pv: idx[r['mi'] // 3].append(r)
     out = []
     for e in ec:
         cands = []
         for q in range((e['mi'] - MONTHS) // 3, (e['mi'] + MONTHS) // 3 + 1):
-            for c in idx.get((e['dist'] if key == 'dist' else 0, q), ()):
+            for c in idx.get(q, ()):
                 if abs(c['mi'] - e['mi']) > MONTHS: continue
                 if abs(math.log(c['sqft'] / e['sqft'])) > math.log(1 + SIZETOL): continue
                 if agetol and e['ls'] and c['ls'] and abs(c['ls'] - e['ls']) > agetol: continue
-                d = gap(e, c)
-                if maxkm is not None and (d is None or d > maxkm * 1000): continue
+                if key == 'near':
+                    d = haversine(e['lat'], e['lng'], c['lat'], c['lng'])
+                    if d > LADDER[-1]: continue
+                else:
+                    d = gap(e, c)
+                    if maxkm is not None and (d is None or d > maxkm * 1000): continue
                 cands.append((d if d is not None else 0, c))
         cands.sort(key=lambda t: t[0])
-        for _, c in cands[:NEAR]:
+        take = cands
+        if key == 'near':
+            for ring in LADDER:
+                take = [t for t in cands if t[0] <= ring]
+                if take: break
+        for d, c in take[:NEAR]:
             out.append(dict(ec=e['proj'], pv=c['proj'], mk=e['mk'], ratio=c['psf'] / e['psf'],
-                            ecpsf=e['psf'], pvpsf=c['psf'], ecls=e['ls'], sqft=e['sqft']))
+                            ecpsf=e['psf'], pvpsf=c['psf'], ecls=e['ls'], sqft=e['sqft'],
+                            d=(round(d) if key == 'near' else None)))
     return out
 
 def pct(ps): return st.median(p['ratio'] for p in ps) * 100 - 100
@@ -166,17 +221,23 @@ def by_project(ps, floor=1):
     out = []
     for k, v in g.items():
         if len(v) < floor: continue
+        dd = [p['d'] for p in v if p.get('d') is not None]
         out.append(dict(ec=k, n=len(v), pairs=len(v),
                         ecpsf=st.median(p['ecpsf'] for p in v),
                         pvpsf=st.median(p['pvpsf'] for p in v),
                         pct=pct(v),
+                        # How far the comparable actually is. This is the EVIDENCE for the
+                        # matching rule, so the page prints it beside the name: a row whose
+                        # comparable sits 1.9 km away is a weaker read than one at 259 m,
+                        # and under the old district match that difference was invisible.
+                        d=(round(st.median(dd)) if dd else None),
                         comps=[n for n, _ in Counter(p['pv'] for p in v).most_common(2)],
                         age=(st.median([int(p['mk'][:4]) - (p['ecls'] + 4) for p in v if p['ecls']])
                              if any(p['ecls'] for p in v) else None)))
     out.sort(key=lambda d: -d['pct'])
     return out
 
-LAUNCH = pairs(1, 'dist')
+LAUNCH = pairs(1, 'near')          # distance, not district — see the note on LADDER
 RESALE = pairs(3, 'geo', lhonly=True, agetol=LSTOL, maxkm=KM)
 RES_RAW = pairs(3, 'geo', maxkm=KM)          # no tenure or vintage control
 
@@ -203,9 +264,20 @@ mks = [r['mk'] for r in R]
 DATA = dict(
     meta=dict(window=[min(mks), max(mks)], rows=len(R), ec_rows=sum(r['ec'] for r in R),
               months=MONTHS, sizetol=SIZETOL, near=NEAR, km=KM, lstol=LSTOL,
-              ec_projects=len({r['proj'] for r in R if r['ec']})),
+              ec_projects=len({r['proj'] for r in R if r['ec']}),
+              # how many of the projects in the window carry a local geocode — the page
+              # quotes this as the coverage behind the distance match
+              geocoded=len({r['proj'] for r in R if r['lat']}),
+              ec_geocoded=len({r['proj'] for r in R if r['ec'] and r['lat']})),
     launch=dict(pct=pct(LAUNCH), pairs=len(LAUNCH), projects=len({p['ec'] for p in LAUNCH}),
-                lo=band(LAUNCH)[0], hi=band(LAUNCH)[1], ci=ci(LAUNCH), by=by_project(LAUNCH)),
+                lo=band(LAUNCH)[0], hi=band(LAUNCH)[1], ci=ci(LAUNCH), by=by_project(LAUNCH),
+                ladder=LADDER,
+                # EC launches with new sales in the window that found NOTHING inside the
+                # last ring. Named rather than dropped silently: "no private launch within
+                # 2 km in the same six months" is a fact about the launch, and the page
+                # says so instead of quietly showing a shorter table.
+                unmatched=sorted({r['proj'] for r in R if r['ec'] and r['sale'] == 1}
+                                 - {p['ec'] for p in LAUNCH})),
     resale=dict(pct=pct(RESALE), pairs=len(RESALE), projects=len({p['ec'] for p in RESALE}),
                 lo=band(RESALE)[0], hi=band(RESALE)[1], ci=ci(RESALE),
                 by=by_project(RESALE, floor=100)),
@@ -222,7 +294,9 @@ json.dump(DATA, open(OUT, 'w'), indent=1)
 print(f"wrote {os.path.basename(OUT)}  {DATA['meta']['window'][0]}..{DATA['meta']['window'][1]}  "
       f"{DATA['meta']['rows']:,} rows, {DATA['meta']['ec_rows']:,} EC")
 print(f"  launch  {DATA['launch']['pct']:+.1f}%  {DATA['launch']['pairs']:,} pairs, "
-      f"{DATA['launch']['projects']} EC launches")
+      f"{DATA['launch']['projects']} EC launches  (distance, ladder {LADDER})")
+if DATA['launch']['unmatched']:
+    print(f"    no comparable inside {LADDER[-1]}m: {', '.join(DATA['launch']['unmatched'])}")
 print(f"  resale  {DATA['resale']['pct']:+.1f}%  {DATA['resale']['pairs']:,} pairs, "
       f"{DATA['resale']['projects']} EC projects   (no controls {DATA['resale_raw']['pct']:+.1f}%)")
 for a in DATA['ages']:

@@ -1428,18 +1428,52 @@ def void_spread_names(k=3):
 def ec_launch_table():
     """Every EC launch in the window, and the private launch beside it. Ordered by the
     premium, smallest first, so the spread is the shape of the column rather than a range
-    stated in prose."""
+    stated in prose.
+
+    HOW FAR the comparable is now travels with it. Distance is the matching rule as of
+    2026-09-11, so it is the evidence for the row: +28% against something 259 m away and
+    +26% against something 1.9 km away are not the same reading, and the district match
+    this replaced made that difference invisible."""
     r = ['<table class="fig"><thead><tr><th>EC launch</th><th class="num">EC psf</th>'
          '<th class="num">Private psf</th><th class="num">Private is</th>'
          '<th>Compared against</th></tr></thead><tbody>']
     for d in sorted(E['launch']['by'], key=lambda d: d['pct']):
+        far = d.get('d')
+        sub = f'{d["pairs"]:,} pairs'
+        if far is not None:
+            sub = (f'{far:,} m away &middot; ' if far < 1000 else f'{far/1000:.1f} km away &middot; ') + sub
         r.append(f'<tr><th>{nice(d["ec"])}</th>'
                  f'<td class="num">${d["ecpsf"]:,.0f}</td>'
                  f'<td class="num">${d["pvpsf"]:,.0f}</td>'
                  f'<td class="num big" style="color:var(--gold-soft)">+{d["pct"]:.0f}%</td>'
                  f'<td>{", ".join(nice(c) for c in d["comps"])}'
-                 f'<span class="sub2">{d["pairs"]:,} pairs</span></td></tr>')
+                 f'<span class="sub2">{sub}</span></td></tr>')
     return ''.join(r) + '</tbody></table>'
+
+def ec_ladder_line():
+    """The matching rule, in one sentence, computed from what the run actually used."""
+    L = E['launch'].get('ladder')
+    if not L: return 'each EC paired against the private launches in the same district.'
+    rings = ', '.join(f'{x/1000:g} km' for x in L)
+    return (f'the nearest {E["meta"]["near"]} inside {rings}, taking the first of those rings '
+            f'that holds anything, so a launch with a comparable across the road is never '
+            f'paired against one {L[-1]/1000:g} km away.')
+
+def ec_unmatched_line():
+    """The launches that found NOTHING. Said out loud, because a shorter table is otherwise
+    indistinguishable from a shorter market. Do NOT claim they all carried a figure before:
+    most did, on a district-matched comparable kilometres away, but Parc Greenwich had no
+    district match either and never appeared. The wording says "some", which stays true
+    across re-runs without the script having to hold the old cut to compare against."""
+    u = E['launch'].get('unmatched') or []
+    if not u: return ''
+    L = E['launch'].get('ladder') or [2000]
+    names = ', '.join(f'<b>{nice(x)}</b>' for x in u)
+    return (f'<p class="expl">{len(u)} EC launches sold in the window and are <b>not</b> in the '
+            f'table: {names}. No private launch opened within {L[-1]/1000:g} km of them inside '
+            f'the same six months and size band, so there is nothing to pair them with. Most '
+            f'carried a figure until 2026-09-11, when the match was on district and a '
+            f'comparable several kilometres away still counted.</p>')
 
 # Age bands measured but not shown on the page. (Shawn, 2026-09-10.)
 HIDDEN_AGE_BANDS = {'15+'}
@@ -2357,7 +2391,7 @@ plate of the ones below it. The extra strata area is void or roof. Floor is take
 
 <div class="panel" data-p="ec" hidden>
 <h1 class="disp">What a buyer pays to skip the EC</h1>
-<p class="lede">An EC and a private condo <b>launching in the same district at the same time</b>,
+<p class="lede">An EC and a private condo <b>launching beside each other at the same time</b>,
 size for size. Then the same two, years later, in the <b>resale</b> market. The first figure is
 what the private badge costs on the day. The second is what is left of it.</p>
 
@@ -2370,7 +2404,8 @@ what the private badge costs on the day. The second is what is left of it.</p>
 <section>
   <div class="sechead"><h2 class="disp">At launch</h2>
   <p><b>{E['launch']['pairs']:,} pairs across {E['launch']['projects']} EC launches.</b> Every EC
-  that sold in the window, set against the private launches selling beside it.</p></div>
+  that sold in the window, set against the private launches selling <b>nearest to it</b> &mdash;
+  {ec_ladder_line()}</p></div>
   <div class="scroll">{ec_launch_table()}</div>
   <p class="expl">Every EC launch in the window, measured against the private launches selling
   beside it: the column runs from +{min(d['pct'] for d in E['launch']['by']):.0f}% to
@@ -2378,6 +2413,7 @@ what the private badge costs on the day. The second is what is left of it.</p>
   <b>+{E['launch']['pct']:.1f}%</b> ({E['launch']['ci'][0]:.0f} to {E['launch']['ci'][1]:.0f})
   across {E['launch']['pairs']:,} matched pairs. <b>Nothing on this panel comes from a slide
   &mdash; every figure here is computed from the transactions.</b></p>
+  {ec_unmatched_line()}
 </section>
 
 <section>
@@ -2406,11 +2442,21 @@ what the private badge costs on the day. The second is what is left of it.</p>
   <div class="sechead"><h2 class="disp">Behind it</h2>
   <p>How the figure is built, and every pair behind it.</p></div>
 
-  <details><summary>Why the launch cut is matched on district, not distance</summary>
+  <details><summary>How the launch cut finds a comparable &mdash; and what changed on 11 Sept 2026</summary>
     <p class="expl">The URA feed carries <b>no coordinates for an uncompleted project</b> &mdash;
-    Rivelle, Aurelle, Copen Grand, Lumina Grand, Novo Place and Otto Place all read blank. A
-    distance match would drop exactly the launches this measures, so the launch cut holds the
-    district and the resale cut, where both legs are built, holds the {E['meta']['km']:g} km.</p>
+    Rivelle, Aurelle, Copen Grand, Lumina Grand, Novo Place and Otto Place all read blank &mdash;
+    so until 11 Sept 2026 the launch cut matched on <b>district</b>. District is a boundary, not
+    a distance. URA files <b>Pinery Residences in district 16 and Rivelle Tampines in 18</b>
+    though the two stand <b>259 m apart</b>, so the one real comparable Rivelle had was
+    structurally ineligible and it was read against <b>Parktown Residence, 2.8 km away</b> in
+    Tampines North. That single substitution was worth <b>5 points</b> on Rivelle&rsquo;s row.</p>
+    <p class="expl">The cut now measures <b>distance</b>, on the geocode this workstream already
+    holds: {E['meta'].get('geocoded', 0):,} verified coordinates covering <b>every EC project</b>
+    in the window. Checked against URA&rsquo;s own coordinates on the projects carrying both,
+    pairwise distances agree to a <b>median of 2 m</b>, so this is a substitute for the missing
+    coordinates rather than a different measurement. The rings are the same ladder the Price Gap
+    engine uses for a comparable, so no new constant was introduced. The resale cut is unchanged
+    and still measures on the feed&rsquo;s own coordinates inside {E['meta']['km']:g} km.</p>
   </details>
 
   <details><summary>Where the data comes from &mdash; not the MAPS refresh</summary>
@@ -2428,7 +2474,8 @@ what the private badge costs on the day. The second is what is left of it.</p>
       <div class="card"><h3>Held constant</h3><ul>
         <li>floor area within <b>{E['meta']['sizetol']*100:.0f}%</b></li>
         <li>contract date within <b>{E['meta']['months']} months</b></li>
-        <li>launch: <b>same district</b> &middot; resale: <b>within {E['meta']['km']:g} km</b></li>
+        <li>launch: <b>nearest, within {(E['launch'].get('ladder') or [2000])[-1]/1000:g} km</b>
+            &middot; resale: <b>within {E['meta']['km']:g} km</b></li>
         <li>resale only: <b>leasehold</b> comparables, lease start within
             <b>{E['meta']['lstol']} years</b></li></ul></div>
       <div class="card"><h3>How it is read</h3><ul>

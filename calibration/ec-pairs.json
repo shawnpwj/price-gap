@@ -11,29 +11,31 @@
   "near": 3,
   "km": 1.5,
   "lstol": 5,
-  "ec_projects": 82
+  "ec_projects": 82,
+  "geocoded": 1835,
+  "ec_geocoded": 82
  },
  "launch": {
-  "pct": 29.380372644726464,
-  "pairs": 11768,
-  "projects": 16,
-  "lo": 17.74257425742576,
-  "hi": 35.613143024254015,
+  "pct": 29.28869504304288,
+  "pairs": 11254,
+  "projects": 13,
+  "lo": 20.727474582213375,
+  "hi": 35.588142041851626,
   "ci": [
-   16.934153643925455,
-   33.62543047413959
+   18.070905129728658,
+   33.48131000204262
   ],
   "by": [
    {
     "ec": "OLA",
-    "n": 375,
-    "pairs": 375,
-    "ecpsf": 1182.615073309572,
+    "n": 317,
+    "pairs": 317,
+    "ecpsf": 1174.2523512593884,
     "pvpsf": 1743.3966430788823,
-    "pct": 46.93544897577863,
+    "pct": 50.54787550253411,
+    "d": 1587,
     "comps": [
-     "SENGKANG GRAND RESIDENCES",
-     "THE FLORENCE RESIDENCES"
+     "SENGKANG GRAND RESIDENCES"
     ],
     "age": -1
    },
@@ -44,36 +46,11 @@
     "ecpsf": 1192.4116723492416,
     "pvpsf": 1743.3966430788823,
     "pct": 46.208167685757786,
+    "d": 1421,
     "comps": [
      "SENGKANG GRAND RESIDENCES"
     ],
     "age": 1.0
-   },
-   {
-    "ec": "PIERMONT GRAND",
-    "n": 78,
-    "pairs": 78,
-    "ecpsf": 1166.3656162861841,
-    "pvpsf": 1714.5539587251683,
-    "pct": 43.25178619932663,
-    "comps": [
-     "SENGKANG GRAND RESIDENCES",
-     "THE FLORENCE RESIDENCES"
-    ],
-    "age": -1.0
-   },
-   {
-    "ec": "ALTURA",
-    "n": 1080,
-    "pairs": 1080,
-    "ecpsf": 1481.4093180205837,
-    "pvpsf": 2044.8365988783496,
-    "pct": 38.13997080130932,
-    "comps": [
-     "THE BOTANY AT DAIRY FARM",
-     "THE MYST"
-    ],
-    "age": -3
    },
    {
     "ec": "TENET",
@@ -82,11 +59,26 @@
     "ecpsf": 1386.8310596877986,
     "pvpsf": 1874.9540762937395,
     "pct": 34.35287664579727,
+    "d": 939,
     "comps": [
      "PASIR RIS 8",
      "PARKTOWN RESIDENCE"
     ],
     "age": -3
+   },
+   {
+    "ec": "NOVO PLACE",
+    "n": 1512,
+    "pairs": 1512,
+    "ecpsf": 1649.597038338856,
+    "pvpsf": 2251.352514732888,
+    "pct": 34.0130286686024,
+    "d": 1924,
+    "comps": [
+     "THE LAKEGARDEN RESIDENCES",
+     "J'DEN"
+    ],
+    "age": -3.0
    },
    {
     "ec": "AURELLE OF TAMPINES",
@@ -95,23 +87,11 @@
     "ecpsf": 1768.209935825274,
     "pvpsf": 2370.6315907162225,
     "pct": 33.03446576300803,
+    "d": 467,
     "comps": [
      "PARKTOWN RESIDENCE"
     ],
     "age": -3.0
-   },
-   {
-    "ec": "LUMINA GRAND",
-    "n": 1536,
-    "pairs": 1536,
-    "ecpsf": 1521.2052062379305,
-    "pvpsf": 1990.5355796621975,
-    "pct": 32.07507873066254,
-    "comps": [
-     "THE MYST",
-     "THE BOTANY AT DAIRY FARM"
-    ],
-    "age": -2.0
    },
    {
     "ec": "COPEN GRAND",
@@ -120,32 +100,62 @@
     "ecpsf": 1691.6111570465478,
     "pvpsf": 2232.0777849074702,
     "pct": 31.949814566401017,
+    "d": 743,
     "comps": [
      "TENGAH GARDEN RESIDENCES"
     ],
     "age": 0
    },
    {
-    "ec": "NOVO PLACE",
-    "n": 18,
-    "pairs": 18,
-    "ecpsf": 1674.6822420950266,
-    "pvpsf": 2045.9333719397453,
-    "pct": 25.620627226797808,
+    "ec": "LUMINA GRAND",
+    "n": 12,
+    "pairs": 12,
+    "ecpsf": 1645.330176936373,
+    "pvpsf": 2140.990003516437,
+    "pct": 30.330948352941306,
+    "d": 1825,
     "comps": [
      "TENGAH GARDEN RESIDENCES"
     ],
-    "age": -1.5
+    "age": 0.0
    },
    {
     "ec": "RIVELLE TAMPINES",
-    "n": 966,
-    "pairs": 966,
-    "ecpsf": 1937.436146010167,
-    "pvpsf": 2375.05131177499,
-    "pct": 22.385546218789543,
+    "n": 1677,
+    "pairs": 1677,
+    "ecpsf": 1933.725971970264,
+    "pvpsf": 2438.5376287852687,
+    "pct": 27.608266336590034,
+    "d": 259,
     "comps": [
-     "PARKTOWN RESIDENCE"
+     "PINERY RESIDENCES"
+    ],
+    "age": -3
+   },
+   {
+    "ec": "ALTURA",
+    "n": 12,
+    "pairs": 12,
+    "ecpsf": 1628.1351194307022,
+    "pvpsf": 2045.9333719397453,
+    "pct": 25.664489915434615,
+    "d": 1924,
+    "comps": [
+     "TENGAH GARDEN RESIDENCES"
+    ],
+    "age": 0.0
+   },
+   {
+    "ec": "OTTO PLACE",
+    "n": 1788,
+    "pairs": 1788,
+    "ecpsf": 1753.6118179461916,
+    "pvpsf": 2093.2854164027,
+    "pct": 20.871751742161365,
+    "d": 1803,
+    "comps": [
+     "THE LAKEGARDEN RESIDENCES",
+     "J'DEN"
     ],
     "age": -3.0
    },
@@ -156,6 +166,7 @@
     "ecpsf": 1242.5793624987227,
     "pvpsf": 1462.9798141057267,
     "pct": 19.710175364906007,
+    "d": 645,
     "comps": [
      "THE COMMODORE",
      "THE WATERGARDENS AT CANBERRA"
@@ -169,6 +180,7 @@
     "ecpsf": 1227.1855299270148,
     "pvpsf": 1466.087748660636,
     "pct": 18.518518518518505,
+    "d": 745,
     "comps": [
      "THE COMMODORE",
      "CANBERRA CRESCENT RESIDENCES"
@@ -176,56 +188,29 @@
     "age": -3
    },
    {
-    "ec": "PARC CENTRAL RESIDENCES",
-    "n": 169,
-    "pairs": 169,
-    "ecpsf": 1218.5240877908036,
-    "pvpsf": 1455.744806754404,
-    "pct": 17.781018836269325,
-    "comps": [
-     "TREASURE AT TAMPINES",
-     "PASIR RIS 8"
-    ],
-    "age": -2
-   },
-   {
-    "ec": "OTTO PLACE",
-    "n": 291,
-    "pairs": 291,
-    "ecpsf": 1751.8875925215634,
-    "pvpsf": 2045.9333719397453,
-    "pct": 17.278106508875737,
-    "comps": [
-     "TENGAH GARDEN RESIDENCES"
-    ],
-    "age": -3
-   },
-   {
     "ec": "COASTAL CABANA",
-    "n": 1857,
-    "pairs": 1857,
-    "ecpsf": 1794.4067498596992,
-    "pvpsf": 2069.3066197019225,
-    "pct": 13.18470429547422,
+    "n": 1449,
+    "pairs": 1449,
+    "ecpsf": 1796.7860656374448,
+    "pvpsf": 1965.2585172517538,
+    "pct": 9.653714447813996,
+    "d": 463,
     "comps": [
-     "KASSIA",
      "THE SHOREFRONT"
     ],
     "age": -2
-   },
-   {
-    "ec": "NORTH GAIA",
-    "n": 911,
-    "pairs": 911,
-    "ecpsf": 1306.6375690067966,
-    "pvpsf": 1462.9798141057267,
-    "pct": 12.150382152447861,
-    "comps": [
-     "THE WATERGARDENS AT CANBERRA",
-     "THE COMMODORE"
-    ],
-    "age": -3
    }
+  ],
+  "ladder": [
+   1000,
+   1500,
+   2000
+  ],
+  "unmatched": [
+   "NORTH GAIA",
+   "PARC CENTRAL RESIDENCES",
+   "PARC GREENWICH",
+   "PIERMONT GRAND"
   ]
  },
  "resale": {
@@ -246,6 +231,7 @@
     "ecpsf": 1238.7083987526207,
     "pvpsf": 1796.1271781913001,
     "pct": 47.32078395459561,
+    "d": null,
     "comps": [
      "HILLION RESIDENCES"
     ],
@@ -258,6 +244,7 @@
     "ecpsf": 1016.0003329882262,
     "pvpsf": 1265.5308247098624,
     "pct": 26.777721117343773,
+    "d": null,
     "comps": [
      "THE QUARTZ",
      "COMPASS HEIGHTS"
@@ -271,6 +258,7 @@
     "ecpsf": 974.6881849372583,
     "pvpsf": 1229.3646931585815,
     "pct": 26.344217271895005,
+    "d": null,
     "comps": [
      "LAKEHOLMZ",
      "PARC VISTA"
@@ -284,6 +272,7 @@
     "ecpsf": 959.999009033281,
     "pvpsf": 1137.4574513763193,
     "pct": 18.795417348608837,
+    "d": null,
     "comps": [
      "THE TROPICA"
     ],
@@ -296,6 +285,7 @@
     "ecpsf": 1235.4329678905344,
     "pvpsf": 1393.5469485966983,
     "pct": 12.920353982300895,
+    "d": null,
     "comps": [
      "THE LAKEFRONT RESIDENCES",
      "CASPIAN"
@@ -309,6 +299,7 @@
     "ecpsf": 967.7409365254849,
     "pvpsf": 1073.547278918938,
     "pct": 12.51138779228667,
+    "d": null,
     "comps": [
      "YEWTEE RESIDENCES"
     ],
@@ -321,6 +312,7 @@
     "ecpsf": 1275.1409987159332,
     "pvpsf": 1403.2088741069688,
     "pct": 10.638492427432794,
+    "d": null,
     "comps": [
      "PARC CENTROS",
      "RIVER ISLES"
@@ -334,6 +326,7 @@
     "ecpsf": 1278.3470675127046,
     "pvpsf": 1435.7756440087196,
     "pct": 10.050017539081722,
+    "d": null,
     "comps": [
      "RIVERTREES RESIDENCES",
      "RIVERBANK @ FERNVALE"
@@ -347,6 +340,7 @@
     "ecpsf": 923.7527121379629,
     "pvpsf": 990.9667190020966,
     "pct": 9.166666666666657,
+    "d": null,
     "comps": [
      "MAYSPRINGS"
     ],
@@ -359,6 +353,7 @@
     "ecpsf": 1068.3859939241354,
     "pvpsf": 1161.289123830582,
     "pct": 8.920187793427232,
+    "d": null,
     "comps": [
      "PARC OASIS"
     ],
@@ -371,6 +366,7 @@
     "ecpsf": 1191.5800918857433,
     "pvpsf": 1286.9104694558296,
     "pct": 8.87808967711345,
+    "d": null,
     "comps": [
      "GRANDEUR 8"
     ],
@@ -383,6 +379,7 @@
     "ecpsf": 1430.708200559277,
     "pvpsf": 1548.3854984407758,
     "pct": 8.783860480323739,
+    "d": null,
     "comps": [
      "LA FIESTA",
      "THE LUXURIE"
@@ -396,6 +393,7 @@
     "ecpsf": 1013.5473408543578,
     "pvpsf": 1101.2224450117587,
     "pct": 8.749612292260124,
+    "d": null,
     "comps": [
      "RIO VISTA",
      "EVERGREEN PARK"
@@ -409,6 +407,7 @@
     "ecpsf": 1186.7396962815114,
     "pvpsf": 1250.8742848117984,
     "pct": 8.625612981979287,
+    "d": null,
     "comps": [
      "A TREASURE TROVE",
      "PARC CENTROS"
@@ -422,6 +421,7 @@
     "ecpsf": 1093.8594327694514,
     "pvpsf": 1166.4504088253846,
     "pct": 8.034653465346537,
+    "d": null,
     "comps": [
      "SKIES MILTONIA",
      "THE MILTONIA RESIDENCES"
@@ -435,6 +435,7 @@
     "ecpsf": 1344.8834043599882,
     "pvpsf": 1472.426964555002,
     "pct": 7.897384305835018,
+    "d": null,
     "comps": [
      "PARC CENTROS",
      "WATERTOWN"
@@ -448,6 +449,7 @@
     "ecpsf": 1327.1875700920937,
     "pvpsf": 1399.5022774368551,
     "pct": 7.563636363636377,
+    "d": null,
     "comps": [
      "LA FIESTA",
      "THE LUXURIE"
@@ -461,6 +463,7 @@
     "ecpsf": 1282.0631927089623,
     "pvpsf": 1327.9682686627361,
     "pct": 7.246376811594217,
+    "d": null,
     "comps": [
      "THE SANTORINI",
      "Q BAY RESIDENCES"
@@ -474,6 +477,7 @@
     "ecpsf": 1009.1202041562298,
     "pvpsf": 1026.5795854662344,
     "pct": 6.320078057296996,
+    "d": null,
     "comps": [
      "TROPICAL SPRING",
      "MELVILLE PARK"
@@ -487,6 +491,7 @@
     "ecpsf": 1060.1306920508189,
     "pvpsf": 1095.9122023915438,
     "pct": 5.172413793103445,
+    "d": null,
     "comps": [
      "RIO VISTA",
      "COMPASS HEIGHTS"
@@ -500,6 +505,7 @@
     "ecpsf": 1180.416238811321,
     "pvpsf": 1231.2462999649542,
     "pct": 4.944684573428006,
+    "d": null,
     "comps": [
      "SEASTRAND",
      "RIPPLE BAY"
@@ -513,6 +519,7 @@
     "ecpsf": 1358.1991903196383,
     "pvpsf": 1417.4910542426899,
     "pct": 3.6247226313205942,
+    "d": null,
     "comps": [
      "A TREASURE TROVE",
      "THE LUXURIE"
@@ -526,6 +533,7 @@
     "ecpsf": 1842.755329725978,
     "pvpsf": 1934.2700805122836,
     "pct": 3.416436194731048,
+    "d": null,
     "comps": [
      "AFFINITY AT SERANGOON",
      "THE FLORENCE RESIDENCES"
@@ -539,6 +547,7 @@
     "ecpsf": 1296.5836612942667,
     "pvpsf": 1316.1276736746595,
     "pct": 3.372411781860606,
+    "d": null,
     "comps": [
      "RIVERSOUND RESIDENCE",
      "RIVERSAILS"
@@ -552,6 +561,7 @@
     "ecpsf": 1604.690425656804,
     "pvpsf": 1645.1595920933241,
     "pct": 3.2986111111111,
+    "d": null,
     "comps": [
      "JEWEL @ BUANGKOK",
      "THE LUXURIE"
@@ -565,6 +575,7 @@
     "ecpsf": 1171.1028347361923,
     "pvpsf": 1212.630327199934,
     "pct": 3.2514136581122273,
+    "d": null,
     "comps": [
      "SEA ESTA",
      "RIPPLE BAY"
@@ -578,6 +589,7 @@
     "ecpsf": 901.2990214804516,
     "pvpsf": 900.5500475602994,
     "pct": 1.3776200756357753,
+    "d": null,
     "comps": [
      "REGENT GROVE",
      "NORTHVALE"
@@ -591,6 +603,7 @@
     "ecpsf": 1271.3059881934792,
     "pvpsf": 1276.408219584222,
     "pct": 0.9147809340394986,
+    "d": null,
     "comps": [
      "BOATHOUSE RESIDENCES",
      "RIVERSAILS"
@@ -604,6 +617,7 @@
     "ecpsf": 1288.6563180571618,
     "pvpsf": 1293.4974240820634,
     "pct": 0.8865979381443339,
+    "d": null,
     "comps": [
      "RIVERBANK @ FERNVALE",
      "RIVERTREES RESIDENCES"
@@ -617,6 +631,7 @@
     "ecpsf": 1183.092919624952,
     "pvpsf": 1205.418110536144,
     "pct": 0.6572719879477802,
+    "d": null,
     "comps": [
      "EIGHT COURTYARDS",
      "CANBERRA RESIDENCES"
@@ -630,6 +645,7 @@
     "ecpsf": 986.5819105109368,
     "pvpsf": 937.5545219916626,
     "pct": -1.274181547619051,
+    "d": null,
     "comps": [
      "ROSEWOOD",
      "ROSEWOOD SUITES"
@@ -643,6 +659,7 @@
     "ecpsf": 1105.2268902663468,
     "pvpsf": 1064.7506540582308,
     "pct": -1.8117336560348036,
+    "d": null,
     "comps": [
      "SAVANNAH CONDOPARK",
      "CHANGI RISE CONDOMINIUM"
@@ -656,6 +673,7 @@
     "ecpsf": 1218.7292310308042,
     "pvpsf": 1153.371243440828,
     "pct": -2.302631325301192,
+    "d": null,
     "comps": [
      "RIVER ISLES",
      "FLO RESIDENCE"
@@ -669,6 +687,7 @@
     "ecpsf": 1345.8297468012713,
     "pvpsf": 1297.2858742358019,
     "pct": -2.5081029584274006,
+    "d": null,
     "comps": [
      "RIVER ISLES",
      "FLO RESIDENCE"
@@ -682,6 +701,7 @@
     "ecpsf": 1264.731684440701,
     "pvpsf": 1189.1600628025158,
     "pct": -2.8344479275513805,
+    "d": null,
     "comps": [
      "FLO RESIDENCE",
      "RIVER ISLES"
@@ -695,6 +715,7 @@
     "ecpsf": 1315.3611462001838,
     "pvpsf": 1269.6761087214363,
     "pct": -4.025593175153304,
+    "d": null,
     "comps": [
      "THE GREENWICH",
      "SELETAR PARK RESIDENCE"
@@ -708,6 +729,7 @@
     "ecpsf": 1211.3839487801365,
     "pvpsf": 1151.190957536403,
     "pct": -4.051434533124663,
+    "d": null,
     "comps": [
      "SKIES MILTONIA",
      "THE WISTERIA"
@@ -721,6 +743,7 @@
     "ecpsf": 1333.3319569906682,
     "pvpsf": 1285.6291714326442,
     "pct": -4.39932318104907,
+    "d": null,
     "comps": [
      "THE PALETTE",
      "D'NEST"
@@ -734,6 +757,7 @@
     "ecpsf": 957.3986669748309,
     "pvpsf": 892.9023041008475,
     "pct": -4.706668706472016,
+    "d": null,
     "comps": [
      "REGENT GROVE",
      "NORTHVALE"
@@ -747,6 +771,7 @@
     "ecpsf": 1403.8679604625315,
     "pvpsf": 1329.4758245232867,
     "pct": -5.5049722797215,
+    "d": null,
     "comps": [
      "HILLSTA",
      "HILLION RESIDENCES"
@@ -760,6 +785,7 @@
     "ecpsf": 1596.7725452670502,
     "pvpsf": 1563.491698425564,
     "pct": -5.5476056864945775,
+    "d": null,
     "comps": [
      "RAFFLESIA CONDOMINIUM",
      "BISHAN 8"
@@ -773,6 +799,7 @@
     "ecpsf": 1298.64590191807,
     "pvpsf": 1201.8413400347458,
     "pct": -5.627705627705652,
+    "d": null,
     "comps": [
      "RIVER ISLES",
      "PARC CENTROS"
@@ -786,6 +813,7 @@
     "ecpsf": 1303.640693848524,
     "pvpsf": 1213.2055787783022,
     "pct": -6.434023991275893,
+    "d": null,
     "comps": [
      "LIVIA",
      "NV RESIDENCES"
@@ -799,6 +827,7 @@
     "ecpsf": 1475.3496529169036,
     "pvpsf": 1398.8862089361492,
     "pct": -7.068302028767377,
+    "d": null,
     "comps": [
      "THE ALPS RESIDENCES",
      "THE PALETTE"
@@ -812,6 +841,7 @@
     "ecpsf": 1276.1415357895526,
     "pvpsf": 1179.8697498118713,
     "pct": -7.773946360153261,
+    "d": null,
     "comps": [
      "SKIES MILTONIA",
      "THE MILTONIA RESIDENCES"
@@ -825,6 +855,7 @@
     "ecpsf": 1628.4144118433328,
     "pvpsf": 1484.5345500514657,
     "pct": -7.835623678646925,
+    "d": null,
     "comps": [
      "RIVERBANK @ FERNVALE",
      "RIVERTREES RESIDENCES"
@@ -838,6 +869,7 @@
     "ecpsf": 1322.8710665813,
     "pvpsf": 1221.0125644847262,
     "pct": -8.038539529838957,
+    "d": null,
     "comps": [
      "THE NAUTICAL",
      "CANBERRA RESIDENCES"
@@ -851,6 +883,7 @@
     "ecpsf": 1433.362575699461,
     "pvpsf": 1327.1875700920937,
     "pct": -8.132530120481917,
+    "d": null,
     "comps": [
      "HILLSTA",
      "PHOENIX RESIDENCES"
@@ -864,6 +897,7 @@
     "ecpsf": 1219.2576057143563,
     "pvpsf": 1098.758171008935,
     "pct": -12.93898306236892,
+    "d": null,
     "comps": [
      "THE NAUTICAL",
      "CANBERRA RESIDENCES"
@@ -877,6 +911,7 @@
     "ecpsf": 1349.9986064530515,
     "pvpsf": 1151.6916930551224,
     "pct": -13.883888388838898,
+    "d": null,
     "comps": [
      "MI CASA",
      "HILLSTA"
@@ -890,6 +925,7 @@
     "ecpsf": 1346.795864161018,
     "pvpsf": 1136.957351712227,
     "pct": -16.102860720072385,
+    "d": null,
     "comps": [
      "CANBERRA RESIDENCES",
      "THE NAUTICAL"
@@ -903,6 +939,7 @@
     "ecpsf": 1367.2536099439305,
     "pvpsf": 1121.8491158514303,
     "pct": -17.680864415584423,
+    "d": null,
     "comps": [
      "CANBERRA RESIDENCES",
      "THE NAUTICAL"

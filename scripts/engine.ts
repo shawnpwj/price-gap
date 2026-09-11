@@ -300,7 +300,7 @@ export interface Data {
   dsi: any[]; byName: Map<string, any>;
   psfHist: Record<string, any>; base: Record<string, any>; mix: Record<string, any>;
   stations: any[]; overrides: Record<string, any>; details: Record<string, any>;
-  gls: Map<string, any>; cutoff: string; cutoffs: Record<number, string>;
+  gls: Map<string, any>; glsArr: any[]; cutoff: string; cutoffs: Record<number, string>;
 }
 
 export async function loadData(): Promise<Data> {
@@ -358,6 +358,10 @@ export async function loadData(): Promise<Data> {
     // parcels with a land price and a projected psf come back with this one word.
     gls: new Map(glsArr.filter((g) => g.devName || g.displayName)
       .map((g) => [String(g.devName || g.displayName).toUpperCase().trim(), g])),
+    // The RAW array as well as the name-keyed Map. The Map drops any site without a devName or
+    // displayName and is keyed for lookup-by-name; the upcoming-launches panel needs to scan
+    // every awarded parcel by DISTANCE, which is a different question.
+    glsArr,
     cutoff: cutoffs[PSF_WINDOW_MONTHS], cutoffs,
   };
 }

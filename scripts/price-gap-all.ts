@@ -27,7 +27,7 @@ import { promises as fs } from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import {
-  loadData, loadConstants, factsFor, screen, neighbours, runOne, JUDGEMENT, vintageGap,
+  loadData, loadConstants, factsFor, screen, neighbours, runOne, JUDGEMENT, vintageGap, haversine,
   BEDS, MIN_UNITS, MAX_RADIUS_M, MIN_COMPS, OUTLIER_BAND, AGE_EXCLUDE_YEARS,
   LEASE_GAP_EXCLUDE_YEARS, PSF_WINDOW_MONTHS, type Constants,
 } from "./engine.ts";
@@ -101,6 +101,47 @@ function setMeta(K: Constants) {
     mrtCuts: K.mrtBandCutLabel, mrt: K.mrtBandPsf,
     harmonisation: K.harmonisationUplift, integrated: K.integratedPremium,
   };
+}
+
+// ── UPCOMING LAUNCHES NEARBY (Shawn, 2026-09-11) ──────────────────────────────
+// "I would love to have you compare upcoming new launch with potential launch price as well...
+// When i check their resale for example for Scala, or for Thomson Impression, i would love to
+// see these new launch prices there. Of course we can say they are estimation, but its good."
+//
+// THIS IS A REFERENCE PANEL AND IT NEVER TOUCHES THE GAP. A projected launch price is not a
+// transaction: it is the GLS sheet's own forecast for a site that has sold nothing. It sits
+// beside the verdict the way Area Transformation does, and nothing downstream reads it.
+//
+// Rules he set, 2026-09-11: 1 km radius, and where the sheet carries a site twice under two
+// unit-count scenarios (Chuan Grove is 550 units at $3,014 and 505 at $2,941), take the row
+// with MORE units. The range always travels with the figure — Chuan Grove's own spread is
+// $2,763-$3,266, which against The Scala is the difference between +39% and +68%.
+const UPCOMING_RADIUS_M = 1000;
+
+function upcomingNear(lat: number, lng: number, glsArr: any[], subjectPsf: number | null) {
+  const best = new Map<string, any>();
+  for (const g of glsArr) {
+    if (!g?.projectedPsf?.avg || !g.lat || g.launched) continue;
+    if (haversine(lat, lng, g.lat, g.lng) > UPCOMING_RADIUS_M) continue;
+    const key = String(g.siteName || g.displayName).toUpperCase().trim();
+    const prev = best.get(key);
+    if (!prev || (g.units ?? 0) > (prev.units ?? 0)) best.set(key, g);
+  }
+  return [...best.values()]
+    .map((g) => {
+      const p = g.projectedPsf;
+      const vs = (v: number) => (subjectPsf ? Math.round((v / subjectPsf - 1) * 1000) / 10 : null);
+      return {
+        n: g.devName || g.displayName,          // Thomson Reserve, Chuan Grove GLS
+        m: Math.round(haversine(lat, lng, g.lat, g.lng)),
+        y: g.launchYear ?? null,
+        u: g.units ?? null,
+        lo: Math.round(p.low), avg: Math.round(p.avg), hi: Math.round(p.high),
+        // what it would price against this development's own psf — the comparison he asked for
+        vsLo: vs(p.low), vsAvg: vs(p.avg), vsHi: vs(p.high),
+      };
+    })
+    .sort((a, b) => a.m - b.m);
 }
 
 async function main() {
@@ -279,6 +320,14 @@ async function main() {
       top: S0.top?.year ?? null, topEst: S0.top?.estimated ? 1 : undefined,
       u: S0.units ?? null, int: S0.integrated ? 1 : undefined,
       mrt: { s: S0.mrt.station, m: S0.mrt.metres, min: S0.mrt.minutes },
+      // FYI ONLY — projected launch prices for sites within 1 km that have sold nothing yet.
+      // Compared against this development's own psf. Never read by the gap.
+      up: (() => {
+        // against the development's own ALL-bedroom psf — the headline a reader is looking at
+        const own = (beds as any)?.All?.psf ?? null;
+        const u = upcomingNear(node.lat, node.lng, data.glsArr ?? [], own);
+        return u.length ? u : undefined;
+      })(),
       beds,
     });
 

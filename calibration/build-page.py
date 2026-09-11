@@ -2132,35 +2132,7 @@ plate of the ones below it. The extra strata area is void or roof. Floor is take
       [(f"{VR['discount']:.0f}% off", 'what a resale buyer pays for it', VR['devs'])],
       '')}
 
-<section>
-  <div class="calc">
-    <h3>What should the penthouse cost</h3>
-    <div class="cin">
-      <label>Unit below &mdash; sqft<input id="vbS" type="number" value="1216" min="200" max="9000" step="1"></label>
-      <label>Unit below &mdash; psf<input id="vbP" type="number" value="2662" min="200" max="9000" step="10"></label>
-      <label>Penthouse sqft<input id="vpS" type="number" value="1421" min="200" max="9000" step="1"></label>
-      <label>Floors below<input id="vF" type="number" value="1" min="0" max="70" step="1"></label>
-    </div>
-    <div id="voidOut" class="cout"></div>
-  </div>
 
-  <div class="sechead"><h2 class="disp">Behind it</h2>
-  <p>How the figure is built, and every pair behind it.</p></div>
-
-  <details><summary>Is the floor step doing the work?</summary>
-    <p class="expl">The extra area is small against the home, so a 2% error in the base swings the
-    answer by more than 10%. <b>The check:</b> the same method on stacks whose top unit is the
-    <b>same size</b> as the ones below. No extra area, so it should read zero. Across
-    {V['resale']['placebo']['pairs']:,} resales it reads
-    <b>{V['resale']['placebo']['residual_pct']:+.2f}%</b>
-    ({V['resale']['placebo']['lo']:+.2f} to {V['resale']['placebo']['hi']:+.2f}) &mdash; zero.
-    Nothing is corrected.</p>
-    <div class="scroll">{void_sens()}</div>
-    <p class="expl">At other floor steps it runs
-    <b>{min(x['ratio'] for x in V['resale']['sensitivity']):.2f} to
-    {max(x['ratio'] for x in V['resale']['sensitivity']):.2f}</b>. <b>Quote half.</b></p>
-  </details>
-</section>
 
 <section>
   <h2>Where it moves</h2>
@@ -2191,6 +2163,34 @@ plate of the ones below it. The extra strata area is void or roof. Floor is take
 </section>
 
 <section>
+  <div class="calc">
+    <h3>What should the penthouse cost</h3>
+    <div class="cin">
+      <label>Unit below &mdash; sqft<input id="vbS" type="number" value="1216" min="200" max="9000" step="1"></label>
+      <label>Unit below &mdash; psf<input id="vbP" type="number" value="2662" min="200" max="9000" step="10"></label>
+      <label>Penthouse sqft<input id="vpS" type="number" value="1421" min="200" max="9000" step="1"></label>
+      <label>Floors below<input id="vF" type="number" value="1" min="0" max="70" step="1"></label>
+    </div>
+    <div id="voidOut" class="cout"></div>
+  </div>
+
+  <div class="sechead"><h2 class="disp">Behind it</h2>
+  <p>How the figure is built, and every pair behind it.</p></div>
+
+  <details><summary>Is the floor step doing the work?</summary>
+    <p class="expl">The extra area is small against the home, so a 2% error in the base swings the
+    answer by more than 10%. <b>The check:</b> the same method on stacks whose top unit is the
+    <b>same size</b> as the ones below. No extra area, so it should read zero. Across
+    {V['resale']['placebo']['pairs']:,} resales it reads
+    <b>{V['resale']['placebo']['residual_pct']:+.2f}%</b>
+    ({V['resale']['placebo']['lo']:+.2f} to {V['resale']['placebo']['hi']:+.2f}) &mdash; zero.
+    Nothing is corrected.</p>
+    <div class="scroll">{void_sens()}</div>
+    <p class="expl">At other floor steps it runs
+    <b>{min(x['ratio'] for x in V['resale']['sensitivity']):.2f} to
+    {max(x['ratio'] for x in V['resale']['sensitivity']):.2f}</b>. <b>Quote half.</b></p>
+  </details>
+
   
   <details><summary>Where the data comes from &mdash; not the MAPS refresh</summary>
     <p class="expl">The <b>REALIS unit-level pull</b> held by the floor study &mdash; the only

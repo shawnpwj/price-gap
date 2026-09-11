@@ -701,6 +701,45 @@ export function adjust(K: Constants, S: any, pool: any[]) {
 // ── One subject, one bedroom, one constant set ───────────────────────────────
 // `screened` is passed in so a batch can screen once and run both constant sets
 // against the identical pool.
+
+// ── A GLS PARCEL AS A COMPARABLE (Shawn, 2026-09-11) ─────────────────────────
+// "I want these adjusted like how the others are adjusted." An un-launched parcel has no
+// transaction, so it can never be in `pool` and never reaches the gap. It is restated
+// SEPARATELY, through the identical ladder, purely so its bar can stand on the same basis
+// as the three beside it.
+//
+// What it needs, and where each field comes from:
+//   psf         the GLS sheet's PROJECTED average; low/high travel alongside as the bracket
+//   leaseStart  the launch year — a GLS parcel is 99-yr and the sheet carries no lease date,
+//               so this is the nearest honest stand-in and it is labelled as projected
+//   top         launch year + CONSTRUCTION_YEARS, the same invention the engine already makes
+//               anywhere it has to guess a completion year
+//   mrt         measured from the parcel's own coordinates against the same station roster
+//   integrated  left FALSE rather than guessed — the sheet does not carry it
+export function glsAsComparable(data: Data, K: Constants, S: any, g: any) {
+  if (!g?.projectedPsf?.avg || g.lat == null || g.lng == null) return null;
+  const ls = parseInt(String(g.launchYear), 10);
+  if (!Number.isFinite(ls)) return null;
+  const nearest = data.stations
+    .map((s: any) => ({ name: s.name, m: Math.round(haversine(g.lat, g.lng, s.lat, s.lng)) }))
+    .sort((a: any, z: any) => a.m - z.m)[0];
+  if (!nearest) return null;
+  const node: any = {
+    name: g.devName || g.displayName,
+    dist: Math.round(haversine(S.lat, S.lng, g.lat, g.lng)),
+    psf: { psf: Math.round(g.projectedPsf.avg) },
+    tenure: { type: "LH", leaseStart: ls, years: 99, raw: `99 yrs — GLS parcel, launching ${ls}` },
+    top: { year: ls + CONSTRUCTION_YEARS, estimated: true },
+    mrt: { station: nearest.name, metres: nearest.m, minutes: Math.round(walkMinutes(nearest.m) * 10) / 10 },
+    integrated: false,
+    units: g.units ?? null,
+    lo: Math.round(g.projectedPsf.low), hi: Math.round(g.projectedPsf.high),
+    launchYear: g.launchYear ?? null,
+  };
+  const out = adjust(K, S, [node]);
+  return out?.[0] ?? null;
+}
+
 export function runOne(data: Data, K: Constants, S: any, bed: string, screened: ReturnType<typeof screen>, nComps = 3) {
   const { rejected, ageExcluded, leaseExcluded } = screened;
   // Every survivor of the age screen is adjusted, not just the nComps nearest, because

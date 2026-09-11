@@ -27,7 +27,7 @@ import { promises as fs } from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import {
-  loadData, loadConstants, factsFor, screen, neighbours, runOne, JUDGEMENT, vintageGap, haversine,
+  loadData, loadConstants, factsFor, screen, neighbours, runOne, JUDGEMENT, vintageGap, haversine, glsAsComparable,
   BEDS, MIN_UNITS, MAX_RADIUS_M, MIN_COMPS, OUTLIER_BAND, AGE_EXCLUDE_YEARS,
   LEASE_GAP_EXCLUDE_YEARS, PSF_WINDOW_MONTHS, type Constants,
 } from "./engine.ts";
@@ -118,7 +118,8 @@ function setMeta(K: Constants) {
 // $2,763-$3,266, which against The Scala is the difference between +39% and +68%.
 const UPCOMING_RADIUS_M = 1000;
 
-function upcomingNear(lat: number, lng: number, glsArr: any[], subjectPsf: number | null) {
+function upcomingNear(lat: number, lng: number, glsArr: any[], subjectPsf: number | null,
+                      data?: any, K?: any, S?: any) {
   const best = new Map<string, any>();
   for (const g of glsArr) {
     if (!g?.projectedPsf?.avg || !g.lat || g.launched) continue;
@@ -131,14 +132,22 @@ function upcomingNear(lat: number, lng: number, glsArr: any[], subjectPsf: numbe
     .map((g) => {
       const p = g.projectedPsf;
       const vs = (v: number) => (subjectPsf ? Math.round((v / subjectPsf - 1) * 1000) / 10 : null);
+      // Restated through the SAME ladder as the three comparables, so its bar stands on the
+      // same basis. `a` is the adjusted figure, `s` the working. Still never reaches the gap.
+      const adj = (data && K && S) ? glsAsComparable(data, K, S, g) : null;
       return {
         n: g.devName || g.displayName,          // Thomson Reserve, Chuan Grove GLS
         m: Math.round(haversine(lat, lng, g.lat, g.lng)),
         y: g.launchYear ?? null,
         u: g.units ?? null,
         lo: Math.round(p.low), avg: Math.round(p.avg), hi: Math.round(p.high),
-        // what it would price against this development's own psf — the comparison he asked for
+        // what the PROJECTED price is against this development's own psf, unadjusted
         vsLo: vs(p.low), vsAvg: vs(p.avg), vsHi: vs(p.high),
+        // and the same figure restated onto the subject's terms
+        a: adj ? Math.round(adj.adjusted) : null,
+        ag: adj && subjectPsf ? Math.round(adj.adjusted - subjectPsf) : null,
+        s: adj?.steps?.map((x: any) => [x.label, x.delta, x.base, x.calc]) ?? null,
+        mrtM: adj?.mrt?.metres ?? null,
       };
     })
     .sort((a, b) => a.m - b.m);
@@ -325,7 +334,7 @@ async function main() {
       up: (() => {
         // against the development's own ALL-bedroom psf — the headline a reader is looking at
         const own = (beds as any)?.All?.psf ?? null;
-        const u = upcomingNear(node.lat, node.lng, data.glsArr ?? [], own);
+        const u = upcomingNear(node.lat, node.lng, data.glsArr ?? [], own, data, K, S0);
         return u.length ? u : undefined;
       })(),
       beds,

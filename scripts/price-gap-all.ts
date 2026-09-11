@@ -148,6 +148,18 @@ function upcomingNear(lat: number, lng: number, glsArr: any[], subjectPsf: numbe
         ag: adj && subjectPsf ? Math.round(adj.adjusted - subjectPsf) : null,
         s: adj?.steps?.map((x: any) => [x.label, x.delta, x.base, x.calc]) ?? null,
         mrtM: adj?.mrt?.metres ?? null,
+        // THE RESTATED BRACKET, and the comparison read off it. The panel leads on these:
+        // a parcel awarded a year after the subject carries a year of lease the subject
+        // does not have, and quoting the raw projection against the subject's psf prices
+        // that difference as if it were value. Chuan Grove is the case (Shawn, 2026-09-11).
+        aLo: adj?.adjLo ?? null, aHi: adj?.adjHi ?? null,
+        avsAvg: adj && subjectPsf ? Math.round((adj.adjusted / subjectPsf - 1) * 1000) / 10 : null,
+        avsLo: adj?.adjLo && subjectPsf ? Math.round((adj.adjLo / subjectPsf - 1) * 1000) / 10 : null,
+        avsHi: adj?.adjHi && subjectPsf ? Math.round((adj.adjHi / subjectPsf - 1) * 1000) / 10 : null,
+        // the subject's own lease start, so the row can say what the gap in vintage IS
+        ls: adj?.tenure?.leaseStart ?? null,
+        top: adj?.top?.year ?? null,
+        aw: adj?.awardDate ?? null,
       };
     })
     .sort((a, b) => a.m - b.m);

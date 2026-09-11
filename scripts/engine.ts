@@ -739,10 +739,10 @@ export function glsAsComparable(data: Data, K: Constants, S: any, g: any) {
     .map((s: any) => ({ name: s.name, m: Math.round(haversine(g.lat, g.lng, s.lat, s.lng)) }))
     .sort((a: any, z: any) => a.m - z.m)[0];
   if (!nearest) return null;
-  const node: any = {
+  const nodeAt = (psf: number): any => ({
     name: g.devName || g.displayName,
     dist: Math.round(haversine(S.lat, S.lng, g.lat, g.lng)),
-    psf: { psf: Math.round(g.projectedPsf.avg) },
+    psf: { psf: Math.round(psf) },
     tenure: { type: "LH", leaseStart: ls, years: 99,
               raw: `99 yrs from ${ls} — ${g.awardDate ? `awarded ${g.awardDate}` : "award date not carried; taken as launch year less one"}` },
     top: { year: ls + CONSTRUCTION_YEARS, estimated: true },
@@ -751,9 +751,19 @@ export function glsAsComparable(data: Data, K: Constants, S: any, g: any) {
     units: g.units ?? null,
     lo: Math.round(g.projectedPsf.low), hi: Math.round(g.projectedPsf.high),
     launchYear: g.launchYear ?? null,
-  };
-  const out = adjust(K, S, [node]);
-  return out?.[0] ?? null;
+    awardDate: g.awardDate ?? null,
+  });
+  const out = adjust(K, S, [nodeAt(g.projectedPsf.avg)])?.[0];
+  if (!out) return null;
+  // THE WHOLE BRACKET GOES THROUGH THE SAME LADDER, not just the average. Adjusting the
+  // midpoint and leaving low/high at face value would print a restated headline over an
+  // unrestated range, and the two would not be on the same basis — which is the exact
+  // complaint (Shawn, 2026-09-11): "not just take it as face value". Percentage steps
+  // compound on their running subtotal, so the bracket cannot be scaled by the average's
+  // delta; each end is re-run.
+  out.adjLo = adjust(K, S, [nodeAt(g.projectedPsf.low)])?.[0]?.adjusted ?? null;
+  out.adjHi = adjust(K, S, [nodeAt(g.projectedPsf.high)])?.[0]?.adjusted ?? null;
+  return out;
 }
 
 export function runOne(data: Data, K: Constants, S: any, bed: string, screened: ReturnType<typeof screen>, nComps = 3) {

@@ -702,6 +702,16 @@ export function adjust(K: Constants, S: any, pool: any[]) {
 // `screened` is passed in so a batch can screen once and run both constant sets
 // against the identical pool.
 
+
+// The lease start of a GLS parcel is the DEVELOPER'S PURCHASE YEAR, not the launch year.
+// awardDate is free text ("17 Jul 2025", "Dec 2024"), so take the trailing 4-digit year.
+export function glsLeaseStart(g: any): number | null {
+  const m = String(g?.awardDate ?? "").match(/(\d{4})\s*$/);
+  if (m) return parseInt(m[1], 10);
+  const ly = parseInt(String(g?.launchYear ?? ""), 10);
+  return Number.isFinite(ly) ? ly - 1 : null;   // launch is estimated as award + 1
+}
+
 // ── A GLS PARCEL AS A COMPARABLE (Shawn, 2026-09-11) ─────────────────────────
 // "I want these adjusted like how the others are adjusted." An un-launched parcel has no
 // transaction, so it can never be in `pool` and never reaches the gap. It is restated
@@ -710,16 +720,21 @@ export function adjust(K: Constants, S: any, pool: any[]) {
 //
 // What it needs, and where each field comes from:
 //   psf         the GLS sheet's PROJECTED average; low/high travel alongside as the bracket
-//   leaseStart  the launch year — a GLS parcel is 99-yr and the sheet carries no lease date,
-//               so this is the nearest honest stand-in and it is labelled as projected
+//   leaseStart  the AWARD YEAR — the developer's purchase date, which is when the 99-yr lease
+//               starts. Shawn, 2026-09-11: "the developer purchase year is the lease start",
+//               and the sheet's own launchYear is an estimate of award + 1. An earlier version
+//               used launchYear and so aged every parcel a year too young, which on the newer
+//               band is ~$42 psf of lease adjustment that should not have been there.
+//               Where awardDate is blank — the en-bloc sites, which were never awarded at a
+//               GLS tender — fall back to launchYear - 1, which is that same rule inverted.
 //   top         launch year + CONSTRUCTION_YEARS, the same invention the engine already makes
 //               anywhere it has to guess a completion year
 //   mrt         measured from the parcel's own coordinates against the same station roster
 //   integrated  left FALSE rather than guessed — the sheet does not carry it
 export function glsAsComparable(data: Data, K: Constants, S: any, g: any) {
   if (!g?.projectedPsf?.avg || g.lat == null || g.lng == null) return null;
-  const ls = parseInt(String(g.launchYear), 10);
-  if (!Number.isFinite(ls)) return null;
+  const ls = glsLeaseStart(g);
+  if (ls == null) return null;
   const nearest = data.stations
     .map((s: any) => ({ name: s.name, m: Math.round(haversine(g.lat, g.lng, s.lat, s.lng)) }))
     .sort((a: any, z: any) => a.m - z.m)[0];
@@ -728,7 +743,8 @@ export function glsAsComparable(data: Data, K: Constants, S: any, g: any) {
     name: g.devName || g.displayName,
     dist: Math.round(haversine(S.lat, S.lng, g.lat, g.lng)),
     psf: { psf: Math.round(g.projectedPsf.avg) },
-    tenure: { type: "LH", leaseStart: ls, years: 99, raw: `99 yrs — GLS parcel, launching ${ls}` },
+    tenure: { type: "LH", leaseStart: ls, years: 99,
+              raw: `99 yrs from ${ls} — ${g.awardDate ? `awarded ${g.awardDate}` : "award date not carried; taken as launch year less one"}` },
     top: { year: ls + CONSTRUCTION_YEARS, estimated: true },
     mrt: { station: nearest.name, metres: nearest.m, minutes: Math.round(walkMinutes(nearest.m) * 10) / 10 },
     integrated: false,

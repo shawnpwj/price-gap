@@ -12,6 +12,7 @@
  "cuts": [
   {
    "label": "every pair",
+   "headline": false,
    "lgmax": 99,
    "dgmax": 99999,
    "apmax": 99999,
@@ -28,6 +29,7 @@
   },
   {
    "label": "&lt;10 yr lease gap",
+   "headline": false,
    "lgmax": 10,
    "dgmax": 99999,
    "apmax": 99999,
@@ -44,6 +46,7 @@
   },
   {
    "label": "&lt;5 yr lease gap",
+   "headline": false,
    "lgmax": 5,
    "dgmax": 99999,
    "apmax": 99999,
@@ -60,6 +63,7 @@
   },
   {
    "label": "neighbours, under 800 m apart",
+   "headline": false,
    "lgmax": 99,
    "dgmax": 99999,
    "apmax": 800,
@@ -76,6 +80,7 @@
   },
   {
    "label": "next door, under 500 m apart",
+   "headline": true,
    "lgmax": 99,
    "dgmax": 99999,
    "apmax": 500,

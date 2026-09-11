@@ -4,19 +4,22 @@
 they build.** Everything below is either a ruling Shawn gave or a result measured against the
 market. Nothing here is a default.
 
-Last worked **2026-09-08**. Commits `price-gap 5a82f7c`, `kya-maps-calculator a254024`, both on
+Last worked **2026-09-11**, figures **as of 2H2026** (`cut.py CUT_END=2026-09`). Earlier note: Commits `price-gap 5a82f7c`, `kya-maps-calculator a254024`, both on
 main and pushed. Page live on offline staging, hidden behind a **double-tap on the "K" brand mark** (it was the
 Live Data chip until 2026-09-10; that chip is xl-only and never rendered on a phone).
 
 **ALL FOUR CONSTANTS ARE MEASURED.** The tenure pass closed on 2026-09-08 — see §10.
 
+*All measured figures below are the **2H2026 cut** (`cut.py`). Re-cutting is deliberate;
+run `python3 freshness.py` before quoting any of them.*
+
 | constant | engine says | measured | where |
 |---|---|---|---|
 | Lease difference | $40 flat | **$25 / $42** by midpoint | §3 |
 | MRT distance | $50 / $200 / $250 | **+$67 / +$144 / +$215**, or **$23 per 100 m** | §11 |
-| Integrated | +5% | **+11.0%** — MOVED from +6.7% on one month of new data, see §12a | §12 |
+| Integrated | +5% | **+8.2%** — the next-door cut, comparables under 500 m apart | §12 |
 | Void · extra penthouse area | **none — 1.00× implicit** | resale buyer pays **52% less** for it than for the floor plate | §13 |
-| Tenure · FH vs LH | ÷1.15 | **+17%**, and **+11% → +22%** by the lease left | §10 |
+| Tenure · FH vs LH | ÷1.15 | **+17.2%**, and **+10% → +23%** by the lease left | §10 |
 
 | EC vs private condo | **no constant — reference only** | **+29.4%** at launch, **−0.7%** at resale | §14 |
 

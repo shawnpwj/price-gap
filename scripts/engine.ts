@@ -198,8 +198,12 @@ export async function loadMeasured(): Promise<Constants> {
   const nearM = mrt.near_m as number, farM = mrt.far_m as number;
   const mrtBandPsf: Record<string, number> = {};
   for (const b of mrt.bands as any[]) mrtBandPsf[b.key] = roundTo(b.adj, 0);
-  // Integrated: the tightest cut, which is the one the README quotes as the answer.
-  const cut = (integ.cuts as any[]).slice(-1)[0];
+  // Integrated: the cut the study FLAGS as its headline. This used to be cuts.slice(-1)[0] —
+  // selecting a published constant by array position, and build-page.py did the same thing
+  // independently. Appending a sixth cut would have silently re-headlined both with no error.
+  // integrated-pairs.py now sets `headline` on exactly one cut; falling back to the last is
+  // kept only so an older JSON still loads.
+  const cut = (integ.cuts as any[]).find((c) => c.headline) ?? (integ.cuts as any[]).slice(-1)[0];
 
   return {
     key: "measured",

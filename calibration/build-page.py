@@ -1092,7 +1092,9 @@ MBAND = {b['key']: b['adj'] for b in (M['bands'] if M else [])}
 MBLAB = {'near|mid': 'under 5 vs 5&ndash;10 min', 'mid|far': '5&ndash;10 vs over 10 min',
          'near|far': 'under 5 vs over 10 min'}
 TSTEP = [g for g in (T['slices']['gradient'] if T else []) if not g.get('thin') and g.get('pct')]
-INT_HEAD = (G['cuts'][-1] if G else None)          # the cut the engine actually uses
+# The cut the engine adopts — selected by the study's own `headline` flag, not by position.
+# engine.ts selects the same way; see integrated-pairs.py HEADLINE_CUT.
+INT_HEAD = (next((c for c in G['cuts'] if c.get('headline')), G['cuts'][-1]) if G else None)
 
 def ten_step_of(left):
     """The measured premium for the step this pair's remaining lease falls in."""
@@ -1867,8 +1869,8 @@ so what is left is the walk.</p>
 the walk. What is left is the building sitting on the station.</p>
 
 {hero('+5%', 'flat, on an integrated project',
-      [(f"+{G['cuts'][-1]['pct']:.1f}%", G['cuts'][-1]['label'], G['cuts'][-1]['devs'],
-        int_cut_tx(G['cuts'][-1])),
+      [(f"+{INT_HEAD['pct']:.1f}%", INT_HEAD['label'], INT_HEAD['devs'],
+        int_cut_tx(INT_HEAD)),
        (f"+{G['cuts'][0]['pct']:.1f}%", 'every pair', G['cuts'][0]['devs'],
         int_cut_tx(G['cuts'][0]))],
       '')}
@@ -2244,7 +2246,7 @@ HTML = f"""<!doctype html>
         ${M['bands'][2]['adj']:,.0f}</span></button>
     <button type="button" class="done" data-go="integrated">
       <span class="tn">Integrated</span>
-      <span class="ts">+{G['cuts'][-1]['pct']:.1f}%</span></button>
+      <span class="ts">+{INT_HEAD['pct']:.1f}%</span></button>
     <button type="button" class="done" data-go="tenure">
       <span class="tn">Freehold vs Leasehold</span>
       <span class="ts">+{TGL[0]['pct']*100:.0f}% to +{TGL[-1]['pct']*100:.0f}%</span></button>

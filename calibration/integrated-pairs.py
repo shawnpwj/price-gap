@@ -65,6 +65,8 @@ EC_PRIVATISE, BEDS = 5, ['1BR', '2BR', '3BR', '4BR+']
 # projects' walks TO THE STATION — which a reader takes as "the two are 400 m apart". They are
 # different things: Pasir Ris 8 vs Stratum differ by 331 m in station distance and sit 847 m
 # apart. That mislabel is why far comparables looked screened when they were not.
+HEADLINE_CUT = 'next door, under 500 m apart'   # the cut the engine adopts; see `headline`
+
 CUTS = [(99, 99999, 99999, 'every pair'),
         (10, 99999, 99999, '&lt;10 yr lease gap'),
         (5,  99999, 99999, '&lt;5 yr lease gap'),
@@ -201,6 +203,12 @@ def summary():
         if prs(g) < 3: continue
         lo, hi = boot(g); plo, phi = boot(g, pct=True)
         out['cuts'].append(dict(label=lab,
+                                # THE HEADLINE FLAG. Both consumers — engine.ts and
+                                # build-page.py — used to take cuts[-1], selecting the
+                                # constant by array position in two places independently.
+                                # Append a sixth cut and both would silently re-headline with
+                                # no error anywhere. They now select on this flag.
+                                headline=(lab == HEADLINE_CUT),
                                 # the RULE that defines this cut, recorded so the page can
                                 # reproduce the row subset instead of re-deriving it from the
                                 # label — no constant is ever hardcoded across scripts

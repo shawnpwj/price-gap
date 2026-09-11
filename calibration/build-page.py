@@ -1799,6 +1799,13 @@ so what is left is the walk.</p>
 
 <section>
   <div class="scroll">{mrt_table()}</div>
+  <p class="expl"><b>The minutes are this study&rsquo;s own convention, and it is worth stating
+  plainly:</b> {M['near_m']:,} m and {M['far_m']:,} m measured straight across the map, at
+  80 metres a minute &mdash; so {M['near_m']//80} and {M['far_m']//80} minutes. They are NOT
+  routed walking times. The straight-line metres here already run about 1.24&times; a real
+  walking route, so no further detour allowance is applied on top; adding one would count the
+  same detour twice and pull the five-minute line in to about 308 m, which would put a
+  development sitting on top of its station into the five-to-ten-minute band.</p>
 
   <div class="sechead"><h2 class="disp">Behind it</h2>
   <p>How the figure is built, and every pair behind it.</p></div>
@@ -2143,15 +2150,12 @@ what the private badge costs on the day. The second is what is left of it.</p>
   <p><b>{E['launch']['pairs']:,} pairs across {E['launch']['projects']} EC launches.</b> Every EC
   that sold in the window, set against the private launches selling beside it.</p></div>
   <div class="scroll">{ec_launch_table()}</div>
-  <p class="expl">The three slides read <b>25% to 36%</b>. The column runs from
-  +{min(d['pct'] for d in E['launch']['by']):.0f}% to
-  +{max(d['pct'] for d in E['launch']['by']):.0f}% with a median of
-  <b>+{E['launch']['pct']:.1f}%</b> ({E['launch']['ci'][0]:.0f} to {E['launch']['ci'][1]:.0f}),
-  so the slides sit in the middle of the market rather than at one end of it. Rivelle against Parktown reads +{next(d['pct'] for d in E['launch']['by']
-  if 'RIVELLE' in d['ec']):.0f}% here; against {nice(E['slides'][0]['pv'])} alone, size for size,
-  it is +{E['slides'][0]['pct']:.1f}%, and on the two headline PSFs the slide quotes
-  (${E['slides'][0]['ecpsf']:,.0f} against ${E['slides'][0]['pvpsf']:,.0f}),
-  +{E['slides'][0]['raw_pct']:.0f}%.</p>
+  <p class="expl">Every EC launch in the window, measured against the private launches selling
+  beside it: the column runs from +{min(d['pct'] for d in E['launch']['by']):.0f}% to
+  +{max(d['pct'] for d in E['launch']['by']):.0f}%, with a median of
+  <b>+{E['launch']['pct']:.1f}%</b> ({E['launch']['ci'][0]:.0f} to {E['launch']['ci'][1]:.0f})
+  across {E['launch']['pairs']:,} matched pairs. <b>Nothing on this panel comes from a slide
+  &mdash; every figure here is computed from the transactions.</b></p>
 </section>
 
 <section>

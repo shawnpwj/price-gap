@@ -703,7 +703,7 @@ letter-spacing:.01em;margin:52px 0 10px}
    it stays reachable at any scroll depth, which is the point of splitting the page up. */
 .terms{display:flex;flex-wrap:wrap;gap:0;border-top:1px solid var(--ink);
 max-width:1180px;margin:0 auto;padding:0 24px}
-.terms button{flex:1 1 auto;min-width:132px;padding:13px 14px 12px;text-align:left;
+.terms button{flex:1 1 0;min-width:0;padding:13px 11px 12px;text-align:left;
 background:none;border:0;border-right:1px solid var(--ink);cursor:pointer;font:inherit;
 color:inherit;position:relative;
 transition:background .18s cubic-bezier(.22,1,.36,1),color .18s cubic-bezier(.22,1,.36,1)}
@@ -714,7 +714,7 @@ transition:background .18s cubic-bezier(.22,1,.36,1),color .18s cubic-bezier(.22
 color:var(--slate-400);letter-spacing:.005em}
 /* The sub-label is the panel's ANSWER, not a status word, so it is set as a figure:
    readable size, no uppercase, gold on a measured panel. Shawn, 2026-09-08. */
-.terms .ts{display:block;margin-top:4px;font-size:11.5px;letter-spacing:.02em;
+.terms .ts{display:block;margin-top:4px;font-size:12.5px;letter-spacing:.02em;
 color:var(--slate-600);font-variant-numeric:tabular-nums}
 .terms button.done .ts{color:rgba(201,169,106,.75)}
 .terms button[aria-current="true"]{background:var(--navy-850)}
@@ -723,7 +723,12 @@ color:var(--slate-600);font-variant-numeric:tabular-nums}
 .terms button[aria-current="true"]::after{content:"";position:absolute;left:0;right:0;bottom:-1px;
 height:2px;background:var(--gold)}
 .panel>h1{margin-top:46px}
-@media (max-width:760px){.terms{padding:0 16px}.terms button{min-width:118px}}
+/* Seven terms must sit on ONE line at the 1024 iPad target — PRODUCT.md's binding
+   constraint. flex-basis 0 with min-width 0 lets them share the row evenly instead of
+   each demanding its content width and pushing the last one onto a second row.
+   Below 760 the bar is allowed to wrap; that is a phone, not the meeting device. */
+@media (max-width:760px){.terms{padding:0 16px}
+.terms button{flex:1 1 auto;min-width:118px}}
 .lede{font-size:15px;color:var(--slate-400);max-width:64ch;margin-bottom:14px}
 h2{font:600 20px/1.3 Optima,Candara,sans-serif;color:var(--slate-100);margin:0 0 6px}
 h3{font:600 15px/1.3 Optima,Candara,sans-serif;color:var(--gold-soft);letter-spacing:.02em}
@@ -747,10 +752,10 @@ box-shadow:0 10px 40px -12px rgba(0,0,0,.55);padding:26px 28px}
 .answers{display:flex;gap:34px;flex-wrap:wrap;align-items:flex-end}
 .ans .n{font:600 clamp(40px,5.2vw,56px)/.95 Optima,Candara,sans-serif;color:var(--gold);
 white-space:nowrap;letter-spacing:-.012em}
-.ans .w{font-size:11.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--slate-400);
+.ans .w{font-size:12px;letter-spacing:.15em;text-transform:uppercase;color:var(--slate-400);
 margin-top:10px}
 .ans .g{font:600 18px/1.15 Optima,Candara,sans-serif;color:var(--slate-300);margin-top:8px}
-.ans .g span{font:400 11.5px/1 -apple-system,Segoe UI,sans-serif;letter-spacing:.04em;
+.ans .g span{font:400 12.5px/1 -apple-system,Segoe UI,sans-serif;letter-spacing:.04em;
 text-transform:uppercase;color:var(--slate-600);display:block;margin-top:3px}
 .vcell.grow{flex:1 1 340px}
 @media (max-width:1100px){
@@ -809,7 +814,7 @@ tr.dim td.big{color:var(--slate-500);font-weight:400}
    including iPad landscape at 1024. (The figure tables above are narrower and stay two-up there.) */
 .wins.pairwide{grid-template-columns:repeat(auto-fit,minmax(520px,1fr))}
 .win .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
-.sub2{display:block;font-size:11.5px;color:var(--slate-600);margin-top:3px;white-space:nowrap}
+.sub2{display:block;font-size:12.5px;color:var(--slate-600);margin-top:3px;white-space:nowrap}
 table.fig a{color:inherit;text-decoration:none;border-bottom:1px solid rgba(201,169,106,.35)}
 table.fig a:hover{color:var(--gold-soft);border-bottom-color:var(--gold)}
 .winhead{margin-bottom:8px}
@@ -817,7 +822,7 @@ table.fig a:hover{color:var(--gold-soft);border-bottom-color:var(--gold)}
 /* method + notes */
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
 .card{border:1px solid var(--ink);border-radius:11px;background:var(--navy-850);padding:16px 18px}
-.card h4{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);
+.card h3{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);
 font-weight:400;margin-bottom:9px}
 .card ul{list-style:none}
 .card li{padding:3px 0;color:var(--slate-400);font-size:12.5px}
@@ -1676,8 +1681,10 @@ on one screen; every figure below has a panel of its own.</p>
     <td style="color:var(--gold-soft)">private launches +{E['launch']['pct']:.0f}% over the EC
     beside them; by resale the gap is {E['resale']['pct']:+.1f}% &mdash; no difference</td></tr>
   </tbody></table></div>
-  <div class="caveat" style="margin-top:18px"><b>Nothing has been written back yet.</b>
-  Every figure on this page sits beside its constant, not in place of it.</div>
+  <div class="caveat" style="margin-top:18px"><b>The measured figures are the ones in use.</b>
+  Adopted on 2026-09-09 after audit: the engine reads them from this study at load time, and the
+  judgement constants beside them are retired, kept only so the change is visible. The reference
+  row is the exception &mdash; it is measured and deliberately wired to nothing.</div>
 </section>
 </div>
 
@@ -1746,18 +1753,18 @@ the first one measured against the market.</p>
 
   <details><summary>How a pair is built, and every pair</summary>
     <div class="cards" style="margin-top:6px">
-      <div class="card"><h4>Held constant</h4><ul>
+      <div class="card"><h3>Held constant</h3><ul>
         <li>within <b>500 m</b> of each other</li>
         <li>same <b>nearest MRT station</b></li>
         <li>identical <b>top-26 primary schools</b> within 1 km</li>
         <li>median sizes within <b>20%</b>, bedroom by bedroom</li></ul></div>
-      <div class="card"><h4>Both sides must be</h4><ul>
+      <div class="card"><h3>Both sides must be</h3><ul>
         <li>leasehold, with a known lease start</li>
         <li><b>200 units</b> or more</li>
         <li><b>5+ transactions</b> in the window</li>
         <li>EC only once privatised &mdash; <b>TOP + 5</b></li>
         <li>resale and sub-sale only</li></ul></div>
-      <div class="card"><h4>Not controlled</h4><ul>
+      <div class="card"><h3>Not controlled</h3><ul>
         <li><b>floor</b> &mdash; the PSF series carries none</li>
         <li><b>facing</b> &mdash; same</li>
         <li>lease start and building age are<br>confounded: this is blended vintage</li></ul></div>
@@ -1791,6 +1798,9 @@ so what is left is the walk.</p>
 <section>
   <div class="scroll">{mrt_table()}</div>
 
+  <div class="sechead"><h2 class="disp">Behind it</h2>
+  <p>How the figure is built, and every pair behind it.</p></div>
+
   <details><summary>How the lease is taken out, and the check that it worked</summary>
     <p class="expl">Each pair shares its nearest station but sits at a different distance from it.
     Their price difference still contains whatever lease difference they carry, so the measured
@@ -1815,18 +1825,18 @@ so what is left is the walk.</p>
 
   <details><summary>How a pair is built, and every pair</summary>
     <div class="cards" style="margin-top:6px">
-      <div class="card"><h4>Held constant</h4><ul>
+      <div class="card"><h3>Held constant</h3><ul>
         <li>same <b>nearest station</b>, and it must be nearest for both</li>
         <li>both inside <b>{M['catchment']:,} m</b> of it</li>
         <li>within <b>{M['pair_cap']:,} m</b> of each other</li>
         <li>identical <b>top-26 primary schools</b> within 1 km</li>
         <li>median sizes within <b>20%</b>, bedroom by bedroom</li></ul></div>
-      <div class="card"><h4>Both sides must be</h4><ul>
+      <div class="card"><h3>Both sides must be</h3><ul>
         <li>leasehold, with a known lease start</li>
         <li><b>200 units</b> or more</li>
         <li><b>5+ transactions</b> in the window</li>
         <li>EC only once privatised &mdash; <b>TOP + 5</b></li></ul></div>
-      <div class="card"><h4>Not controlled</h4><ul>
+      <div class="card"><h3>Not controlled</h3><ul>
         <li><b>floor</b> and <b>facing</b> &mdash; the PSF series carries neither</li>
         <li>which <b>side</b> of the station the project sits on</li>
         <li>bus and shuttle access</li></ul></div>
@@ -1865,6 +1875,9 @@ the walk. What is left is the building sitting on the station.</p>
 
 <section>
   <div class="scroll">{int_table()}</div>
+
+  <div class="sechead"><h2 class="disp">Behind it</h2>
+  <p>How the figure is built, and every pair behind it.</p></div>
 
   <details><summary>Does it matter how far apart the two sit?</summary>
     <p class="expl"><b>Yes, and it is the screen that decides this figure.</b> An integrated
@@ -1911,15 +1924,15 @@ the walk. What is left is the building sitting on the station.</p>
 
   <details><summary>How a pair is built, and every pair</summary>
     <div class="cards" style="margin-top:6px">
-      <div class="card"><h4>Held constant</h4><ul>
+      <div class="card"><h3>Held constant</h3><ul>
         <li>same <b>nearest station</b>, nearest for both</li>
         <li>within <b>{G['pair_cap']:,} m</b> of each other</li>
         <li>median sizes within <b>20%</b>, bedroom by bedroom</li></ul></div>
-      <div class="card"><h4>Adjusted out</h4><ul>
+      <div class="card"><h3>Adjusted out</h3><ul>
         <li><b>lease</b>, at ${G['lease_old']:,.0f} / ${G['lease_new']:,.0f} by midpoint</li>
         <li><b>walking distance</b>, at ${G['slope']:.0f} per 100 m</li>
         <li>both measured here, neither assumed</li></ul></div>
-      <div class="card"><h4>Not controlled</h4><ul>
+      <div class="card"><h3>Not controlled</h3><ul>
         <li><b>floor</b> and <b>facing</b></li>
         <li>the quality of the mall attached</li>
         <li>whether the plain neighbour is itself mixed-use</li></ul></div>
@@ -1982,15 +1995,15 @@ constant at all.</p>
 
   <details><summary>How a pair is built, and every pair</summary>
     <div class="cards" style="margin-top:6px">
-      <div class="card"><h4>Held constant</h4><ul>
+      <div class="card"><h3>Held constant</h3><ul>
         <li>same <b>nearest MRT station</b></li>
         <li>within <b>{T['screens']['radius_m']:,} m</b> of each other</li>
         <li>median sizes within <b>20%</b>, bedroom by bedroom</li></ul></div>
-      <div class="card"><h4>Both sides must be</h4><ul>
+      <div class="card"><h3>Both sides must be</h3><ul>
         <li>one <b>freehold</b> (or 999-year), one <b>leasehold</b></li>
         <li><b>{T['screens']['min_units']:,} units</b> or more</li>
         <li><b>{T['screens']['min_n']}+ transactions</b> in the window</li></ul></div>
-      <div class="card"><h4>Not controlled</h4><ul>
+      <div class="card"><h3>Not controlled</h3><ul>
         <li><b>floor</b> and <b>facing</b></li>
         <li>the age gap between the two, beyond the lease rate</li></ul></div>
     </div>
@@ -2030,6 +2043,9 @@ plate of the ones below it. The extra strata area is void or roof. Floor is take
     </div>
     <div id="voidOut" class="cout"></div>
   </div>
+
+  <div class="sechead"><h2 class="disp">Behind it</h2>
+  <p>How the figure is built, and every pair behind it.</p></div>
 
   <details><summary>Is the floor step doing the work?</summary>
     <p class="expl">The extra area is small against the home, so a 2% error in the base swings the
@@ -2084,18 +2100,18 @@ plate of the ones below it. The extra strata area is void or roof. Floor is take
 
   <details><summary>How a pair is built, and every development</summary>
     <div class="cards" style="margin-top:6px">
-      <div class="card"><h4>Held constant</h4><ul>
+      <div class="card"><h3>Held constant</h3><ul>
         <li>same project, same <b>block</b>, same <b>stack</b></li>
         <li>&mdash; so the same <b>floor plate</b>, by construction</li>
         <li>base legs within <b>{V['meta']['size_tol']*100:.0f}%</b> of the stack&rsquo;s median size</li>
         <li>base legs within <b>{V['meta']['match_days']} days</b> of the penthouse resale</li></ul></div>
-      <div class="card"><h4>The screens</h4><ul>
+      <div class="card"><h3>The screens</h3><ul>
         <li><b>{V['meta']['min_base']}+ base legs</b>, so the comparator is a median</li>
         <li>extra area <b>{V['meta']['extra_band'][0]*100:.0f}&ndash;{V['meta']['extra_band'][1]*100:.0f}%</b>
             of the floor plate</li>
         <li>under that is a bay window; over it is a <b>duplex</b> &mdash; a second floor plate,
             which is what this pair exists to exclude</li></ul></div>
-      <div class="card"><h4>Not controlled</h4><ul>
+      <div class="card"><h3>Not controlled</h3><ul>
         <li><b>what the extra area is</b> &mdash; void, roof terrace or roof</li>
         <li><b>renovation and fit-out</b>, on either leg</li>
         <li>the top floor&rsquo;s own view, beyond the floor step and the check above</li></ul></div>
@@ -2154,6 +2170,9 @@ what the private badge costs on the day. The second is what is left of it.</p>
 
   
 
+  <div class="sechead"><h2 class="disp">Behind it</h2>
+  <p>How the figure is built, and every pair behind it.</p></div>
+
   <details><summary>Why the launch cut is matched on district, not distance</summary>
     <p class="expl">The URA feed carries <b>no coordinates for an uncompleted project</b> &mdash;
     Rivelle, Aurelle, Copen Grand, Lumina Grand, Novo Place and Otto Place all read blank. A
@@ -2173,17 +2192,17 @@ what the private badge costs on the day. The second is what is left of it.</p>
 
   <details><summary>How a pair is built, and every EC</summary>
     <div class="cards" style="margin-top:6px">
-      <div class="card"><h4>Held constant</h4><ul>
+      <div class="card"><h3>Held constant</h3><ul>
         <li>floor area within <b>{E['meta']['sizetol']*100:.0f}%</b></li>
         <li>contract date within <b>{E['meta']['months']} months</b></li>
         <li>launch: <b>same district</b> &middot; resale: <b>within {E['meta']['km']:g} km</b></li>
         <li>resale only: <b>leasehold</b> comparables, lease start within
             <b>{E['meta']['lstol']} years</b></li></ul></div>
-      <div class="card"><h4>How it is read</h4><ul>
+      <div class="card"><h3>How it is read</h3><ul>
         <li>the <b>nearest {E['meta']['near']}</b> comparables per EC transaction</li>
         <li>the <b>median of the pair ratios</b>, never a difference of two medians</li>
         <li>years built is <b>lease start + 4</b>, the median gap to TOP</li></ul></div>
-      <div class="card"><h4>Not controlled</h4><ul>
+      <div class="card"><h3>Not controlled</h3><ul>
         <li><b>floor</b> and <b>facing</b></li>
         <li>walking distance to the station, on either leg</li>
         <li>the EC income ceiling and resale restrictions themselves</li></ul></div>

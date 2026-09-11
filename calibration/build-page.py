@@ -903,11 +903,97 @@ color:var(--gold);border:1px solid rgba(201,169,106,.4);border-radius:999px;padd
 """
 
 JS = """
-/* the lease "Try a pair" calculator lived here; its section was removed 2026-09-11 */
+(function(){
+  var B=%BANDS%, LO=%LO%, HI=%HI%;
+  function bandFor(m){for(var i=0;i<B.length;i++){if(m<B[i][0])return B[i];}return B[B.length-1];}
+  function n(id){return parseFloat(document.getElementById(id).value);}
+  function go(){
+    var a=n('lsA'), b=n('lsB'), o=document.getElementById('calcOut');
+    if(!a||!b||a<1960||b<1960||a>2040||b>2040){o.className='cout bad';
+      o.innerHTML='Enter two lease start years.';return;}
+    if(a===b){o.className='cout bad';o.innerHTML='Same lease start \\u2014 no adjustment.';return;}
+    var mid=(a+b)/2, bd=bandFor(mid), rate=bd[1], gap=b-a, adj=rate*gap;
+    var warn='';
+    if(mid>HI) warn='<p class="cwarn">Midpoint '+mid.toFixed(1)+' is past the measured range '+
+      '(ends '+HI.toFixed(0)+'). The rate was still climbing when the evidence ran out, so treat '+
+      'this as a floor.</p>';
+    else if(mid<LO) warn='<p class="chint">Midpoint '+mid.toFixed(1)+' is older than the bulk of '+
+      'the sample, but the older band is flat and carries most of the evidence. The rate does not '+
+      'change going further back.</p>';
+    o.className='cout';
+    o.innerHTML =
+      '<div class="crow"><span>Midpoint</span><b>'+(mid%1?mid.toFixed(1):mid.toFixed(0))+'</b></div>'+
+      '<div class="crow"><span>Rate</span><b>$'+rate.toFixed(0)+' psf / yr</b>'+
+        '<i class="cflat">'+bd[2]+'</i></div>'+
+      '<div class="crow"><span>Lease gap</span><b>'+Math.abs(gap)+' years</b></div>'+
+      '<div class="crow big"><span>Adjustment</span><b>'+(adj<0?'\u2212':'+')+'$'+
+        Math.abs(Math.round(adj)).toLocaleString()+' psf</b></div>'+
+      '<p class="chint">Add this to the '+(gap>0?'older':'newer')+
+      ' comparable\\'s PSF to put it on the subject\\'s lease terms.</p>'+warn;
+  }
+  ['lsA','lsB'].forEach(function(id){document.getElementById(id).addEventListener('input',go);});
+  go();
+})();
 
+(function(){
+  // FH vs LH. Two directions, because a client is as likely to hold the leasehold price as
+  // the freehold one, and the arithmetic is the same equation read either way:
+  //     freehold = (leasehold + age) x (1 + premium)
+  // where AGE is the completion-year gap at the measured lease rate and PREMIUM is the step
+  // for the lease the leasehold side has left. Going the other way just inverts it.
+  //
+  // PERCENT, NOT DOLLARS. Shawn, 2026-09-08: "Change it all to %, i dont need quantum."
+  //
+  // TB = [older rate, newer rate, boundary year, build years, lease term, this year]
+  // TS = [[floor of the lease-left step, premium as a fraction, its label], ...]
+  var TB=%TENB%, TS=%TENS%, fwd=true;
+  function n(id){return parseFloat(document.getElementById(id).value);}
+  function el(id){return document.getElementById(id);}
+  function rate(a,b){return ((a+b)/2-TB[3]) < TB[2] ? TB[0] : TB[1];}
+  function step(left){for(var i=0;i<TS.length;i++){if(left>=TS[i][0])return TS[i];}
+    return TS[TS.length-1];}
 
-/* the freehold-vs-leasehold calculator lived here; its section was removed 2026-09-11 */
-
+  // THE LEASE LEFT IS NOT ASKED FOR. Shawn, 2026-09-08: it followed entirely from the leasehold
+  // completion year, so the field only restated an answer the calculator already had. It is
+  // worked out here and shown in the result instead. Term, less the years since TOP, less the
+  // years it took to build.
+  function left(){var t=n('tlT'); if(!t) return null;
+    return Math.max(1, Math.min(TB[4], TB[4]-(TB[5]-t)-TB[3]));}
+  function dirs(){
+    el('tdF').className = fwd?'on':''; el('tdL').className = fwd?'':'on';
+    el('tpL').childNodes[0].nodeValue =
+      (fwd?'Freehold':'Leasehold')+' comparable \u2014 psf';
+  }
+  function go(){
+    dirs();
+    var p=n('tfP'), tf=n('tfT'), tl=n('tlT'), o=el('tenOut');
+    if(!p||!tf||!tl){o.className='cout bad';o.innerHTML='Fill in all three.';return;}
+    var lf=left(), r=rate(tf,tl), dv=tf-tl, age=r*dv, st=step(lf),
+        out = fwd ? (p/(1+st[1]) - age)      // freehold in, leasehold out
+                  : ((p + age)*(1+st[1]));   // leasehold in, freehold out
+    o.className='cout';
+    o.innerHTML=
+      (dv===0
+        ? '<div class="crow"><span>Same completion year</span><b>no age adjustment</b></div>'
+        : '<div class="crow"><span>Completion-year gap \u2014 the freehold is '+
+          Math.abs(dv)+' yrs '+(dv>0?'newer':'older')+
+          ', at $'+r.toFixed(0)+' a year</span><b>'+
+          (fwd?(age>=0?'\u2212':'+'):(age>=0?'+':'\u2212'))+'$'+
+          Math.abs(Math.round(age)).toLocaleString()+'</b></div>')+
+      '<div class="crow"><span>Freehold premium, '+st[2].split(' ')[0].replace('-','\u2013')+
+        ' years of lease left</span><b>'+
+        (fwd?'\u2212':'+')+(st[1]*100).toFixed(0)+'%</b></div>'+
+      '<div class="crow big"><span>'+(fwd?'As leasehold':'As freehold')+'</span><b>$'+
+        Math.round(out).toLocaleString()+' psf</b></div>'+
+      '<p class="chint">Lease left worked out from the completion year: '+TB[4]+' \u2212 ('+
+      TB[5]+' \u2212 '+tl+') \u2212 '+TB[3]+' years of building = '+lf+'.</p>';
+  }
+  ['tfP','tfT','tlT'].forEach(function(id){
+    var e=el(id); if(e) e.addEventListener('input',go);});
+  el('tdF').addEventListener('click',function(){fwd=true;go();});
+  el('tdL').addEventListener('click',function(){fwd=false;go();});
+  go();
+})();
 
 /* VOID SPACE. Deliberately the smallest calculator on this page: the unit below, its psf,
    and the penthouse size. The floor plate is priced at the psf it already sells for; only the
@@ -1784,7 +1870,30 @@ the first one measured against the market.</p>
        (f'${BANDR[NEW_NM]:,.0f}', NEW_NM, ndev(rows_in(NEW_NM)), ntx(rows_in(NEW_NM)))],
       '')}
 
+<section>
+  <div class="sechead"><h2 class="disp">How to use it</h2></div>
+  <div class="steps">
+    <div class="step"><span class="sn">1</span>
+      <p>Average the <b>two lease start years</b>. That is the midpoint.</p></div>
+    <div class="step"><span class="sn">2</span>
+      <p>Midpoint <b>{OLD_NM}</b> &rarr; ${BANDR[OLD_NM]:,.0f}. <b>{NEW_NM}</b> &rarr;
+      ${BANDR[NEW_NM]:,.0f}.</p></div>
+    <div class="step"><span class="sn">3</span>
+      <p>Multiply by the <b>lease gap</b> and add to the comparable's PSF.</p></div>
+  </div>
 
+  <div class="calc">
+    <h3>Try a pair</h3>
+    <div class="cin">
+      <label>Comparable lease start<input id="lsA" type="number" value="2005" min="1960" max="2040" step="1"></label>
+      <label>Subject lease start<input id="lsB" type="number" value="2025" min="1960" max="2040" step="1"></label>
+    </div>
+    <div id="calcOut" class="cout"></div>
+  </div>
+  <p class="expl">The midpoint is what lets two rates price a pair that straddles the boundary:
+  a 2005-against-2025 comparable is centred on 2015 and takes the newer rate, without anyone
+  having to decide which side it belongs to.</p>
+</section>
 
 <section>
   <div class="sechead"><h2 class="disp">The measurement</h2>
@@ -2063,7 +2172,35 @@ constant at all.</p>
         ten_slice_tx(g, TGL[i-1] if i else None)) for i, g in enumerate(TGL)],
       '')}
 
+<section>
+  <div class="sechead"><h2 class="disp">How to use it</h2></div>
+  <div class="steps">
+    <div class="step"><span class="sn">1</span>
+      <p>Take the <b>difference in completion year</b> &mdash; TOP, not lease start. A freehold
+      has no lease start to difference against.</p></div>
+    <div class="step"><span class="sn">2</span>
+      <p>Price that at the <b>measured lease rate</b>: ${T['bands']['old']:,.0f} a year up to
+      {T['band_bound']-1}, ${T['bands']['new']:,.0f} from {T['band_bound']}, read at the
+      midpoint.</p></div>
+    <div class="step"><span class="sn">3</span>
+      <p>Then take off the <b>freehold percentage for the lease the leasehold side has
+      left</b>, from the table below.</p></div>
+  </div>
 
+  <div class="calc">
+    <h3>Restate a comparable</h3>
+    <div class="dirs" role="group" aria-label="Which way round">
+      <button type="button" id="tdF" class="on">Freehold &rarr; leasehold</button>
+      <button type="button" id="tdL">Leasehold &rarr; freehold</button>
+    </div>
+    <div class="cin">
+      <label id="tpL">Freehold comparable &mdash; psf<input id="tfP" type="number" value="2100" min="200" max="9000" step="10"></label>
+      <label>Freehold TOP year<input id="tfT" type="number" value="2005" min="1960" max="2035" step="1"></label>
+      <label>Leasehold TOP year<input id="tlT" type="number" value="2015" min="1960" max="2035" step="1"></label>
+    </div>
+    <div id="tenOut" class="cout"></div>
+  </div>
+</section>
 
 <section>
   <div class="sechead"><h2 class="disp">Freehold is worth more as the lease runs down</h2>

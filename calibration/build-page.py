@@ -1088,6 +1088,12 @@ def mrt_band_tx(key):
 # pair reads, what the published figure says it should read, and the gap between the two — and
 # the table opens on the pairs that land on the figure and walks out to the ones that do not.
 # Exactly the shape of the lease panel's table, which is the one he signed off.
+# Read from engine.ts rather than restated: an earlier version of the note below quoted a
+# detour factor of 1.24 while doing its arithmetic with the engine's 1.3, and stated the
+# direction backwards (a straight line cannot be longer than the route it cuts across).
+ENG_CIRCUITY = float(__import__('re').search(r'const CIRCUITY = ([\d.]+)',
+    open(os.path.join(HERE, '..', 'scripts', 'engine.ts')).read()).group(1))
+
 MBAND = {b['key']: b['adj'] for b in (M['bands'] if M else [])}
 MBLAB = {'near|mid': 'under 5 vs 5&ndash;10 min', 'mid|far': '5&ndash;10 vs over 10 min',
          'near|far': 'under 5 vs over 10 min'}
@@ -1348,6 +1354,77 @@ def ec_launch_table():
 
 # Age bands measured but not shown on the page. (Shawn, 2026-09-10.)
 HIDDEN_AGE_BANDS = {'15+'}
+# The bands the page actually SHOWS, so prose about them is computed from what a reader can see
+# rather than asserted. An earlier version claimed "a mature EC trades above the private condo"
+# — the exact reverse of this table, whose column is "Private is" and whose privatised rows are
+# POSITIVE. The claim sat two inches under the rows refuting it.
+AGE_SHOWN = [a for a in (E['ages'] if E else []) if a['key'] not in HIDDEN_AGE_BANDS]
+
+# THE PLACEBO VERDICT IS COMPUTED, NOT ASSERTED. The page printed "that covers zero" as a fixed
+# string whatever the numbers said — and it does NOT cover zero: both bounds are negative. A
+# check presented as passing while it is failing is worse than no check at all.
+def _placebo_verdict():
+    if not G: return ''
+    lo, hi = G['placebo']['pct_lo'], G['placebo']['pct_hi']
+    lt = G.get('confound', {}).get('treat_load'); lp = G.get('confound', {}).get('placebo_load')
+    load = (f' These pairs also carry only about {lp/lt:.0%} of the adjustment burden of the '
+            f'integrated pairs they check, so even a clean reading would not certify the '
+            f'treatment on its own') if lt and lp else ''
+    if lo <= 0 <= hi:
+        return ('an interval that <b>covers zero</b>, which is the check passing: with nothing '
+                'to find, the method finds nothing.' + load)
+    side = 'below' if hi < 0 else 'above'
+    return (f'an interval that <b>does not cover zero</b>. Pairs that should read nothing read '
+            f'{side} it, so a small residual bias survives the lease and distance corrections, '
+            f'and the integrated figures above carry it too.' + load)
+PLACEBO_VERDICT = _placebo_verdict()
+
+# The claim about WHY some developments read low used to be asserted ("the three that read low
+# are the three with the widest lease gaps") and was false against the table printed beside it.
+# Computed now, so it states whatever is true of the current cut.
+def _int_low_note():
+    if not G or not G.get('devs'): return ''
+    d = G['devs']
+    low3 = {x['name'] for x in sorted(d, key=lambda x: x['adj'])[:3]}
+    wide3 = {x['name'] for x in sorted(d, key=lambda x: -abs(x.get('lg') or 0))[:3]}
+    both = low3 & wide3
+    if not both:
+        return 'none of the three lowest is among the three widest'
+    return (f'{len(both)} of the three lowest {"is" if len(both)==1 else "are"} among the three '
+            f'widest')
+INT_LOW_NOTE = _int_low_note()
+INT_THIN = sum(1 for x in (G['devs'] if G else []) if (x.get('pairs') or 0) <= 3)
+
+# The two constants still set by judgement and still applied, read from the engine and the
+# tenure study rather than restated. The summary caveat claimed every judgement constant was
+# retired; these two are not, and both travel into every workup.
+def _judgement_live():
+    eng = open(os.path.join(HERE, '..', 'scripts', 'engine.ts')).read()
+    import re as _re
+    harm = float(_re.search(r'harmonisationUplift: ([\d.]+)', eng).group(1))
+    cy   = int(_re.search(r'CONSTRUCTION_YEARS = (\d+)', eng).group(1))
+    b = (T or {}).get('build', {})
+    return dict(harm=harm, cy=cy, cy_measured=b.get('median'), cy_n=b.get('n') or 0)
+JUDGE = _judgement_live()
+
+# The sweep sentence used to name index 0 and index 3 and call the result flat, skipping the
+# 400 m row that dips between them. State the actual span of the tight caps instead.
+def _sweep_tight():
+    if not G or not G.get('apartsweep'): return ''
+    cap = (INT_HEAD or {}).get('apmax') or 500
+    tight = [r for r in G['apartsweep'] if r['cap'] <= max(cap, 600)]
+    if not tight: return ''
+    lo, hi = min(tight, key=lambda r: r['pct']), max(tight, key=lambda r: r['pct'])
+    return (f"it runs +{lo['pct']:.1f}% at {lo['cap']:,} m to +{hi['pct']:.1f}% at "
+            f"{hi['cap']:,} m across the four tightest caps")
+SWEEP_TIGHT = _sweep_tight()
+PCT_RATIO = (fpct(rows_in(NEW_NM)) / fpct(rows_in(OLD_NM))) if fpct(rows_in(OLD_NM)) else 0
+DOL_RATIO = (BANDR[NEW_NM] / BANDR[OLD_NM]) if BANDR[OLD_NM] else 0
+
+# The bands the page actually SHOWS, so prose about them is computed from what a reader can
+# see rather than asserted. An earlier version claimed "a mature EC trades above the private
+# condo" — the exact reverse of this table, whose column is "Private is" and whose privatised
+# rows are POSITIVE. The claim sat two inches under the rows refuting it.
 
 
 def ec_age_table():
@@ -1683,6 +1760,13 @@ on one screen; every figure below has a panel of its own.</p>
     <td style="color:var(--gold-soft)">private launches +{E['launch']['pct']:.0f}% over the EC
     beside them; by resale the gap is {E['resale']['pct']:+.1f}% &mdash; no difference</td></tr>
   </tbody></table></div>
+  <p class="expl" style="margin-top:20px"><b>Two judgement constants are NOT on this page, and
+  both are still live.</b> The engine applies a <b>+{JUDGE['harm']:.0%} GFA harmonisation</b>
+  uplift that was dropped from this study on 2026-09-06 and has never been measured; and it
+  assumes <b>{JUDGE['cy']} years</b> from lease start to completion, where the tenure pass
+  measured a median of <b>{JUDGE['cy_measured']}</b> across {JUDGE['cy_n']:,} developments and
+  the difference was not adopted. Both reach every workup.</p>
+
   <div class="caveat" style="margin-top:18px"><b>The measured figures are the ones in use.</b>
   Adopted on 2026-09-09 after audit: the engine reads them from this study at load time, and the
   judgement constants beside them are retired, kept only so the change is visible. The reference
@@ -1747,8 +1831,10 @@ the first one measured against the market.</p>
     reads as a bigger figure per foot.</p>
     <div class="scroll">{why_table()}</div>
     <p class="expl">Small flats, large flats, pairs two years apart or twenty &mdash; the jump is
-    in every row. A higher base price explains some of it, narrowing the gap from
-    {fpct(rows_in(OLD_NM)):+.2%} to {fpct(rows_in(NEW_NM)):+.2%} a year, but nowhere near all.</p>
+    in every row. A higher base price explains some of it: on a percentage
+    basis the two bands are {PCT_RATIO:.2f}&times; apart ({fpct(rows_in(OLD_NM)):+.2%} against
+    {fpct(rows_in(NEW_NM)):+.2%} a year) where in dollars they are {DOL_RATIO:.2f}&times;. The
+    gap narrows on that scale, but nowhere near closes.</p>
     <p class="expl">What is left is vintage: through the 2010s each successive launch in the same
     spot came out dearer than the last. This measures the size of that effect, not its cause.</p>
   </details>
@@ -1769,7 +1855,7 @@ the first one measured against the market.</p>
       <div class="card"><h3>Not controlled</h3><ul>
         <li><b>floor</b> &mdash; the PSF series carries none</li>
         <li><b>facing</b> &mdash; same</li>
-        <li>lease start and building age are<br>confounded: this is blended vintage</li></ul></div>
+        <li>lease start and building age are<br>confounded: this is blended vintage </li></ul></div>
     </div>
     <p class="expl" style="margin-top:18px">All {len(ALL)} comparisons, numbered, <b>closest to
     the rate first</b> and walking out to the furthest. <b>Difference</b> is what the market
@@ -1801,11 +1887,18 @@ so what is left is the walk.</p>
   <div class="scroll">{mrt_table()}</div>
   <p class="expl"><b>The minutes are this study&rsquo;s own convention, and it is worth stating
   plainly:</b> {M['near_m']:,} m and {M['far_m']:,} m measured straight across the map, at
-  80 metres a minute &mdash; so {M['near_m']//80} and {M['far_m']//80} minutes. They are NOT
-  routed walking times. The straight-line metres here already run about 1.24&times; a real
-  walking route, so no further detour allowance is applied on top; adding one would count the
-  same detour twice and pull the five-minute line in to about 308 m, which would put a
-  development sitting on top of its station into the five-to-ten-minute band.</p>
+  80 metres a minute &mdash; so {M['near_m']//80} and {M['far_m']//80} minutes. They are
+  <b>not routed walking times</b>, and a real route between two points is always longer than the
+  straight line between them.</p>
+  <p class="expl">The engine allows for that detour with a factor of {ENG_CIRCUITY:g}, which
+  would pull the five-minute line in to {M['near_m']/ENG_CIRCUITY:,.0f} m. This study does not
+  apply it, deliberately: on the one case checked against a real walking route the straight-line
+  metres here already ran about a quarter longer than the route itself, so applying the factor on
+  top would count the same detour twice &mdash; and at
+  {M['near_m']/ENG_CIRCUITY:,.0f} m a development sitting on top of its station falls into the
+  five-to-ten-minute band. <b>The consequence is that the same building can read a different
+  number of minutes here than in a Price Gap workup</b>, and the metres are the thing to compare
+  across the two.</p>
 
   <div class="sechead"><h2 class="disp">Behind it</h2>
   <p>How the figure is built, and every pair behind it.</p></div>
@@ -1871,7 +1964,9 @@ so what is left is the walk.</p>
 
 <div class="panel" data-p="integrated" hidden>
 <h1 class="disp">What the market pays for being on top of the station</h1>
-<p class="lede"><b>{ndev2(GROWS,'a','b')} developments &middot; {len(GROWS)} comparisons, resting on {GTX:,} transactions.</b> An integrated development against an ordinary condo a short walk away at the
+<p class="lede"><b>{INT_HEAD['devs']} developments &middot; {INT_HEAD['cells']} comparisons behind the
+published figure</b>, drawn from {ndev2(GROWS,'a','b')} developments and {len(GROWS)}
+comparisons in the study overall, resting on {GTX:,} transactions. An integrated development against an ordinary condo a short walk away at the
 <b>same station</b>. The lease difference between them is taken out, and so is the difference in
 the walk. What is left is the building sitting on the station.</p>
 
@@ -1894,13 +1989,11 @@ the walk. What is left is the building sitting on the station.</p>
     and the further apart they are the more of the gap between them is simply a different
     location. Sweeping the limit on <b>how far apart the two actually sit</b>:</p>
     <div class="scroll">{apart_table()}</div>
-    <p class="expl">The premium is <b>flat across every tight limit</b> &mdash;
-    +{G['apartsweep'][0]['pct']:.1f}% at {G['apartsweep'][0]['cap']:,} m through
-    +{G['apartsweep'][3]['pct']:.1f}% at {G['apartsweep'][3]['cap']:,} m &mdash; and only drifts
-    upward once distant comparables are let in. <b>That is why the published figure is the
-    under-{INT_HEAD['apmax']:,} m cut.</b> Shawn&rsquo;s own examples sit inside it: Sengkang
-    Grand against Esparina is 230 m, against Jewel @ Buangkok 256 m, Watertown against Parc
-    Centros 406 m.</p>
+    <p class="expl">The premium is <b>steady across every tight limit</b> &mdash;
+    {SWEEP_TIGHT} &mdash; and drifts upward only once distant comparables are let in.
+    <b>That is why the published figure is the under-{INT_HEAD['apmax']:,} m cut.</b>
+    Shawn&rsquo;s own examples sit inside it: Sengkang Grand against Esparina is 230 m, against
+    Jewel @ Buangkok 256 m, Watertown against Parc Centros 406 m.</p>
     <p class="expl">A separate limit, on how differently the two walk <b>to the station</b>,
     behaves the same way: inside the tight lease-gap column the premium climbs from
     +{G['dsweep'][1]['rows'][0]['pct']:.1f}% to +{G['dsweep'][1]['rows'][-1]['pct']:.1f}% as it
@@ -1915,20 +2008,18 @@ the walk. What is left is the building sitting on the station.</p>
     the identical lease and distance corrections. Nothing separates those pairs, so the answer
     should be zero. Across <b>{G['placebo']['pairs']} pairs</b> it reads
     <b>{G['placebo']['pct']:+.1f}%</b> ({G['placebo']['adj']:+,.0f} psf), with an interval of
-    {G['placebo']['pct_lo']:+.1f}% to {G['placebo']['pct_hi']:+.1f}% that covers zero. It leans
-    very slightly negative, which if anything makes the integrated figures above conservative.</p>
+    {G['placebo']['pct_lo']:+.1f}% to {G['placebo']['pct_hi']:+.1f}% &mdash; {PLACEBO_VERDICT}.</p>
   </details>
 
   <details><summary>Every development, and what each one reads</summary>
     <p class="expl">These {G['n_integrated']} are a classification made for this study and audited
     by hand &mdash; a judgement, not a datum.</p>
     <div class="scroll">{int_devs()}</div>
-    <p class="expl"><b>Read the lease-gap column before the premium column.</b> The three that
-    read low or negative are the three with the widest lease gaps, and their answers are
-    dominated by the correction rather than by the building. Pasir Ris 8 carries more pairs than
-    any other &mdash; a 2021 lease set against neighbours from 1996 to 2013 &mdash; and its
-    individual answers run from &minus;$424 to +$306. That is noise around a large subtraction,
-    which is why it is not evidence that being on the station is worth nothing.</p>
+    <p class="expl"><b>Read the lease-gap column beside the premium column. <b>The
+  developments that read low are not simply the ones with the widest lease gaps</b> &mdash;
+  {INT_LOW_NOTE} &mdash; so the gap does not explain them on its own. What the thin ones share
+  is how little sits behind them: {INT_THIN} of these {len(G['devs'])} rest on three pairs or
+  fewer, and a single stack or a single quarter moves them.</p>
   </details>
 
   <details><summary>How a pair is built, and every pair</summary>
@@ -2167,10 +2258,15 @@ what the private badge costs on the day. The second is what is left of it.</p>
   <div class="scroll">{ec_age_table()}</div>
   <p class="expl">The premium is <b>{E['resale']['pct']:+.1f}%</b> overall, and could really be
   anywhere from {E['resale']['ci'][0]:+.1f}% to {E['resale']['ci'][1]:+.1f}% &mdash; an interval
-  that covers zero, and a figure inside 1%. There is <b>no difference</b> between the two. It does not merely close: past privatisation the
-  sign turns over, and a mature EC trades <b>above</b> the private condo beside it. Held against
-  every private comparable with no tenure or vintage control the figure is
+  that covers zero, and a figure inside 1%. <b>There is no difference between the two.</b>
+  Held against every private comparable with no tenure or vintage control the figure is
   {E['resale_raw']['pct']:+.1f}%.</p>
+  <p class="expl">Within that, the direction does turn over with age, and it turns the way the
+  column reads: just past MOP the EC is the dearer of the two by
+  {abs(AGE_SHOWN[0]['pct']):.1f}%, and once privatised the private condo pulls back ahead by
+  {AGE_SHOWN[-1]['pct']:+.1f}%. <b>Both of those intervals cover zero</b>
+  ({AGE_SHOWN[0]['lo']:+.1f} to {AGE_SHOWN[0]['hi']:+.1f}, and {AGE_SHOWN[-1]['lo']:+.1f} to
+  {AGE_SHOWN[-1]['hi']:+.1f}), so this is a direction, not a figure to quote.</p>
 
   
 

@@ -98,6 +98,9 @@ def sides_of(rows):
     return d
 ntx    = lambda rows: sum(sides_of(rows).values())
 NTX    = sum(SIDES.values())
+# Kept though the paragraph that printed them was removed on 2026-09-11: they are one line
+# each, they are the answer to "what does a comparison actually rest on", and the build prints
+# them below so the figure stays visible to whoever re-cuts the study.
 NPRICE = len(SIDES)
 TXMED  = st.median(SIDES.values())
 TXPAIR = st.median(r['n_old'] + r['n_new'] for r in ALL)
@@ -1899,16 +1902,7 @@ the first one measured against the market.</p>
   <div class="sechead"><h2 class="disp">The measurement</h2>
   <p><b>{NDEV} developments &middot; {npairs(ALL)} pairs &middot; {len(ALL)} comparisons,
   resting on {NTX:,} transactions.</b> Each development paired with a leasehold neighbour and
-  compared bedroom by bedroom, across 24 months of resale and sub-sale to {LW[1]}.</p>
-  <p class="expl" style="margin-bottom:0">A comparison is one pair at one bedroom &mdash; not one
-  sale. Each side of it is that project&rsquo;s median psf for that bedroom over the window,
-  built from a median of <b>{TXMED:,.0f} transactions</b> (the typical comparison has
-  {TXPAIR:,.0f} across its two sides, and no side has fewer than five). The two bands above count
-  {ntx(rows_in(OLD_NM)):,} and {ntx(rows_in(NEW_NM)):,} transactions; they overlap by
-  {ntx(rows_in(OLD_NM)) + ntx(rows_in(NEW_NM)) - NTX:,}, because a project can pair with an older
-  neighbour on one side of the boundary and a newer one on the other. Nothing here is a mean:
-  each month is the median of that month&rsquo;s sales, and the cell is the median of those
-  months, so one penthouse or one fire-sale cannot move it.</p></div>
+  compared bedroom by bedroom, across 24 months of resale and sub-sale to {LW[1]}.</p></div>
   <div class="scroll">{answer_table()}</div>
 
 </section>
@@ -2522,6 +2516,7 @@ print(f'  region in the newer band: RCR ${fit(RCR_NEW):.0f} vs OCR ${fit(OCR_NEW
 # cannot quietly break one without anybody seeing it.
 _med = st.median(abs(x) for x in RESID)
 print(f'  fit: {WITHIN}/{len(ALL)} cells within $200 of their band; median miss ${_med:,.0f}')
+print(f'  base: {NTX:,} transactions over {NPRICE} project x bedroom price points; median {TXMED:,.0f} a side, {TXPAIR:,.0f} a comparison')
 print(f'  timing: sides offset {OFF_ME:+.2f} months on average; quarter-matched reads '
       f'${MATCHQ[OLD_NM]:.1f}/${MATCHQ[NEW_NM]:.1f} against ${BANDR[OLD_NM]:.1f}/${BANDR[NEW_NM]:.1f}')
 print(f'  outside the central 95%: {len(MISSES)} cells; dropping them gives '

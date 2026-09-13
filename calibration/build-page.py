@@ -1872,6 +1872,7 @@ AGR   = AG['rows'] if AG else []
 AGRATE = AG['rate'] if AG else 0          # the FLAT rate. Kept — it is what two bands beat.
 AGEV  = (AG.get('evidence') or {}) if AG else {}
 AGST  = AGEV.get('step') or {}
+AGFM  = AGEV.get('form') or {}
 AGB   = AGST.get('bound', 2010)           # 2010, and it survives bootstrapping the search
 AGPRE = [r for r in AGR if r['mid'] <  AGB]
 AGPOST= [r for r in AGR if r['mid'] >= AGB]
@@ -1969,6 +1970,37 @@ def age_bound_bar():
                  f'{share:.0%}<span style="display:inline-block;height:9px;width:{w * 1.6:.0f}px;'
                  f'margin-left:10px;border-radius:3px;vertical-align:middle;background:'
                  f'{"var(--gold)" if y == AGB else "var(--ink)"}"></span></td></tr>')
+    return ''.join(r) + '</tbody></table>'
+
+def age_form_table():
+    """The cells where the midpoint form and the piecewise form actually disagree — long gaps
+    that span the boundary. Three pairs, and they are the whole evidence base for the
+    question, which is the most important thing this table says."""
+    if not AGFM.get('wide'): return ''
+    r = ['<table class="fig"><thead><tr><th>Older</th><th>Newer</th>'
+         '<th class="num">completion</th><th class="num">gap</th>'
+         '<th class="num">what it really paid</th><th class="num">midpoint says</th>'
+         '<th class="num">piecewise says</th></tr></thead><tbody>']
+    for w in AGFM['wide']:
+        close = 'pw' if abs(w['actual'] - w['pw']) < abs(w['actual'] - w['mid']) else 'mid'
+        mk = lambda v, k: (f'<td class="num {"big" if close == k else "quiet"}">'
+                           f'${v:,.0f}</td>')
+        r.append(f'<tr><td>{_nm(w["older"])}</td><td>{_nm(w["newer"])}</td>'
+                 f'<td class="num quiet">{w["top_old"]}&rarr;{w["top_new"]}</td>'
+                 f'<td class="num quiet">{w["gap"]} yr</td>'
+                 f'<td class="num">${w["actual"]:,.0f}</td>'
+                 + mk(w['mid'], 'mid') + mk(w['pw'], 'pw') + '</tr>')
+    return ''.join(r) + '</tbody></table>'
+
+def age_knot_ladder():
+    """Move the piecewise knot to the right and watch the newer rate run away while the fit
+    keeps improving. The single clearest picture of why that form is not adopted."""
+    if not AGFM.get('ladder'): return ''
+    r = ['<table class="fig"><thead><tr><th>Put the knot at&hellip;</th>'
+         '<th class="num">the newer rate becomes</th></tr></thead><tbody>']
+    for k, v, _ in AGFM['ladder']:
+        r.append(f'<tr><th>{k}</th><td class="num {"quiet" if k == AGB else ""}">'
+                 f'${v:,.0f} / yr</td></tr>')
     return ''.join(r) + '</tbody></table>'
 
 def age_pair_table():
@@ -2265,6 +2297,52 @@ of a newer building &mdash; on the only clock both sides share, <b>completion</b
     picks up some of it and gets the shape wrong everywhere. <b>The engine's shape &mdash; lease
     bands on the TOP clock &mdash; comes last of the live contenders</b>, beaten even by a single
     flat rate.</p>
+  </details>
+
+  <details><summary>A pair that spans {AGB} &mdash; one rate, or split across both?</summary>
+    <p class="expl">Shawn, 2026-09-13: <i>&ldquo;are we talking about the midpoint? or should we
+    do a blended rate &mdash; if I am comparing 2000 to 2025, ${fitted_age(AGPRE):,.0f} &times; 9
+    plus ${fitted_age(AGPOST):,.0f} &times; 16?&rdquo;</i> <b>It is the midpoint today</b>, and
+    the two are different models, not two spellings of one. The midpoint says the band belongs to
+    the <b>pair</b> &mdash; one rate across the whole gap, chosen by where the pair is centred.
+    Splitting it says the band belongs to the <b>calendar year</b> &mdash; each year priced at
+    its own rate and summed. Fitted that second way the rates are
+    <b>${AGFM['pw_pre']:,.1f} and ${AGFM['pw_post']:,.1f}</b>.</p>
+    <p class="expl"><b>They predict the same.</b> Scored on the same {AGFM['paired']['folds']}
+    held-out folds, midpoint is ahead by ${abs(AGFM['paired']['mean']):,.0f} a fold with a 95%
+    interval of ${AGFM['paired']['lo']:+,.0f} to ${AGFM['paired']['hi']:+,.0f} &mdash; which
+    covers zero. Accuracy does not choose between them.</p>
+    <p class="expl"><b>What chooses is whether the break holds still.</b> The midpoint boundary
+    lands on {AGB} in {AGEV['bound_boot']['share']:.0%} of resamples. The split form's knot does
+    not settle &mdash; its best position is {AGFM['knot_best']} and no year holds more than
+    {AGFM['knot_share']:.0%} of resamples. Push the knot later and the newer rate runs away while
+    the fit keeps improving, which is what a model does when it is <b>absorbing a trend rather
+    than locating a break</b>. Price the years individually and the study can no longer tell you
+    where the boundary is; the newer rate becomes whatever you set it to.</p>
+    <div class="grid2">
+      <div><div class="scroll">{age_knot_ladder()}</div></div>
+      <div><p class="expl">So the rule stays the midpoint. It is also mostly moot:
+      <b>{AGFM['diverge_small']} of {len(AGR)} cells</b> come out within $50 either way, and only
+      <b>{AGFM['diverge_big']}</b> differ by more than $150. The two forms only part company on a
+      long gap that spans {AGB}.</p></div>
+    </div>
+    <p class="expl"><b>And that is where the midpoint is blunt.</b> It charges the whole gap at
+    the newer rate even when most of the years sit on the older side &mdash; a 2000-against-2025
+    comparable is centred {2012.5:.1f}, so it takes ${fitted_age(AGPOST):,.0f} across all 25
+    years (${fitted_age(AGPOST) * 25:,.0f}) where splitting gives
+    ${AGFM['pw_pre'] * 10 + AGFM['pw_post'] * 15:,.0f}. Here is every cell in the study shaped
+    like that &mdash; and there are {len(AGFM['wide'])}, over {AGFM['wide_pairs']} pairs, which is
+    the entire evidence base for the question:</p>
+    <div class="scroll">{age_form_table()}</div>
+    <p class="expl">On the two widest &mdash; the {AGFM['wide'][0]['gap']}-year and
+    {AGFM['wide'][1]['gap']}-year gaps, where most of the span sits on the older side &mdash;
+    <b>the split form is closer</b>, and the midpoint overshoots by
+    ${AGFM['wide'][0]['mid'] - AGFM['wide'][0]['actual']:,.0f} and
+    ${AGFM['wide'][1]['mid'] - AGFM['wide'][1]['actual']:,.0f}. The two narrower cells are the
+    same pair read on two bedrooms and they disagree with each other, which is the size of the
+    evidence here. <b>The rule is not moved on {AGFM['wide_pairs']} pairs</b> &mdash; but a gap
+    over about fifteen years spanning {AGB} is the known weak spot, and worth reading both ways
+    before quoting.</p>
   </details>
 
   <details><summary>What is thin about this, and what would move it</summary>

@@ -430,7 +430,120 @@ for W in WINDOWS:
             cut_[lab] = dict(cells=len(sel), rate=fitted(sel) if len(sel) >= 4 else None)
         ev['region'].append(dict(region=reg, **cut_))
 
-    #  (e) the honest race — the boundary re-searched inside every training fold
+    #  (e) MIDPOINT BAND, OR PIECEWISE INTEGRATION? Shawn, 2026-09-13: "are we talking about
+    #      the midpoint? or should we do a blended rate — $13 x 9 + $36 x 16?"
+    #      These are two different MODELS, not two spellings of one.
+    #        midpoint : the band is a property of the PAIR — one rate for the whole gap, chosen
+    #                   by where the pair is centred. What the page does, and what the 99-year
+    #                   panel does with lease starts.
+    #        piecewise: the band is a property of the CALENDAR YEAR — each year of the gap
+    #                   priced at its own band and summed. Fitted here as a two-regressor least
+    #                   squares through the origin, which is exactly his arithmetic.
+    #      They predict the same. What separates them is that only one has a boundary that
+    #      holds still — see the knot bootstrap below.
+    def split_years(r, k):
+        lo, hi = r['top_old'], r['top_new']
+        return max(0.0, min(hi, k) - lo), max(0.0, hi - max(lo, k))
+
+    def fit_pw(rr, k):
+        s11 = s12 = s22 = t1 = t2 = 0.0
+        for r in rr:
+            x1, x2 = split_years(r, k)
+            s11 += x1*x1; s12 += x1*x2; s22 += x2*x2; t1 += x1*r['diff']; t2 += x2*r['diff']
+        det = s11*s22 - s12*s12
+        return ((s22*t1 - s12*t2)/det, (s11*t2 - s12*t1)/det) if abs(det) > 1e-9 else (None, None)
+
+    def sse_pw(rr, k):
+        b1, b2 = fit_pw(rr, k)
+        if b1 is None: return None
+        return sum((r['diff'] - b1*split_years(r, k)[0] - b2*split_years(r, k)[1])**2 for r in rr)
+
+    def knot(rr, hi_y=2022):
+        b = None
+        for k in range(1998, hi_y):
+            e = sse_pw(rr, k)
+            if e and (b is None or e < b[0]): b = (e, k)
+        return b[1] if b else None
+
+    pw1, pw2_ = fit_pw(rows, BB)
+    # THE RUNAWAY. Move the knot right and the newer rate climbs without limit while the fit
+    # keeps improving. That is a model absorbing a TREND, not locating a BREAK — and it is the
+    # reason the page does not adopt this form.
+    ladder = [[k, fit_pw(rows, k)[1], sse_pw(rows, k)] for k in (BB, BB+3, BB+6, BB+9, BB+11)]
+    g3 = random.Random(5); kf = collections.Counter()
+    for _ in range(400):
+        smp = [x for _ in ps2 for x in byp2[ps2[g3.randrange(len(ps2))]]]
+        kk = knot(smp)
+        if kk: kf[kk] += 1
+    kt = sum(kf.values()) or 1
+
+    # PAIRED held-out: the SAME folds scored by both models, so the comparison is not two
+    # independent noisy averages set against each other.
+    def paired(shA, shB, folds=600, seed=23):
+        g4 = random.Random(seed); pl = sorted(pairs); d = []; win = 0
+        for _ in range(folds):
+            te_p = set(g4.sample(pl, max(1, len(pl)//5)))
+            tr = [r for r in rows if (r['older'], r['newer']) not in te_p]
+            te = [r for r in rows if (r['older'], r['newer']) in te_p]
+            if len(tr) < 10 or not te: continue
+            pa, pb = shA(tr), shB(tr)
+            if pa is None or pb is None: continue
+            ea = math.sqrt(sum((r['diff'] - pa(r))**2 for r in te)/len(te))
+            eb = math.sqrt(sum((r['diff'] - pb(r))**2 for r in te)/len(te))
+            d.append(ea - eb); win += (ea < eb)
+        # A THIN WINDOW SCORES NOTHING. The 12-month cut cannot fit both sides of the band in
+        # a training fold, so shape_band returns None every time and there is no comparison to
+        # report. Say so with a None rather than dividing by zero.
+        if not d: return (None, None, None, None, 0)
+        d.sort()
+        return (sum(d)/len(d), d[int(.025*len(d))], d[int(.975*len(d))-1], win/len(d), len(d))
+
+    def sh_pw_fixed(tr):
+        b1, b2 = fit_pw(tr, BB)
+        return None if b1 is None else (lambda r: b1*split_years(r, BB)[0] + b2*split_years(r, BB)[1])
+    pm, plo_, phi_, pwin, pn = paired(shape_band(BB), sh_pw_fixed)
+
+    # WHERE IT MATTERS. The two forms agree on most cells; the question only bites on a gap
+    # that spans the boundary, and it bites hardest on a long one.
+    def diverge(r):
+        a, b = split_years(r, BB)
+        mid_ = (fitted([x for x in rows if x['mid'] >= BB]) if r['mid'] >= BB
+                else fitted([x for x in rows if x['mid'] < BB])) * r['gap']
+        return abs(mid_ - (pw1*a + pw2_*b))
+    wide = [r for r in rows if r['mid'] >= BB and r['top_old'] < BB and r['gap'] >= 15]
+    ev['form'] = dict(
+        bound=BB, pw_pre=pw1, pw_post=pw2_,
+        straddle=sum(1 for r in rows if r['top_old'] < BB < r['top_new']),
+        straddle_pairs=len({(r['older'], r['newer']) for r in rows
+                            if r['top_old'] < BB < r['top_new']}),
+        knot_best=knot(rows), knot_share=max(kf.values())/kt if kf else 0,
+        knot_mode=kf.most_common(1)[0][0] if kf else None,
+        ladder=ladder,
+        paired=dict(mean=pm, lo=plo_, hi=phi_, win=pwin, folds=pn),
+        diverge_small=sum(1 for r in rows if diverge(r) < 50),
+        diverge_big=sum(1 for r in rows if diverge(r) >= 150),
+        wide=[dict(older=r['older'], newer=r['newer'], top_old=r['top_old'],
+                   top_new=r['top_new'], gap=r['gap'], bed=r['bed'], actual=r['diff'],
+                   mid=(fitted([x for x in rows if x['mid'] >= BB]) if r['mid'] >= BB
+                        else fitted([x for x in rows if x['mid'] < BB])) * r['gap'],
+                   pw=pw1*split_years(r, BB)[0] + pw2_*split_years(r, BB)[1])
+              for r in sorted(wide, key=lambda r: -r['gap'])],
+        wide_pairs=len({(r['older'], r['newer']) for r in wide}))
+    if pm is None:
+        ev['form'] = None                     # nothing to say on a window this thin
+        print(f'\n  MIDPOINT OR PIECEWISE? — window too thin to score')
+    else:
+        print(f'\n  MIDPOINT OR PIECEWISE?  piecewise reads ${pw1:.1f} / ${pw2_:.1f} at knot {BB}')
+        print(f'    paired held-out, midpoint minus piecewise: ${pm:+,.1f}  '
+              f'95% ${plo_:+,.1f}..${phi_:+,.1f}  (midpoint ahead on {pwin:.0%} of {pn} folds)')
+        print(f'    piecewise knot: best {knot(rows)}, modal resample {kf.most_common(1)[0][0]} '
+              f'at {max(kf.values())/kt:.0%} — NOT identified')
+        print(f'    newer rate as the knot moves: ' +
+              '  '.join(f'{k}:${v:.0f}' for k, v, _ in ladder))
+        print(f'    cells where the two forms differ by $150+: '
+              f'{ev["form"]["diverge_big"]} of {len(rows)}')
+
+    #  (f) the honest race — the boundary re-searched inside every training fold
     ev['race_honest'] = {
         'no age term at all (zero)': holdout(rows, shape_zero),
         f'FLAT — one rate ${a:,.1f}/yr': holdout(rows, shape_flat),

@@ -275,8 +275,10 @@ print(f'freehold universe: {len(P)} developments   rejected: '
       + ', '.join(f'{v} {k}' for k, v in rejected.most_common(5)))
 
 OUT = {}
+WINDOWS_CUT = {}
 for W in WINDOWS:
     cut_mo, rows = build(W)
+    WINDOWS_CUT[W] = cut_mo
     if not rows:
         print(f'\n{W}m: no pairs'); continue
     pairs = {(r['older'], r['newer']) for r in rows}
@@ -335,7 +337,9 @@ for W in WINDOWS:
                        race={l: e for l, e in race},
                        rows=rows)
 
-OUT['meta'] = dict(last=LAST, lease_bands=LB, construction_years=CONSTRUCTION_YEARS,
+# The window the freshness gate reads, so this JSON is pinned to cut.py like the other five.
+OUT['meta'] = dict(window=[WINDOWS_CUT.get(24, LAST), LAST],
+                   last=LAST, lease_bands=LB, construction_years=CONSTRUCTION_YEARS,
                    screens=dict(radius_m=RADIUS_M, min_units=MIN_UNITS, min_n=MIN_N,
                                 size_tol=SIZE_TOL, min_gap_years=MIN_GAP_YEARS),
                    universe=len(P))

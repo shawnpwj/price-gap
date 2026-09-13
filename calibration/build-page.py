@@ -42,6 +42,11 @@ TENP = os.path.join(HERE, 'tenure-pairs.json')
 T    = json.load(open(TENP)) if os.path.exists(TENP) else None
 ECP  = os.path.join(HERE, 'ec-pairs.json')
 E    = json.load(open(ECP)) if os.path.exists(ECP) else None
+# FREEHOLD-vs-FREEHOLD. The same exercise on the only clock two freeholds share — COMPLETION.
+# Separate constant, separate panel: "Lease Difference (FH)" beside "Lease Difference (99 Years)"
+# (Shawn, 2026-09-13). age-pairs.py writes it.
+AGEP = os.path.join(HERE, 'age-pairs.json')
+A    = json.load(open(AGEP)) if os.path.exists(AGEP) else None
 ALL  = D['24']                       # 24 months. No gap screen.
 POOL = D.get('pooled24', [])
 
@@ -1850,6 +1855,75 @@ TENS_JS = '[' + ','.join(f'[{g["min_left"]},{g["pct"]:.5f},"{g["label"]}"]'
 BANDS_JS = '[' + ','.join(f'[{hi},{BANDR[nm]:.2f},"{nm}"]' for _, hi, nm in BANDS) + ']'
 A1, A2 = age_label(OLD_NM); B1, B2 = age_label(NEW_NM)
 
+# ── FREEHOLD vs FREEHOLD — the price of a year of COMPLETION ────────────────
+# The lease study prices a year of LEASE START between two leaseholds, and that figure bundles
+# two things: the building got newer AND the lease got longer. Between two freeholds there is no
+# lease to lengthen, so what is left is the pure price of a newer building. Same methodology,
+# different clock — completion, the only one both sides share.
+AG    = A['24'] if A else None
+AGR   = AG['rows'] if AG else []
+AGRATE = AG['rate'] if AG else 0
+AGBAND = (AG.get('best_band') or {}) if AG else {}
+
+def age_gap_table():
+    """What the rate reads inside each gap band. AN OUTPUT, NEVER A SCREEN — the estimator is
+    one slope through every cell, not the average of this column."""
+    if not AGR: return ''
+    r = ['<table class="fig"><thead><tr><th>Completion gap</th><th class="num">cells</th>'
+         '<th class="num">pairs</th><th class="num">reads</th>'
+         '<th class="num">median cell</th></tr></thead><tbody>']
+    for label, g0, g1 in (('1&ndash;4 years', 1, 5), ('5&ndash;9 years', 5, 10),
+                          ('10&ndash;19 years', 10, 20), ('20 years and over', 20, 999)):
+        sel = [x for x in AGR if g0 <= x['gap'] < g1]
+        if len(sel) < 5:
+            r.append(f'<tr><th>{label}</th><td class="num quiet">{len(sel)}</td>'
+                     f'<td class="num quiet">&mdash;</td>'
+                     f'<td class="num quiet" colspan="2">too thin to read</td></tr>')
+            continue
+        r.append(f'<tr><th>{label}</th><td class="num quiet">{len(sel)}</td>'
+                 f'<td class="num quiet">{npairs(sel)}</td>'
+                 f'<td class="num big">${fitted_age(sel):,.0f}</td>'
+                 f'<td class="num quiet">${st.median([x["per_yr"] for x in sel]):,.0f}</td></tr>')
+    return ''.join(r) + '</tbody></table>'
+
+def fitted_age(rows):
+    """lease-pairs.py's estimator: least squares through the origin, sum(diff x gap)/sum(gap^2).
+    Not the mean of the per-cell column, which the one-year cells dominate."""
+    num = sum(x['diff'] * x['gap'] for x in rows)
+    den = sum(x['gap'] ** 2 for x in rows)
+    return num / den if den else 0
+
+def age_race_table():
+    """The shape horse race, held-out RMSE, lower is better. The page shows it because the
+    winner is NOT the figure on the face and a reader is owed that."""
+    if not AG: return ''
+    r = ['<table class="fig"><thead><tr><th>Shape</th>'
+         '<th class="num">average miss</th></tr></thead><tbody>']
+    race = sorted(((l, e) for l, e in AG['race'].items() if e is not None), key=lambda x: x[1])
+    for label, e in race:
+        big = 'big' if label.startswith('FLAT') else 'quiet'
+        r.append(f'<tr><th>{html.escape(label)}</th>'
+                 f'<td class="num {big}">${e:,.0f}</td></tr>')
+    return ''.join(r) + '</tbody></table>'
+
+def age_pair_table():
+    """Every cell tied back to the headline, closest to the fitted rate first (Shawn's ordering
+    ruling on the lease panel, applied here for the same reason)."""
+    if not AGR: return ''
+    rows = sorted(AGR, key=lambda x: abs(x['per_yr'] - AGRATE))
+    r = ['<table class="fig pairs"><thead><tr><th>Older</th><th>Newer</th>'
+         '<th class="num">apart</th><th></th><th class="num">completion</th>'
+         '<th class="num">gap</th><th class="num">psf difference</th>'
+         '<th class="num">per year</th></tr></thead><tbody>']
+    for x in rows:
+        r.append(f'<tr><td>{_nm(x["older"])}</td><td>{_nm(x["newer"])}</td>'
+                 f'<td class="num quiet">{x["metres"]}m</td><td class="quiet">{x["bed"]}</td>'
+                 f'<td class="num quiet">{x["top_old"]}&rarr;{x["top_new"]}</td>'
+                 f'<td class="num quiet">{x["gap"]} yr</td>'
+                 f'<td class="num quiet">${x["diff"]:,.0f}</td>'
+                 f'<td class="num">${x["per_yr"]:,.0f}</td></tr>')
+    return ''.join(r) + '</tbody></table>'
+
 QDATA = []
 PAIRTABLE = pairtable()          # populates QDATA — must run before any template
 QJSON = json.dumps(QDATA, separators=(',', ':'))
@@ -1863,8 +1937,12 @@ on one screen; every figure below has a panel of its own.</p>
 
 <section>
   <div class="scroll"><table class="fig"><thead><tr><th>Term</th><th class="num">Constant</th><th>Measured</th></tr></thead><tbody>
-  <tr><th><a href="#lease">Lease &mdash; how new the building is</a></th><td class="num big">$40 psf / yr</td>
+  <tr><th><a href="#lease">Lease difference (99 years) &mdash; a year of lease start</a></th><td class="num big">$40 psf / yr</td>
     <td style="color:var(--gold-soft)">${BANDR[OLD_NM]:,.0f} and ${BANDR[NEW_NM]:,.0f}, by midpoint</td></tr>
+  <tr><th><a href="#fhage">Lease difference (FH) &mdash; a year of completion</a></th>
+    <td class="num big">the same $40</td>
+    <td style="color:var(--gold-soft)">${AGRATE:,.0f} between two freeholds
+    (${AG['lo']:,.0f} to ${AG['hi']:,.0f}) &mdash; less than half the leasehold rate</td></tr>
   <tr><th><a href="#tenure">Tenure &middot; freehold vs leasehold</a></th><td class="num big">&divide; 1.15</td>
     <td style="color:var(--gold-soft)">+{THP['p']*100:.0f}% on average, and
     +{TGL[0]['pct']*100:.0f}% to +{TGL[-1]['pct']*100:.0f}% by the lease left</td></tr>
@@ -2005,6 +2083,108 @@ the first one measured against the market.</p>
   </details>
 </section>
 
+</div>
+
+<div class="panel" data-p="fhage" hidden>
+<h1 class="disp">What a year of completion is worth between two freeholds</h1>
+<p class="lede">The lease study prices a year of <b>lease start</b> between two leaseholds, and
+that figure necessarily bundles two things that move together: the building got newer, and the
+lease got longer. Between two freeholds there is no lease to lengthen. What is left is the price
+of a newer building &mdash; on the only clock both sides share, <b>completion</b>.</p>
+
+{hero('$' + str(round(BANDR[OLD_NM])) + ' / $' + str(round(BANDR[NEW_NM])),
+      'lease bands, read on the TOP clock',
+      [(f'${AGRATE:,.0f}', 'a year of completion', ndev(AGR), ntx(AGR))],
+      f'Less than half the leasehold rate. A freehold pair is not a lease pair, and the engine '
+      f'prices it as though it were.')}
+
+<section>
+  <div class="sechead"><h2 class="disp">How to use it</h2></div>
+  <div class="steps">
+    <div class="step"><span class="sn">1</span>
+      <p>Both sides <b>freehold</b> &mdash; 999-year counts as freehold. If either side is
+      leasehold this is the wrong figure; use the 99-year panel.</p></div>
+    <div class="step"><span class="sn">2</span>
+      <p>Difference the two <b>completion years</b>, not the lease starts. A freehold has no
+      lease start to difference against.</p></div>
+    <div class="step"><span class="sn">3</span>
+      <p>Multiply the gap by <b>${AGRATE:,.0f}</b> and add to the comparable's psf.</p></div>
+  </div>
+  <p class="expl">Flat, one rate, no bands &mdash; unlike the 99-year figure. The band question
+  is answered below and the answer is that it is <b>not settled</b>, so the face carries the
+  level, which is.</p>
+</section>
+
+<section>
+  <div class="sechead"><h2 class="disp">The measurement</h2>
+  <p><b>{ndev(AGR)} developments &middot; {npairs(AGR)} pairs &middot; {len(AGR)} comparisons,
+  resting on {ntx(AGR):,} transactions.</b> Every freehold paired with a freehold neighbour
+  within {A['meta']['screens']['radius_m']}&thinsp;m on the same station, matched bedroom by
+  bedroom on sizes within {A['meta']['screens']['size_tol']:.0%}, across 24 months of resale and
+  sub-sale to {cut.CUT_END}. Identical screens to the 99-year study; ECs cannot appear on either
+  side, because an EC is leasehold.</p></div>
+  <div class="scroll">{age_gap_table()}</div>
+  <p class="expl">The rate is <b>one slope through every cell</b>, not the average of that last
+  column. A short gap divides a small price difference by a small number and throws out a large
+  one, and {sum(1 for x in AGR if x['gap'] <= 2) / len(AGR):.0%} of these cells are two years
+  apart or less &mdash; which is why the median column runs above the fitted rate in the shortest
+  band and the estimator does not use it. Read across the bands and there is <b>no trend</b>:
+  ${min(fitted_age([x for x in AGR if g0 <= x['gap'] < g1]) for g0, g1 in ((1,5),(5,10),(10,20),(20,999))):,.0f}
+  to ${max(fitted_age([x for x in AGR if g0 <= x['gap'] < g1]) for g0, g1 in ((1,5),(5,10),(10,20),(20,999))):,.0f}
+  with the long band in the middle of it, on {npairs([x for x in AGR if x['gap'] >= 20])} pairs.
+  A flat rate is what that shape asks for.</p>
+</section>
+
+<section>
+  <div class="sechead"><h2 class="disp">Behind it</h2>
+  <p>Three questions, answered once each.</p></div>
+
+  <details><summary>Is the pairing doing the work instead of the gap?</summary>
+    <p class="expl">Two freeholds completed the same year, next door, matched on bedroom and
+    size, should cost the same. Fit the line with an intercept and that is what the intercept
+    tests. It reads <b>${A['24']['intercept']:,.0f}</b> against a standard error of
+    ${A['24']['intercept_se']:,.0f} &mdash; t&thinsp;=&thinsp;{A['24']['intercept']/A['24']['intercept_se']:+.2f},
+    <b>indistinguishable from zero</b>. The gap is doing the work.</p>
+  </details>
+
+  <details><summary>Does the 99-year study's two-band shape hold here?</summary>
+    <p class="expl"><b>Something is there, but it is not settled and the page does not use it.</b>
+    Searching every boundary from 1995 to 2018, the best split lands at
+    <b>{AGBAND.get('bound')}</b> &mdash; ${AGBAND.get('pre',0):,.0f} a year before it,
+    ${AGBAND.get('post',0):,.0f} after &mdash; and it does predict better than a flat rate.
+    But the post side rests on <b>{AGBAND.get('n_post')} cells</b> against
+    {AGBAND.get('n_pre')} before it, and the boundary was found by searching for it. That is
+    the shape of a figure that moves when the next cut arrives.</p>
+    <p class="expl">Note the boundary is <b>not</b> the 99-year study's. That one splits on a
+    2011 lease start, which is a {A['meta']['construction_years']}-year build gap from a
+    {2011 + A['meta']['construction_years']} completion &mdash; four years later than what the
+    freehold pairs find. Two different boundaries, not one shared vintage effect.</p>
+    <div class="scroll">{age_race_table()}</div>
+    <p class="expl">Held-out error, split by pair, 200 folds. Read it as the average dollars a
+    shape misses a cell by. <b>The engine's shape &mdash; lease bands on the TOP clock &mdash;
+    is beaten by a single flat rate</b>, which is the finding this panel exists to report.</p>
+  </details>
+
+  <details><summary>Why not just use the 99-year figure?</summary>
+    <p class="expl">Because it is {(BANDR[NEW_NM] / AGRATE):.1f} times too big on the newer band
+    and {(BANDR[OLD_NM] / AGRATE):.1f} times on the older one. A leasehold pair twenty years
+    apart is priced for twenty years of building age <em>and</em> twenty years of lease. A
+    freehold pair twenty years apart is priced for the building alone, and the market pays
+    ${AGRATE:,.0f} a year for it. Applying ${BANDR[NEW_NM]:,.0f} to a freehold comparable
+    twenty years off the subject overstates the correction by roughly
+    ${(BANDR[NEW_NM] - AGRATE) * 20:,.0f} psf.</p>
+  </details>
+</section>
+
+<section>
+  <div class="sechead"><h2 class="disp">Every pair, tied back to the headline</h2>
+  <p>All {len(AGR)} comparisons, the ones sitting closest to ${AGRATE:,.0f} first.</p></div>
+  <div class="scroll">{age_pair_table()}</div>
+</section>
+
+<div class="caveat" style="margin-top:18px"><b>Measured, not adopted.</b> Nothing on this panel
+is wired to the engine. The Price Gap workup still restates a freehold comparable with the
+99-year bands; changing that is a separate decision.</div>
 </div>
 
 <div class="panel" data-p="mrt" hidden>
@@ -2516,8 +2696,11 @@ HTML = f"""<!doctype html>
     <button type="button" class="done" data-go="summary" aria-current="true">
       <span class="tn">Summary</span></button>
     <button type="button" class="done" data-go="lease">
-      <span class="tn">Lease Difference</span>
+      <span class="tn">Lease Difference (99 Years)</span>
       <span class="ts">${BANDR[OLD_NM]:,.0f} / ${BANDR[NEW_NM]:,.0f} a year</span></button>
+    <button type="button" class="done" data-go="fhage">
+      <span class="tn">Lease Difference (FH)</span>
+      <span class="ts">${AGRATE:,.0f} a year of completion</span></button>
     <button type="button" class="done" data-go="mrt">
       <span class="tn">MRT Distance</span>
       <span class="ts">${M['bands'][0]['adj']:,.0f} / ${M['bands'][1]['adj']:,.0f} /

@@ -28,7 +28,7 @@ FLOOR = os.path.join(HERE, '..', '..', 'launch-picker', 'floor-study', 'data')
 # Which JSONs are cut against psf-history and must end exactly at the pin. void-pairs reads the
 # floor study's static REALIS pull, which no crawl touches, so it carries its own window.
 PINNED = ['lease-pairs.json', 'mrt-pairs.json', 'integrated-pairs.json',
-          'tenure-pairs.json', 'ec-pairs.json']
+          'tenure-pairs.json', 'ec-pairs.json', 'age-pairs.json']
 LOOSE  = {'void-pairs.json': [os.path.join(FLOOR, f) for f in
                               ('realis-newsale-all-sg.json', 'realis-resale-all-sg.json')]}
 

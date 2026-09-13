@@ -97,7 +97,7 @@ function packSide(r: any, S: any, bed: string) {
 function setMeta(K: Constants) {
   return {
     key: K.key, label: K.label, blurb: K.blurb,
-    lease: K.leaseRateLabel, ageFH: K.ageRateFH, tenure: K.tenureLabel,
+    lease: K.leaseRateLabel, ageFH: K.ageRateFHLabel, tenure: K.tenureLabel,
     mrtCuts: K.mrtBandCutLabel, mrt: K.mrtBandPsf,
     harmonisation: K.harmonisationUplift, integrated: K.integratedPremium,
   };
@@ -116,13 +116,29 @@ function setMeta(K: Constants) {
 // unit-count scenarios (Chuan Grove is 550 units at $3,014 and 505 at $2,941), take the row
 // with MORE units. The range always travels with the figure — Chuan Grove's own spread is
 // $2,763-$3,266, which against The Scala is the difference between +39% and +68%.
-const UPCOMING_RADIUS_M = 1000;
+// THE FOURTH PILLAR REACHES AS FAR AS THE COMPARABLES DO (Shawn, 2026-09-13: "with thomson
+// impression, you compare with thomson reserve as a fourth pillar right? i want that
+// THROUGHOUT"). At 1,000 m it appeared on only 568 of 1,805 developments — a third — because
+// the comparable ladder walks out to 2,000 m and this did not follow it. Matching MAX_RADIUS_M
+// is the whole fix: the pillar is context, never part of the gap, so a wider reach costs
+// nothing but shows the upcoming launch that a 1,600 m comparable already implied was relevant.
+const UPCOMING_RADIUS_M = 2000;
 
 function upcomingNear(lat: number, lng: number, glsArr: any[], subjectPsf: number | null,
-                      data?: any, K?: any, S?: any) {
+                      data?: any, K?: any, S?: any, subjName?: string) {
   const best = new Map<string, any>();
+  // A DEVELOPMENT IS NOT ITS OWN FOURTH PILLAR (2026-09-13). Every GLS-only subject was
+  // listing ITSELF at 0 m, restated onto its own terms — THE SERRA RESIDENCES showed
+  // "$3,150 -> $4,462", the projected price marked up by a tenure premium and twenty years
+  // of vintage against itself. The subject is a sheet row like any other, so the panel had
+  // no reason to skip it until it was told to.
+  const selfKeys = new Set([S?.name, subjName].filter(Boolean)
+    .map((x: any) => String(x).toUpperCase().replace(/[^A-Z0-9]/g, "")));
+  const isSelf = (g: any) => [g.devName, g.displayName, g.siteName].filter(Boolean)
+    .some((x: any) => selfKeys.has(String(x).toUpperCase().replace(/[^A-Z0-9]/g, "")));
   for (const g of glsArr) {
     if (!g?.projectedPsf?.avg || !g.lat || g.launched) continue;
+    if (isSelf(g)) continue;
     if (haversine(lat, lng, g.lat, g.lng) > UPCOMING_RADIUS_M) continue;
     const key = String(g.siteName || g.displayName).toUpperCase().trim();
     const prev = best.get(key);
@@ -279,13 +295,24 @@ async function main() {
     // date, launch year minus one is the working estimate and is flagged as one — it moves
     // the vintage term by a single year, which is $43 psf at the measured rate.
     const awardYear = awardYearOf(site);
-    if (!awardYear) continue;
+    // AN EXPLICIT TENURE BEATS THE INFERRED ONE (2026-09-13). "99 years from award" is a sound
+    // default for GOVERNMENT land and wrong for everything else, and the sheet now carries
+    // collective-sale rows — The Serra Residences is FREEHOLD on land bought en bloc in 2010, so
+    // the default booked it as a 16-year-old leasehold and put ~$677 psf of vintage adjustment
+    // on every comparable in the wrong direction. The second override block above already
+    // deferred to a hand-set tenure; this one overwrote it unconditionally, which is why an
+    // override alone could not rescue such a site. gls-forward has no tenure field of its own
+    // (the sheet has no tenure column), so pricegap-overrides.json is the only place to say it.
+    const ovTenure = data.overrides[gname]?.tenure;
+    if (!awardYear && !ovTenure) continue;
     data.overrides[gname] = {
       ...(data.overrides[gname] || {}),
-      tenure: { raw: `99 yrs lease commencing from ${awardYear}`, type: "LH", years: 99, leaseStart: awardYear },
+      tenure: ovTenure
+        ?? { raw: `99 yrs lease commencing from ${awardYear}`, type: "LH", years: 99, leaseStart: awardYear },
       units: site.units ?? null,
-      top: undefined,
-      _glsOnly: true, _awardEstimated: !String(site.awardDate || "").match(/\b20\d{2}\b/),
+      top: data.overrides[gname]?.top,
+      _glsOnly: true,
+      _awardEstimated: !ovTenure && !String(site.awardDate || "").match(/\b20\d{2}\b/),
     };
     glsOnly.push({ project: gname, street: site.siteName || site.location || "", district: "",
                    region: site.region || "", lat: site.lat, lng: site.lng, _gls: true });
@@ -341,12 +368,12 @@ async function main() {
       top: S0.top?.year ?? null, topEst: S0.top?.estimated ? 1 : undefined,
       u: S0.units ?? null, int: S0.integrated ? 1 : undefined,
       mrt: { s: S0.mrt.station, m: S0.mrt.metres, min: S0.mrt.minutes },
-      // FYI ONLY — projected launch prices for sites within 1 km that have sold nothing yet.
-      // Compared against this development's own psf. Never read by the gap.
+      // FYI ONLY — projected launch prices for sites within MAX_RADIUS_M that have sold
+      // nothing yet. Compared against this development's own psf. Never read by the gap.
       up: (() => {
         // against the development's own ALL-bedroom psf — the headline a reader is looking at
         const own = (beds as any)?.All?.psf ?? null;
-        const u = upcomingNear(node.lat, node.lng, data.glsArr ?? [], own, data, K, S0);
+        const u = upcomingNear(node.lat, node.lng, data.glsArr ?? [], own, data, K, S0, name);
         return u.length ? u : undefined;
       })(),
       beds,

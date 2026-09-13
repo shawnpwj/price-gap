@@ -53,7 +53,15 @@ export const MIN_MONTHS_IN_WINDOW = 2;
 // adds a single project the 1.5 km ring did not already contain (they sit INSIDE it, Amo
 // being 562 m from the station), so the honest form of the idea is not a different anchor
 // but a wider ring when the tight one is short.
-export const RADIUS_LADDER = [1000, 1500, 2000];
+// SHAWN'S SELECTION RULE, 2026-09-13: "DISTANCE > LEASE TYPE > EXTEND DISTANCE > LEASE TYPE".
+// Distance still wins — but WITHIN a rung, a same-tenure comparable is taken ahead of an
+// opposite-tenure one, and only when the rung cannot fill up does it widen. The 500 m rung is
+// new and is what makes the rule bite: at the old first rung of 1,000 m almost everything was
+// already in the net, so a tenure preference inside it would have been a re-rank of the whole
+// pool rather than the tight next-door read he is describing. This does NOT reinstate the
+// comparability ranking retired on 2026-09-10 — inside a tenure class the order is still pure
+// distance, and tenure never overrides a nearer rung.
+export const RADIUS_LADDER = [500, 1000, 1500, 2000];
 export const MAX_RADIUS_M = RADIUS_LADDER[RADIUS_LADDER.length - 1];
 // How many comparables the ladder is trying to reach before it stops widening.
 export const TARGET_COMPS = 3;
@@ -118,7 +126,15 @@ export interface Constants {
   // a pair straddling a band boundary need no decision (calibration §3).
   leaseRate: (midpointYear: number) => number;
   leaseRateLabel: string;
-  ageRateFH: number;                       // freehold-vs-freehold, $/yr of TOP difference
+  // Freehold-vs-freehold age, $/psf per year of TOP difference, read at the MIDPOINT of the
+  // two completion years — the same midpoint device as leaseRate, for the same reason.
+  // MEASURED SEPARATELY FROM THE LEASE RATE (age-pairs.json, 2026-09-13) because between two
+  // freeholds there is no lease to lengthen: what is left is the price of a newer building
+  // alone. That is roughly HALF the lease rate on older stock ($13 vs $25) and nearly the same
+  // on new ($36 vs $42) — which is the signature of lease decay, present in one and absent in
+  // the other, and it is why the lease rate must not be borrowed for this case.
+  ageRateFH: (midpointTopYear: number) => number;
+  ageRateFHLabel: string;
   // Tenure, applied AFTER vintage, as a proportion of the running subtotal.
   // `leaseLeft` is the leasehold side's remaining years where it is known.
   tenurePremium: (leaseLeft: number | null) => number;
@@ -150,7 +166,8 @@ export const JUDGEMENT: Constants = {
   blurb: "What the engine charged before the calibration study. Retired 2026-09-09; kept as the record of what was replaced.",
   leaseRate: () => 40,
   leaseRateLabel: "$40 psf per year, flat",
-  ageRateFH: 10,
+  ageRateFH: () => 10,
+  ageRateFHLabel: "$10 psf per year, flat",
   tenurePremium: () => 0.15,
   tenureLabel: "divide by 1.15",
   mrtBandOf: (m) => {
@@ -174,8 +191,9 @@ export const loadConstants = () => loadMeasured();
 
 export async function loadMeasured(): Promise<Constants> {
   const C = (f: string) => path.join(ROOT, "calibration", f);
-  const [lease, mrt, tenure, integ] = await Promise.all(
-    ["lease-pairs.json", "mrt-pairs.json", "tenure-pairs.json", "integrated-pairs.json"]
+  const [lease, mrt, tenure, integ, age] = await Promise.all(
+    ["lease-pairs.json", "mrt-pairs.json", "tenure-pairs.json", "integrated-pairs.json",
+     "age-pairs.json"]
       .map(async (f) => JSON.parse(await fs.readFile(C(f), "utf8")))
   );
   // Lease: two bands read at the MIDPOINT of the two lease starts (calibration §3).
@@ -204,6 +222,12 @@ export async function loadMeasured(): Promise<Constants> {
   // integrated-pairs.py now sets `headline` on exactly one cut; falling back to the last is
   // kept only so an older JSON still loads.
   const cut = (integ.cuts as any[]).find((c) => c.headline) ?? (integ.cuts as any[]).slice(-1)[0];
+  // Age: the 24-month window is the headline, exactly as it is on lease. `best_band` is the
+  // split the held-out race picked; if a future re-cut cannot identify one, fall back to the
+  // flat rate rather than inventing a boundary.
+  const A24 = age["24"];
+  const ageBound = A24?.best_band?.bound ?? Infinity;
+  const ageBands = { pre: A24?.best_band?.pre ?? A24.rate, post: A24?.best_band?.post ?? A24.rate };
 
   return {
     key: "measured",
@@ -211,8 +235,14 @@ export async function loadMeasured(): Promise<Constants> {
     blurb: "Each figure fitted against matched pairs of real neighbouring projects. Adopted on Shawn's audit, 2026-09-09.",
     leaseRate: (mid) => (mid >= bound ? bands.new : bands.old),
     leaseRateLabel: `$${Math.round(bands.old)} / $${Math.round(bands.new)} psf per year, by the midpoint of the two lease starts (${bound} boundary)`,
-    // Freehold-vs-freehold age, measured alongside the tenure fit.
-    ageRateFH: tenure.fh_age_rate as number,
+    // Freehold-vs-freehold age — the two bands from age-pairs.json, read at the TOP midpoint.
+    // Adopted on Shawn's ruling, 2026-09-13, replacing the flat $19.5 that tenure-pairs.py
+    // fitted as a by-product of its placebo. THE POST-BAND IS THIN: 15 pairs, and it moves
+    // $25->$40 depending where the split is drawn, so the page must carry that caveat. The
+    // PRE-band is the robust half — $12.9 to $14.2 whatever boundary is chosen.
+    ageRateFH: (mid) => (mid >= ageBound ? ageBands.post : ageBands.pre),
+    ageRateFHLabel: `$${Math.round(ageBands.pre)} / $${Math.round(ageBands.post)} psf per year, `
+      + `by the midpoint of the two completion years (${ageBound} boundary)`,
     tenurePremium: (leaseLeft) => {
       if (leaseLeft == null) return headline;
       for (const g of grad) if (leaseLeft >= g.minLeft) return g.pct;
@@ -347,7 +377,22 @@ export async function loadData(): Promise<Data> {
         if (!codes.length) return true;          // no codes recorded — keep it rather than guess
         return !codes.every((c) => LRT_LINES.has(String(c).replace(/[^A-Za-z]/g, "").toUpperCase()));
       }),
-    overrides: JSON.parse(overrideRaw),
+    // CASE-INSENSITIVE (2026-09-13). Entries are keyed as they appear in dsi-index, which is
+    // UPPERCASE — but a GLS-only subject is keyed on the sheet's displayName ("The Serra
+    // Residences"), so an override written either way silently missed. Both spellings now
+    // resolve, and the same entry keeps working when a launch starts transacting and its
+    // dsi-index name takes over. Later duplicates lose to the first, so a stray second casing
+    // cannot quietly replace a real entry.
+    overrides: new Proxy(JSON.parse(overrideRaw), {
+      get(t, k) {
+        if (typeof k !== "string" || k in t) return (t as any)[k];
+        const want = k.toUpperCase();
+        for (const kk of Object.keys(t)) if (kk.toUpperCase() === want) return (t as any)[kk];
+        return undefined;
+      },
+      has(t, k) { return typeof k === "string"
+        ? Object.keys(t).some((kk) => kk.toUpperCase() === k.toUpperCase()) : k in t; },
+    }),
     details: JSON.parse(detailRaw).projects,
     // KEYED ON devName OR displayName (Shawn, 2026-09-10). 41 of the sheet's 83 sites carry
     // devName: "" — the parcel is awarded but the developer has not named the project yet —
@@ -518,13 +563,26 @@ function screenAt(data: Data, S: any, bed: string, candidates: ReturnType<typeof
     S.tenure?.type === "LH" && c.tenure?.type === "LH" &&
     S.tenure.leaseStart != null && c.tenure.leaseStart != null &&
     Math.abs(S.tenure.leaseStart - c.tenure.leaseStart) > LEASE_GAP_EXCLUDE_YEARS;
+  // Pass 2c — THE MIXED PAIR, which had no screen at all until 2026-09-13. `tooOld` needs the
+  // COMPARABLE to be freehold and `tooFarLease` needs the SUBJECT to be leasehold, so a
+  // FREEHOLD subject with LEASEHOLD comparables fell between them and was screened on nothing.
+  // THE SERRA RESIDENCES is the case that found it: a 2030 freehold kept OLEANDER TOWERS, TOP
+  // 1998, thirty-two years older, needing $1,355 psf added to a $1,597 base — 85% of the
+  // comparable's own price manufactured by the ladder. This is the AMO RESIDENCE defect of
+  // 2026-09-09 with the tenures swapped; it was fixed on one diagonal and left open on the
+  // other. TOP is the clock because it is the only one a mixed pair shares — the same reason
+  // the vintage ADJUSTMENT uses it, so screening and adjusting agree. Same 15 years, same
+  // MIN_COMPS guard, same disclosure. (Shawn ruled the fix, 2026-09-13.)
+  const tooFarMixed = (c: any) =>
+    S.tenure && c.tenure && S.tenure.type !== c.tenure.type &&
+    S.top && c.top && Math.abs(S.top.year - c.top.year) > AGE_EXCLUDE_YEARS;
 
   const ageExcluded: any[] = [];
   const leaseExcluded: any[] = [];
   // Both screens together where the pool can afford it; the age screen alone where it
   // cannot; everything where even that is too thin. An imperfect comparable beats none,
   // and the tighter screen is the first thing to give way rather than the last.
-  const both = eligible.filter((c) => !tooOld(c) && !tooFarLease(c));
+  const both = eligible.filter((c) => !tooOld(c) && !tooFarLease(c) && !tooFarMixed(c));
   const ageOnly = eligible.filter((c) => !tooOld(c));
   const pool = both.length >= MIN_COMPS ? both : ageOnly.length >= MIN_COMPS ? ageOnly : eligible;
 
@@ -542,8 +600,24 @@ function screenAt(data: Data, S: any, bed: string, candidates: ReturnType<typeof
   // RANK BY DISTANCE. Everything above decides who is ELIGIBLE; this decides which three of
   // the eligible a development is judged against, and among candidates the screens have
   // already accepted, the nearest is the truest. (Shawn, 2026-09-10.)
-  const ranked = [...pool].sort((a, b) => comparability(S, a) - comparability(S, b));
-  return { rejected, eligible, pool: ranked, ageExcluded, leaseExcluded, radius, windowMonths };
+  const byDistance = [...pool].sort((a, b) => comparability(S, a) - comparability(S, b));
+  // TENURE PREFERENCE, INSIDE THE RING ONLY (Shawn, 2026-09-13). "DISTANCE > LEASE TYPE >
+  // EXTEND DISTANCE > LEASE TYPE": a like-for-like tenure is worth more than a few hundred
+  // metres, but never worth widening the ring for. So the same-tenure candidates in THIS ring
+  // are offered first, opposite-tenure ones fall in behind them, and each group stays in pure
+  // distance order. The ring only widens when the two groups together cannot fill it, which is
+  // what keeps this from re-opening the comparability ranking retired on 2026-09-10.
+  //
+  // It changes which comparables are USED, never which are eligible, and the cross-tenure
+  // adjustment is untouched — it simply fires less often, which is the point: the tenure
+  // premium is the largest single restatement the engine makes, so a workup that can avoid
+  // needing it is standing on less machinery. `sameTenureFirst` travels in the result so the
+  // page can say whether a workup got a like-for-like read or fell back.
+  const sameT = byDistance.filter((c) => c.tenure?.type && c.tenure.type === S.tenure?.type);
+  const otherT = byDistance.filter((c) => !(c.tenure?.type && c.tenure.type === S.tenure?.type));
+  const ranked = S.tenure?.type ? [...sameT, ...otherT] : byDistance;
+  return { rejected, eligible, pool: ranked, ageExcluded, leaseExcluded, radius, windowMonths,
+           sameTenure: sameT.length, crossTenure: otherT.length };
 }
 
 // Walk the radius ladder: take the tightest ring that yields TARGET_COMPS, and if none does,
@@ -629,7 +703,8 @@ export function adjust(K: Constants, S: any, pool: any[]) {
         { kind: "rate", yrs, rate, from: c.tenure.leaseStart, to: S.tenure.leaseStart,
           midpoint: K.key === "measured" ? Math.round(mid) : null, clock: "lease start" });
     } else if (S.top && c.top) {
-      const rate = bothFH ? K.ageRateFH : K.leaseRate((S.top.year + c.top.year) / 2);
+      const topMid = (S.top.year + c.top.year) / 2;
+      const rate = bothFH ? K.ageRateFH(topMid) : K.leaseRate(topMid);
       const yrs = S.top.year - c.top.year;
       add("Age (TOP)", yrs * rate,
         `TOP ${c.top.year} vs subject ${S.top.year} — ${Math.abs(yrs)} yrs ${yrs > 0 ? "older" : "newer"} x $${Math.round(rate)}/yr` +
@@ -823,7 +898,7 @@ export function runOne(data: Data, K: Constants, S: any, bed: string, screened: 
   if (S.psfSource.startsWith("projected")) caveats.push(`${S.name} has NOT transacted — its figure is a PROJECTED launch price (GLS forecast), not an observed one. Every number downstream of it is a forecast, and the gap should be treated as indicative only until real caveats appear.`);
   if (S.top?.estimated) caveats.push(`${S.name} has no completion year on record — TOP estimated as ${S.top.year} (${S.top.source}). Any age adjustment against a freehold comparable inherits that estimate.`);
   if (comps.some((c) => c.steps.some((s: any) => s.label === "Age (TOP)")))
-    caveats.push(`Age is adjusted at $${Math.round(K.ageRateFH)} psf per year of TOP difference for freehold comparisons — a condition/obsolescence proxy only. It cannot see renovation state, en-bloc potential, or how well a specific building has been maintained.`);
+    caveats.push(`Age is adjusted at ${K.ageRateFHLabel} of TOP difference for freehold comparisons — a condition/obsolescence proxy only. It cannot see renovation state, en-bloc potential, or how well a specific building has been maintained.`);
   if (leaseExcluded.length) caveats.push(`${leaseExcluded.length} leasehold comparable(s) were EXCLUDED for a lease start more than ${LEASE_GAP_EXCLUDE_YEARS} years from the subject's (${leaseExcluded.map((l: any) => `${l.name}, lease ${l.leaseStart}`).join("; ")}). Restating a lease that far apart is the constant doing the valuation rather than the market.`);
   if (ageExcluded.length) caveats.push(`${ageExcluded.length} freehold comparable(s) were EXCLUDED for being more than ${AGE_EXCLUDE_YEARS} years older than the subject (${ageExcluded.map((a: any) => `${a.name}, TOP ${a.top}`).join("; ")}). They are listed under comparable selection.`);
   if (bandExcluded.length) caveats.push(`${bandExcluded.length} comparable(s) were EXCLUDED for landing more than ${Math.round(OUTLIER_BAND * 100)}% from the subject even after adjustment (${bandExcluded.map((b) => `${b.name} $${b.adjusted}`).join("; ")}) — the adjustments could not bridge them, which usually means a different submarket. Note this screen is applied to the same quantity being measured; the exclusions are listed so you can overrule them.`);
@@ -864,7 +939,7 @@ export function runOne(data: Data, K: Constants, S: any, bed: string, screened: 
     layout, caveats,
     assumptions: {
       set: K.key, setLabel: K.label,
-      lease: K.leaseRateLabel, ageFH: K.ageRateFH, tenure: K.tenureLabel,
+      lease: K.leaseRateLabel, ageFH: K.ageRateFHLabel, tenure: K.tenureLabel,
       mrtCuts: K.mrtBandCutLabel, mrtBands: K.mrtBandPsf,
       integratedPremium: K.integratedPremium, harmonisationUplift: K.harmonisationUplift,
       minUnits: MIN_UNITS, maxRadiusM: MAX_RADIUS_M,

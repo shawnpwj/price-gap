@@ -930,7 +930,9 @@ export function runOne(data: Data, K: Constants, S: any, bed: string, screened: 
   const meanAdj = comps.length ? comps.reduce((s, c) => s + c.adjusted, 0) / comps.length : 0;
   const gap = Math.round(medianAdj - S.psf.psf);
   const gapPct = medianAdj ? gap / medianAdj : 0;
-  const verdict = S._unadjustable ? "not assessable"
+  const noComps = comps.length === 0;
+  const verdict = noComps ? "no comparables"
+    : S._unadjustable ? "not assessable"
     : Math.abs(gapPct) < 0.03 ? "fairly valued" : gapPct > 0 ? "undervalued" : "overvalued";
 
   // ── Caveats — these travel WITH the numbers, not as a footnote ─────────────
@@ -940,6 +942,7 @@ export function runOne(data: Data, K: Constants, S: any, bed: string, screened: 
     if (c.psf.fellBack) caveats.push(`${c.name} had too few ${bed} caveats — its figure uses ALL bedroom types instead, so unit-mix differences are baked into it.`);
     if (c.psf.months < 4) caveats.push(`${c.name} priced off only ${c.psf.months} month(s) of caveats — a thin sample that one atypical unit can move.`);
   }
+  if (noComps) caveats.push(`NO COMPARABLE DEVELOPMENT cleared screening for ${S.name} — not one, so there is nothing to restate and NO VERDICT is given. The gap, the adjusted median and the percentage are all undefined here, not zero. See the rejected candidates below for which screen each nearby development failed; this is usually a development with no similarly-sized neighbour that has transacted recently.`);
   if (S._unadjustable) caveats.push(`${S.name} has no date to difference against — no completion year on record, and no lease start either — so the vintage adjustment — the largest term on the ladder — could not run and the comparables below are UNRESTATED. No verdict is given: the figures show what the neighbours transact at, not what this is worth.`);
   if (S.psfWindow > PSF_WINDOW_MONTHS) caveats.push(`${S.name} has no transactions in the last ${PSF_WINDOW_MONTHS} months — its figure reaches back ${S.psfWindow} months. The comparables are all priced off the last ${PSF_WINDOW_MONTHS}, so the subject's side of this comparison is older than theirs and the gap carries whatever the market did in between.`);
   if (S.psfSource === "new sale") caveats.push(`${S.name} is priced off DEVELOPER (new sale) transactions; comparables are priced off the RESALE market. Developer pricing carries a primary-market premium that resale does not.`);
@@ -983,7 +986,10 @@ export function runOne(data: Data, K: Constants, S: any, bed: string, screened: 
     window: `${PSF_WINDOW_MONTHS} months from ${data.cutoff}`,
     radius: screened.radius,
     comps, rejected: rejected.slice(0, 12), ageExcluded, leaseExcluded, bandExcluded,
-    result: { medianAdjusted: Math.round(medianAdj), meanAdjusted: Math.round(meanAdj), basis: "median", gap, gapPct, verdict },
+    result: { medianAdjusted: noComps ? null : Math.round(medianAdj),
+               meanAdjusted: noComps ? null : Math.round(meanAdj),
+               basis: "median",
+               gap: noComps ? null : gap, gapPct: noComps ? null : gapPct, verdict },
     layout, caveats,
     assumptions: {
       set: K.key, setLabel: K.label,

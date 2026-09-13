@@ -51,8 +51,12 @@ async function main() {
     console.log(`      = $${c.adjusted} adjusted   gap vs subject ${c.gap > 0 ? "+" : ""}$${c.gap}\n`);
   }
   if (ageExcluded.length) console.log(`  age-excluded: ${ageExcluded.map((a: any) => `${a.name}(TOP ${a.top})`).join(", ")}\n`);
-  console.log(`  MEDIAN adjusted $${result.medianAdjusted} (mean would be $${result.meanAdjusted}) vs subject $${S.psf.psf}`);
-  console.log(`  GAP ${result.gap > 0 ? "+" : ""}$${result.gap} psf (${(result.gapPct * 100).toFixed(1)}%) -> subject is ${result.verdict.toUpperCase()}`);
+  if (result.gap === null) {
+    console.log(`  NO COMPARABLE DEVELOPMENT cleared screening — no verdict. Subject transacts at $${S.psf.psf}.`);
+  } else {
+    console.log(`  MEDIAN adjusted $${result.medianAdjusted} (mean would be $${result.meanAdjusted}) vs subject $${S.psf.psf}`);
+    console.log(`  GAP ${result.gap > 0 ? "+" : ""}$${result.gap} psf (${(result.gapPct * 100).toFixed(1)}%) -> subject is ${result.verdict.toUpperCase()}`);
+  }
   console.log(`\n  rejected nearer candidates: ${rejected.slice(0, 6).map((r: any) => `${r.name}(${r.dist}m: ${r.why[0]})`).join(", ")}`);
   console.log(`\nOK ${outFile}`);
 }

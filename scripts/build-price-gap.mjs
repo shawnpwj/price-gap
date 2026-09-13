@@ -26,6 +26,11 @@ for (const bed of BEDS) {
 const tpl = await fs.readFile(path.join(HERE, "price-gap.template.html"), "utf8");
 const dest = path.join(ROOT, "out", "price-gap.html");
 await fs.mkdir(path.dirname(dest), { recursive: true });
-await fs.writeFile(dest, tpl.replace("__DATA__", JSON.stringify(out)));
+// The subject's name reaches the <title> too — it is the browser tab and the PDF header on
+// a document that goes to a client, and it was hardcoded until 2026-09-13.
+const subjectName = (Object.values(out)[0]?.subject?.name ?? subject);
+const titleSafe = String(subjectName).replace(/[<&]/g, (c) => (c === "<" ? "&lt;" : "&amp;"));
+await fs.writeFile(dest, tpl.replace("__DATA__", JSON.stringify(out))
+                             .replace("__SUBJECT__", titleSafe));
 await fs.rm(tmp, { recursive: true, force: true });
 console.log(`OK ${dest}  (${subject}, ${BEDS.length} bedroom views)`);

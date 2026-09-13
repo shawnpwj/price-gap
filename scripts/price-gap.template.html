@@ -1,4 +1,5 @@
-<title>Price Gap Analysis — Grand Dunman</title>
+<meta charset="utf-8">
+<title>Price Gap Analysis — __SUBJECT__</title>
 <style>
   .viz-root {
     color-scheme: light;
@@ -190,16 +191,24 @@ function render() {
     `Base PSF from <b>${S.psfSource}</b> caveats over the ${d.window}.`;
 
   document.getElementById("v-subj").innerHTML = money(S.psf.psf) + ' <span class="unit">psf</span>';
-  document.getElementById("v-comp").innerHTML = money(R.medianAdjusted) +
-    ' <span class="unit">psf' + (R.meanAdjusted !== R.medianAdjusted ? ` · mean ${money(R.meanAdjusted)}` : "") + '</span>';
+  const noComps = R.gap === null || R.gap === undefined;
+  document.getElementById("v-comp").innerHTML = noComps
+    ? '<span class="unit">no comparable development</span>'
+    : money(R.medianAdjusted) +
+      ' <span class="unit">psf' + (R.meanAdjusted !== R.medianAdjusted ? ` · mean ${money(R.meanAdjusted)}` : "") + '</span>';
   const gapEl = document.getElementById("v-gap");
-  gapEl.innerHTML = (R.gap > 0 ? "+" : "−") + money(Math.abs(R.gap)).slice(1) + ' <span class="unit">psf &nbsp;' + (R.gapPct*100).toFixed(1) + '%</span>';
-  gapEl.style.color = R.gap > 0 ? cssv("--good") : R.gap < 0 ? cssv("--crit") : cssv("--warn");
+  gapEl.innerHTML = noComps
+    ? '—'
+    : (R.gap > 0 ? "+" : "−") + money(Math.abs(R.gap)).slice(1) + ' <span class="unit">psf &nbsp;' + (R.gapPct*100).toFixed(1) + '%</span>';
+  gapEl.style.color = noComps ? cssv("--warn") : R.gap > 0 ? cssv("--good") : R.gap < 0 ? cssv("--crit") : cssv("--warn");
 
-  const cls = R.verdict === "undervalued" ? "under" : R.verdict === "overvalued" ? "over" : "fair";
-  document.getElementById("v-tag").innerHTML = `<span class="tag ${cls}">${R.verdict.toUpperCase()}</span>`;
-  document.getElementById("v-expl").textContent =
-    R.gap > 0
+  const cls = noComps ? "fair" : R.verdict === "undervalued" ? "under" : R.verdict === "overvalued" ? "over" : "fair";
+  document.getElementById("v-tag").innerHTML = noComps
+    ? '<span class="tag fair">NO COMPARABLES</span>'
+    : `<span class="tag ${cls}">${R.verdict.toUpperCase()}</span>`;
+  document.getElementById("v-expl").textContent = noComps
+    ? `NOT ONE comparable development cleared screening for ${S.name}, so there is nothing to restate and no gap can be worked out. This is not a gap of zero — it is no measurement at all. The rejected candidates below show which screen each nearby development failed.`
+    : R.gap > 0
       ? `The MEDIAN comparable, once restated on ${S.name}'s lease, tenure, age and MRT terms, is worth ${money(Math.abs(R.gap))} psf MORE than ${S.name} transacts at — the subject looks cheap for what it is.`
       : R.gap < 0
       ? `The MEDIAN comparable, once restated on ${S.name}'s lease, tenure, age and MRT terms, is worth ${money(Math.abs(R.gap))} psf LESS than ${S.name} transacts at — the subject carries a premium over its neighbours.`

@@ -90,6 +90,15 @@ def lease_pred(r):
     """What the published rule says this pair's psf difference should be, signed."""
     a, b = lease_split(r['ls_old'], r['ls_new'])
     return (1 if r['ls_new'] >= r['ls_old'] else -1) * (LPW1 * a + LPW2 * b)
+def own_yr(r):
+    """What this pair reads on its own, per year of lease. Noisy at a one-year gap by
+    construction — see the pair table's note."""
+    return r['diff'] / r['gap'] if r['gap'] else 0.0
+def rule_yr(r):
+    """The rate the published rule works out to for THIS pair, per year. Equal to the band
+    rate when the gap sits inside one band; a blend of the two when it spans the boundary,
+    which is the honest single number for a split gap."""
+    return abs(lease_pred(r)) / r['gap'] if r['gap'] else 0.0
 def fit_pw_rows(rows):
     """Refit the two legs on a SUBSET — least squares through the origin, two regressors.
     Used by the robustness cuts, which must be refitted the way the headline is fitted."""
@@ -699,13 +708,13 @@ def pairtable():
     about the band rate and walks out to the ones that do not.
 
     Every row opens its quarters on click — see the drill-down block above."""
-    rows = sorted(ALL, key=lambda r: abs(resid(r)))
+    rows = sorted(ALL, key=lambda r: abs(own_yr(r) - rule_yr(r)))
     global QDATA
     QDATA = [quarters(r) for r in rows]
     nm_ = lambda x, ls: f'{html.escape(x.title())} <i class="age">{ls}</i>'
     h = ['<table class="fig pairs"><thead><tr><th class="num">#</th><th>older</th><th>newer</th>'
          '<th class="num">gap</th><th>bed</th><th class="num">difference</th>'
-         '<th class="num">the rule says</th>'
+         '<th class="num">$ / yr</th><th class="num">the rule says</th>'
          '<th class="num">off by</th><th class="num">sales</th></tr></thead><tbody>']
     for i, r in enumerate(rows, 1):
         h.append(
@@ -713,9 +722,10 @@ def pairtable():
             f'<td>{nm_(r["older"], r["ls_old"])}</td>'
             f'<td>{nm_(r["newer"], r["ls_new"])}</td>'
             f'<td class="num">{r["gap"]}y</td><td class="quiet">{r["bed"]}</td>'
-            f'<td class="num big">{r["diff"]:+,.0f}</td>'
-            f'<td class="num quiet">{lease_pred(r):+,.0f}</td>'
-            f'<td class="num quiet">{r["diff"] - lease_pred(r):+,.0f}</td>'
+            f'<td class="num quiet">{r["diff"]:+,.0f}</td>'
+            f'<td class="num big">{own_yr(r):+,.0f}</td>'
+            f'<td class="num quiet">${rule_yr(r):,.0f}</td>'
+            f'<td class="num quiet">{own_yr(r) - rule_yr(r):+,.0f}</td>'
             f'<td class="num quiet">{r["n_old"]} / {r["n_new"]}</td></tr>')
     return ''.join(h) + '</tbody></table>'
 
@@ -2342,11 +2352,19 @@ the first one measured against the market.</p>
     </div>
     <p class="expl" style="margin-top:18px">All {len(ALL)} comparisons, numbered, <b>closest to
     the rate first</b> and walking out to the furthest. <b>Difference</b> is what the market
-    shows between the two; <b>$ / yr</b> is that difference over the lease gap; <b>the rate
-    says</b> is the published figure for this pair&rsquo;s band &mdash; the same
-    ${LPW1:,.0f} and ${LPW2:,.0f} on the panel above &mdash; so every row ties
-    straight back to the headline. <b>Sales</b> is the transactions behind each side. Nothing in
-    a row is adjusted for anything. <b>Click any row</b> to open the quarters behind it.</p>
+    shows between the two; <b>$ / yr</b> is that difference over the lease gap, which is the
+    figure this panel is about; <b>the rule says</b> is what ${LPW1:,.0f} before {LPWB} and
+    ${LPW2:,.0f} from {LPWB} works out to per year for this pair &mdash; the band rate itself
+    when the gap sits inside one band, a blend of the two when it spans {LPWB} &mdash; so every
+    row ties straight back to the headline. <b>Sales</b> is the transactions behind each side.
+    Nothing in a row is adjusted for anything. <b>Click any row</b> to open the quarters behind
+    it.</p>
+    <p class="expl"><b>Read the shortest gaps with care.</b> A one-year pair divides its whole
+    uncontrolled floor, stack and mix difference by one, so its $&thinsp;/&thinsp;yr swings far
+    wider than the rate ever does &mdash; which is why the psf difference sits beside it, and why
+    the table is sorted by the per-year miss, putting those rows at the bottom rather than the
+    top. The estimator is not affected: it fits the difference against the gap, so a one-year
+    pair carries one year of leverage and cannot shout.</p>
     <div class="scroll" style="margin-top:12px">{PAIRTABLE}</div>
   </details>
 </section>

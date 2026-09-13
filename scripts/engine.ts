@@ -287,7 +287,7 @@ export async function loadMeasured(): Promise<Constants> {
     // THE POST-BAND IS THIN: 15 pairs, and it moves $34.5-$39.2 on leave-one-pair-out, so the
     // page carries that caveat. The PRE-band is the robust half.
     ageAdjFH: (f, t) => piecewise(f, t, ageBound, ageBands.pre, ageBands.post),
-    ageRateFHLabel: `$${ageBands.pre.toFixed(1)} / $${ageBands.post.toFixed(1)} psf per year, `
+    ageRateFHLabel: `$${Math.round(ageBands.pre)} / $${Math.round(ageBands.post)} psf per year, `
       + `each year of the gap priced at its own band (${ageBound} boundary)`,
     tenurePremium: (leaseLeft) => {
       if (leaseLeft == null) return headline;
@@ -946,7 +946,7 @@ export function runOne(data: Data, K: Constants, S: any, bed: string, screened: 
   if (S.psfSource.startsWith("projected")) caveats.push(`${S.name} has NOT transacted — its figure is a PROJECTED launch price (GLS forecast), not an observed one. Every number downstream of it is a forecast, and the gap should be treated as indicative only until real caveats appear.`);
   if (S.top?.estimated) caveats.push(`${S.name} has no completion year on record — TOP estimated as ${S.top.year} (${S.top.source}). Any age adjustment against a freehold comparable inherits that estimate.`);
   if (comps.some((c) => c.steps.some((s: any) => s.label === "Age (TOP)")))
-    caveats.push(`Age is adjusted at ${K.ageRateFHLabel} of TOP difference for freehold comparisons — a condition/obsolescence proxy only. It cannot see renovation state, en-bloc potential, or how well a specific building has been maintained.`);
+    caveats.push(`For freehold comparisons, age is adjusted on the TOP clock at ${K.ageRateFHLabel} — a condition/obsolescence proxy only. It cannot see renovation state, en-bloc potential, or how well a specific building has been maintained.`);
   if (leaseExcluded.length) caveats.push(`${leaseExcluded.length} leasehold comparable(s) were EXCLUDED for a lease start more than ${LEASE_GAP_EXCLUDE_YEARS} years from the subject's (${leaseExcluded.map((l: any) => `${l.name}, lease ${l.leaseStart}`).join("; ")}). Restating a lease that far apart is the constant doing the valuation rather than the market.`);
   if (ageExcluded.length) caveats.push(`${ageExcluded.length} freehold comparable(s) were EXCLUDED for being more than ${AGE_EXCLUDE_YEARS} years older than the subject (${ageExcluded.map((a: any) => `${a.name}, TOP ${a.top}`).join("; ")}). They are listed under comparable selection.`);
   if (bandExcluded.length) caveats.push(`${bandExcluded.length} comparable(s) were EXCLUDED for landing more than ${Math.round(OUTLIER_BAND * 100)}% from the subject even after adjustment (${bandExcluded.map((b) => `${b.name} $${b.adjusted}`).join("; ")}) — the adjustments could not bridge them, which usually means a different submarket. Note this screen is applied to the same quantity being measured; the exclusions are listed so you can overrule them.`);

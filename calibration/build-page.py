@@ -1996,6 +1996,30 @@ def age_adj(top_old, top_new):
 # are read. Re-rendering any of them is one f-string away, and deleting them would mean
 # rewriting the renderer before the evidence could be shown again.
 # ─────────────────────────────────────────────────────────────────────────────
+def age_own_yr(r):
+    return r['diff'] / r['gap'] if r['gap'] else 0.0
+def age_rule_yr(r):
+    """What the published rule works out to per year FOR THIS PAIR — the band rate when the
+    gap sits inside one band, a blend when it spans the boundary."""
+    pre, post = age_split(r['top_old'], r['top_new'])
+    return (AGPW1 * pre + AGPW2 * post) / r['gap'] if r['gap'] else 0.0
+
+def age_answer_table():
+    """The freehold twin of answer_table(): what each LEG reads, its interval, and how many
+    pairs contribute years to it. Same columns as the 99-year panel (Shawn, 2026-09-13)."""
+    L = AGPWD.get('legs') or {}
+    h = ['<table class="fig look"><thead><tr><th>Each year of the completion gap</th>'
+         '<th class="num">$ psf / yr</th><th class="num">could really be</th>'
+         '<th class="num">pairs contributing</th></tr></thead><tbody>']
+    for which, label, rate_ in (('pre', f'before {AGB}', AGPW1), ('post', f'from {AGB}', AGPW2)):
+        g = L.get(which) or {}
+        ci = (f'${g["ci_lo"]:,.0f} to ${g["ci_hi"]:,.0f}'
+              if g.get('ci_lo') is not None else '&mdash;')
+        h.append(f'<tr><th>{label}</th><td class="num big">${rate_:,.0f}</td>'
+                 f'<td class="num quiet">{ci}</td>'
+                 f'<td class="num quiet">{g.get("pairs", 0)}</td></tr>')
+    return ''.join(h) + '</tbody></table>'
+
 def age_gap_table():
     """What the rate reads inside each gap band. AN OUTPUT, NEVER A SCREEN — the estimator is
     one slope through every cell, not the average of this column."""
@@ -2159,24 +2183,27 @@ def age_pair_table():
     """Every cell tied back to the headline, closest to the fitted rate first (Shawn's ordering
     ruling on the lease panel, applied here for the same reason)."""
     if not AGR: return ''
-    # Closest to what the APPLIED (piecewise) rule predicts for that cell.
-    rows = sorted(AGR, key=lambda x: abs(x['diff'] - age_adj(x['top_old'], x['top_new'])))
-    r = ['<table class="fig pairs"><thead><tr><th>Older</th><th>Newer</th>'
-         '<th class="num">apart</th><th></th><th class="num">completion</th>'
-         '<th class="num">gap</th><th>split at ' + str(AGB) + '</th>'
-         '<th class="num">psf difference</th>'
-         '<th class="num">per year</th></tr></thead><tbody>']
-    for x in rows:
-        post = x['mid'] >= AGB
-        r.append(f'<tr{" class=hi" if post else ""}>'
+    # Sorted by the PER-YEAR miss, so the short gaps that divide their whole uncontrolled
+    # difference by one or two sort to the bottom rather than leading. Same ordering and the
+    # same columns as the 99-year panel's pair table.
+    rows = sorted(AGR, key=lambda x: abs(age_own_yr(x) - age_rule_yr(x)))
+    r = ['<table class="fig pairs"><thead><tr><th class="num">#</th><th>older</th><th>newer</th>'
+         '<th class="num">apart</th><th class="num">completion</th>'
+         '<th class="num">gap</th><th>bed</th><th class="num">difference</th>'
+         '<th class="num">$ / yr</th><th class="num">the rule says</th>'
+         '<th class="num">off by</th><th class="num">sales</th></tr></thead><tbody>']
+    for i, x in enumerate(rows, 1):
+        spans = age_split(x['top_old'], x['top_new'])[0] > 0 and age_split(x['top_old'], x['top_new'])[1] > 0
+        r.append(f'<tr{" class=hi" if spans else ""}><td class="num quiet">{i}</td>'
                  f'<td>{_nm(x["older"])}</td><td>{_nm(x["newer"])}</td>'
-                 f'<td class="num quiet">{x["metres"]}m</td><td class="quiet">{x["bed"]}</td>'
+                 f'<td class="num quiet">{x["metres"]}m</td>'
                  f'<td class="num quiet">{x["top_old"]}&rarr;{x["top_new"]}</td>'
-                 f'<td class="num quiet">{x["gap"]} yr</td>'
-                 f'<td class="quiet">{age_split(x["top_old"], x["top_new"])[0]:.0f}'
-                 f'&thinsp;+&thinsp;{age_split(x["top_old"], x["top_new"])[1]:.0f} yr</td>'
-                 f'<td class="num quiet">${x["diff"]:,.0f}</td>'
-                 f'<td class="num">${x["per_yr"]:,.0f}</td></tr>')
+                 f'<td class="num quiet">{x["gap"]}y</td><td class="quiet">{x["bed"]}</td>'
+                 f'<td class="num quiet">{x["diff"]:+,.0f}</td>'
+                 f'<td class="num big">{age_own_yr(x):+,.0f}</td>'
+                 f'<td class="num quiet">${age_rule_yr(x):,.0f}</td>'
+                 f'<td class="num quiet">{age_own_yr(x) - age_rule_yr(x):+,.0f}</td>'
+                 f'<td class="num quiet">{x["n_old"]} / {x["n_new"]}</td></tr>')
     return ''.join(r) + '</tbody></table>'
 
 QDATA = []
@@ -2404,19 +2431,55 @@ of a newer building &mdash; on the only clock both sides share, <b>completion</b
   ${AGPW1 * (AGB - 2000):,.0f} + ${AGPW2 * (2025 - AGB):,.0f} =
   <b>${AGPW1 * (AGB - 2000) + AGPW2 * (2025 - AGB):,.0f} psf</b>. A pair wholly on one side of
   {AGB} is simply its gap times that side's rate.</p>
-  <p class="expl">The 99-year panel works the same way on lease starts. The two differ only in
-  the clock they read and the rates they carry &mdash; a freehold has no lease start to
-  difference against, so completion is the only clock it has.</p>
 </section>
 
 <section>
   <div class="sechead"><h2 class="disp">The measurement</h2>
   <p><b>{ndev(AGR)} developments &middot; {npairs(AGR)} pairs &middot; {len(AGR)} comparisons,
-  resting on {ntx(AGR):,} transactions.</b> Every freehold paired with a freehold neighbour
-  within {A['meta']['screens']['radius_m']}&thinsp;m on the same station, matched bedroom by
-  bedroom on sizes within {A['meta']['screens']['size_tol']:.0%}, across 24 months of resale and
-  sub-sale to {cut.CUT_END}. Identical screens to the 99-year study; ECs cannot appear on either
-  side, because an EC is leasehold.</p></div>
+  resting on {ntx(AGR):,} transactions.</b> Every freehold paired with a freehold neighbour and
+  compared bedroom by bedroom, across 24 months of resale and sub-sale to {cut.CUT_END}.</p></div>
+  <div class="scroll">{age_answer_table()}</div>
+</section>
+
+<section>
+  <div class="sechead"><h2 class="disp">Behind it</h2>
+  <p>What goes into a pair, and every one of them.</p></div>
+
+  <details><summary>How a pair is built, and every pair</summary>
+    <div class="cards" style="margin-top:6px">
+      <div class="card"><h3>Held constant</h3><ul>
+        <li>within <b>{A['meta']['screens']['radius_m']}&thinsp;m</b> of each other</li>
+        <li>same <b>nearest MRT station</b></li>
+        <li>identical <b>top-26 primary schools</b> within 1 km</li>
+        <li>median sizes within <b>{A['meta']['screens']['size_tol']:.0%}</b>, bedroom by
+          bedroom</li></ul></div>
+      <div class="card"><h3>Both sides must be</h3><ul>
+        <li><b>freehold</b> &mdash; 999-year counts as freehold</li>
+        <li><b>{A['meta']['screens']['min_units']} units</b> or more</li>
+        <li><b>{A['meta']['screens']['min_n']}+ transactions</b> in the window</li>
+        <li>completed at least <b>{A['meta']['screens']['min_gap_years']} year</b> apart</li>
+        <li>resale and sub-sale only</li></ul></div>
+      <div class="card"><h3>Not controlled</h3><ul>
+        <li><b>floor</b> &mdash; the PSF series carries none</li>
+        <li><b>facing</b> &mdash; same</li>
+        <li>no EC on either side: an EC is<br>leasehold and cannot be a freehold pair</li></ul></div>
+    </div>
+    <p class="expl" style="margin-top:18px">All {len(AGR)} comparisons, numbered, <b>closest to
+    the rate first</b> and walking out to the furthest. <b>Difference</b> is what the market
+    shows between the two; <b>$ / yr</b> is that difference over the completion gap, which is the
+    figure this panel is about; <b>the rule says</b> is what ${AGPW1:,.0f} before {AGB} and
+    ${AGPW2:,.0f} from {AGB} works out to per year for this pair &mdash; the band rate itself
+    when the gap sits inside one band, a blend of the two when it spans {AGB}, and those rows are
+    tinted. <b>Sales</b> is the transactions behind each side. Nothing in a row is adjusted for
+    anything.</p>
+    <p class="expl"><b>Read the shortest gaps with care.</b> A one-year pair divides its whole
+    uncontrolled floor, stack and mix difference by one, so its $&thinsp;/&thinsp;yr swings far
+    wider than the rate ever does &mdash; which is why the psf difference sits beside it, and why
+    the table is sorted by the per-year miss, putting those rows at the bottom rather than the
+    top. The estimator is not affected: it fits the difference against the gap, so a one-year
+    pair carries one year of leverage and cannot shout.</p>
+    <div class="scroll" style="margin-top:12px">{age_pair_table()}</div>
+  </details>
 </section>
 </div>
 

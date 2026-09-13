@@ -625,8 +625,37 @@ for W in WINDOWS:
             if abs(_fit - _pub) > 1.5:
                 print(f'  !! PUBLISHED {_w} is ${_pub} but this cut fits ${_fit:.2f} — '
                       f'the hand-set constant has gone stale. Take it back to Shawn.')
+    # PER-LEG EVIDENCE, the same shape lease-pairs.py publishes, so the freehold panel's
+    # measurement table can carry the same columns as the 99-year one (Shawn, 2026-09-13:
+    # "lease difference (FH) should be almost similar in information and format as 99 Years").
+    # A leg is a run of YEARS, so what is countable is how many pairs contribute any years to
+    # it — a pair spanning the boundary contributes to both and is counted in both.
+    def leg_rows(which):
+        return [r for r in rows
+                if (split_years(r, BB)[0] if which == 'pre' else split_years(r, BB)[1]) > 0]
+    def boot_leg(which, B=2000, seed=17):
+        g5 = random.Random(seed); vals = []
+        for _ in range(B):
+            smp = [x for _ in ps2 for x in byp2[ps2[g5.randrange(len(ps2))]]]
+            a, b = fit_pw(smp, BB)
+            if a is not None: vals.append(a if which == 'pre' else b)
+        vals.sort()
+        return (vals[int(.025*len(vals))], vals[int(.975*len(vals))-1]) if vals else (None, None)
+    age_legs = {}
+    if pm is not None:
+        for which in ('pre', 'post'):
+            rs = leg_rows(which); lo_, hi_ = boot_leg(which)
+            age_legs[which] = dict(cells=len(rs),
+                                   pairs=len({(r['older'], r['newer']) for r in rs}),
+                                   devs=len({x for r in rs for x in (r['older'], r['newer'])}),
+                                   ci_lo=lo_, ci_hi=hi_)
+        for w in ('pre', 'post'):
+            print(f'    {w:>4s} leg: {age_legs[w]["cells"]} cells, {age_legs[w]["pairs"]} pairs, '
+                  f'95% ${age_legs[w]["ci_lo"]:.1f}..${age_legs[w]["ci_hi"]:.1f}')
+
     OUT[str(W)] = dict(pw=(dict(bound=BB, pre=AGE_PUBLISHED['pre'], post=AGE_PUBLISHED['post'],
-                                pre_fit=pw1, post_fit=pw2_) if pm is not None else None),
+                                pre_fit=pw1, post_fit=pw2_, legs=age_legs)
+                           if pm is not None else None),
                        evidence=ev, cells=len(rows), pairs=len(pairs), devs=len(devs),
                        rate=a, lo=lo, hi=hi, pct=apct,
                        intercept=c, intercept_se=se_c, slope_with_intercept=a_int,

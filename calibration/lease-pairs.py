@@ -382,7 +382,34 @@ if __name__ == '__main__':
     print(f'\n  VINTAGE-VS-AGE TEST — same method on {FIRST}..{months_back(FIRST, -23)}: '
           f'{len(early)} cells, {len({(r["older"],r["newer"]) for r in early})} pairs')
 
+    # ── THE ADOPTED FORM: SPLIT THE GAP, DO NOT READ ONE RATE AT THE MIDPOINT ──────────
+    # Shawn, 2026-09-13. The midpoint form assigns a whole pair to one band by where it is
+    # centred, which puts a CLIFF in the middle of the rule: lease starts 2001-vs-2020 are
+    # centred 2010.5 and take the old rate across all 19 years; shift both ends one year and
+    # they take the new rate across all 19 — 1.7x apart on identical stock. Pricing each
+    # calendar year at its own band removes the edge and wins on 92% of held-out folds.
+    #
+    # THE BOUNDARY STAYS HAND-SET AT 2011 AND MUST NOT BE FITTED. A knot fitted to this cut
+    # lands on 2012 with 82% bootstrap confidence; the same fit on the window three years
+    # earlier lands on 2006 with none, scattering across 2003-2013. It does not replicate.
+    # This is the same trap the dead knee fell into — see THE ESTIMATOR above.
+    BOUND = 2011
+    def fit_piecewise(rows, k):
+        """diff = pre*(years before k) + post*(years from k), least squares through origin."""
+        s11 = s12 = s22 = t1 = t2 = 0.0
+        for r in rows:
+            lo, hi = r['ls_old'], r['ls_new']
+            x1 = max(0.0, min(hi, k) - lo); x2 = max(0.0, hi - max(lo, k))
+            s11 += x1*x1; s12 += x1*x2; s22 += x2*x2; t1 += x1*r['diff']; t2 += x2*r['diff']
+        det = s11*s22 - s12*s12
+        return ((s22*t1 - s12*t2)/det, (s11*t2 - s12*t1)/det) if abs(det) > 1e-9 else (None, None)
+    pw_pre, pw_post = fit_piecewise(out[24], BOUND)
+    straddle = sum(1 for r in out[24] if r['ls_old'] < BOUND < r['ls_new'])
+    print(f'\n  ADOPTED FORM — piecewise at {BOUND}: ${pw_pre:.1f} / ${pw_post:.1f}  '
+          f'({straddle} of {len(out[24])} cells span the boundary)')
+
     json.dump({**{str(w): out[w] for w in WINDOWS}, 'pooled24': pooled,
+               'pw': dict(bound=BOUND, pre=pw_pre, post=pw_post, straddle=straddle),
                'early24': early, 'early_window': [FIRST, months_back(FIRST, -23)],
                'late_window': [months_back(LAST, 23), LAST]},
               open(os.path.join(d, 'lease-pairs.json'), 'w'), indent=1)

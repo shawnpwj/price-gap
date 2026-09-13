@@ -610,7 +610,12 @@ for W in WINDOWS:
     for l, e in sorted(ev['race_honest'].items(), key=lambda x: x[1]):
         print(f'    {e:>9,.1f}   {l}')
 
-    OUT[str(W)] = dict(evidence=ev, cells=len(rows), pairs=len(pairs), devs=len(devs),
+    # THE ADOPTED FORM, surfaced at the top of the window so the engine does not have to reach
+    # into `evidence` for a live constant. Boundary HAND-SET from the midpoint form's identified
+    # break; rates fitted piecewise. See the calibration page's "why the break is found one way
+    # and applied another".
+    OUT[str(W)] = dict(pw=(dict(bound=BB, pre=pw1, post=pw2_) if pm is not None else None),
+                       evidence=ev, cells=len(rows), pairs=len(pairs), devs=len(devs),
                        rate=a, lo=lo, hi=hi, pct=apct,
                        intercept=c, intercept_se=se_c, slope_with_intercept=a_int,
                        best_band=(dict(bound=best[1], pre=best[2], post=best[3],

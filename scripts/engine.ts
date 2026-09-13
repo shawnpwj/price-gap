@@ -117,23 +117,57 @@ const METRES_PER_MIN = 80;
 
 export type Band = "near" | "mid" | "far";
 
+// One leg of a vintage adjustment: a run of years all priced at the same rate.
+// A gap wholly inside one band has a single part, which is the ordinary case and renders
+// exactly as the old single-rate step did. Only a gap that SPANS the boundary has two.
+export interface VintagePart { years: number; rate: number; from: number; to: number }
+export interface VintageAdj { total: number; parts: VintagePart[]; yrs: number }
+
+// Price a year range piecewise across one boundary, signed from `from` to `to`.
+// DIRECTION IS THE WHOLE POINT OF THE SIGN: the engine adjusts a comparable TO the subject,
+// so a comparable NEWER than the subject must come DOWN. Integrate over the span either way
+// and flip once, rather than trying to carry the sign through the split.
+export const piecewise = (from: number, to: number, bound: number,
+                          pre: number, post: number): VintageAdj => {
+  const lo = Math.min(from, to), hi = Math.max(from, to), sign = to >= from ? 1 : -1;
+  const parts: VintagePart[] = [];
+  const preYrs = Math.max(0, Math.min(hi, bound) - lo);
+  const postYrs = Math.max(0, hi - Math.max(lo, bound));
+  if (preYrs > 0) parts.push({ years: preYrs, rate: pre, from: lo, to: Math.min(hi, bound) });
+  if (postYrs > 0) parts.push({ years: postYrs, rate: post, from: Math.max(lo, bound), to: hi });
+  const total = sign * parts.reduce((a, p) => a + p.years * p.rate, 0);
+  return { total, parts, yrs: to - from };
+};
+
 export interface Constants {
   key: "judgement" | "measured";
   label: string;
   blurb: string;
-  // Vintage. `leaseRate(midpoint)` is $/psf per year of lease-start difference; the
-  // measured set reads it at the MIDPOINT of the two lease starts, which is what makes
-  // a pair straddling a band boundary need no decision (calibration §3).
-  leaseRate: (midpointYear: number) => number;
+  // Vintage. `leaseAdj(from, to)` is the TOTAL psf for moving from the comparable's lease
+  // start to the subject's, signed. It is a function of the two years and not of one rate,
+  // because the measured set SPLITS a gap that spans the band boundary and prices each side
+  // at its own rate (Shawn, 2026-09-13).
+  //
+  // WHY THIS REPLACED `leaseRate(midpoint)`. The old form assigned the whole gap to one band
+  // by where the pair was centred, which put a CLIFF in the middle of the rule: lease starts
+  // 2001-vs-2020 are centred 2010.5 and took $24.7 across all 19 years ($469); shift both ends
+  // one year and they are centred 2011.5 and took $42.3 across all 19 ($804). Same gap, same
+  // stock, 1.7x apart. Splitting the gap removes the edge and wins on 92% of held-out folds.
+  //
+  // THE BOUNDARY IS HAND-SET AND STAYS THAT WAY. A knot fitted to this cut lands on 2012 with
+  // 82% bootstrap confidence and lands on 2006 three years earlier with none — it does not
+  // replicate, so it is not fitted. See lease-pairs.py's standing warning about the dead knee.
+  leaseAdj: (fromYear: number, toYear: number) => VintageAdj;
   leaseRateLabel: string;
-  // Freehold-vs-freehold age, $/psf per year of TOP difference, read at the MIDPOINT of the
-  // two completion years — the same midpoint device as leaseRate, for the same reason.
+  // Freehold-vs-freehold age — the same split form on the TOP clock.
   // MEASURED SEPARATELY FROM THE LEASE RATE (age-pairs.json, 2026-09-13) because between two
   // freeholds there is no lease to lengthen: what is left is the price of a newer building
-  // alone. That is roughly HALF the lease rate on older stock ($13 vs $25) and nearly the same
-  // on new ($36 vs $42) — which is the signature of lease decay, present in one and absent in
-  // the other, and it is why the lease rate must not be borrowed for this case.
-  ageRateFH: (midpointTopYear: number) => number;
+  // alone. That is roughly HALF the lease rate on older stock and nearly the same on new —
+  // the signature of lease decay, present in one and absent in the other, and it is why the
+  // lease rate must not be borrowed for this case.
+  // ERA-MATCHED the two agree: freehold pairs completed 2015+ read $41.2/yr against the
+  // leasehold band's $42.3, and the gap the lease curve predicts at 85 years left is ~$3.
+  ageAdjFH: (fromTopYear: number, toTopYear: number) => VintageAdj;
   ageRateFHLabel: string;
   // Tenure, applied AFTER vintage, as a proportion of the running subtotal.
   // `leaseLeft` is the leasehold side's remaining years where it is known.
@@ -164,9 +198,9 @@ export const JUDGEMENT: Constants = {
   key: "judgement",
   label: "Engine constants (retired)",
   blurb: "What the engine charged before the calibration study. Retired 2026-09-09; kept as the record of what was replaced.",
-  leaseRate: () => 40,
+  leaseAdj: (f, t) => piecewise(f, t, Infinity, 40, 40),
   leaseRateLabel: "$40 psf per year, flat",
-  ageRateFH: () => 10,
+  ageAdjFH: (f, t) => piecewise(f, t, Infinity, 10, 10),
   ageRateFHLabel: "$10 psf per year, flat",
   tenurePremium: () => 0.15,
   tenureLabel: "divide by 1.15",
@@ -196,9 +230,15 @@ export async function loadMeasured(): Promise<Constants> {
      "age-pairs.json"]
       .map(async (f) => JSON.parse(await fs.readFile(C(f), "utf8")))
   );
-  // Lease: two bands read at the MIDPOINT of the two lease starts (calibration §3).
-  const bands = tenure.bands as { old: number; new: number };
-  const bound = tenure.band_bound as number;
+  // Lease: two bands, and the gap SPLIT at the boundary rather than read at its midpoint
+  // (calibration §3, changed 2026-09-13). lease-pairs.py publishes the piecewise fit as `pw`;
+  // tenure-pairs.json's midpoint bands are the fallback for an older JSON that predates it,
+  // and they are a DIFFERENT FIT — $24.7/$42.3 against the piecewise $21.9/$46.5 — so a
+  // fallback is a visibly different answer, not a rounding difference.
+  const pw = lease.pw as { bound: number; pre: number; post: number } | undefined;
+  const bands = pw ? { old: pw.pre, new: pw.post }
+                   : (tenure.bands as { old: number; new: number });
+  const bound = pw ? pw.bound : (tenure.band_bound as number);
   // Tenure: the headline is the "vintage, then % premium" fit, which is the order the
   // engine applies. Where the leasehold side's remaining lease is known, the measured
   // gradient is used instead — the freehold premium is not one number, it widens as
@@ -226,23 +266,29 @@ export async function loadMeasured(): Promise<Constants> {
   // split the held-out race picked; if a future re-cut cannot identify one, fall back to the
   // flat rate rather than inventing a boundary.
   const A24 = age["24"];
-  const ageBound = A24?.best_band?.bound ?? Infinity;
-  const ageBands = { pre: A24?.best_band?.pre ?? A24.rate, post: A24?.best_band?.post ?? A24.rate };
+  // `pw` is the adopted piecewise fit; `best_band` is the midpoint fit that IDENTIFIED the
+  // boundary and is kept as the fallback. If a future re-cut can identify neither, fall back
+  // to the flat rate rather than inventing a boundary.
+  const ageBound = A24?.pw?.bound ?? A24?.best_band?.bound ?? Infinity;
+  const ageBands = A24?.pw
+    ? { pre: A24.pw.pre as number, post: A24.pw.post as number }
+    : { pre: A24?.best_band?.pre ?? A24.rate, post: A24?.best_band?.post ?? A24.rate };
 
   return {
     key: "measured",
     label: "Measured constants",
     blurb: "Each figure fitted against matched pairs of real neighbouring projects. Adopted on Shawn's audit, 2026-09-09.",
-    leaseRate: (mid) => (mid >= bound ? bands.new : bands.old),
-    leaseRateLabel: `$${Math.round(bands.old)} / $${Math.round(bands.new)} psf per year, by the midpoint of the two lease starts (${bound} boundary)`,
-    // Freehold-vs-freehold age — the two bands from age-pairs.json, read at the TOP midpoint.
-    // Adopted on Shawn's ruling, 2026-09-13, replacing the flat $19.5 that tenure-pairs.py
-    // fitted as a by-product of its placebo. THE POST-BAND IS THIN: 15 pairs, and it moves
-    // $25->$40 depending where the split is drawn, so the page must carry that caveat. The
-    // PRE-band is the robust half — $12.9 to $14.2 whatever boundary is chosen.
-    ageRateFH: (mid) => (mid >= ageBound ? ageBands.post : ageBands.pre),
-    ageRateFHLabel: `$${Math.round(ageBands.pre)} / $${Math.round(ageBands.post)} psf per year, `
-      + `by the midpoint of the two completion years (${ageBound} boundary)`,
+    leaseAdj: (f, t) => piecewise(f, t, bound, bands.old, bands.new),
+    leaseRateLabel: `$${Math.round(bands.old)} / $${Math.round(bands.new)} psf per year, each year of the gap priced at its own band (${bound} boundary)`,
+    // Freehold-vs-freehold age — the two bands from age-pairs.json, SPLIT at the boundary
+    // rather than read at the midpoint (Shawn, 2026-09-13; the calibration page carries the
+    // reasoning and the cliff that decided it). Adopted 2026-09-13, replacing the flat $19.5
+    // that tenure-pairs.py fitted as a by-product of its placebo.
+    // THE POST-BAND IS THIN: 15 pairs, and it moves $34.5-$39.2 on leave-one-pair-out, so the
+    // page carries that caveat. The PRE-band is the robust half.
+    ageAdjFH: (f, t) => piecewise(f, t, ageBound, ageBands.pre, ageBands.post),
+    ageRateFHLabel: `$${ageBands.pre.toFixed(1)} / $${ageBands.post.toFixed(1)} psf per year, `
+      + `each year of the gap priced at its own band (${ageBound} boundary)`,
     tenurePremium: (leaseLeft) => {
       if (leaseLeft == null) return headline;
       for (const g of grad) if (leaseLeft >= g.minLeft) return g.pct;
@@ -692,25 +738,27 @@ export function adjust(K: Constants, S: any, pool: any[]) {
     const bothFH = S.tenure?.type === "FH" && c.tenure?.type === "FH";
     if (bothLH && S.tenure.leaseStart != null && c.tenure.leaseStart != null) {
       const yrs = S.tenure.leaseStart - c.tenure.leaseStart;
-      // Read at the MIDPOINT of the two lease starts. If the rate varies with vintage,
-      // the whole difference across an interval is the gap times the rate at its
-      // midpoint — so a pair straddling a band boundary needs no decision.
-      const mid = (S.tenure.leaseStart + c.tenure.leaseStart) / 2;
-      const rate = K.leaseRate(mid);
-      add("Lease", yrs * rate,
-        `${yrs > 0 ? "+" : ""}${yrs} yrs lease vs subject (${c.tenure.leaseStart} vs ${S.tenure.leaseStart}) x $${Math.round(rate)}/yr` +
-        (K.key === "measured" ? ` (midpoint ${Math.round(mid)})` : ""),
-        { kind: "rate", yrs, rate, from: c.tenure.leaseStart, to: S.tenure.leaseStart,
-          midpoint: K.key === "measured" ? Math.round(mid) : null, clock: "lease start" });
+      // SPLIT at the band boundary: each calendar year of the gap is priced at its own band
+      // and the legs are summed. A gap wholly inside one band yields a single leg and reads
+      // exactly as the old single-rate step did.
+      const v = K.leaseAdj(c.tenure.leaseStart, S.tenure.leaseStart);
+      add("Lease", v.total,
+        `${yrs > 0 ? "+" : ""}${yrs} yrs lease vs subject (${c.tenure.leaseStart} vs ${S.tenure.leaseStart}) — `
+        + v.parts.map((pt) => `${pt.years} x $${Math.round(pt.rate)}/yr`).join(" + "),
+        { kind: "rate", yrs, rate: v.parts.length === 1 ? v.parts[0].rate : null,
+          parts: v.parts, from: c.tenure.leaseStart, to: S.tenure.leaseStart,
+          clock: "lease start" });
     } else if (S.top && c.top) {
-      const topMid = (S.top.year + c.top.year) / 2;
-      const rate = bothFH ? K.ageRateFH(topMid) : K.leaseRate(topMid);
+      const v = bothFH ? K.ageAdjFH(c.top.year, S.top.year)
+                       : K.leaseAdj(c.top.year, S.top.year);
       const yrs = S.top.year - c.top.year;
-      add("Age (TOP)", yrs * rate,
-        `TOP ${c.top.year} vs subject ${S.top.year} — ${Math.abs(yrs)} yrs ${yrs > 0 ? "older" : "newer"} x $${Math.round(rate)}/yr` +
+      add("Age (TOP)", v.total,
+        `TOP ${c.top.year} vs subject ${S.top.year} — ${Math.abs(yrs)} yrs ${yrs > 0 ? "older" : "newer"}, `
+        + v.parts.map((pt) => `${pt.years} x $${Math.round(pt.rate)}/yr`).join(" + ") +
         (bothFH ? " (freehold vs freehold)" : "") +
         (c.top.estimated || S.top.estimated ? " (estimated TOP)" : ""),
-        { kind: "rate", yrs, rate, from: c.top.year, to: S.top.year, clock: "TOP",
+        { kind: "rate", yrs, rate: v.parts.length === 1 ? v.parts[0].rate : null,
+          parts: v.parts, from: c.top.year, to: S.top.year, clock: "TOP",
           estimated: !!(c.top.estimated || S.top.estimated) });
     }
 

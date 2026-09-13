@@ -52,6 +52,15 @@ POOL = D.get('pooled24', [])
 
 # ── the answer: TWO bands, read at the midpoint ─────────────────────────────
 BANDS = [(1900, 2011, 'up to 2010'), (2011, 3000, '2011 onward')]
+# THE ADOPTED FORM IS PIECEWISE (Shawn, 2026-09-13) — each calendar year of the gap priced at
+# its own band and summed, not one rate read at the pair's midpoint. The midpoint bands above
+# stay: they are what the panel compares against, and they still define the band LABELS.
+# The boundary is HAND-SET at 2011 and must not be fitted — a knot fitted to this cut lands on
+# 2012 with 82% bootstrap confidence and on 2006 three years earlier with none.
+LPW   = D.get('pw') or {}
+LPW1  = LPW.get('pre', 0.0)
+LPW2  = LPW.get('post', 0.0)
+LPWB  = LPW.get('bound', 2011)
 
 mid    = lambda r: (r['ls_old'] + r['ls_new']) / 2
 # LEAST SQUARES THROUGH THE ORIGIN, matching lease-pairs.py fitted(). Changed from the ratio
@@ -763,6 +772,11 @@ white-space:nowrap;letter-spacing:-.012em}
 .ans .w{font-size:12px;letter-spacing:.15em;text-transform:uppercase;color:var(--slate-400);
 margin-top:10px}
 .ans .g{font:600 18px/1.15 Optima,Candara,sans-serif;color:var(--slate-300);margin-top:8px}
+.vbase{display:flex;gap:34px;flex-wrap:wrap;margin-top:16px;padding-top:14px;
+border-top:1px solid rgba(36,48,80,.85)}
+.vbase .g{font:600 18px/1.15 Optima,Candara,sans-serif;color:var(--slate-300)}
+.vbase .g span{font:400 12.5px/1 -apple-system,Segoe UI,sans-serif;letter-spacing:.04em;
+text-transform:uppercase;color:var(--slate-500);display:block;margin-top:4px}
 .ans .g span{font:400 12.5px/1 -apple-system,Segoe UI,sans-serif;letter-spacing:.04em;
 text-transform:uppercase;color:var(--slate-600);display:block;margin-top:3px}
 .vcell.grow{flex:1 1 340px}
@@ -919,28 +933,44 @@ color:var(--gold);border:1px solid rgba(201,169,106,.4);border-radius:999px;padd
 
 JS = """
 (function(){
-  var B=%BANDS%, LO=%LO%, HI=%HI%;
-  function bandFor(m){for(var i=0;i<B.length;i++){if(m<B[i][0])return B[i];}return B[B.length-1];}
+  // PW = [boundary, rate before it, rate from it]. The gap is SPLIT at the boundary and each
+  // leg priced at its own rate — the form adopted 2026-09-13, replacing one rate read at the
+  // pair's midpoint. See the panel's "How to use it".
+  var PW=%PW%, LO=%LO%, HI=%HI%;
   function n(id){return parseFloat(document.getElementById(id).value);}
+  // Signed from `f` to `t`: a comparable NEWER than the subject must come down, so integrate
+  // over the span either way and flip once.
+  function pw(f,t){
+    var lo=Math.min(f,t), hi=Math.max(f,t), sg=(t>=f?1:-1), out=[];
+    var a=Math.max(0,Math.min(hi,PW[0])-lo), b=Math.max(0,hi-Math.max(lo,PW[0]));
+    if(a>0) out.push({yrs:a, rate:PW[1], to:Math.min(hi,PW[0])});
+    if(b>0) out.push({yrs:b, rate:PW[2], to:hi});
+    var tot=0; for(var i=0;i<out.length;i++) tot+=out[i].yrs*out[i].rate;
+    return {parts:out, total:sg*tot};
+  }
   function go(){
     var a=n('lsA'), b=n('lsB'), o=document.getElementById('calcOut');
     if(!a||!b||a<1960||b<1960||a>2040||b>2040){o.className='cout bad';
       o.innerHTML='Enter two lease start years.';return;}
     if(a===b){o.className='cout bad';o.innerHTML='Same lease start \\u2014 no adjustment.';return;}
-    var mid=(a+b)/2, bd=bandFor(mid), rate=bd[1], gap=b-a, adj=rate*gap;
+    var gap=b-a, r=pw(a,b), adj=r.total, mid=(a+b)/2;
     var warn='';
-    if(mid>HI) warn='<p class="cwarn">Midpoint '+mid.toFixed(1)+' is past the measured range '+
+    if(Math.max(a,b)>HI) warn='<p class="cwarn">Part of this gap is past the measured range '+
       '(ends '+HI.toFixed(0)+'). The rate was still climbing when the evidence ran out, so treat '+
       'this as a floor.</p>';
-    else if(mid<LO) warn='<p class="chint">Midpoint '+mid.toFixed(1)+' is older than the bulk of '+
-      'the sample, but the older band is flat and carries most of the evidence. The rate does not '+
-      'change going further back.</p>';
+    else if(mid<LO) warn='<p class="chint">This pair is older than the bulk of the sample, but '+
+      'the older band is flat and carries most of the evidence. The rate does not change going '+
+      'further back.</p>';
+    var legs='';
+    for(var i=0;i<r.parts.length;i++){
+      var pt=r.parts[i];
+      legs+='<div class="crow"><span>'+(i===0&&r.parts.length>1?'Years before '+PW[0]
+              :(r.parts.length>1?'Years from '+PW[0]:'Lease gap'))+'</span><b>'+
+            pt.yrs+' \u00d7 $'+pt.rate.toFixed(1)+'/yr</b><i class="cflat">$'+
+            Math.round(pt.yrs*pt.rate).toLocaleString()+'</i></div>';
+    }
     o.className='cout';
-    o.innerHTML =
-      '<div class="crow"><span>Midpoint</span><b>'+(mid%1?mid.toFixed(1):mid.toFixed(0))+'</b></div>'+
-      '<div class="crow"><span>Rate</span><b>$'+rate.toFixed(0)+' psf / yr</b>'+
-        '<i class="cflat">'+bd[2]+'</i></div>'+
-      '<div class="crow"><span>Lease gap</span><b>'+Math.abs(gap)+' years</b></div>'+
+    o.innerHTML = legs +
       '<div class="crow big"><span>Adjustment</span><b>'+(adj<0?'\u2212':'+')+'$'+
         Math.abs(Math.round(adj)).toLocaleString()+' psf</b></div>'+
       '<p class="chint">Add this to the '+(gap>0?'older':'newer')+
@@ -964,7 +994,21 @@ JS = """
   var TB=%TENB%, TS=%TENS%, fwd=true;
   function n(id){return parseFloat(document.getElementById(id).value);}
   function el(id){return document.getElementById(id);}
-  function rate(a,b){return ((a+b)/2-TB[3]) < TB[2] ? TB[0] : TB[1];}
+  // The age term here is the LEASE rate on the TOP clock, so it splits the same way. TOP is
+  // converted to a lease-start equivalent by subtracting the build gap (TB[3]) before the
+  // boundary (TB[2]) is applied, which is what the engine does.
+  // How to SAY the age term: one rate when the gap sits inside one band, both when it spans.
+  function ageLegs(tf,tl){
+    var f=tl-TB[3], t=tf-TB[3], lo=Math.min(f,t), hi=Math.max(f,t);
+    var a=Math.max(0,Math.min(hi,TB[2])-lo), b=Math.max(0,hi-Math.max(lo,TB[2]));
+    if(a>0&&b>0) return a+' yrs at $'+TB[0].toFixed(0)+' then '+b+' at $'+TB[1].toFixed(0)+' a year';
+    return '$'+(b>0?TB[1]:TB[0]).toFixed(0)+' a year';
+  }
+  function ageAdj(tf,tl){
+    var f=tl-TB[3], t=tf-TB[3], lo=Math.min(f,t), hi=Math.max(f,t), sg=(t>=f?1:-1);
+    var a=Math.max(0,Math.min(hi,TB[2])-lo), b=Math.max(0,hi-Math.max(lo,TB[2]));
+    return sg*(a*TB[0]+b*TB[1]);
+  }
   function step(left){for(var i=0;i<TS.length;i++){if(left>=TS[i][0])return TS[i];}
     return TS[TS.length-1];}
 
@@ -983,7 +1027,7 @@ JS = """
     dirs();
     var p=n('tfP'), tf=n('tfT'), tl=n('tlT'), o=el('tenOut');
     if(!p||!tf||!tl){o.className='cout bad';o.innerHTML='Fill in all three.';return;}
-    var lf=left(), r=rate(tf,tl), dv=tf-tl, age=r*dv, st=step(lf),
+    var lf=left(), dv=tf-tl, age=ageAdj(tf,tl), st=step(lf),
         out = fwd ? (p/(1+st[1]) - age)      // freehold in, leasehold out
                   : ((p + age)*(1+st[1]));   // leasehold in, freehold out
     o.className='cout';
@@ -992,7 +1036,7 @@ JS = """
         ? '<div class="crow"><span>Same completion year</span><b>no age adjustment</b></div>'
         : '<div class="crow"><span>Completion-year gap \u2014 the freehold is '+
           Math.abs(dv)+' yrs '+(dv>0?'newer':'older')+
-          ', at $'+r.toFixed(0)+' a year</span><b>'+
+          ', at '+ageLegs(tf,tl)+'</span><b>'+
           (fwd?(age>=0?'\u2212':'+'):(age>=0?'+':'\u2212'))+'$'+
           Math.abs(Math.round(age)).toLocaleString()+'</b></div>')+
       '<div class="crow"><span>Freehold premium, '+st[2].split(' ')[0].replace('-','\u2013')+
@@ -1596,7 +1640,7 @@ def ec_resale_table():
                  f'<td class="num big" style="color:var(--gold-soft)">{d["pct"]:+.1f}%</td></tr>')
     return ''.join(r) + '</tbody></table>'
 
-def hero(was, was_sub, answers, call):
+def hero(was, was_sub, answers, call, base=None):
     """The verdict block every panel opens with. `answers` is a list of
     (figure, what it is, how many developments).
 
@@ -1610,12 +1654,17 @@ def hero(was, was_sub, answers, call):
            if len(a) > 3 and a[3] else '')
         + '</div>' for a in answers)
     call_p = ('<p class="call">' + call + '</p>') if call else ''
+    base_d = ''
+    if base:
+        base_d = ('<div class="vbase">' + ''.join(
+            '<div class="g">' + f'{n:,}' + '<span>' + w + '</span></div>' for n, w in base)
+            + '</div>')
     return ('<div class="verdict"><div class="vgrid">'
             '<div class="vcell"><div class="lab">Engine constant</div>'
             '<div class="val was">' + was + '</div><div class="sub">' + was_sub + '</div></div>'
             '<div class="arrow">&rarr;</div>'
             '<div class="vcell grow"><div class="lab">Measured</div>'
-            '<div class="answers">' + cells + '</div></div></div>'
+            '<div class="answers">' + cells + '</div>' + base_d + '</div></div>'
             + call_p + '</div>')
 
 def nice(n):
@@ -1852,14 +1901,14 @@ def ten_sens_table():
 # lease a subject has left from nothing but its completion year.
 # ROUNDED TO THE DOLLAR. Shawn, 2026-09-08: a 10-year gap at "$25 a year" must read $250, not
 # $249. The row states the rate to the dollar, so the arithmetic behind it uses that same dollar.
-TENB_JS = ('[%d,%d,%d,%d,%d,%d]' % (round(T['bands']['old']), round(T['bands']['new']),
-                                    T['band_bound'], T['build']['median'], T['build']['term'],
-                                    datetime.date.today().year)) if T else '[0,0,0,0,99,2026]'
+TENB_JS = ('[%.2f,%.2f,%d,%d,%d,%d]' % (LPW1, LPW2, LPWB,
+                                        T['build']['median'], T['build']['term'],
+                                        datetime.date.today().year)) if T else '[0,0,0,0,99,2026]'
 # [floor of the step, the premium as a fraction, the step's label] — PERCENT, his ruling.
 TENS_JS = '[' + ','.join(f'[{g["min_left"]},{g["pct"]:.5f},"{g["label"]}"]'
                          for g in TGL) + ']' if TGL else '[]'
 
-BANDS_JS = '[' + ','.join(f'[{hi},{BANDR[nm]:.2f},"{nm}"]' for _, hi, nm in BANDS) + ']'
+PW_JS = f'[{LPWB},{LPW1:.2f},{LPW2:.2f}]'
 A1, A2 = age_label(OLD_NM); B1, B2 = age_label(NEW_NM)
 
 # ── FREEHOLD vs FREEHOLD — the price of a year of COMPLETION ────────────────
@@ -2094,7 +2143,8 @@ on one screen; every figure below has a panel of its own.</p>
 <section>
   <div class="scroll"><table class="fig"><thead><tr><th>Term</th><th class="num">Constant</th><th>Measured</th></tr></thead><tbody>
   <tr><th><a href="#lease">Lease difference (99 years) &mdash; a year of lease start</a></th><td class="num big">$40 psf / yr</td>
-    <td style="color:var(--gold-soft)">${BANDR[OLD_NM]:,.0f} and ${BANDR[NEW_NM]:,.0f}, by midpoint</td></tr>
+    <td style="color:var(--gold-soft)">${LPW1:,.1f} a year before {LPWB} and
+    ${LPW2:,.1f} from {LPWB}, a gap spanning it split between the two</td></tr>
   <tr><th><a href="#fhage">Lease difference (FH) &mdash; a year of completion</a></th>
     <td class="num big">the same $40</td>
     <td style="color:var(--gold-soft)">${AGPW1:,.1f} a year before {AGB} and
@@ -2138,20 +2188,22 @@ on one screen; every figure below has a panel of its own.</p>
 the first one measured against the market.</p>
 
 {hero('$40', 'flat, every comparable',
-      [(f'${BANDR[OLD_NM]:,.0f}', OLD_NM, ndev(rows_in(OLD_NM)), ntx(rows_in(OLD_NM))),
-       (f'${BANDR[NEW_NM]:,.0f}', NEW_NM, ndev(rows_in(NEW_NM)), ntx(rows_in(NEW_NM)))],
-      '')}
+      [(f'${LPW1:,.1f}', f'years before {LPWB}', None),
+       (f'${LPW2:,.1f}', f'years from {LPWB}', None)],
+      f'A gap that spans {LPWB} is split between the two rates.',
+      base=[(NDEV, 'developments'), (npairs(ALL), 'pairs'),
+            (len(ALL), 'comparisons'), (NTX, 'transactions')])}
 
 <section>
   <div class="sechead"><h2 class="disp">How to use it</h2></div>
   <div class="steps">
     <div class="step"><span class="sn">1</span>
-      <p>Average the <b>two lease start years</b>. That is the midpoint.</p></div>
+      <p>Split the <b>lease gap</b> at {LPWB}. Count the years each side.</p></div>
     <div class="step"><span class="sn">2</span>
-      <p>Midpoint <b>{OLD_NM}</b> &rarr; ${BANDR[OLD_NM]:,.0f}. <b>{NEW_NM}</b> &rarr;
-      ${BANDR[NEW_NM]:,.0f}.</p></div>
+      <p>Years <b>before {LPWB}</b> at ${LPW1:,.1f}. Years <b>from {LPWB}</b> at
+      ${LPW2:,.1f}.</p></div>
     <div class="step"><span class="sn">3</span>
-      <p>Multiply by the <b>lease gap</b> and add to the comparable's PSF.</p></div>
+      <p>Add the two legs, and add that to the comparable's PSF.</p></div>
   </div>
 
   <div class="calc">
@@ -2162,9 +2214,20 @@ the first one measured against the market.</p>
     </div>
     <div id="calcOut" class="cout"></div>
   </div>
-  <p class="expl">The midpoint is what lets two rates price a pair that straddles the boundary:
-  a 2005-against-2025 comparable is centred on 2015 and takes the newer rate, without anyone
-  having to decide which side it belongs to.</p>
+  <p class="expl"><b>Changed on 2026-09-13, from one rate read at the pair's midpoint.</b> The
+  midpoint form assigned a whole pair to one band by where it was centred, which put a cliff in
+  the middle of the rule: lease starts 2001-against-2020 are centred 2010.5 and took
+  ${BANDR[OLD_NM]:,.0f} across all 19 years (${BANDR[OLD_NM] * 19:,.0f}); shift both ends one
+  year and they are centred 2011.5 and took ${BANDR[NEW_NM]:,.0f} across all 19
+  (${BANDR[NEW_NM] * 19:,.0f}). Same gap, same stock,
+  {BANDR[NEW_NM] / BANDR[OLD_NM]:.1f}&times; apart. Splitting the gap removes the edge, and it
+  predicts better &mdash; ahead on 92% of held-out folds. The midpoint bands were
+  ${BANDR[OLD_NM]:,.1f} / ${BANDR[NEW_NM]:,.1f}; fitted as a split they are
+  ${LPW1:,.1f} / ${LPW2:,.1f}.</p>
+  <p class="expl"><b>The {LPWB} boundary is hand-set and stays that way.</b> A knot fitted to
+  this cut lands on 2012 in 82% of resamples &mdash; and the same fit on the window three years
+  earlier lands on 2006, scattered across 2003&ndash;2013. It does not replicate, so it is not
+  fitted. {LPW.get('straddle', 0)} of {len(ALL)} comparisons span it.</p>
 </section>
 
 <section>
@@ -2252,10 +2315,10 @@ of a newer building &mdash; on the only clock both sides share, <b>completion</b
 {hero('$' + str(round(BANDR[OLD_NM])) + ' / $' + str(round(BANDR[NEW_NM])),
       'lease bands, read on the TOP clock',
       [(f'${AGPW1:,.1f}', AGNM[0], None), (f'${AGPW2:,.1f}', AGNM[1], None)],
-      f'A gap that spans {AGB} is split between the two rates. '
-      f'{ndev(AGR)} developments, {ntx(AGR):,} transactions. '
-      f'The engine applies one lease band across the whole gap, and a freehold pair is not a '
-      f'lease pair.')}
+      f'A gap that spans {AGB} is split between the two rates. The engine applies one lease '
+      f'band across the whole gap, and a freehold pair is not a lease pair.',
+      base=[(ndev(AGR), 'developments'), (npairs(AGR), 'pairs'),
+            (len(AGR), 'comparisons'), (ntx(AGR), 'transactions')])}
 
 <section>
   <div class="sechead"><h2 class="disp">How to use it</h2></div>
@@ -2450,15 +2513,12 @@ of a newer building &mdash; on the only clock both sides share, <b>completion</b
   <div class="scroll">{age_pair_table()}</div>
 </section>
 
-<div class="caveat" style="margin-top:18px"><b>Adopted &mdash; but the engine applies it the
-other way.</b> The freehold age rate is live in the workup: it reads this study's bands and
-prices a freehold-against-freehold comparable off the TOP clock. What the engine does <b>not</b>
-do is split the gap. It reads ONE rate at the midpoint of the two completion years
-(${fitted_age(AGPRE):,.0f} or ${fitted_age(AGPOST):,.0f}), which is the form this panel argues
-against above. <b>Until that is closed, this page and the workup differ on a gap that spans
-{AGB}</b> &mdash; by up to ${max(abs(c['mid_says'] - c['pw_says']) for c in AGFM['cliff']):,.0f}
-psf on a {AGFM['cliff'][0]['gap']}-year gap. The page states the better form; the engine has not
-been changed to it, and that is a deliberate open item, not an oversight.</div>
+<div class="caveat" style="margin-top:18px"><b>Adopted, and the engine applies this form.</b>
+The freehold age rate is live in the Price Gap workup: a freehold-against-freehold comparable is
+priced off the TOP clock, each year of the gap at its own band, exactly as set out above. The
+engine read one rate at the midpoint until 2026-09-13; it no longer does, and the workup's own
+step now shows the split &mdash; <i>&ldquo;4 yrs to {AGB} at ${AGPW1:,.0f}, then 11 at
+${AGPW2:,.0f} per year&rdquo;</i> &mdash; rather than a single rate it cannot name.</div>
 </div>
 
 <div class="panel" data-p="mrt" hidden>
@@ -2971,7 +3031,7 @@ HTML = f"""<!doctype html>
       <span class="tn">Summary</span></button>
     <button type="button" class="done" data-go="lease">
       <span class="tn">Lease Difference (99 Years)</span>
-      <span class="ts">${BANDR[OLD_NM]:,.0f} / ${BANDR[NEW_NM]:,.0f} a year</span></button>
+      <span class="ts">${LPW1:,.1f} / ${LPW2:,.1f} a year</span></button>
     <button type="button" class="done" data-go="fhage">
       <span class="tn">Lease Difference (FH)</span>
       <span class="ts">${AGPW1:,.1f} / ${AGPW2:,.1f} a year</span></button>
@@ -3005,7 +3065,7 @@ HTML = f"""<!doctype html>
 </footer>
 </div>
 <script>var QD={QJSON};</script>
-<script>{JS.replace('%TENB%', TENB_JS).replace('%TENS%', TENS_JS).replace('%BANDS%', BANDS_JS).replace('%LO%', f'{MID_LO}').replace('%HI%', f'{MID_HI}').replace('%VLO%', f"{VR['lo']}").replace('%VHI%', f"{VR['hi']}").replace('%VMID%', f"{VR['ratio']}").replace('%VFS%', f"{V['meta']['floor_step']}")}</script>
+<script>{JS.replace('%TENB%', TENB_JS).replace('%TENS%', TENS_JS).replace('%PW%', PW_JS).replace('%LO%', f'{MID_LO}').replace('%HI%', f'{MID_HI}').replace('%VLO%', f"{VR['lo']}").replace('%VHI%', f"{VR['hi']}").replace('%VMID%', f"{VR['ratio']}").replace('%VFS%', f"{V['meta']['floor_step']}")}</script>
 </body></html>
 """
 open(OUT, 'w').write(HTML)

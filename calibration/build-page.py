@@ -2450,11 +2450,15 @@ of a newer building &mdash; on the only clock both sides share, <b>completion</b
   <div class="scroll">{age_pair_table()}</div>
 </section>
 
-<div class="caveat" style="margin-top:18px"><b>Measured, not adopted.</b> Nothing on this panel
-is wired to the engine. The Price Gap workup still restates a freehold comparable with the
-99-year bands &mdash; which on a comparable twenty years older and wholly before {AGB}
-overstates the correction by about ${(BANDR[NEW_NM] - AGPW1) * 20:,.0f} psf. Changing that is a
-separate decision.</div>
+<div class="caveat" style="margin-top:18px"><b>Adopted &mdash; but the engine applies it the
+other way.</b> The freehold age rate is live in the workup: it reads this study's bands and
+prices a freehold-against-freehold comparable off the TOP clock. What the engine does <b>not</b>
+do is split the gap. It reads ONE rate at the midpoint of the two completion years
+(${fitted_age(AGPRE):,.0f} or ${fitted_age(AGPOST):,.0f}), which is the form this panel argues
+against above. <b>Until that is closed, this page and the workup differ on a gap that spans
+{AGB}</b> &mdash; by up to ${max(abs(c['mid_says'] - c['pw_says']) for c in AGFM['cliff']):,.0f}
+psf on a {AGFM['cliff'][0]['gap']}-year gap. The page states the better form; the engine has not
+been changed to it, and that is a deliberate open item, not an oversight.</div>
 </div>
 
 <div class="panel" data-p="mrt" hidden>

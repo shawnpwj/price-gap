@@ -2377,21 +2377,13 @@ the first one measured against the market.</p>
         <li><b>facing</b> &mdash; same</li>
         <li>lease start and building age are<br>confounded: this is blended vintage </li></ul></div>
     </div>
-    <p class="expl" style="margin-top:18px">All {len(ALL)} comparisons, numbered, <b>closest to
-    the rate first</b> and walking out to the furthest. <b>Difference</b> is what the market
-    shows between the two; <b>$ / yr</b> is that difference over the lease gap, which is the
-    figure this panel is about; <b>the rule says</b> is what ${LPW1:,.0f} before {LPWB} and
-    ${LPW2:,.0f} from {LPWB} works out to per year for this pair &mdash; the band rate itself
-    when the gap sits inside one band, a blend of the two when it spans {LPWB} &mdash; so every
-    row ties straight back to the headline. <b>Sales</b> is the transactions behind each side.
-    Nothing in a row is adjusted for anything. <b>Click any row</b> to open the quarters behind
+    <p class="expl" style="margin-top:18px">All {len(ALL)} comparisons, closest to the rule
+    first. <b>$ / yr</b> is the psf difference over the lease gap. <b>The rule says</b> is
+    ${LPW1:,.0f} / ${LPW2:,.0f} for this pair. Nothing is adjusted. <b>Click a row</b> for its
+    quarters.</p>
+    <p class="expl"><b>The bottom rows are short gaps.</b> A 1-year pair puts its whole psf
+    difference into one year, so it swings wide. The fit weights by gap, so these barely move
     it.</p>
-    <p class="expl"><b>Read the shortest gaps with care.</b> A one-year pair divides its whole
-    uncontrolled floor, stack and mix difference by one, so its $&thinsp;/&thinsp;yr swings far
-    wider than the rate ever does &mdash; which is why the psf difference sits beside it, and why
-    the table is sorted by the per-year miss, putting those rows at the bottom rather than the
-    top. The estimator is not affected: it fits the difference against the gap, so a one-year
-    pair carries one year of leverage and cannot shout.</p>
     <div class="scroll" style="margin-top:12px">{PAIRTABLE}</div>
   </details>
 </section>
@@ -2400,16 +2392,12 @@ the first one measured against the market.</p>
 
 <div class="panel" data-p="fhage" hidden>
 <h1 class="disp">What a year of completion is worth between two freeholds</h1>
-<p class="lede">The 99-year study prices a year of <b>lease start</b> between two leaseholds, and
-that figure necessarily bundles two things that move together: the building got newer, and the
-lease got longer. Between two freeholds there is no lease to lengthen. What is left is the price
-of a newer building &mdash; on the only clock both sides share, <b>completion</b>.</p>
+<p class="lede">Between two freeholds, we compare on <b>TOP completion date</b>.</p>
 
 {hero('$' + str(round(BANDR[OLD_NM])) + ' / $' + str(round(BANDR[NEW_NM])),
       'the retired lease bands, one rate at the TOP midpoint',
       [(f'${AGPW1:,.0f}', AGNM[0], None), (f'${AGPW2:,.0f}', AGNM[1], None)],
-      f'A gap that spans {AGB} is split between the two rates. The engine applies one lease '
-      f'band across the whole gap, and a freehold pair is not a lease pair.',
+      f'A gap that spans {AGB} is split between the two rates.',
       base=[(ndev(AGR), 'developments'), (npairs(AGR), 'pairs'),
             (len(AGR), 'comparisons'), (ntx(AGR), 'transactions')])}
 
@@ -2417,11 +2405,9 @@ of a newer building &mdash; on the only clock both sides share, <b>completion</b
   <div class="sechead"><h2 class="disp">How to use it</h2></div>
   <div class="steps">
     <div class="step"><span class="sn">1</span>
-      <p>Both sides <b>freehold</b> &mdash; 999-year counts as freehold. If either side is
-      leasehold this is the wrong figure; use the 99-year panel.</p></div>
+      <p>Both sides <b>freehold</b> (999-year counts). Otherwise use the 99-year panel.</p></div>
     <div class="step"><span class="sn">2</span>
-      <p>Split the <b>completion gap</b> at {AGB}. Count the years each side &mdash; not the
-      lease starts, because a freehold has none to difference against.</p></div>
+      <p>Split the <b>TOP gap</b> at {AGB}. Count the years each side.</p></div>
     <div class="step"><span class="sn">3</span>
       <p>Years <b>before {AGB}</b> at ${AGPW1:,.0f}. Years <b>from {AGB}</b> at ${AGPW2:,.0f}.
       Add the two and add that to the comparable's psf.</p></div>
@@ -2429,8 +2415,7 @@ of a newer building &mdash; on the only clock both sides share, <b>completion</b
   <p class="expl"><b>Worked:</b> a 2000-against-2025 comparable is
   {AGB - 2000} years at ${AGPW1:,.0f} plus {2025 - AGB} at ${AGPW2:,.0f} &mdash;
   ${AGPW1 * (AGB - 2000):,.0f} + ${AGPW2 * (2025 - AGB):,.0f} =
-  <b>${AGPW1 * (AGB - 2000) + AGPW2 * (2025 - AGB):,.0f} psf</b>. A pair wholly on one side of
-  {AGB} is simply its gap times that side's rate.</p>
+  <b>${AGPW1 * (AGB - 2000) + AGPW2 * (2025 - AGB):,.0f} psf</b>.</p>
 </section>
 
 <section>
@@ -2464,20 +2449,13 @@ of a newer building &mdash; on the only clock both sides share, <b>completion</b
         <li><b>facing</b> &mdash; same</li>
         <li>no EC on either side: an EC is<br>leasehold and cannot be a freehold pair</li></ul></div>
     </div>
-    <p class="expl" style="margin-top:18px">All {len(AGR)} comparisons, numbered, <b>closest to
-    the rate first</b> and walking out to the furthest. <b>Difference</b> is what the market
-    shows between the two; <b>$ / yr</b> is that difference over the completion gap, which is the
-    figure this panel is about; <b>the rule says</b> is what ${AGPW1:,.0f} before {AGB} and
-    ${AGPW2:,.0f} from {AGB} works out to per year for this pair &mdash; the band rate itself
-    when the gap sits inside one band, a blend of the two when it spans {AGB}, and those rows are
-    tinted. <b>Sales</b> is the transactions behind each side. Nothing in a row is adjusted for
-    anything.</p>
-    <p class="expl"><b>Read the shortest gaps with care.</b> A one-year pair divides its whole
-    uncontrolled floor, stack and mix difference by one, so its $&thinsp;/&thinsp;yr swings far
-    wider than the rate ever does &mdash; which is why the psf difference sits beside it, and why
-    the table is sorted by the per-year miss, putting those rows at the bottom rather than the
-    top. The estimator is not affected: it fits the difference against the gap, so a one-year
-    pair carries one year of leverage and cannot shout.</p>
+    <p class="expl" style="margin-top:18px">All {len(AGR)} comparisons, closest to the rule
+    first. <b>$ / yr</b> is the psf difference over the TOP gap. <b>The rule says</b> is
+    ${AGPW1:,.0f} / ${AGPW2:,.0f} for this pair; tinted rows span {AGB}. Nothing is
+    adjusted.</p>
+    <p class="expl"><b>The bottom rows are short gaps.</b> A 1-year pair puts its whole psf
+    difference into one year, so it swings wide. The fit weights by gap, so these barely move
+    it.</p>
     <div class="scroll" style="margin-top:12px">{age_pair_table()}</div>
   </details>
 </section>

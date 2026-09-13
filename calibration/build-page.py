@@ -1374,7 +1374,7 @@ def int_pairtable():
          '<th>plain neighbour</th><th class="num">apart</th><th>bed</th>'
          '<th class="num">after lease &amp; walk</th>'
          '<th class="num">the premium</th><th class="num">the figure says</th>'
-         '<th class="num">sales</th><th>next door</th>'
+         '<th class="num">off by</th><th class="num">sales</th><th>next door</th>'
          '</tr></thead><tbody>']
     for i, r in enumerate(rows, 1):
         h.append(f'<tr><td class="num quiet">{i}</td>'
@@ -1385,6 +1385,7 @@ def int_pairtable():
                  f'<td class="num quiet">{r["adj"]:+,.0f}</td>'
                  f'<td class="num big">{pc(r):+.1f}%</td>'
                  f'<td class="num quiet">+{hd:.1f}%</td>'
+                 f'<td class="num quiet">{pc(r) - hd:+.1f}%</td>'
                  f'<td class="num quiet">{r["n_i"]} / {r["n_n"]}</td>'
                  f'<td class="quiet">{"yes" if tight(r) else "&mdash;"}</td></tr>')
     return ''.join(h) + '</tbody></table>'
@@ -1494,21 +1495,26 @@ def void_cut(name):
     return ''.join(r)
 
 def void_devs(n=30, widest=False):
+    # Same shape as every other pair table: closest to the headline first, the figure, off by.
+    # `widest` is the retired "worth money" cut — NOT RENDERED since 2026-09-13.
     d = V['resale']['devs']
-    d = sorted(d, key=lambda r: -r['spread'])[:n] if widest else d[:n]
-    r = ['<table class="fig"><thead><tr><th>Development</th><th class="num">district</th>'
-         '<th class="num">Extra</th><th class="num">Home psf</th>'
-         '<th class="num">Extra-area psf</th><th class="num">Discount</th>'
-         '<th class="num">widest gap &times;</th><th class="num">Resales</th>'
-         '</tr></thead><tbody>']
-    for x in d:
-        r.append(f'<tr><th>{html.escape(nice(x["proj"]))}</th>'
-                 f'<td class="num quiet">{x["dist"]}</td>'
-                 f'<td class="num">+{x["extra"]:,}</td>'
+    hd = VR['discount']
+    d = (sorted(d, key=lambda r: -r['spread']) if widest
+         else sorted(d, key=lambda x: abs((100 - x['ratio'] * 100) - hd)))[:n]
+    r = ['<table class="fig pairs"><thead><tr><th class="num">#</th><th>development</th>'
+         '<th class="num">extra sqft</th><th class="num">home psf</th>'
+         '<th class="num">extra-area psf</th><th class="num">discount</th>'
+         '<th class="num">the figure says</th><th class="num">off by</th>'
+         '<th class="num">resales</th></tr></thead><tbody>']
+    for i, x in enumerate(d, 1):
+        disc = 100 - x['ratio'] * 100
+        r.append(f'<tr><td class="num quiet">{i}</td><td>{html.escape(nice(x["proj"]))}</td>'
+                 f'<td class="num quiet">+{x["extra"]:,}</td>'
                  f'<td class="num quiet">${x["base_psf"]:,}</td>'
-                 f'<td class="num">${x["void_psf"]:,}</td>'
-                 f'<td class="num big" style="color:var(--gold)">{100-x["ratio"]*100:.0f}% off</td>'
-                 f'<td class="num {"big" if x["spread"]>=.5 else "quiet"}">{x["spread"]:.2f}</td>'
+                 f'<td class="num quiet">${x["void_psf"]:,}</td>'
+                 f'<td class="num big">{disc:.0f}% off</td>'
+                 f'<td class="num quiet">{hd:.0f}% off</td>'
+                 f'<td class="num quiet">{disc - hd:+.0f}</td>'
                  f'<td class="num quiet">{x["pairs"]}</td></tr>')
     r.append('</tbody></table>')
     return ''.join(r)
@@ -1526,20 +1532,25 @@ def ec_launch_table():
     2026-09-11, so it is the evidence for the row: +28% against something 259 m away and
     +26% against something 1.9 km away are not the same reading, and the district match
     this replaced made that difference invisible."""
-    r = ['<table class="fig"><thead><tr><th>EC launch</th><th class="num">EC psf</th>'
-         '<th class="num">Private psf</th><th class="num">Private is</th>'
-         '<th>Compared against</th></tr></thead><tbody>']
-    for d in sorted(E['launch']['by'], key=lambda d: d['pct']):
+    # Same shape as every other pair table since 2026-09-13: closest to the headline first.
+    hd = E['launch']['pct']
+    r = ['<table class="fig pairs"><thead><tr><th class="num">#</th><th>EC launch</th>'
+         '<th>private launch</th><th class="num">apart</th><th class="num">EC psf</th>'
+         '<th class="num">private psf</th><th class="num">private is</th>'
+         '<th class="num">the figure says</th><th class="num">off by</th>'
+         '<th class="num">pairs</th></tr></thead><tbody>']
+    for i, d in enumerate(sorted(E['launch']['by'], key=lambda d: abs(d['pct'] - hd)), 1):
         far = d.get('d')
-        sub = f'{d["pairs"]:,} pairs'
-        if far is not None:
-            sub = (f'{far:,} m away &middot; ' if far < 1000 else f'{far/1000:.1f} km away &middot; ') + sub
-        r.append(f'<tr><th>{nice(d["ec"])}</th>'
-                 f'<td class="num">${d["ecpsf"]:,.0f}</td>'
-                 f'<td class="num">${d["pvpsf"]:,.0f}</td>'
-                 f'<td class="num big" style="color:var(--gold-soft)">+{d["pct"]:.0f}%</td>'
-                 f'<td>{", ".join(nice(c) for c in d["comps"])}'
-                 f'<span class="sub2">{sub}</span></td></tr>')
+        apart = '&mdash;' if far is None else (f'{far:,}m' if far < 1000 else f'{far/1000:.1f}km')
+        r.append(f'<tr><td class="num quiet">{i}</td><td>{nice(d["ec"])}</td>'
+                 f'<td>{", ".join(nice(c) for c in d["comps"])}</td>'
+                 f'<td class="num quiet">{apart}</td>'
+                 f'<td class="num quiet">${d["ecpsf"]:,.0f}</td>'
+                 f'<td class="num quiet">${d["pvpsf"]:,.0f}</td>'
+                 f'<td class="num big">{d["pct"]:+.0f}%</td>'
+                 f'<td class="num quiet">+{hd:.0f}%</td>'
+                 f'<td class="num quiet">{d["pct"] - hd:+.0f}%</td>'
+                 f'<td class="num quiet">{d["pairs"]:,}</td></tr>')
     return ''.join(r) + '</tbody></table>'
 
 def ec_ladder_line():
@@ -1561,11 +1572,8 @@ def ec_unmatched_line():
     if not u: return ''
     L = E['launch'].get('ladder') or [2000]
     names = ', '.join(f'<b>{nice(x)}</b>' for x in u)
-    return (f'<p class="expl">{len(u)} EC launches sold in the window and are <b>not</b> in the '
-            f'table: {names}. No private launch opened within {L[-1]/1000:g} km of them inside '
-            f'the same six months and size band, so there is nothing to pair them with. Most '
-            f'carried a figure until 2026-09-11, when the match was on district and a '
-            f'comparable several kilometres away still counted.</p>')
+    return (f'<p class="expl">Not in the table, with no private launch within {L[-1]/1000:g} km '
+            f'to pair: {names}.</p>')
 
 # Age bands measured but not shown on the page. (Shawn, 2026-09-10.)
 HIDDEN_AGE_BANDS = {'15+'}
@@ -1664,16 +1672,25 @@ def ec_age_table():
 def ec_resale_table():
     """Every EC carrying 100 pairs or more. A NEGATIVE figure is the EC trading above the
     private condo beside it."""
-    r = ['<table class="fig"><thead><tr><th>EC</th><th class="num">Years built</th>'
-         '<th class="num">EC psf</th><th class="num">Private psf</th>'
-         '<th class="num">Private is</th></tr></thead><tbody>']
-    for d in sorted(E['resale']['by'], key=lambda d: d['pct']):
+    # Same shape as every other pair table: closest to the headline first, with what the
+    # figure says and how far this row is off it. (Shawn, 2026-09-13: sorting most-negative
+    # first led the table with ECs dearer than private, which the headline does not say.)
+    hd = E['resale']['pct']
+    r = ['<table class="fig pairs"><thead><tr><th class="num">#</th><th>EC</th>'
+         '<th class="num">years built</th><th class="num">EC psf</th>'
+         '<th class="num">private psf</th><th class="num">private is</th>'
+         '<th class="num">the figure says</th><th class="num">off by</th>'
+         '<th class="num">pairs</th></tr></thead><tbody>']
+    for i, d in enumerate(sorted(E['resale']['by'], key=lambda d: abs(d['pct'] - hd)), 1):
         age = f'{d["age"]:.0f}' if d['age'] is not None else '&mdash;'
-        r.append(f'<tr><th>{nice(d["ec"])}<span class="sub2">{d["pairs"]:,} pairs</span></th>'
-                 f'<td class="num">{age}</td>'
-                 f'<td class="num">${d["ecpsf"]:,.0f}</td>'
-                 f'<td class="num">${d["pvpsf"]:,.0f}</td>'
-                 f'<td class="num big" style="color:var(--gold-soft)">{d["pct"]:+.1f}%</td></tr>')
+        r.append(f'<tr><td class="num quiet">{i}</td><td>{nice(d["ec"])}</td>'
+                 f'<td class="num quiet">{age}</td>'
+                 f'<td class="num quiet">${d["ecpsf"]:,.0f}</td>'
+                 f'<td class="num quiet">${d["pvpsf"]:,.0f}</td>'
+                 f'<td class="num big">{d["pct"]:+.1f}%</td>'
+                 f'<td class="num quiet">{hd:+.1f}%</td>'
+                 f'<td class="num quiet">{d["pct"] - hd:+.1f}%</td>'
+                 f'<td class="num quiet">{d["pairs"]:,}</td></tr>')
     return ''.join(r) + '</tbody></table>'
 
 def hero(was, was_sub, answers, call, base=None):
@@ -2234,56 +2251,36 @@ def check_panels(body):
 BODY = f"""
 <div class="panel" data-p="summary">
 <h1 class="disp">Where the constants now stand</h1>
-<p class="lede">Five constants set by judgement, each now measured against the market, and one
-reference figure that is measured but deliberately not wired to anything. This is the whole study
-on one screen; every figure below has a panel of its own.</p>
+<p class="lede">Each engine constant, and what the market measures.</p>
 
 <section>
-  <div class="scroll"><table class="fig"><thead><tr><th>Term</th><th class="num">Constant</th><th>Measured</th></tr></thead><tbody>
-  <tr><th><a href="#lease">Lease difference (99 years) &mdash; a year of lease start</a></th><td class="num big">$40 psf / yr</td>
-    <td style="color:var(--gold-soft)">${LPW1:,.0f} a year before {LPWB} and
-    ${LPW2:,.0f} from {LPWB}, a gap spanning it split between the two</td></tr>
-  <tr><th><a href="#fhage">Lease difference (FH) &mdash; a year of completion</a></th>
-    <td class="num big">the same $40</td>
-    <td style="color:var(--gold-soft)">${AGPW1:,.0f} a year before {AGB} and
-    ${AGPW2:,.0f} from {AGB}, a gap spanning it split between the two &mdash; two bands, as the
-    lease figure has, but on a different year and applied per year</td></tr>
-  <tr><th><a href="#tenure">Tenure &middot; freehold vs leasehold</a></th><td class="num big">&divide; 1.15</td>
-    <td style="color:var(--gold-soft)">+{THP['p']*100:.0f}% on average, and
-    +{TGL[0]['pct']*100:.0f}% to +{TGL[-1]['pct']*100:.0f}% by the lease left</td></tr>
-  <tr><th><a href="#mrt">MRT walk band</a></th><td class="num big">$50 / $200 / $250</td>
+  <div class="scroll"><table class="fig"><thead><tr><th>Term</th><th class="num">Engine constant</th><th>Measured</th></tr></thead><tbody>
+  <tr><th><a href="#lease">Lease difference (99 years)</a></th><td class="num big">$40 psf / yr</td>
+    <td style="color:var(--gold-soft)">${LPW1:,.0f} before {LPWB} &middot; ${LPW2:,.0f} from {LPWB}, per year of lease start</td></tr>
+  <tr><th><a href="#fhage">Lease difference (FH)</a></th><td class="num big">$10 psf / yr</td>
+    <td style="color:var(--gold-soft)">${AGPW1:,.0f} before {AGB} &middot; ${AGPW2:,.0f} from {AGB}, per year of TOP</td></tr>
+  <tr><th><a href="#mrt">MRT distance</a></th><td class="num big">$50 / $200 / $250</td>
     <td style="color:var(--gold-soft)">+${M['bands'][0]['adj']:,.0f} / +${M['bands'][1]['adj']:,.0f} /
-    +${M['bands'][2]['adj']:,.0f}, or ${M['slope100']:.0f} per 100 m</td></tr>
-    <tr><th><a href="#integrated">Integrated development</a></th><td class="num big">+5%</td>
-    <td style="color:var(--gold-soft)">+{G['cuts'][4]['pct']:.1f}% ({G['cuts'][4]['pct_lo']:.1f} to
-    {G['cuts'][4]['pct_hi']:.1f}), which contains the +5%</td></tr>
-  <tr><th><a href="#void">Void &middot; extra penthouse area</a></th>
-    <td class="num big">1.00&times; &mdash; full price</td>
-    <td style="color:var(--gold-soft)">a resale buyer pays {VR['discount']:.0f}% less for it than
-    for the floor plate; there is no constant for it today</td></tr>
-  <tr><th><a href="#ec">EC vs private condo &middot; reference</a></th>
-    <td class="num big">none</td>
-    <td style="color:var(--gold-soft)">private launches +{E['launch']['pct']:.0f}% over the EC
-    beside them; by resale the gap is {E['resale']['pct']:+.1f}% &mdash; no difference</td></tr>
+    +${M['bands'][2]['adj']:,.0f}</td></tr>
+  <tr><th><a href="#integrated">Integrated</a></th><td class="num big">+5%</td>
+    <td style="color:var(--gold-soft)">+{INT_HEAD['pct']:.1f}%</td></tr>
+  <tr><th><a href="#tenure">Freehold vs leasehold</a></th><td class="num big">&divide; 1.15</td>
+    <td style="color:var(--gold-soft)">+{TGL[0]['pct']*100:.0f}% to +{TGL[-1]['pct']*100:.0f}%, by lease left</td></tr>
+  <tr><th><a href="#void">Void space</a></th><td class="num big">full price</td>
+    <td style="color:var(--gold-soft)">{VR['discount']:.0f}% off the home&rsquo;s psf</td></tr>
+  <tr><th><a href="#ec">EC vs private</a></th><td class="num big">none</td>
+    <td style="color:var(--gold-soft)">+{E['launch']['pct']:.0f}% at launch &middot; no difference at resale</td></tr>
   </tbody></table></div>
-  <p class="expl" style="margin-top:20px"><b>Two judgement constants are NOT on this page, and
-  both are still live.</b> The engine applies a <b>+{JUDGE['harm']:.0%} GFA harmonisation</b>
-  uplift that was dropped from this study on 2026-09-06 and has never been measured; and it
-  assumes <b>{JUDGE['cy']} years</b> from lease start to completion, where the tenure pass
-  measured a median of <b>{JUDGE['cy_measured']}</b> across {JUDGE['cy_n']:,} developments and
-  the difference was not adopted. Both reach every workup.</p>
 
-  <div class="caveat" style="margin-top:18px"><b>The measured figures are the ones in use.</b>
-  Adopted on 2026-09-09 after audit: the engine reads them from this study at load time, and the
-  judgement constants beside them are retired, kept only so the change is visible. The reference
-  row is the exception &mdash; it is measured and deliberately wired to nothing.</div>
+  <div class="caveat" style="margin-top:18px"><b>The measured figures are in use</b> (adopted
+  2026-09-09). EC vs private is reference only. Still on judgement: <b>+{JUDGE['harm']:.0%} GFA
+  harmonisation</b> and <b>{JUDGE['cy']} years</b> from lease start to TOP.</div>
 </section>
 </div>
 
 <div class="panel" data-p="lease" hidden>
 <h1 class="disp">What the market pays for a year of lease</h1>
-<p class="lede">The engine restates every comparable using constants set by judgement. This is
-the first one measured against the market.</p>
+<p class="lede">Between two leaseholds, we compare on <b>lease start</b>.</p>
 
 {hero('$40', 'flat, every comparable',
       [(f'${LPW1:,.0f}', f'years before {LPWB}', None),
@@ -2329,34 +2326,20 @@ the first one measured against the market.</p>
   <p>Three questions, answered once each.</p></div>
 
   <details><summary>Do the bands move as the stock ages?</summary>
-    <p class="expl"><b>No. They are fixed calendar years.</b> If this were really an age effect,
-    the boundary would slide forward every year. Run the identical method on sales from
-    {EW[0]}&ndash;{EW[1]}, three years earlier, and the jump lands on the same calendar band with
-    the stock three years younger.</p>
+    <p class="expl"><b>No &mdash; they are fixed calendar years.</b> Sales from
+    {EW[0]}&ndash;{EW[1]} put the jump on the same years.</p>
     <div class="scroll">{vintage_table()}</div>
-    <p class="expl">The {AGE_SLICES[3][0]}&ndash;{AGE_SLICES[3][1]-1} band aged four years and kept
-    paying the high rate. <b>This is the vintage of the stock, not its age</b> &mdash; projects
-    launched from about 2012 sold into a much steeper pricing era and have carried it since.</p>
-    <p class="expl">What will eventually move the answer is <b>lease decay</b>, which bites on the
-    lease <em>left</em>, below 60&ndash;65 years. Only
-    {sum(1 for r in ALL if r['ls_old'] + 99 - NOW < 65)} of {len(ALL)} cells sit down there today,
-    so it is almost absent. Expect it around the end of this decade &mdash; as the oldest band
-    steepening, not as the boundary sliding.</p>
+    <p class="expl">Lease decay (under 65 years left) will steepen the oldest band from about
+    2030. Only {sum(1 for r in ALL if r['ls_old'] + 99 - NOW < 65)} of {len(ALL)} cells are there
+    today.</p>
   </details>
 
   <details><summary>Why the newer band is nearly double</summary>
-    <p class="expl"><b>Part of it is that newer developments are built more efficiently</b>
-    &mdash; a three-bedroom from 2011 on runs {SHRINK3:.0%} smaller, {SQ3_NEW:,.0f} sq ft against
-    {SQ3_OLD:,.0f}. A buyer pays a quantum, and the same $50k of newness over a smaller plate
-    reads as a bigger figure per foot.</p>
+    <p class="expl"><b>Newer units are smaller.</b> A 3BR from 2011 on is {SHRINK3:.0%} smaller
+    ({SQ3_NEW:,.0f} vs {SQ3_OLD:,.0f} sq ft), so the same quantum reads higher per foot.</p>
     <div class="scroll">{why_table()}</div>
-    <p class="expl">Small flats, large flats, pairs two years apart or twenty &mdash; the jump is
-    in every row. A higher base price explains some of it: on a percentage
-    basis the two bands are {PCT_RATIO:.2f}&times; apart ({fpct(rows_in(OLD_NM)):+.2%} against
-    {fpct(rows_in(NEW_NM)):+.2%} a year) where in dollars they are {DOL_RATIO:.2f}&times;. The
-    gap narrows on that scale, but nowhere near closes.</p>
-    <p class="expl">What is left is vintage: through the 2010s each successive launch in the same
-    spot came out dearer than the last. This measures the size of that effect, not its cause.</p>
+    <p class="expl">The jump holds in every row. In percent the bands are {PCT_RATIO:.2f}&times;
+    apart; in dollars, {DOL_RATIO:.2f}&times;.</p>
   </details>
 
   <details><summary>How a pair is built, and every pair</summary>
@@ -2394,8 +2377,7 @@ the first one measured against the market.</p>
 <h1 class="disp">What a year of completion is worth between two freeholds</h1>
 <p class="lede">Between two freeholds, we compare on <b>TOP completion date</b>.</p>
 
-{hero('$' + str(round(BANDR[OLD_NM])) + ' / $' + str(round(BANDR[NEW_NM])),
-      'the retired lease bands, one rate at the TOP midpoint',
+{hero('$10', 'flat, every freehold comparable',
       [(f'${AGPW1:,.0f}', AGNM[0], None), (f'${AGPW2:,.0f}', AGNM[1], None)],
       f'A gap that spans {AGB} is split between the two rates.',
       base=[(ndev(AGR), 'developments'), (npairs(AGR), 'pairs'),
@@ -2463,57 +2445,30 @@ the first one measured against the market.</p>
 
 <div class="panel" data-p="mrt" hidden>
 <h1 class="disp">What the market pays for the walk to the station</h1>
-<p class="lede"><b>{ndev2(MROWS,'closer','further')} developments &middot; {len(MROWS):,} comparisons, resting on
-{MTX:,} transactions.</b> Each development paired with a leasehold neighbour on the same nearest station,
-over the same 24 months. The lease difference between them is removed at the measured lease rate,
-so what is left is the walk.</p>
+<p class="lede">Two developments on the same station, at different walks. Lease difference
+removed.</p>
 
 {hero(' / '.join(f"${M['engine'][b['key']]}" for b in M['bands']), 'three fixed band steps',
       [(f"+${b['adj']:,.0f}", lab, b['devs'], mrt_band_tx(b['key']))
        for b, lab in zip(M['bands'], ('under 5 vs 5-10 min', '5-10 vs over 10 min',
                                       'under 5 vs over 10 min'))],
-      '')}
+      f"Under {M['near_m']:,} m &middot; {M['near_m']:,}&ndash;{M['far_m']:,} m &middot; over "
+      f"{M['far_m']:,} m, straight-line.",
+      base=[(ndev2(MROWS,'closer','further'), 'developments'), (len(MROWS), 'comparisons'),
+            (MTX, 'transactions')])}
 
 <section>
+  <div class="sechead"><h2 class="disp">The measurement</h2></div>
   <div class="scroll">{mrt_table()}</div>
-  <p class="expl"><b>The minutes are this study&rsquo;s own convention, and it is worth stating
-  plainly:</b> {M['near_m']:,} m and {M['far_m']:,} m measured straight across the map, at
-  80 metres a minute &mdash; so {M['near_m']//80} and {M['far_m']//80} minutes. They are
-  <b>not routed walking times</b>, and a real route between two points is always longer than the
-  straight line between them.</p>
-  <p class="expl">The engine allows for that detour with a factor of {ENG_CIRCUITY:g}, which
-  would pull the five-minute line in to {M['near_m']/ENG_CIRCUITY:,.0f} m. This study does not
-  apply it, deliberately: on the one case checked against a real walking route the straight-line
-  metres here already ran about a quarter longer than the route itself, so applying the factor on
-  top would count the same detour twice &mdash; and at
-  {M['near_m']/ENG_CIRCUITY:,.0f} m a development sitting on top of its station falls into the
-  five-to-ten-minute band. <b>The consequence is that the same building can read a different
-  number of minutes here than in a Price Gap workup</b>, and the metres are the thing to compare
-  across the two.</p>
+</section>
 
-  <div class="sechead"><h2 class="disp">Behind it</h2>
-  <p>How the figure is built, and every pair behind it.</p></div>
+<section>
+  <div class="sechead"><h2 class="disp">Behind it</h2></div>
 
-  <details><summary>How the lease is taken out, and the check that it worked</summary>
-    <p class="expl">Each pair shares its nearest station but sits at a different distance from it.
-    Their price difference still contains whatever lease difference they carry, so the measured
-    vintage rate above is subtracted from it. What remains is distance.</p>
-    <p class="expl"><b>The check.</b> Take pairs in the same band standing the same distance from
-    the station &mdash; within 50 m of each other. Nothing separates them, so after the lease comes
-    out they should read zero. They read <b>{'&minus;' if M['placebo']['adj'] < 0 else '+'}${abs(M['placebo']['adj']):.1f}</b> across
-    {M['placebo']['pairs']} pairs. That is the evidence the adjustment is working and that what is
-    left is the walk.</p>
-  </details>
-
-  <details><summary>Where the 5 and 10 minute lines are drawn</summary>
-    <p class="expl"><b>Under 400 m &middot; 400 to 800 m &middot; over 800 m.</b> People walk about
-    80 metres a minute. Distance is measured straight across the map, not along the pavement.</p>
-    <p class="expl"><b>The lines are the soft part of this.</b> A big interchange is held as one
-    point and some addresses sit about 100 m off, so a project can fall on the wrong side of a
-    line &mdash; CityLife@Tampines measures 869 m here against a 700 m walk. Move the lines
-    anywhere defensible and the bottom row runs <b>$162 to $304</b>.</p>
-    <p class="expl"><b>Why it still holds.</b> Both sides of a pair are measured to the same
-    station point, so the error largely cancels in the gap between them.</p>
+  <details><summary>The check that the adjustment works</summary>
+    <p class="expl">Pairs the same distance from the station should read zero once lease is out.
+    They read <b>{'&minus;' if M['placebo']['adj'] < 0 else '+'}${abs(M['placebo']['adj']):.1f}</b>
+    across {M['placebo']['pairs']} pairs.</p>
   </details>
 
   <details><summary>How a pair is built, and every pair</summary>
@@ -2535,16 +2490,9 @@ so what is left is the walk.</p>
         <li>bus and shuttle access</li></ul></div>
     </div>
   
-    <p class="expl"><b>{len([r for r in MROWS if r['pairkey'] in MBAND]):,} comparisons that
-    span two different walk bands</b>, closest to their own band first. <b>After lease</b> is
-    the psf gap once the lease difference between the two is removed at the measured rate &mdash;
-    that is the figure the bands are fitted on, so it is the one compared against what the band
-    says. <b>Sales</b> is the transactions behind each side.</p>
-    <p class="expl">Below the divider sit the other
-    {len([r for r in MROWS if r['pairkey'] not in MBAND]):,}: pairs with <b>both</b> projects in
-    the same walk band. They are not evidence for a step &mdash; they are the <b>placebo</b>,
-    built on purpose, and once the lease is out they should read about nothing. Across them the
-    method reads <b>${M['placebo']['adj']:+,.0f}</b>.</p>
+    <p class="expl" style="margin-top:18px">All {len(MROWS):,} comparisons, closest to the band
+    first. <b>After lease</b> is the psf difference with lease removed. Below the divider: both
+    sides in the same band, which should read about nothing.</p>
     <div class="scroll">{mrt_pairtable()}</div>
   </details>
 
@@ -2555,62 +2503,45 @@ so what is left is the walk.</p>
 
 <div class="panel" data-p="integrated" hidden>
 <h1 class="disp">What the market pays for being on top of the station</h1>
-<p class="lede"><b>{INT_HEAD['devs']} developments &middot; {INT_HEAD['cells']} comparisons behind the
-published figure</b>, drawn from {ndev2(GROWS,'a','b')} developments and {len(GROWS)}
-comparisons in the study overall, resting on {GTX:,} transactions. An integrated development against an ordinary condo a short walk away at the
-<b>same station</b>. The lease difference between them is taken out, and so is the difference in
-the walk. What is left is the building sitting on the station.</p>
+<p class="lede">An integrated development against a plain neighbour on the same station. Lease
+and walk removed.</p>
 
 {hero('+5%', 'flat, on an integrated project',
       [(f"+{INT_HEAD['pct']:.1f}%", INT_HEAD['label'], INT_HEAD['devs'],
         int_cut_tx(INT_HEAD)),
        (f"+{G['cuts'][0]['pct']:.1f}%", 'every pair', G['cuts'][0]['devs'],
         int_cut_tx(G['cuts'][0]))],
-      '')}
+      f"The figure in use is the under-{INT_HEAD['apmax']:,} m cut.",
+      base=[(ndev2(GROWS,'a','b'), 'developments'), (len(GROWS), 'comparisons'),
+            (GTX, 'transactions')])}
 
 <section>
+  <div class="sechead"><h2 class="disp">The measurement</h2></div>
   <div class="scroll">{int_table()}</div>
+</section>
 
-  <div class="sechead"><h2 class="disp">Behind it</h2>
-  <p>How the figure is built, and every pair behind it.</p></div>
+<section>
+  <div class="sechead"><h2 class="disp">Behind it</h2></div>
 
   <details><summary>Does it matter how far apart the two sit?</summary>
-    <p class="expl"><b>Yes, and it is the screen that decides this figure.</b> An integrated
-    project and a plain one on the same station can be next door or most of a kilometre apart,
-    and the further apart they are the more of the gap between them is simply a different
-    location. Sweeping the limit on <b>how far apart the two actually sit</b>:</p>
+    <p class="expl"><b>Yes.</b> Steady under {INT_HEAD['apmax']:,} m ({SWEEP_TIGHT}); it drifts up
+    once distant pairs are let in.</p>
     <div class="scroll">{apart_table()}</div>
-    <p class="expl">The premium is <b>steady across every tight limit</b> &mdash;
-    {SWEEP_TIGHT} &mdash; and drifts upward only once distant comparables are let in.
-    <b>That is why the published figure is the under-{INT_HEAD['apmax']:,} m cut.</b>
-    Shawn&rsquo;s own examples sit inside it: Sengkang Grand against Esparina is 230 m, against
-    Jewel @ Buangkok 256 m, Watertown against Parc Centros 406 m.</p>
-    <p class="expl">A separate limit, on how differently the two walk <b>to the station</b>,
-    behaves the same way: inside the tight lease-gap column the premium climbs from
-    +{G['dsweep'][1]['rows'][0]['pct']:.1f}% to +{G['dsweep'][1]['rows'][-1]['pct']:.1f}% as it
-    loosens, while the like-for-like check beside it stays flat &mdash; unremoved walking effect
-    leaking in. <b>These two limits are different things</b>, and an earlier version of this
-    page labelled the second as though it were the first.</p>
+    <p class="expl">A looser limit on the <b>walk to the station</b> also lifts it
+    (+{G['dsweep'][1]['rows'][0]['pct']:.1f}% to +{G['dsweep'][1]['rows'][-1]['pct']:.1f}%).</p>
     <div class="scroll">{dsweep_table()}</div>
   </details>
 
-  <details><summary>The check that the adjustments are working</summary>
-    <p class="expl">The same method run on <b>plain against plain</b> at the same station, under
-    the identical lease and distance corrections. Nothing separates those pairs, so the answer
-    should be zero. Across <b>{G['placebo']['pairs']} pairs</b> it reads
-    <b>{G['placebo']['pct']:+.1f}%</b> ({G['placebo']['adj']:+,.0f} psf), with an interval of
-    {G['placebo']['pct_lo']:+.1f}% to {G['placebo']['pct_hi']:+.1f}% &mdash; {PLACEBO_VERDICT}.</p>
+  <details><summary>The check that the adjustments work</summary>
+    <p class="expl">Plain against plain on the same station should read zero. Across
+    <b>{G['placebo']['pairs']} pairs</b> it reads <b>{G['placebo']['pct']:+.1f}%</b>
+    ({G['placebo']['pct_lo']:+.1f}% to {G['placebo']['pct_hi']:+.1f}%).</p>
   </details>
 
-  <details><summary>Every development, and what each one reads</summary>
-    <p class="expl">These {G['n_integrated']} are a classification made for this study and audited
-    by hand &mdash; a judgement, not a datum.</p>
+  <details><summary>Every development</summary>
     <div class="scroll">{int_devs()}</div>
-    <p class="expl"><b>Read the lease-gap column beside the premium column.</b> <b>The
-  developments that read low are not simply the ones with the widest lease gaps</b> &mdash;
-  {INT_LOW_NOTE} &mdash; so the gap does not explain them on its own. What the thin ones share
-  is how little sits behind them: {INT_THIN} of these {len(G['devs'])} rest on three pairs or
-  fewer, and a single stack or a single quarter moves them.</p>
+    <p class="expl">{INT_THIN} of {len(G['devs'])} rest on three pairs or fewer; read those as
+    thin.</p>
   </details>
 
   <details><summary>How a pair is built, and every pair</summary>
@@ -2629,14 +2560,9 @@ the walk. What is left is the building sitting on the station.</p>
         <li>whether the plain neighbour is itself mixed-use</li></ul></div>
     </div>
   
-    <p class="expl">All {len(GROWS)} comparisons, <b>closest to the published premium first</b>.
-    <b>After lease &amp; walk</b> is what survives in dollars once BOTH the lease gap and the
-    difference in walking distance are removed at their own measured rates; <b>the premium</b> is
-    that same residue as a share of the plain neighbour&rsquo;s psf &mdash; <b>this pair&rsquo;s
-    own integrated premium, after every adjustment</b>, built exactly the way the headline is, so
-    the two sit side by side. <b>Next door</b> says whether the pair is inside the under-500 m cut
-    the published figure is computed from. This is the thinnest panel here, and the sales
-    column is the reason to read it carefully.</p>
+    <p class="expl" style="margin-top:18px">All {len(GROWS)} comparisons, closest to the figure
+    first. <b>After lease &amp; walk</b> is the psf difference with both removed. <b>Next
+    door</b> marks pairs inside the cut in use.</p>
     <div class="scroll">{int_pairtable()}</div>
   </details>
 
@@ -2646,20 +2572,21 @@ the walk. What is left is the building sitting on the station.</p>
 
 <div class="panel" data-p="tenure" hidden>
 <h1 class="disp">What the market pays for freehold</h1>
-<p class="lede"><b>{ndev2(TROWS,'fh','lh')} developments &middot; {len(TROWS)} comparisons, resting on {TTX:,} transactions.</b> The last constant on judgement, and the only one that turned out not to be a
-constant at all.</p>
+<p class="lede">A freehold against a leasehold neighbour. The premium grows as the lease runs
+down.</p>
 
 {hero('&divide; 1.15', 'flat, every freehold comparable',
       [(f'+{g["pct"]*100:.0f}%', ten_step_label(g), g['devs'],
         ten_slice_tx(g, TGL[i-1] if i else None)) for i, g in enumerate(TGL)],
-      '')}
+      '',
+      base=[(ndev2(TROWS,'fh','lh'), 'developments'), (len(TROWS), 'comparisons'),
+            (TTX, 'transactions')])}
 
 <section>
   <div class="sechead"><h2 class="disp">How to use it</h2></div>
   <div class="steps">
     <div class="step"><span class="sn">1</span>
-      <p>Take the <b>difference in completion year</b> &mdash; TOP, not lease start. A freehold
-      has no lease start to difference against.</p></div>
+      <p>Take the <b>TOP gap</b> between the two.</p></div>
     <div class="step"><span class="sn">2</span>
       <p>Price that at the <b>measured lease rate</b>: each year of the gap at its own band,
       ${LPW1:,.0f} before {LPWB} and ${LPW2:,.0f} from {LPWB}.</p></div>
@@ -2684,31 +2611,23 @@ constant at all.</p>
 </section>
 
 <section>
-  <div class="sechead"><h2 class="disp">Freehold is worth more as the lease runs down</h2>
-  <p>One freehold and one leasehold development, next door, bedroom by bedroom. The only thing
-  that changes down this table is <b>how much lease the leasehold side has left</b>.</p></div>
+  <div class="sechead"><h2 class="disp">The measurement</h2></div>
   <div class="scroll">{ten_grad_table()}</div>
 </section>
 
 <section>
-  <div class="sechead"><h2 class="disp">Behind it</h2>
-  <p>Two questions, answered once each.</p></div>
+  <div class="sechead"><h2 class="disp">Behind it</h2></div>
 
   <details><summary>Does distance affect the premium?</summary>
-    <p class="expl"><b>{T['counts']['devs']} developments &middot; {T['counts']['pairs']} pairs
-    &middot; {T['counts']['cells']} cells</b>, on the same screens as the lease study &mdash;
-    500 m apart, the same station, the same schools, 200+ units, sizes within 20% &mdash; across
-    24 months of resale and sub-sale to {T['window'][1]}.</p>
     <div class="scroll">{ten_sens_table()}</div>
   </details>
 
   <details><summary>Does it hold across the island, and across bedrooms?</summary>
     <div class="scroll">{ten_slice_table('region', 'Region')}</div>
-    <p class="expl" style="margin-top:18px">The three regions agree closely &mdash; part of the
-    case for a percentage, since one ratio serves the island.</p>
+    <p class="expl" style="margin-top:18px">The regions agree, so one percentage serves the
+    island.</p>
     <div class="scroll" style="margin-top:14px">{ten_slice_table('bedroom', 'Bedroom')}</div>
-    <p class="expl" style="margin-top:18px">Bedroom is the match, not the answer &mdash; it holds
-    size constant. One- and four-bedroom are too thin to show.</p>
+    <p class="expl" style="margin-top:18px">1BR and 4BR are too thin to show.</p>
   </details>
 
   <details><summary>How a pair is built, and every pair</summary>
@@ -2725,12 +2644,8 @@ constant at all.</p>
         <li><b>floor</b> and <b>facing</b></li>
         <li>the age gap between the two, beyond the lease rate</li></ul></div>
     </div>
-<p class="expl">All {len(TROWS)} comparisons &mdash; a freehold development against a
-    leasehold neighbour on the same station, matched bedroom by bedroom, <b>closest to its own
-    step first</b>. Shown in <b>percent</b> throughout, which is this panel&rsquo;s standing
-    exception to the dollars rule. The premium is not one number &mdash; it widens as the lease
-    shortens &mdash; so each row is compared against <b>the step its leasehold side falls in</b>,
-    never against the headline. <b>Sales</b> is the transactions behind each side.</p>
+<p class="expl" style="margin-top:18px">All {len(TROWS)} comparisons, closest to their step
+    first. Each row is checked against the step for its lease left.</p>
     <div class="scroll">{ten_pairtable()}</div>
     </details>
 
@@ -2741,46 +2656,15 @@ constant at all.</p>
 </div>
 <div class="panel" data-p="void" hidden>
 <h1 class="disp">What the market pays for the void</h1>
-<p class="lede">Same project, same block, <b>same stack</b>, so the top unit stands on the floor
-plate of the ones below it. The extra strata area is void or roof. Floor is taken out at
-{V['meta']['floor_step']*100:.1f}% a floor; what is left is what that area fetches on
-<b>resale</b>.</p>
+<p class="lede">The penthouse against the units below it in the same stack. Floor removed at
+{V['meta']['floor_step']*100:.1f}% a floor.</p>
 
 {hero('1.00&times;', 'every strata sqft priced alike',
-      [(f"{VR['discount']:.0f}% off", 'what a resale buyer pays for it', VR['devs'])],
-      '')}
-
-
+      [(f"{VR['discount']:.0f}% off", 'what a resale buyer pays for the extra area', None)],
+      '', base=[(VR['devs'], 'developments'), (VR['pairs'], 'penthouse resales')])}
 
 <section>
-  <h2>Where it moves</h2>
-  <p class="expl"><b>The bigger the void, the more the buyer pays for it.</b> A large roof or a
-  full double-volume room is a room, and gets treated as one.</p>
-  <div class="scroll">{void_cut('extra area')}</div>
-
-  <p class="expl" style="margin-top:18px"><b>The cheaper the home, the more the extra area is
-  worth to the buyer</b> &mdash; the opposite of what you would guess.</p>
-  <div class="scroll">{void_cut('price tier')}</div>
-
-  <details style="margin-top:16px"><summary>By region, and by tenure</summary>
-    <div class="scroll">{void_cut('region')}</div>
-    <div class="scroll" style="margin-top:14px">{void_cut('tenure')}</div>
-    <p class="expl">Thin cells. Direction only, never a figure to quote.</p>
-  </details>
-</section>
-
-<section>
-  <h2>The finding that is worth money</h2>
-  <p class="expl"><b>The spread inside one development is wider than the spread between
-  developments</b> &mdash; the void is priced stack by stack: {void_spread_names()}.</p>
-  <div class="scroll">{void_devs(widest=True, n=12)}</div>
-  <p class="expl"><b>The advice is not &ldquo;penthouses are good value&rdquo; &mdash; it is find
-  the stack where the void was given away.</b></p>
-
-  
-</section>
-
-<section>
+  <div class="sechead"><h2 class="disp">How to use it</h2></div>
   <div class="calc">
     <h3>What should the penthouse cost</h3>
     <div class="cin">
@@ -2791,29 +2675,16 @@ plate of the ones below it. The extra strata area is void or roof. Floor is take
     </div>
     <div id="voidOut" class="cout"></div>
   </div>
+</section>
 
-  <div class="sechead"><h2 class="disp">Behind it</h2>
-  <p>How the figure is built, and every pair behind it.</p></div>
+<section>
+  <div class="sechead"><h2 class="disp">Behind it</h2></div>
 
-  <details><summary>Is the floor step doing the work?</summary>
-    <p class="expl">The extra area is small against the home, so a 2% error in the base swings the
-    answer by more than 10%. <b>The check:</b> the same method on stacks whose top unit is the
-    <b>same size</b> as the ones below. No extra area, so it should read zero. Across
+  <details><summary>The check that the floor step works</summary>
+    <p class="expl">Stacks whose top unit is the same size should read zero. Across
     {V['resale']['placebo']['pairs']:,} resales it reads
-    <b>{V['resale']['placebo']['residual_pct']:+.2f}%</b>
-    ({V['resale']['placebo']['lo']:+.2f} to {V['resale']['placebo']['hi']:+.2f}) &mdash; zero.
-    Nothing is corrected.</p>
+    <b>{V['resale']['placebo']['residual_pct']:+.2f}%</b>.</p>
     <div class="scroll">{void_sens()}</div>
-    <p class="expl">At other floor steps it runs
-    <b>{min(x['ratio'] for x in V['resale']['sensitivity']):.2f} to
-    {max(x['ratio'] for x in V['resale']['sensitivity']):.2f}</b>. <b>Quote half.</b></p>
-  </details>
-
-  
-  <details><summary>Where the data comes from &mdash; not the MAPS refresh</summary>
-    <p class="expl">The <b>REALIS unit-level pull</b> held by the floor study &mdash; the only
-    dataset here carrying a <b>unit number</b>, and without that there is no stack.
-    {V['meta']['window']}, all Singapore, strata, <b>resale only</b>.</p>
   </details>
 
   <details><summary>How a pair is built, and every development</summary>
@@ -2836,91 +2707,44 @@ plate of the ones below it. The extra strata area is void or roof. Floor is take
     </div>
   
     
+    <p class="expl" style="margin-top:18px">Every development with two or more penthouse
+    resales, closest to the figure first.</p>
     <div class="scroll">{void_devs(n=30)}</div>
-    <p class="expl">Developments with at least two matched penthouse resales.</p>
   </details>
 </section>
 </div>
 
 <div class="panel" data-p="ec" hidden>
 <h1 class="disp">What a buyer pays to skip the EC</h1>
-<p class="lede">An EC and a private condo <b>launching beside each other at the same time</b>,
-size for size. Then the same two, years later, in the <b>resale</b> market. The first figure is
-what the private badge costs on the day. The second is what is left of it.</p>
+<p class="lede">An EC against the private condo launching beside it. Then the same comparison
+at resale.</p>
 
-{hero('none &mdash; not a constant',
-      'nothing in the engine reads this',
+{hero('none',
+      'reference only &mdash; nothing in the engine reads this',
       [(f"+{E['launch']['pct']:.0f}%", 'at launch, private over EC', E['launch']['projects']),
-       (f"{E['resale']['pct']:+.1f}%", 'at resale, same two', E['resale']['projects'])],
+       (f"{E['resale']['pct']:+.1f}%", 'at resale &mdash; no difference', E['resale']['projects'])],
       '')}
 
 <section>
   <div class="sechead"><h2 class="disp">At launch</h2>
-  <p><b>{E['launch']['pairs']:,} pairs across {E['launch']['projects']} EC launches.</b> Every EC
-  that sold in the window, set against the private launches selling <b>nearest to it</b> &mdash;
-  {ec_ladder_line()}</p></div>
+  <p>{E['launch']['pairs']:,} pairs across {E['launch']['projects']} EC launches, against the
+  nearest private launches.</p></div>
   <div class="scroll">{ec_launch_table()}</div>
-  <p class="expl">Every EC launch in the window, measured against the private launches selling
-  beside it: the column runs from +{min(d['pct'] for d in E['launch']['by']):.0f}% to
-  +{max(d['pct'] for d in E['launch']['by']):.0f}%, with a median of
-  <b>+{E['launch']['pct']:.1f}%</b> ({E['launch']['ci'][0]:.0f} to {E['launch']['ci'][1]:.0f})
-  across {E['launch']['pairs']:,} matched pairs. <b>Nothing on this panel comes from a slide
-  &mdash; every figure here is computed from the transactions.</b></p>
   {ec_unmatched_line()}
 </section>
 
 <section>
   <div class="sechead"><h2 class="disp">At resale</h2>
-  <p><b>{E['resale']['pairs']:,} pairs across {E['resale']['projects']} ECs.</b> The same
-  comparison in the secondary market, against leasehold private of the same vintage within
-  {E['meta']['km']:g} km.</p></div>
-
+  <p>{E['resale']['pairs']:,} pairs across {E['resale']['projects']} ECs, against leasehold
+  private of the same vintage within {E['meta']['km']:g} km.</p></div>
   <div class="scroll">{ec_age_table()}</div>
-  <p class="expl">The premium is <b>{E['resale']['pct']:+.1f}%</b> overall, and could really be
-  anywhere from {E['resale']['ci'][0]:+.1f}% to {E['resale']['ci'][1]:+.1f}% &mdash; an interval
-  that covers zero, and a figure inside 1%. <b>There is no difference between the two.</b>
-  Held against every private comparable with no tenure or vintage control the figure is
-  {E['resale_raw']['pct']:+.1f}%.</p>
-  <p class="expl">Within that, the direction does turn over with age, and it turns the way the
-  column reads: just past MOP the EC is the dearer of the two by
-  {abs(AGE_SHOWN[0]['pct']):.1f}%, and once privatised the private condo pulls back ahead by
-  {AGE_SHOWN[-1]['pct']:+.1f}%. <b>Both of those intervals cover zero</b>
-  ({AGE_SHOWN[0]['lo']:+.1f} to {AGE_SHOWN[0]['hi']:+.1f}, and {AGE_SHOWN[-1]['lo']:+.1f} to
-  {AGE_SHOWN[-1]['hi']:+.1f}), so this is a direction, not a figure to quote.</p>
+  <p class="expl"><b>{E['resale']['pct']:+.1f}% overall</b> ({E['resale']['ci'][0]:+.1f}% to
+  {E['resale']['ci'][1]:+.1f}%) &mdash; no difference. By age the direction flips, but every
+  band&rsquo;s range covers zero.</p>
+</section>
 
-  
-
-  
-
-  <div class="sechead"><h2 class="disp">Behind it</h2>
-  <p>How the figure is built, and every pair behind it.</p></div>
-
-  <details><summary>How the launch cut finds a comparable &mdash; and what changed on 11 Sept 2026</summary>
-    <p class="expl">The URA feed carries <b>no coordinates for an uncompleted project</b> &mdash;
-    Rivelle, Aurelle, Copen Grand, Lumina Grand, Novo Place and Otto Place all read blank &mdash;
-    so until 11 Sept 2026 the launch cut matched on <b>district</b>. District is a boundary, not
-    a distance. URA files <b>Pinery Residences in district 16 and Rivelle Tampines in 18</b>
-    though the two stand <b>259 m apart</b>, so the one real comparable Rivelle had was
-    structurally ineligible and it was read against <b>Parktown Residence, 2.8 km away</b> in
-    Tampines North. That single substitution was worth <b>5 points</b> on Rivelle&rsquo;s row.</p>
-    <p class="expl">The cut now measures <b>distance</b>, on the geocode this workstream already
-    holds: {E['meta'].get('geocoded', 0):,} verified coordinates covering <b>every EC project</b>
-    in the window. Checked against URA&rsquo;s own coordinates on the projects carrying both,
-    pairwise distances agree to a <b>median of 2 m</b>, so this is a substitute for the missing
-    coordinates rather than a different measurement. The rings are the same ladder the Price Gap
-    engine uses for a comparable, so no new constant was introduced. The resale cut is unchanged
-    and still measures on the feed&rsquo;s own coordinates inside {E['meta']['km']:g} km.</p>
-  </details>
-
-  <details><summary>Where the data comes from &mdash; not the MAPS refresh</summary>
-    <p class="expl">A <b>direct URA PMI pull</b>, all four batches:
-    {E['meta']['window'][0]} to {E['meta']['window'][1]}, {E['meta']['rows']:,} strata
-    transactions of which <b>{E['meta']['ec_rows']:,} are EC</b> across
-    {E['meta']['ec_projects']} projects, every sale type. The floor study&rsquo;s REALIS files
-    were pulled as &ldquo;Apartment + Condominium&rdquo; and hold <b>no EC at all</b>, so this is
-    the only cut of the corpus that can answer it. Rebuild with
-    <b>ec-pairs.py</b>.</p>
-  </details>
+<section>
+  <div class="sechead"><h2 class="disp">Behind it</h2></div>
 
   <details><summary>How a pair is built, and every EC</summary>
     <div class="cards" style="margin-top:6px">
@@ -2941,9 +2765,8 @@ what the private badge costs on the day. The second is what is left of it.</p>
         <li>the EC income ceiling and resale restrictions themselves</li></ul></div>
     </div>
   
-    <p class="expl">A <b>negative</b> figure is the EC trading above its private neighbour. Read
-    the years-built column beside the premium: the ECs at the top of the list are the young ones
-    still carrying their launch pricing forward.</p>
+    <p class="expl" style="margin-top:18px">Every EC at resale, closest to the figure first.
+    Negative means the EC trades above its private neighbour.</p>
     <div class="scroll">{ec_resale_table()}</div>
   </details>
 </section>
@@ -3000,7 +2823,6 @@ HTML = f"""<!doctype html>
   <b>all figures as of {cut.VINTAGE}</b>, cut at {cut.CUT_END} and pinned there —
   a data refresh does not move them; re-cutting is deliberate ·
   generated {datetime.date.today().isoformat()}</span>
-  <span>price-gap/calibration/ · regenerate with build-page.py</span>
 </footer>
 </div>
 <script>var QD={QJSON};</script>

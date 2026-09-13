@@ -189,6 +189,35 @@ def boot(rows, fn, B=2000, seed=17):
     out.sort()
     return out[int(.025*len(out))], out[int(.975*len(out))-1]
 
+def boot_pairs(rows, fn, B=2000, seed=17):
+    """Resample BY PAIR, not by cell. The four bedrooms of one pair are not four independent
+    readings of anything — a cell bootstrap treats them as though they were and reports an
+    interval that is too tight. Every interval on the freehold panel comes through here."""
+    g = random.Random(seed)
+    ps = sorted({(r['older'], r['newer']) for r in rows})
+    byp = collections.defaultdict(list)
+    for r in rows: byp[(r['older'], r['newer'])].append(r)
+    out = []
+    for _ in range(B):
+        s = [x for _ in ps for x in byp[ps[g.randrange(len(ps))]]]
+        v = fn(s)
+        if v is not None: out.append(v)
+    if not out: return None, None
+    out.sort()
+    return out[int(.025 * len(out))], out[int(.975 * len(out)) - 1]
+
+def best_bound(rows, lo_y=1998, hi_y=2016, floor=8):
+    """The boundary that minimises in-sample SSE. Used two ways: once on the data, and once
+    inside every bootstrap resample to ask whether it lands in the same place twice."""
+    best = None
+    for b in range(lo_y, hi_y):
+        lo = [r for r in rows if r['mid'] < b]; hi = [r for r in rows if r['mid'] >= b]
+        if len(lo) < floor or len(hi) < floor: continue
+        fl, fh = fitted(lo), fitted(hi)
+        sse = sum((r['diff'] - (fl if r['mid'] < b else fh) * r['gap']) ** 2 for r in rows)
+        if best is None or sse < best[0]: best = (sse, b)
+    return best[1] if best else None
+
 def banded(rows, bound):
     lo = [r for r in rows if r['mid'] < bound]
     hi = [r for r in rows if r['mid'] >= bound]
@@ -237,6 +266,14 @@ def shape_band(bound):
         if lo is None or hi is None: return None
         return lambda r: (lo if r['mid'] < bound else hi) * r['gap']
     return mk
+
+def shape_band_searched(tr):
+    """THE HONEST TWO-BAND SHAPE. shape_band(b) is handed a boundary found on all the data,
+    which leaks the answer into the training set. This makes every fold find its own. If the
+    two shapes score the same, the boundary is so stable that searching for it costs nothing —
+    which is itself the finding."""
+    b = best_bound(tr)
+    return shape_band(b)(tr) if b else None
 
 def shape_curve(tr):
     a, b = curve(tr)
@@ -328,7 +365,87 @@ for W in WINDOWS:
     for label, e in sorted(race, key=lambda x: x[1]):
         print(f'    {e:>9,.1f}   {label}')
 
-    OUT[str(W)] = dict(cells=len(rows), pairs=len(pairs), devs=len(devs),
+    # ── ONE LINE OR TWO? (Shawn, 2026-09-13: "what does the data say? if the data says the
+    # graph is a straight line I don't see why we need two bands. But if there is a clear
+    # banding in terms of the gradient, then we should split it accordingly.")
+    # Five tests, all written to the JSON so the page can show its working.
+    ev = {}
+    BB = best_bound(rows) or 2010
+
+    #  (a) what the rate reads slice by slice — a step shows here, a climb shows here too
+    ev['slices'] = []
+    for lab, s0, s1 in (('before 1998', 0, 1998), ('1998–2003', 1998, 2004),
+                        ('2004–2007', 2004, 2008), ('2008–2009', 2008, 2010),
+                        ('2010–2012', 2010, 2013), ('2013 onward', 2013, 3000)):
+        sel = [r for r in rows if s0 <= r['mid'] < s1]
+        if not sel: continue
+        sp = len({(r['older'], r['newer']) for r in sel})
+        cl, ch = boot_pairs(sel, fitted) if sp >= 8 else (None, None)
+        ev['slices'].append(dict(label=lab, lo_y=s0, hi_y=s1, cells=len(sel), pairs=sp,
+                                 devs=len({x for r in sel for x in (r['older'], r['newer'])}),
+                                 rate=fitted(sel), ci_lo=cl, ci_hi=ch))
+
+    #  (b) IS THE BOUNDARY IDENTIFIED? Bootstrap the grid search itself. A real break lands in
+    #      the same year every resample; a boundary chosen by noise scatters across the range.
+    g2 = random.Random(5); ps2 = sorted(pairs)
+    byp2 = collections.defaultdict(list)
+    for r in rows: byp2[(r['older'], r['newer'])].append(r)
+    found = collections.Counter()
+    for _ in range(600):
+        smp = [x for _ in ps2 for x in byp2[ps2[g2.randrange(len(ps2))]]]
+        b = best_bound(smp)
+        if b: found[b] += 1
+    tot = sum(found.values()) or 1
+    ev['bound_boot'] = dict(bound=BB, share=found[BB] / tot,
+                            spread=sorted([[y, n / tot] for y, n in found.items()]))
+
+    #  (c) is the STEP itself distinguishable from zero, in dollars and on the ratio scale?
+    #      The ratio scale is the one that answers "is this just a price-level artefact" —
+    #      post-2010 freeholds are dearer, and a flat dollar figure on a dearer pair is a
+    #      smaller share of it. If the step survives in %/yr it is not the level talking.
+    st_d = lambda rr: ((fitted([r for r in rr if r['mid'] >= BB]) or 0)
+                       - (fitted([r for r in rr if r['mid'] < BB]) or 0))
+    st_p = lambda rr: ((fitted_pct([r for r in rr if r['mid'] >= BB]) or 0)
+                       - (fitted_pct([r for r in rr if r['mid'] < BB]) or 0))
+    guard = lambda fn: (lambda rr: fn(rr) if len([r for r in rr if r['mid'] >= BB]) >= 5
+                        and len([r for r in rr if r['mid'] < BB]) >= 5 else None)
+    dlo, dhi = boot_pairs(rows, guard(st_d)); plo, phi = boot_pairs(rows, guard(st_p))
+    pre_r = [r for r in rows if r['mid'] < BB]; post_r = [r for r in rows if r['mid'] >= BB]
+    ev['step'] = dict(bound=BB, d=st_d(rows), d_lo=dlo, d_hi=dhi,
+                      p=st_p(rows), p_lo=plo, p_hi=phi,
+                      pre_pct=fitted_pct(pre_r), post_pct=fitted_pct(post_r),
+                      pre_cells=len(pre_r), post_cells=len(post_r),
+                      pre_pairs=len({(r['older'], r['newer']) for r in pre_r}),
+                      post_pairs=len({(r['older'], r['newer']) for r in post_r}),
+                      pre_devs=len({x for r in pre_r for x in (r['older'], r['newer'])}),
+                      post_devs=len({x for r in post_r for x in (r['older'], r['newer'])}))
+
+    #  (d) the OTHER confound: post-2010 freehold stock is disproportionately central. Is
+    #      "post-2010" really "CCR"? Read the step inside each region separately.
+    ev['region'] = []
+    for reg in ('CCR', 'RCR', 'OCR'):
+        cut_ = {}
+        for lab, sel in (('pre', [r for r in rows if r['region'] == reg and r['mid'] < BB]),
+                         ('post', [r for r in rows if r['region'] == reg and r['mid'] >= BB])):
+            cut_[lab] = dict(cells=len(sel), rate=fitted(sel) if len(sel) >= 4 else None)
+        ev['region'].append(dict(region=reg, **cut_))
+
+    #  (e) the honest race — the boundary re-searched inside every training fold
+    ev['race_honest'] = {
+        'no age term at all (zero)': holdout(rows, shape_zero),
+        f'FLAT — one rate ${a:,.1f}/yr': holdout(rows, shape_flat),
+        'linear in vintage (a + b×vintage)': holdout(rows, shape_curve),
+        'ENGINE — lease bands on the TOP clock': holdout(rows, shape_engine),
+        f'TWO BANDS, boundary re-searched in fold': holdout(rows, shape_band_searched)}
+
+    print(f'\n  ONE LINE OR TWO?')
+    print(f'    boundary lands on {BB} in {found[BB]/tot:.0%} of resamples')
+    print(f'    step ${st_d(rows):+,.1f}/yr  95% ${dlo:+,.1f}..${dhi:+,.1f}   '
+          f'= {st_p(rows)*100:+.2f}pp  95% {plo*100:+.2f}..{phi*100:+.2f}pp')
+    for l, e in sorted(ev['race_honest'].items(), key=lambda x: x[1]):
+        print(f'    {e:>9,.1f}   {l}')
+
+    OUT[str(W)] = dict(evidence=ev, cells=len(rows), pairs=len(pairs), devs=len(devs),
                        rate=a, lo=lo, hi=hi, pct=apct,
                        intercept=c, intercept_se=se_c, slope_with_intercept=a_int,
                        best_band=(dict(bound=best[1], pre=best[2], post=best[3],

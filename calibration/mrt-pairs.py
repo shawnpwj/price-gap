@@ -136,9 +136,30 @@ def _early_lease_bands():
 EARLY_LEASE = _early_lease_bands()
 LEASE_NOW = [LEASE]          # swapped alongside WIN
 
+
+# ── THE LEASE ADJUSTMENT IS PIECEWISE (Shawn, 2026-09-13) ─────────────────────────────
+# Each calendar year of the lease gap is priced at its own band and the legs are summed —
+# NOT one rate read at the pair's midpoint. Reading at the midpoint assigned a whole gap to
+# one band by where it was centred and put a cliff in the rule; this study adjusted the lease
+# out that way until now, so its own figure inherited the cliff.
+# THE CONSTANTS ARE READ FROM lease-pairs.json's `pw`, which is the PUBLISHED pair (hand-set
+# whole dollars), not a refit. Deriving them here is how 25/44 went stale once already.
+def _pw():
+    import json as _j, os as _o
+    d = _j.load(open(_o.path.join(_o.path.dirname(_o.path.abspath(__file__)),
+                                  'lease-pairs.json')))['pw']
+    return d['bound'], d['pre'], d['post']
+PW_BOUND, PW_PRE, PW_POST = _pw()
+def lease_adj(ls_from, ls_to):
+    """Total psf for moving from one lease start to the other, signed."""
+    lo, hi = min(ls_from, ls_to), max(ls_from, ls_to)
+    pre  = max(0, min(hi, PW_BOUND) - lo)
+    post = max(0, hi - max(lo, PW_BOUND))
+    return (1 if ls_to >= ls_from else -1) * (PW_PRE * pre + PW_POST * post)
+
 def lease_rate(mid):
     L = LEASE_NOW[0]
-    return L['old'] if mid <= 2010.5 else L['new']
+    return L['old'] if mid <= 2010.5 else L['new']   # RETIRED — the replication still uses it
 
 R = 6371000
 def hav(a, b, c, d):
@@ -234,7 +255,7 @@ def build(catchment):
             raw  = cn['psf'] - cf['psf']
             mid  = (near['ls'] + far['ls']) / 2
             lgap = near['ls'] - far['ls']
-            adj  = raw - lease_rate(mid) * lgap
+            adj  = raw - lease_adj(far['ls'], near['ls'])
             rows.append(dict(closer=near['name'], further=far['name'], tenure=A['tenure'],
                              region=A['region'], station=A['station'], bed=bd,
                              apart=round(hav(A['lat'], A['lng'], B['lat'], B['lng'])),

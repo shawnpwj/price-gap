@@ -19,11 +19,11 @@
   {
    "key": "near|mid",
    "label": "Under 5 min vs 5-10 min",
-   "adj": 67.42909537126843,
-   "lo": 39.6041957913391,
-   "hi": 98.4132255683085,
+   "adj": 62.03971962616822,
+   "lo": 36.58783783783784,
+   "hi": 90.40096618357488,
    "walk": 278.71495327102804,
-   "per100": 24.192851721772897,
+   "per100": 22.259200268253835,
    "cells": 214,
    "pairs": 122,
    "devs": 128
@@ -31,11 +31,11 @@
   {
    "key": "mid|far",
    "label": "5-10 min vs over 10 min",
-   "adj": 143.7661722663062,
-   "lo": 109.21866602294743,
-   "hi": 180.2207836619854,
+   "adj": 143.52739726027397,
+   "lo": 108.99253731343283,
+   "hi": 180.3732394366197,
    "walk": 540.1232876712329,
-   "per100": 26.617288228056385,
+   "per100": 26.573080727383395,
    "cells": 146,
    "pairs": 84,
    "devs": 78
@@ -43,47 +43,47 @@
   {
    "key": "near|far",
    "label": "Under 5 min vs over 10 min",
-   "adj": 215.2465123952894,
-   "lo": 154.49336447788218,
-   "hi": 281.2325405766956,
+   "adj": 205.6,
+   "lo": 149.31147540983608,
+   "hi": 268.780701754386,
    "walk": 832.3818181818182,
-   "per100": 25.859107886985683,
+   "per100": 24.700203141041044,
    "cells": 55,
    "pairs": 28,
    "devs": 34
   }
  ],
  "placebo": {
-  "adj": -12.200074981953264,
-  "lo": -38.17764220414795,
-  "hi": 14.98218293602776,
+  "adj": -7.386861313868613,
+  "lo": -33.81716417910448,
+  "hi": 19.560714285714287,
   "cells": 137,
   "pairs": 69,
   "devs": 104
  },
- "slope100": 22.54531165465777,
+ "slope100": 21.743588093570718,
  "nf_split": [
   {
    "label": "under 500 m",
-   "adj": 63.6916130962107,
+   "adj": 55.4,
    "walk": 473.8,
-   "per100": 13.44272121068187,
+   "per100": 11.692697340650064,
    "pairs": 3,
    "devs": 6
   },
   {
    "label": "500-700 m",
-   "adj": 110.15148107538796,
+   "adj": 112.60714285714286,
    "walk": 564.5,
-   "per100": 19.513105593514254,
+   "per100": 19.9481209667215,
    "pairs": 8,
    "devs": 13
   },
   {
    "label": "over 700 m",
-   "adj": 277.16609392234534,
+   "adj": 262.625,
    "walk": 986.3611111111111,
-   "per100": 28.099860264170868,
+   "per100": 26.625644202878146,
    "pairs": 17,
    "devs": 22
   }
@@ -113,7 +113,7 @@
    "n_close": 17,
    "n_far": 19,
    "raw": 398.5,
-   "adj": 229.15841959101238
+   "adj": 214.5
   },
   {
    "closer": "ARTRA",
@@ -137,7 +137,7 @@
    "n_close": 19,
    "n_far": 20,
    "raw": 478,
-   "adj": 308.6584195910124
+   "adj": 294
   },
   {
    "closer": "ARTRA",
@@ -161,7 +161,7 @@
    "n_close": 17,
    "n_far": 18,
    "raw": 102.5,
-   "adj": -24.50618530674072
+   "adj": -35.5
   },
   {
    "closer": "ARTRA",
@@ -185,7 +185,7 @@
    "n_close": 17,
    "n_far": 3,
    "raw": 502.5,
-   "adj": 33.095594543582706
+   "adj": -35.5
   },
   {
    "closer": "ARTRA",
@@ -209,7 +209,7 @@
    "n_close": 19,
    "n_far": 19,
    "raw": 570,
-   "adj": 100.5955945435827
+   "adj": 32
   },
   {
    "closer": "ARTRA",
@@ -233,7 +233,7 @@
    "n_close": 17,
    "n_far": 39,
    "raw": 155.0,
-   "adj": 70.32920979550619
+   "adj": 63.0
   },
   {
    "closer": "ARTRA",
@@ -257,7 +257,7 @@
    "n_close": 19,
    "n_far": 7,
    "raw": -7,
-   "adj": -91.67079020449381
+   "adj": -99
   },
   {
    "closer": "ARTRA",
@@ -281,7 +281,7 @@
    "n_close": 17,
    "n_far": 7,
    "raw": 358.5,
-   "adj": 19.81683918202475
+   "adj": 62.5
   },
   {
    "closer": "ARTRA",
@@ -305,7 +305,7 @@
    "n_close": 19,
    "n_far": 7,
    "raw": 533.0,
-   "adj": 194.31683918202475
+   "adj": 237.0
   },
   {
    "closer": "ARTRA",
@@ -329,7 +329,7 @@
    "n_close": 17,
    "n_far": 18,
    "raw": 171.0,
-   "adj": 1.6584195910123753
+   "adj": -13.0
   },
   {
    "closer": "ARTRA",
@@ -353,7 +353,7 @@
    "n_close": 17,
    "n_far": 13,
    "raw": 451.5,
-   "adj": 28.14604897753094
+   "adj": 111.5
   },
   {
    "closer": "ARTRA",
@@ -377,7 +377,7 @@
    "n_close": 19,
    "n_far": 11,
    "raw": 456,
-   "adj": 32.64604897753094
+   "adj": 116
   },
   {
    "closer": "ARTRA",
@@ -401,7 +401,7 @@
    "n_close": 17,
    "n_far": 12,
    "raw": 677.5,
-   "adj": 133.97910947151684
+   "adj": 73.5
   },
   {
    "closer": "ARTRA",
@@ -425,7 +425,7 @@
    "n_close": 19,
    "n_far": 3,
    "raw": 764,
-   "adj": 220.47910947151684
+   "adj": 160
   },
   {
    "closer": "CITY GATE",
@@ -449,7 +449,7 @@
    "n_close": 27,
    "n_far": 5,
    "raw": 940.5,
-   "adj": -195.95277110501024
+   "adj": -143.5
   },
   {
    "closer": "MARINA BAY SUITES",
@@ -473,7 +473,7 @@
    "n_close": 13,
    "n_far": 5,
    "raw": -503.5,
-   "adj": -552.9109900480439
+   "adj": -547.5
   },
   {
    "closer": "MARINA BAY SUITES",
@@ -497,7 +497,7 @@
    "n_close": 8,
    "n_far": 6,
    "raw": -572.0,
-   "adj": -621.4109900480439
+   "adj": -616.0
   },
   {
    "closer": "MARINA BAY SUITES",
@@ -521,7 +521,7 @@
    "n_close": 13,
    "n_far": 12,
    "raw": -110.5,
-   "adj": -234.0274751201098
+   "adj": -220.5
   },
   {
    "closer": "MARINA BAY SUITES",
@@ -545,7 +545,7 @@
    "n_close": 8,
    "n_far": 3,
    "raw": -146.5,
-   "adj": -270.0274751201098
+   "adj": -256.5
   },
   {
    "closer": "MARINA BAY SUITES",
@@ -569,7 +569,7 @@
    "n_close": 13,
    "n_far": 10,
    "raw": -211.5,
-   "adj": -112.67801990391214
+   "adj": -123.5
   },
   {
    "closer": "MARINA BAY SUITES",
@@ -593,7 +593,7 @@
    "n_close": 8,
    "n_far": 3,
    "raw": 116.5,
-   "adj": 215.32198009608786
+   "adj": 204.5
   },
   {
    "closer": "V ON SHENTON",
@@ -617,7 +617,7 @@
    "n_close": 18,
    "n_far": 8,
    "raw": 64.0,
-   "adj": -84.2329701441318
+   "adj": -68.0
   },
   {
    "closer": "V ON SHENTON",
@@ -641,7 +641,7 @@
    "n_close": 5,
    "n_far": 6,
    "raw": 8,
-   "adj": -140.2329701441318
+   "adj": -124
   },
   {
    "closer": "CLAVON",
@@ -665,7 +665,7 @@
    "n_close": 94,
    "n_far": 7,
    "raw": 828.0,
-   "adj": 136.24613932738498
+   "adj": 20.0
   },
   {
    "closer": "CLAVON",
@@ -689,7 +689,7 @@
    "n_close": 94,
    "n_far": 17,
    "raw": 354,
-   "adj": 15.31683918202475
+   "adj": -14
   },
   {
    "closer": "CLAVON",
@@ -713,7 +713,7 @@
    "n_close": 94,
    "n_far": 20,
    "raw": 124,
-   "adj": -3.0061853067407185
+   "adj": -14
   },
   {
    "closer": "CLAVON",
@@ -737,7 +737,7 @@
    "n_close": 19,
    "n_far": 19,
    "raw": 211.5,
-   "adj": 84.49381469325928
+   "adj": 73.5
   },
   {
    "closer": "CLAVON",
@@ -761,7 +761,7 @@
    "n_close": 21,
    "n_far": 4,
    "raw": 56.5,
-   "adj": -70.50618530674072
+   "adj": -81.5
   },
   {
    "closer": "CLAVON",
@@ -785,7 +785,7 @@
    "n_close": 19,
    "n_far": 21,
    "raw": 743,
-   "adj": 273.5955945435827
+   "adj": 133
   },
   {
    "closer": "WEST BAY CONDOMINIUM",
@@ -809,7 +809,7 @@
    "n_close": 7,
    "n_far": 9,
    "raw": -388.0,
-   "adj": 31.99341540837338
+   "adj": -14.0
   },
   {
    "closer": "WEST BAY CONDOMINIUM",
@@ -833,7 +833,7 @@
    "n_close": 8,
    "n_far": 3,
    "raw": -403.0,
-   "adj": 16.99341540837338
+   "adj": -29.0
   },
   {
    "closer": "SEAHILL",
@@ -857,7 +857,7 @@
    "n_close": 17,
    "n_far": 9,
    "raw": 86.0,
-   "adj": 11.883514927934101
+   "adj": 20.0
   },
   {
    "closer": "THE CLEMENT CANOPY",
@@ -881,7 +881,7 @@
    "n_close": 19,
    "n_far": 3,
    "raw": 378.5,
-   "adj": 39.81683918202475
+   "adj": 82.5
   },
   {
    "closer": "THE VISION",
@@ -905,7 +905,7 @@
    "n_close": 9,
    "n_far": 7,
    "raw": 235.0,
-   "adj": 37.35603980782429
+   "adj": 59.0
   },
   {
    "closer": "THE VISION",
@@ -929,7 +929,7 @@
    "n_close": 3,
    "n_far": 21,
    "raw": 153.0,
-   "adj": -44.64396019217571
+   "adj": -23.0
   },
   {
    "closer": "THE VISION",
@@ -953,7 +953,7 @@
    "n_close": 9,
    "n_far": 7,
    "raw": 418.0,
-   "adj": 96.82856468771445
+   "adj": 132.0
   },
   {
    "closer": "THE VISION",
@@ -977,7 +977,7 @@
    "n_close": 3,
    "n_far": 10,
    "raw": 505.5,
-   "adj": 184.32856468771445
+   "adj": 219.5
   },
   {
    "closer": "ALEX RESIDENCES",
@@ -1001,7 +1001,7 @@
    "n_close": 18,
    "n_far": 19,
    "raw": 296.0,
-   "adj": 253.6646048977531
+   "adj": 250.0
   },
   {
    "closer": "TANGLIN VIEW",
@@ -1025,7 +1025,7 @@
    "n_close": 3,
    "n_far": 19,
    "raw": -104.0,
-   "adj": 266.58242536032947
+   "adj": 250.0
   },
   {
    "closer": "TANGLIN VIEW",
@@ -1049,7 +1049,7 @@
    "n_close": 19,
    "n_far": 20,
    "raw": -92,
-   "adj": 278.58242536032947
+   "adj": 262
   },
   {
    "closer": "THE CREST",
@@ -1073,7 +1073,7 @@
    "n_close": 19,
    "n_far": 39,
    "raw": -243.5,
-   "adj": -158.8292097955062
+   "adj": -151.5
   },
   {
    "closer": "THE CREST",
@@ -1097,7 +1097,7 @@
    "n_close": 20,
    "n_far": 7,
    "raw": -485,
-   "adj": -400.3292097955062
+   "adj": -393
   },
   {
    "closer": "THE CREST",
@@ -1121,7 +1121,7 @@
    "n_close": 7,
    "n_far": 4,
    "raw": -420,
-   "adj": -335.3292097955062
+   "adj": -328
   },
   {
    "closer": "ASCENTIA SKY",
@@ -1145,7 +1145,7 @@
    "n_close": 7,
    "n_far": 19,
    "raw": 40.0,
-   "adj": 138.82198009608786
+   "adj": 152.0
   },
   {
    "closer": "ASCENTIA SKY",
@@ -1169,7 +1169,7 @@
    "n_close": 7,
    "n_far": 20,
    "raw": -55.0,
-   "adj": 43.821980096087856
+   "adj": 57.0
   },
   {
    "closer": "ASCENTIA SKY",
@@ -1193,7 +1193,7 @@
    "n_close": 7,
    "n_far": 7,
    "raw": -30,
-   "adj": 68.82198009608786
+   "adj": 82
   },
   {
    "closer": "ECHELON",
@@ -1265,7 +1265,7 @@
    "n_close": 11,
    "n_far": 20,
    "raw": 22,
-   "adj": 170.2329701441318
+   "adj": 178
   },
   {
    "closer": "THE METROPOLITAN CONDOMINIUM",
@@ -1289,7 +1289,7 @@
    "n_close": 7,
    "n_far": 7,
    "raw": -152.0,
-   "adj": -3.767029855868202
+   "adj": 4.0
   },
   {
    "closer": "TANGLIN REGENCY",
@@ -1313,7 +1313,7 @@
    "n_close": 12,
    "n_far": 19,
    "raw": -279,
-   "adj": 165.69891043239534
+   "adj": 141
   },
   {
    "closer": "TANGLIN REGENCY",
@@ -1337,7 +1337,7 @@
    "n_close": 3,
    "n_far": 20,
    "raw": -286,
-   "adj": 158.69891043239534
+   "adj": 134
   },
   {
    "closer": "ICON",
@@ -1361,7 +1361,7 @@
    "n_close": 12,
    "n_far": 6,
    "raw": -367.0,
-   "adj": -218.7670298558682
+   "adj": -235.0
   },
   {
    "closer": "INTERNATIONAL PLAZA",
@@ -1385,7 +1385,7 @@
    "n_close": 8,
    "n_far": 3,
    "raw": -1153.5,
-   "adj": -214.6911890871654
+   "adj": -317.5
   },
   {
    "closer": "ALEX RESIDENCES",
@@ -1409,7 +1409,7 @@
    "n_close": 20,
    "n_far": 19,
    "raw": 353,
-   "adj": -42.28792038435142
+   "adj": -47
   },
   {
    "closer": "ALEX RESIDENCES",
@@ -1433,7 +1433,7 @@
    "n_close": 8,
    "n_far": 25,
    "raw": 107,
-   "adj": 149.3353951022469
+   "adj": 153
   },
   {
    "closer": "ALEX RESIDENCES",
@@ -1457,7 +1457,7 @@
    "n_close": 18,
    "n_far": 39,
    "raw": 52.5,
-   "adj": 94.8353951022469
+   "adj": 98.5
   },
   {
    "closer": "ALEX RESIDENCES",
@@ -1481,7 +1481,7 @@
    "n_close": 20,
    "n_far": 7,
    "raw": -224,
-   "adj": -181.6646048977531
+   "adj": -178
   },
   {
    "closer": "ECHELON",
@@ -1505,7 +1505,7 @@
    "n_close": 8,
    "n_far": 8,
    "raw": 154.5,
-   "adj": 196.8353951022469
+   "adj": 200.5
   },
   {
    "closer": "ECHELON",
@@ -1529,7 +1529,7 @@
    "n_close": 18,
    "n_far": 18,
    "raw": -68.5,
-   "adj": -26.164604897753094
+   "adj": -22.5
   },
   {
    "closer": "ECHELON",
@@ -1553,7 +1553,7 @@
    "n_close": 17,
    "n_far": 20,
    "raw": -45.5,
-   "adj": -3.164604897753094
+   "adj": 0.5
   },
   {
    "closer": "THE SAIL @ MARINA BAY",
@@ -1577,7 +1577,7 @@
    "n_close": 25,
    "n_far": 8,
    "raw": -324.0,
-   "adj": -249.8835149279341
+   "adj": -258.0
   },
   {
    "closer": "THE SAIL @ MARINA BAY",
@@ -1601,7 +1601,7 @@
    "n_close": 41,
    "n_far": 13,
    "raw": -39.5,
-   "adj": 34.6164850720659
+   "adj": 26.5
   },
   {
    "closer": "THE SAIL @ MARINA BAY",
@@ -1625,7 +1625,7 @@
    "n_close": 12,
    "n_far": 5,
    "raw": -393,
-   "adj": -318.88351492793413
+   "adj": -327
   },
   {
    "closer": "MARINA BAY RESIDENCES",
@@ -1649,7 +1649,7 @@
    "n_close": 8,
    "n_far": 34,
    "raw": 459.5,
-   "adj": 607.7329701441317
+   "adj": 591.5
   },
   {
    "closer": "MARINA BAY RESIDENCES",
@@ -1673,7 +1673,7 @@
    "n_close": 13,
    "n_far": 23,
    "raw": 146,
-   "adj": 294.2329701441318
+   "adj": 278
   },
   {
    "closer": "MARINA BAY RESIDENCES",
@@ -1697,7 +1697,7 @@
    "n_close": 5,
    "n_far": 10,
    "raw": 292,
-   "adj": 440.2329701441318
+   "adj": 424
   },
   {
    "closer": "MARINA BAY RESIDENCES",
@@ -1721,7 +1721,7 @@
    "n_close": 6,
    "n_far": 3,
    "raw": 688.5,
-   "adj": 836.7329701441317
+   "adj": 820.5
   },
   {
    "closer": "CANNINGHILL PIERS",
@@ -1745,7 +1745,7 @@
    "n_close": 3,
    "n_far": 8,
    "raw": 1450,
-   "adj": 807.6571293754289
+   "adj": 638
   },
   {
    "closer": "CANNINGHILL PIERS",
@@ -1769,7 +1769,7 @@
    "n_close": 4,
    "n_far": 11,
    "raw": 1296.0,
-   "adj": 653.6571293754289
+   "adj": 484.0
   },
   {
    "closer": "QUEENS PEAK",
@@ -1793,7 +1793,7 @@
    "n_close": 27,
    "n_far": 42,
    "raw": 79.5,
-   "adj": -5.170790204493812
+   "adj": -12.5
   },
   {
    "closer": "QUEENS PEAK",
@@ -1817,7 +1817,7 @@
    "n_close": 22,
    "n_far": 29,
    "raw": -139.0,
-   "adj": -223.6707902044938
+   "adj": -231.0
   },
   {
    "closer": "QUEENS PEAK",
@@ -1841,7 +1841,7 @@
    "n_close": 33,
    "n_far": 18,
    "raw": -136,
-   "adj": -220.6707902044938
+   "adj": -228
   },
   {
    "closer": "QUEENS PEAK",
@@ -1865,7 +1865,7 @@
    "n_close": 27,
    "n_far": 42,
    "raw": -132.0,
-   "adj": -47.32920979550619
+   "adj": -40.0
   },
   {
    "closer": "QUEENS PEAK",
@@ -1889,7 +1889,7 @@
    "n_close": 22,
    "n_far": 127,
    "raw": -215,
-   "adj": -130.3292097955062
+   "adj": -123
   },
   {
    "closer": "QUEENS PEAK",
@@ -1913,7 +1913,7 @@
    "n_close": 33,
    "n_far": 39,
    "raw": -235,
-   "adj": -150.3292097955062
+   "adj": -143
   },
   {
    "closer": "QUEENS PEAK",
@@ -1937,7 +1937,7 @@
    "n_close": 5,
    "n_far": 5,
    "raw": -314.5,
-   "adj": -229.8292097955062
+   "adj": -222.5
   },
   {
    "closer": "THE SAIL @ MARINA BAY",
@@ -1961,7 +1961,7 @@
    "n_close": 25,
    "n_far": 34,
    "raw": 135.5,
-   "adj": 357.84945521619767
+   "adj": 333.5
   },
   {
    "closer": "THE SAIL @ MARINA BAY",
@@ -1985,7 +1985,7 @@
    "n_close": 12,
    "n_far": 10,
    "raw": -101,
-   "adj": 121.34945521619767
+   "adj": 97
   },
   {
    "closer": "PEOPLE'S PARK COMPLEX",
@@ -2009,7 +2009,7 @@
    "n_close": 7,
    "n_far": 4,
    "raw": -688.0,
-   "adj": 596.6857412491422
+   "adj": 672.0
   },
   {
    "closer": "THE TRILINQ",
@@ -2033,7 +2033,7 @@
    "n_close": 8,
    "n_far": 60,
    "raw": -242,
-   "adj": 54.347765715728315
+   "adj": 80
   },
   {
    "closer": "THE TRILINQ",
@@ -2057,7 +2057,7 @@
    "n_close": 29,
    "n_far": 130,
    "raw": -316.0,
-   "adj": -19.652234284271685
+   "adj": 6.0
   },
   {
    "closer": "THE TRILINQ",
@@ -2081,7 +2081,7 @@
    "n_close": 22,
    "n_far": 96,
    "raw": -320.5,
-   "adj": -24.152234284271685
+   "adj": 1.5
   },
   {
    "closer": "THE TRILINQ",
@@ -2105,7 +2105,7 @@
    "n_close": 8,
    "n_far": 8,
    "raw": -7.5,
-   "adj": 204.17697551123453
+   "adj": 222.5
   },
   {
    "closer": "THE TRILINQ",
@@ -2129,7 +2129,7 @@
    "n_close": 29,
    "n_far": 20,
    "raw": 30.0,
-   "adj": 241.67697551123453
+   "adj": 260.0
   },
   {
    "closer": "THE TRILINQ",
@@ -2153,7 +2153,7 @@
    "n_close": 22,
    "n_far": 17,
    "raw": 44.5,
-   "adj": 256.17697551123456
+   "adj": 274.5
   },
   {
    "closer": "THE TRILINQ",
@@ -2177,7 +2177,7 @@
    "n_close": 15,
    "n_far": 9,
    "raw": -316.0,
-   "adj": -104.32302448876547
+   "adj": -86.0
   },
   {
    "closer": "THE TRILINQ",
@@ -2201,7 +2201,7 @@
    "n_close": 29,
    "n_far": 7,
    "raw": 292.0,
-   "adj": 334.33539510224693
+   "adj": 338.0
   },
   {
    "closer": "THE TRILINQ",
@@ -2225,7 +2225,7 @@
    "n_close": 22,
    "n_far": 4,
    "raw": 427.0,
-   "adj": 469.33539510224693
+   "adj": 473.0
   },
   {
    "closer": "THE TRILINQ",
@@ -2249,7 +2249,7 @@
    "n_close": 15,
    "n_far": 7,
    "raw": 52.0,
-   "adj": 94.3353951022469
+   "adj": 98.0
   },
   {
    "closer": "REGENT PARK",
@@ -2273,7 +2273,7 @@
    "n_close": 8,
    "n_far": 29,
    "raw": -502.0,
-   "adj": -32.595594543582706
+   "adj": -60.0
   },
   {
    "closer": "THE TRILINQ",
@@ -2297,7 +2297,7 @@
    "n_close": 8,
    "n_far": 27,
    "raw": -94,
-   "adj": 160.01237061348144
+   "adj": 182
   },
   {
    "closer": "THE TRILINQ",
@@ -2321,7 +2321,7 @@
    "n_close": 22,
    "n_far": 25,
    "raw": -42.5,
-   "adj": 211.51237061348144
+   "adj": 233.5
   },
   {
    "closer": "THE TRILINQ",
@@ -2345,7 +2345,7 @@
    "n_close": 15,
    "n_far": 15,
    "raw": -308.5,
-   "adj": -54.48762938651856
+   "adj": -32.5
   },
   {
    "closer": "THE TRILINQ",
@@ -2369,7 +2369,7 @@
    "n_close": 8,
    "n_far": 19,
    "raw": 29,
-   "adj": 156.00618530674072
+   "adj": 167
   },
   {
    "closer": "THE TRILINQ",
@@ -2393,7 +2393,7 @@
    "n_close": 22,
    "n_far": 13,
    "raw": 226.0,
-   "adj": 353.0061853067407
+   "adj": 364.0
   },
   {
    "closer": "THE TRILINQ",
@@ -2417,7 +2417,7 @@
    "n_close": 15,
    "n_far": 18,
    "raw": -119.0,
-   "adj": 8.006185306740718
+   "adj": 19.0
   },
   {
    "closer": "WEST BAY CONDOMINIUM",
@@ -2441,7 +2441,7 @@
    "n_close": 7,
    "n_far": 17,
    "raw": -474.0,
-   "adj": 20.10990048043925
+   "adj": -34.0
   },
   {
    "closer": "THE CLEMENT CANOPY",
@@ -2465,7 +2465,7 @@
    "n_close": 19,
    "n_far": 8,
    "raw": 781.5,
-   "adj": 163.86262439945085
+   "adj": 111.5
   },
   {
    "closer": "WEST BAY CONDOMINIUM",
@@ -2489,7 +2489,7 @@
    "n_close": 7,
    "n_far": 7,
    "raw": -153.0,
-   "adj": 69.34945521619767
+   "adj": 45.0
   },
   {
    "closer": "WEST BAY CONDOMINIUM",
@@ -2513,7 +2513,7 @@
    "n_close": 8,
    "n_far": 21,
    "raw": -250,
-   "adj": -27.65054478380233
+   "adj": -52
   },
   {
    "closer": "WEST BAY CONDOMINIUM",
@@ -2537,7 +2537,7 @@
    "n_close": 7,
    "n_far": 7,
    "raw": 30.0,
-   "adj": 128.82198009608786
+   "adj": 118.0
   },
   {
    "closer": "WEST BAY CONDOMINIUM",
@@ -2561,7 +2561,7 @@
    "n_close": 8,
    "n_far": 10,
    "raw": 102.5,
-   "adj": 201.32198009608786
+   "adj": 190.5
   },
   {
    "closer": "COMMONWEALTH TOWERS",
@@ -2585,7 +2585,7 @@
    "n_close": 42,
    "n_far": 42,
    "raw": -211.5,
-   "adj": -42.158419591012375
+   "adj": -27.5
   },
   {
    "closer": "COMMONWEALTH TOWERS",
@@ -2609,7 +2609,7 @@
    "n_close": 29,
    "n_far": 127,
    "raw": -76.0,
-   "adj": 93.34158040898762
+   "adj": 108.0
   },
   {
    "closer": "COMMONWEALTH TOWERS",
@@ -2633,7 +2633,7 @@
    "n_close": 18,
    "n_far": 39,
    "raw": -99,
-   "adj": 70.34158040898762
+   "adj": 85
   },
   {
    "closer": "COMMONWEALTH TOWERS",
@@ -2657,7 +2657,7 @@
    "n_close": 18,
    "n_far": 19,
    "raw": 588.5,
-   "adj": 217.91757463967053
+   "adj": 210.5
   },
   {
    "closer": "RIVIERE",
@@ -2681,7 +2681,7 @@
    "n_close": 10,
    "n_far": 33,
    "raw": 186.0,
-   "adj": 101.32920979550619
+   "adj": 94.0
   },
   {
    "closer": "RIVIERE",
@@ -2705,7 +2705,7 @@
    "n_close": 7,
    "n_far": 23,
    "raw": 38.5,
-   "adj": -46.17079020449381
+   "adj": -53.5
   },
   {
    "closer": "TANGLIN VIEW",
@@ -2729,7 +2729,7 @@
    "n_close": 3,
    "n_far": 39,
    "raw": -347.5,
-   "adj": 72.49341540837338
+   "adj": 98.5
   },
   {
    "closer": "TANGLIN VIEW",
@@ -2753,7 +2753,7 @@
    "n_close": 19,
    "n_far": 7,
    "raw": -577,
-   "adj": -157.00658459162662
+   "adj": -131
   },
   {
    "closer": "ASCENTIA SKY",
@@ -2777,7 +2777,7 @@
    "n_close": 7,
    "n_far": 3,
    "raw": 144.0,
-   "adj": -127.76044526424158
+   "adj": -98.0
   },
   {
    "closer": "ECHELON",
@@ -2801,7 +2801,7 @@
    "n_close": 18,
    "n_far": 3,
    "raw": 331.5,
-   "adj": -39.08242536032947
+   "adj": -22.5
   },
   {
    "closer": "ECHELON",
@@ -2825,7 +2825,7 @@
    "n_close": 17,
    "n_far": 19,
    "raw": 307.5,
-   "adj": -63.08242536032947
+   "adj": -46.5
   },
   {
    "closer": "THE METROPOLITAN CONDOMINIUM",
@@ -2849,7 +2849,7 @@
    "n_close": 13,
    "n_far": 3,
    "raw": 51.0,
-   "adj": -171.34945521619767
+   "adj": -147.0
   },
   {
    "closer": "THE METROPOLITAN CONDOMINIUM",
@@ -2873,7 +2873,7 @@
    "n_close": 11,
    "n_far": 19,
    "raw": 114,
-   "adj": -108.34945521619767
+   "adj": -84
   },
   {
    "closer": "TANGLIN VIEW",
@@ -2897,7 +2897,7 @@
    "n_close": 3,
    "n_far": 12,
    "raw": 175.0,
-   "adj": 100.8835149279341
+   "adj": 109.0
   },
   {
    "closer": "TANGLIN VIEW",
@@ -2921,7 +2921,7 @@
    "n_close": 19,
    "n_far": 3,
    "raw": 194,
-   "adj": 119.8835149279341
+   "adj": 128
   },
   {
    "closer": "SEAHILL",
@@ -2945,7 +2945,7 @@
    "n_close": 17,
    "n_far": 7,
    "raw": 321,
-   "adj": 49.23955473575842
+   "adj": 79
   },
   {
    "closer": "MIDTOWN MODERN",
@@ -2969,7 +2969,7 @@
    "n_close": 5,
    "n_far": 11,
    "raw": 499,
-   "adj": 499.0
+   "adj": 499
   },
   {
    "closer": "MIDTOWN MODERN",
@@ -3017,7 +3017,7 @@
    "n_close": 19,
    "n_far": 39,
    "raw": -687.5,
-   "adj": -218.0955945435827
+   "adj": -125.5
   },
   {
    "closer": "ASCENTIA SKY",
@@ -3041,7 +3041,7 @@
    "n_close": 7,
    "n_far": 39,
    "raw": -203.5,
-   "adj": 50.51237061348144
+   "adj": 0.5
   },
   {
    "closer": "ASCENTIA SKY",
@@ -3065,7 +3065,7 @@
    "n_close": 7,
    "n_far": 4,
    "raw": -450,
-   "adj": -195.98762938651856
+   "adj": -246
   },
   {
    "closer": "ECHELON",
@@ -3089,7 +3089,7 @@
    "n_close": 8,
    "n_far": 25,
    "raw": 261.5,
-   "adj": 346.1707902044938
+   "adj": 353.5
   },
   {
    "closer": "ECHELON",
@@ -3113,7 +3113,7 @@
    "n_close": 18,
    "n_far": 39,
    "raw": -16.0,
-   "adj": 68.67079020449381
+   "adj": 76.0
   },
   {
    "closer": "ECHELON",
@@ -3137,7 +3137,7 @@
    "n_close": 17,
    "n_far": 7,
    "raw": -269.5,
-   "adj": -184.8292097955062
+   "adj": -177.5
   },
   {
    "closer": "ECHELON",
@@ -3161,7 +3161,7 @@
    "n_close": 4,
    "n_far": 4,
    "raw": -445.0,
-   "adj": -360.3292097955062
+   "adj": -353.0
   },
   {
    "closer": "THE METROPOLITAN CONDOMINIUM",
@@ -3185,7 +3185,7 @@
    "n_close": 7,
    "n_far": 4,
    "raw": -572.0,
-   "adj": -374.3560398078243
+   "adj": -324.0
   },
   {
    "closer": "TANGLIN REGENCY",
@@ -3209,7 +3209,7 @@
    "n_close": 12,
    "n_far": 39,
    "raw": -522.5,
-   "adj": -28.39009951956075
+   "adj": -10.5
   },
   {
    "closer": "TANGLIN REGENCY",
@@ -3233,7 +3233,7 @@
    "n_close": 3,
    "n_far": 7,
    "raw": -771,
-   "adj": -276.89009951956075
+   "adj": -259
   },
   {
    "closer": "ASCENTIA SKY",
@@ -3257,7 +3257,7 @@
    "n_close": 7,
    "n_far": 4,
    "raw": -5.0,
-   "adj": 93.82198009608786
+   "adj": 107.0
   },
   {
    "closer": "ASCENTIA SKY",
@@ -3281,7 +3281,7 @@
    "n_close": 7,
    "n_far": 13,
    "raw": 93.0,
-   "adj": 43.58900995195607
+   "adj": 49.0
   },
   {
    "closer": "ASCENTIA SKY",
@@ -3305,7 +3305,7 @@
    "n_close": 7,
    "n_far": 11,
    "raw": -77.0,
-   "adj": -126.41099004804393
+   "adj": -121.0
   },
   {
    "closer": "ASCENTIA SKY",
@@ -3329,7 +3329,7 @@
    "n_close": 7,
    "n_far": 7,
    "raw": 122.0,
-   "adj": 72.58900995195607
+   "adj": 78.0
   },
   {
    "closer": "ASCENTIA SKY",
@@ -3353,7 +3353,7 @@
    "n_close": 7,
    "n_far": 12,
    "raw": 319.0,
-   "adj": -26.87693033630751
+   "adj": 11.0
   },
   {
    "closer": "ASCENTIA SKY",
@@ -3377,7 +3377,7 @@
    "n_close": 7,
    "n_far": 3,
    "raw": 231.0,
-   "adj": -114.87693033630751
+   "adj": -77.0
   },
   {
    "closer": "PARC CLEMATIS",
@@ -3401,7 +3401,7 @@
    "n_close": 130,
    "n_far": 20,
    "raw": 346.0,
-   "adj": 261.3292097955062
+   "adj": 254.0
   },
   {
    "closer": "PARC CLEMATIS",
@@ -3425,7 +3425,7 @@
    "n_close": 96,
    "n_far": 17,
    "raw": 365,
-   "adj": 280.3292097955062
+   "adj": 273
   },
   {
    "closer": "PARC CLEMATIS",
@@ -3449,7 +3449,7 @@
    "n_close": 38,
    "n_far": 9,
    "raw": 389,
-   "adj": 304.3292097955062
+   "adj": 297
   },
   {
    "closer": "PARC CLEMATIS",
@@ -3473,7 +3473,7 @@
    "n_close": 130,
    "n_far": 7,
    "raw": 608.0,
-   "adj": 353.98762938651856
+   "adj": 332.0
   },
   {
    "closer": "PARC CLEMATIS",
@@ -3497,7 +3497,7 @@
    "n_close": 96,
    "n_far": 4,
    "raw": 747.5,
-   "adj": 493.48762938651856
+   "adj": 471.5
   },
   {
    "closer": "PARC CLEMATIS",
@@ -3521,7 +3521,7 @@
    "n_close": 38,
    "n_far": 7,
    "raw": 757,
-   "adj": 502.98762938651856
+   "adj": 481
   },
   {
    "closer": "REGENT PARK",
@@ -3545,7 +3545,7 @@
    "n_close": 6,
    "n_far": 96,
    "raw": -893.5,
-   "adj": -251.1571293754289
+   "adj": -129.5
   },
   {
    "closer": "PARC CLEMATIS",
@@ -3569,7 +3569,7 @@
    "n_close": 60,
    "n_far": 27,
    "raw": 148,
-   "adj": 105.6646048977531
+   "adj": 102
   },
   {
    "closer": "PARC CLEMATIS",
@@ -3593,7 +3593,7 @@
    "n_close": 130,
    "n_far": 58,
    "raw": 230,
-   "adj": 187.6646048977531
+   "adj": 184
   },
   {
    "closer": "PARC CLEMATIS",
@@ -3617,7 +3617,7 @@
    "n_close": 96,
    "n_far": 25,
    "raw": 278,
-   "adj": 235.6646048977531
+   "adj": 232
   },
   {
    "closer": "PARC CLEMATIS",
@@ -3641,7 +3641,7 @@
    "n_close": 38,
    "n_far": 15,
    "raw": 396.5,
-   "adj": 354.16460489775307
+   "adj": 350.5
   },
   {
    "closer": "PARC CLEMATIS",
@@ -3665,7 +3665,7 @@
    "n_close": 60,
    "n_far": 19,
    "raw": 271,
-   "adj": 101.65841959101238
+   "adj": 87
   },
   {
    "closer": "PARC CLEMATIS",
@@ -3689,7 +3689,7 @@
    "n_close": 130,
    "n_far": 45,
    "raw": 450.5,
-   "adj": 281.1584195910124
+   "adj": 266.5
   },
   {
    "closer": "PARC CLEMATIS",
@@ -3713,7 +3713,7 @@
    "n_close": 96,
    "n_far": 13,
    "raw": 546.5,
-   "adj": 377.1584195910124
+   "adj": 362.5
   },
   {
    "closer": "PARC CLEMATIS",
@@ -3737,7 +3737,7 @@
    "n_close": 38,
    "n_far": 4,
    "raw": 1057.0,
-   "adj": 488.7736144474949
+   "adj": 359.0
   },
   {
    "closer": "VARSITY PARK CONDOMINIUM",
@@ -3761,7 +3761,7 @@
    "n_close": 25,
    "n_far": 5,
    "raw": 30.5,
-   "adj": 79.91099004804393
+   "adj": 74.5
   },
   {
    "closer": "VARSITY PARK CONDOMINIUM",
@@ -3785,7 +3785,7 @@
    "n_close": 5,
    "n_far": 4,
    "raw": 34.0,
-   "adj": 83.41099004804393
+   "adj": 78.0
   },
   {
    "closer": "THE CLEMENT CANOPY",
@@ -3809,7 +3809,7 @@
    "n_close": 19,
    "n_far": 21,
    "raw": 531.5,
-   "adj": 136.21207961564858
+   "adj": 59.5
   },
   {
    "closer": "THE CLEMENT CANOPY",
@@ -3833,7 +3833,7 @@
    "n_close": 19,
    "n_far": 10,
    "raw": 884.0,
-   "adj": 365.1846044955388
+   "adj": 302.0
   },
   {
    "closer": "THE METROPOLITAN CONDOMINIUM",
@@ -3857,7 +3857,7 @@
    "n_close": 7,
    "n_far": 4,
    "raw": -127.0,
-   "adj": 21.232970144131798
+   "adj": 29.0
   },
   {
    "closer": "ECHELON",
@@ -3881,7 +3881,7 @@
    "n_close": 18,
    "n_far": 12,
    "raw": 506.5,
-   "adj": 61.80108956760466
+   "adj": 86.5
   },
   {
    "closer": "CONCOURSE SKYLINE",
@@ -3905,7 +3905,7 @@
    "n_close": 19,
    "n_far": 21,
    "raw": 464.0,
-   "adj": 118.12306966369249
+   "adj": 156.0
   },
   {
    "closer": "WESTCOVE CONDOMINIUM",
@@ -3929,7 +3929,7 @@
    "n_close": 7,
    "n_far": 7,
    "raw": -183,
-   "adj": -59.47252487989019
+   "adj": -73
   },
   {
    "closer": "WESTCOVE CONDOMINIUM",
@@ -3953,7 +3953,7 @@
    "n_close": 10,
    "n_far": 21,
    "raw": -352.5,
-   "adj": -228.9725248798902
+   "adj": -242.5
   },
   {
    "closer": "WATERFRONT @ FABER",
@@ -3977,7 +3977,7 @@
    "n_close": 7,
    "n_far": 20,
    "raw": -262.0,
-   "adj": -92.65841959101238
+   "adj": -78.0
   },
   {
    "closer": "WATERFRONT @ FABER",
@@ -4001,7 +4001,7 @@
    "n_close": 4,
    "n_far": 17,
    "raw": -382.5,
-   "adj": -213.15841959101238
+   "adj": -198.5
   },
   {
    "closer": "WATERFRONT @ FABER",
@@ -4025,7 +4025,7 @@
    "n_close": 7,
    "n_far": 9,
    "raw": -368,
-   "adj": -198.65841959101238
+   "adj": -184
   },
   {
    "closer": "REGENT PARK",
@@ -4049,7 +4049,7 @@
    "n_close": 6,
    "n_far": 17,
    "raw": -528.5,
-   "adj": 64.43188057652719
+   "adj": 143.5
   },
   {
    "closer": "WHISTLER GRAND",
@@ -4073,7 +4073,7 @@
    "n_close": 27,
    "n_far": 8,
    "raw": 86.5,
-   "adj": 44.164604897753094
+   "adj": 40.5
   },
   {
    "closer": "WHISTLER GRAND",
@@ -4097,7 +4097,7 @@
    "n_close": 58,
    "n_far": 20,
    "raw": 116.0,
-   "adj": 73.6646048977531
+   "adj": 70.0
   },
   {
    "closer": "WHISTLER GRAND",
@@ -4121,7 +4121,7 @@
    "n_close": 25,
    "n_far": 17,
    "raw": 87,
-   "adj": 44.664604897753094
+   "adj": 41
   },
   {
    "closer": "WHISTLER GRAND",
@@ -4145,7 +4145,7 @@
    "n_close": 15,
    "n_far": 9,
    "raw": -7.5,
-   "adj": -49.835395102246906
+   "adj": -53.5
   },
   {
    "closer": "PARC RIVIERA",
@@ -4169,7 +4169,7 @@
    "n_close": 19,
    "n_far": 8,
    "raw": -36.5,
-   "adj": 48.17079020449381
+   "adj": 55.5
   },
   {
    "closer": "PARC RIVIERA",
@@ -4193,7 +4193,7 @@
    "n_close": 45,
    "n_far": 20,
    "raw": -104.5,
-   "adj": -19.829209795506188
+   "adj": -12.5
   },
   {
    "closer": "PARC RIVIERA",
@@ -4217,7 +4217,7 @@
    "n_close": 13,
    "n_far": 17,
    "raw": -181.5,
-   "adj": -96.82920979550619
+   "adj": -89.5
   },
   {
    "closer": "PARC RIVIERA",
@@ -4241,7 +4241,7 @@
    "n_close": 18,
    "n_far": 9,
    "raw": -197.0,
-   "adj": -112.32920979550619
+   "adj": -105.0
   },
   {
    "closer": "FABER CREST",
@@ -4265,7 +4265,7 @@
    "n_close": 7,
    "n_far": 17,
    "raw": -692,
-   "adj": -173.1846044955388
+   "adj": -86
   },
   {
    "closer": "REGENT PARK",
@@ -4289,7 +4289,7 @@
    "n_close": 6,
    "n_far": 4,
    "raw": -146.0,
-   "adj": 348.10990048043925
+   "adj": 342.0
   },
   {
    "closer": "WHISTLER GRAND",
@@ -4313,7 +4313,7 @@
    "n_close": 58,
    "n_far": 7,
    "raw": 378.0,
-   "adj": 166.32302448876547
+   "adj": 148.0
   },
   {
    "closer": "WHISTLER GRAND",
@@ -4337,7 +4337,7 @@
    "n_close": 25,
    "n_far": 4,
    "raw": 469.5,
-   "adj": 257.82302448876544
+   "adj": 239.5
   },
   {
    "closer": "WHISTLER GRAND",
@@ -4361,7 +4361,7 @@
    "n_close": 15,
    "n_far": 7,
    "raw": 360.5,
-   "adj": 148.82302448876547
+   "adj": 130.5
   },
   {
    "closer": "WATERFRONT @ FABER",
@@ -4385,7 +4385,7 @@
    "n_close": 7,
    "n_far": 45,
    "raw": -157.5,
-   "adj": -72.82920979550619
+   "adj": -65.5
   },
   {
    "closer": "WATERFRONT @ FABER",
@@ -4409,7 +4409,7 @@
    "n_close": 4,
    "n_far": 13,
    "raw": -201.0,
-   "adj": -116.32920979550619
+   "adj": -109.0
   },
   {
    "closer": "WATERFRONT @ FABER",
@@ -4433,7 +4433,7 @@
    "n_close": 7,
    "n_far": 18,
    "raw": -171.0,
-   "adj": -86.32920979550619
+   "adj": -79.0
   },
   {
    "closer": "FABER CREST",
@@ -4457,7 +4457,7 @@
    "n_close": 7,
    "n_far": 4,
    "raw": -309.5,
-   "adj": 110.49341540837338
+   "adj": 112.5
   },
   {
    "closer": "THE REEF AT KING'S DOCK",
@@ -4481,7 +4481,7 @@
    "n_close": 3,
    "n_far": 14,
    "raw": 595,
-   "adj": 2.3044685685433706
+   "adj": 47
   },
   {
    "closer": "CORALS AT KEPPEL BAY",
@@ -4505,7 +4505,7 @@
    "n_close": 14,
    "n_far": 18,
    "raw": 66,
-   "adj": -131.6439601921757
+   "adj": -110
   },
   {
    "closer": "CORALS AT KEPPEL BAY",
@@ -4529,7 +4529,7 @@
    "n_close": 14,
    "n_far": 41,
    "raw": 215,
-   "adj": 17.35603980782429
+   "adj": 39
   },
   {
    "closer": "SKYSUITES@ANSON",
@@ -4553,7 +4553,7 @@
    "n_close": 13,
    "n_far": 4,
    "raw": -270.0,
-   "adj": 195.68934612471594
+   "adj": 164.0
   },
   {
    "closer": "MERAPRIME",
@@ -4577,7 +4577,7 @@
    "n_close": 5,
    "n_far": 8,
    "raw": 295.0,
-   "adj": 23.239554735758418
+   "adj": 53.0
   },
   {
    "closer": "MERAPRIME",
@@ -4601,7 +4601,7 @@
    "n_close": 4,
    "n_far": 9,
    "raw": 377.0,
-   "adj": 105.23955473575842
+   "adj": 135.0
   },
   {
    "closer": "MERAPRIME",
@@ -4625,7 +4625,7 @@
    "n_close": 5,
    "n_far": 20,
    "raw": -447.0,
-   "adj": -199.94504975978037
+   "adj": -179.0
   },
   {
    "closer": "REGENT PARK",
@@ -4649,7 +4649,7 @@
    "n_close": 6,
    "n_far": 25,
    "raw": -615.5,
-   "adj": 2.1373756005491487
+   "adj": 102.5
   },
   {
    "closer": "REGENT PARK",
@@ -4673,7 +4673,7 @@
    "n_close": 6,
    "n_far": 13,
    "raw": -347.0,
-   "adj": 196.52089052848316
+   "adj": 233.0
   },
   {
    "closer": "REGENT PARK",
@@ -4697,7 +4697,7 @@
    "n_close": 6,
    "n_far": 7,
    "raw": 163.5,
-   "adj": 237.6164850720659
+   "adj": 229.5
   },
   {
    "closer": "THE REEF AT KING'S DOCK",
@@ -4721,7 +4721,7 @@
    "n_close": 30,
    "n_far": 18,
    "raw": 566.0,
-   "adj": 22.479109471516836
+   "adj": -158.0
   },
   {
    "closer": "THE REEF AT KING'S DOCK",
@@ -4745,7 +4745,7 @@
    "n_close": 3,
    "n_far": 41,
    "raw": 810,
-   "adj": 266.47910947151684
+   "adj": 86
   },
   {
    "closer": "WHISTLER GRAND",
@@ -4769,7 +4769,7 @@
    "n_close": 27,
    "n_far": 19,
    "raw": 123,
-   "adj": -4.0061853067407185
+   "adj": -15
   },
   {
    "closer": "WHISTLER GRAND",
@@ -4793,7 +4793,7 @@
    "n_close": 58,
    "n_far": 45,
    "raw": 220.5,
-   "adj": 93.49381469325928
+   "adj": 82.5
   },
   {
    "closer": "WHISTLER GRAND",
@@ -4817,7 +4817,7 @@
    "n_close": 25,
    "n_far": 13,
    "raw": 268.5,
-   "adj": 141.49381469325928
+   "adj": 130.5
   },
   {
    "closer": "WHISTLER GRAND",
@@ -4841,7 +4841,7 @@
    "n_close": 15,
    "n_far": 18,
    "raw": 189.5,
-   "adj": 62.49381469325928
+   "adj": 51.5
   },
   {
    "closer": "THE METROPOLITAN CONDOMINIUM",
@@ -4865,7 +4865,7 @@
    "n_close": 13,
    "n_far": 12,
    "raw": 226,
-   "adj": -70.4659402882636
+   "adj": -38
   },
   {
    "closer": "THE METROPOLITAN CONDOMINIUM",
@@ -4889,7 +4889,7 @@
    "n_close": 11,
    "n_far": 3,
    "raw": 308,
-   "adj": 11.534059711736404
+   "adj": 44
   },
   {
    "closer": "KOPAR AT NEWTON",
@@ -4913,7 +4913,7 @@
    "n_close": 19,
    "n_far": 6,
    "raw": 516.5,
-   "adj": -27.020890528483164
+   "adj": -159.5
   },
   {
    "closer": "THE SCOTTS TOWER",
@@ -4937,7 +4937,7 @@
    "n_close": 6,
    "n_far": 12,
    "raw": 46.0,
-   "adj": -275.17143531228555
+   "adj": -240.0
   },
   {
    "closer": "THE WOODLEIGH RESIDENCES",
@@ -5033,7 +5033,7 @@
    "n_close": 30,
    "n_far": 4,
    "raw": 101.5,
-   "adj": -269.08242536032947
+   "adj": -228.5
   },
   {
    "closer": "D'LEEDON",
@@ -5057,7 +5057,7 @@
    "n_close": 52,
    "n_far": 6,
    "raw": 195,
-   "adj": -175.58242536032947
+   "adj": -135
   },
   {
    "closer": "D'LEEDON",
@@ -5081,7 +5081,7 @@
    "n_close": 26,
    "n_far": 11,
    "raw": 92.0,
-   "adj": -278.58242536032947
+   "adj": -238.0
   },
   {
    "closer": "IRWELL HILL RESIDENCES",
@@ -5105,7 +5105,7 @@
    "n_close": 26,
    "n_far": 33,
    "raw": 221.5,
-   "adj": 52.158419591012375
+   "adj": 37.5
   },
   {
    "closer": "SENNETT RESIDENCE",
@@ -5129,7 +5129,7 @@
    "n_close": 3,
    "n_far": 4,
    "raw": 134.0,
-   "adj": 109.29450497597804
+   "adj": 112.0
   },
   {
    "closer": "SENNETT RESIDENCE",
@@ -5153,7 +5153,7 @@
    "n_close": 9,
    "n_far": 16,
    "raw": 275,
-   "adj": 250.29450497597804
+   "adj": 253
   },
   {
    "closer": "SENNETT RESIDENCE",
@@ -5177,7 +5177,7 @@
    "n_close": 4,
    "n_far": 3,
    "raw": 180.5,
-   "adj": 155.79450497597804
+   "adj": 158.5
   },
   {
    "closer": "THE POIZ RESIDENCES",
@@ -5201,7 +5201,7 @@
    "n_close": 31,
    "n_far": 4,
    "raw": 247.0,
-   "adj": 77.65841959101238
+   "adj": 87.0
   },
   {
    "closer": "NIN RESIDENCE",
@@ -5225,7 +5225,7 @@
    "n_close": 16,
    "n_far": 11,
    "raw": -160.0,
-   "adj": -75.32920979550619
+   "adj": -92.0
   },
   {
    "closer": "NIN RESIDENCE",
@@ -5249,7 +5249,7 @@
    "n_close": 3,
    "n_far": 8,
    "raw": -217.0,
-   "adj": -132.3292097955062
+   "adj": -149.0
   },
   {
    "closer": "NIN RESIDENCE",
@@ -5273,7 +5273,7 @@
    "n_close": 4,
    "n_far": 6,
    "raw": -65.5,
-   "adj": 19.170790204493812
+   "adj": 2.5
   },
   {
    "closer": "NIN RESIDENCE",
@@ -5297,7 +5297,7 @@
    "n_close": 3,
    "n_far": 11,
    "raw": -30,
-   "adj": 54.67079020449381
+   "adj": 38
   },
   {
    "closer": "SENNETT RESIDENCE",
@@ -5321,7 +5321,7 @@
    "n_close": 3,
    "n_far": 31,
    "raw": -113,
-   "adj": 14.006185306740718
+   "adj": 25
   },
   {
    "closer": "SENNETT RESIDENCE",
@@ -5345,7 +5345,7 @@
    "n_close": 3,
    "n_far": 3,
    "raw": -559,
-   "adj": -431.9938146932593
+   "adj": -421
   },
   {
    "closer": "SENNETT RESIDENCE",
@@ -5369,7 +5369,7 @@
    "n_close": 9,
    "n_far": 11,
    "raw": 115.0,
-   "adj": 157.3353951022469
+   "adj": 161.0
   },
   {
    "closer": "SENNETT RESIDENCE",
@@ -5393,7 +5393,7 @@
    "n_close": 4,
    "n_far": 8,
    "raw": -36.5,
-   "adj": 5.835395102246906
+   "adj": 9.5
   },
   {
    "closer": "SENNETT RESIDENCE",
@@ -5417,7 +5417,7 @@
    "n_close": 3,
    "n_far": 4,
    "raw": -245.0,
-   "adj": -202.6646048977531
+   "adj": -199.0
   },
   {
    "closer": "SENNETT RESIDENCE",
@@ -5441,7 +5441,7 @@
    "n_close": 3,
    "n_far": 6,
    "raw": 68.5,
-   "adj": 110.8353951022469
+   "adj": 114.5
   },
   {
    "closer": "SENNETT RESIDENCE",
@@ -5465,7 +5465,7 @@
    "n_close": 9,
    "n_far": 5,
    "raw": 162.5,
-   "adj": 204.8353951022469
+   "adj": 208.5
   },
   {
    "closer": "SENNETT RESIDENCE",
@@ -5489,7 +5489,7 @@
    "n_close": 4,
    "n_far": 11,
    "raw": 150.5,
-   "adj": 192.8353951022469
+   "adj": 196.5
   },
   {
    "closer": "THE POIZ RESIDENCES",
@@ -5513,7 +5513,7 @@
    "n_close": 3,
    "n_far": 4,
    "raw": 314.0,
-   "adj": 229.3292097955062
+   "adj": 222.0
   },
   {
    "closer": "THE POIZ RESIDENCES",
@@ -5537,7 +5537,7 @@
    "n_close": 31,
    "n_far": 6,
    "raw": 181.5,
-   "adj": 96.82920979550619
+   "adj": 89.5
   },
   {
    "closer": "THE POIZ RESIDENCES",
@@ -5561,7 +5561,7 @@
    "n_close": 17,
    "n_far": 5,
    "raw": 366.5,
-   "adj": 281.8292097955062
+   "adj": 274.5
   },
   {
    "closer": "THE POIZ RESIDENCES",
@@ -5585,7 +5585,7 @@
    "n_close": 16,
    "n_far": 11,
    "raw": 373,
-   "adj": 288.3292097955062
+   "adj": 281
   },
   {
    "closer": "WATERBANK AT DAKOTA",
@@ -5609,7 +5609,7 @@
    "n_close": 15,
    "n_far": 7,
    "raw": 40.0,
-   "adj": -9.410990048043928
+   "adj": -4.0
   },
   {
    "closer": "WATERBANK AT DAKOTA",
@@ -5633,7 +5633,7 @@
    "n_close": 10,
    "n_far": 7,
    "raw": 263.0,
-   "adj": 213.5890099519561
+   "adj": 219.0
   },
   {
    "closer": "IRWELL HILL RESIDENCES",
@@ -5657,7 +5657,7 @@
    "n_close": 8,
    "n_far": 21,
    "raw": 645.0,
-   "adj": 221.64604897753094
+   "adj": 209.0
   },
   {
    "closer": "KOPAR AT NEWTON",
@@ -5681,7 +5681,7 @@
    "n_close": 18,
    "n_far": 6,
    "raw": 386.0,
-   "adj": 4.981444079777816
+   "adj": -4.0
   },
   {
    "closer": "PARK PLACE RESIDENCES AT PLQ",
@@ -5705,7 +5705,7 @@
    "n_close": 10,
    "n_far": 13,
    "raw": 782,
-   "adj": 263.1846044955388
+   "adj": 224
   },
   {
    "closer": "PICCADILLY GRAND",
@@ -5729,7 +5729,7 @@
    "n_close": 17,
    "n_far": 14,
    "raw": 841.0,
-   "adj": 272.7736144474949
+   "adj": 95.0
   },
   {
    "closer": "8@WOODLEIGH",
@@ -5753,7 +5753,7 @@
    "n_close": 3,
    "n_far": 23,
    "raw": 174.0,
-   "adj": 597.3539510224691
+   "adj": 562.0
   },
   {
    "closer": "8@WOODLEIGH",
@@ -5777,7 +5777,7 @@
    "n_close": 7,
    "n_far": 68,
    "raw": -162.5,
-   "adj": 260.85395102246906
+   "adj": 225.5
   },
   {
    "closer": "8@WOODLEIGH",
@@ -5801,7 +5801,7 @@
    "n_close": 16,
    "n_far": 23,
    "raw": -201.5,
-   "adj": 221.85395102246906
+   "adj": 186.5
   },
   {
    "closer": "SIMS URBAN OASIS",
@@ -5825,7 +5825,7 @@
    "n_close": 27,
    "n_far": 18,
    "raw": -18,
-   "adj": 193.67697551123453
+   "adj": 212
   },
   {
    "closer": "SIMS URBAN OASIS",
@@ -5849,7 +5849,7 @@
    "n_close": 42,
    "n_far": 47,
    "raw": -232,
-   "adj": -20.32302448876547
+   "adj": -2
   },
   {
    "closer": "SIMS URBAN OASIS",
@@ -5873,7 +5873,7 @@
    "n_close": 46,
    "n_far": 70,
    "raw": -201,
-   "adj": 10.67697551123453
+   "adj": 29
   },
   {
    "closer": "SIMS URBAN OASIS",
@@ -5897,7 +5897,7 @@
    "n_close": 11,
    "n_far": 9,
    "raw": -324.0,
-   "adj": -112.32302448876547
+   "adj": -94.0
   },
   {
    "closer": "BARTLEY RIDGE",
@@ -5921,7 +5921,7 @@
    "n_close": 29,
    "n_far": 29,
    "raw": 13,
-   "adj": 97.67079020449381
+   "adj": 105
   },
   {
    "closer": "BARTLEY RIDGE",
@@ -5945,7 +5945,7 @@
    "n_close": 25,
    "n_far": 57,
    "raw": -32,
-   "adj": 52.67079020449381
+   "adj": 60
   },
   {
    "closer": "BARTLEY RIDGE",
@@ -5969,7 +5969,7 @@
    "n_close": 28,
    "n_far": 22,
    "raw": -135.0,
-   "adj": -50.32920979550619
+   "adj": -43.0
   },
   {
    "closer": "BARTLEY RESIDENCES",
@@ -5993,7 +5993,7 @@
    "n_close": 17,
    "n_far": 29,
    "raw": -27,
-   "adj": 15.335395102246906
+   "adj": 19
   },
   {
    "closer": "BARTLEY RESIDENCES",
@@ -6017,7 +6017,7 @@
    "n_close": 27,
    "n_far": 25,
    "raw": -168,
-   "adj": -125.6646048977531
+   "adj": -122
   },
   {
    "closer": "BARTLEY RESIDENCES",
@@ -6041,7 +6041,7 @@
    "n_close": 22,
    "n_far": 28,
    "raw": -235.5,
-   "adj": -193.1646048977531
+   "adj": -189.5
   },
   {
    "closer": "BARTLEY RESIDENCES",
@@ -6065,7 +6065,7 @@
    "n_close": 4,
    "n_far": 7,
    "raw": -128.0,
-   "adj": -85.6646048977531
+   "adj": -82.0
   },
   {
    "closer": "SANT RITZ",
@@ -6137,7 +6137,7 @@
    "n_close": 20,
    "n_far": 22,
    "raw": 62.0,
-   "adj": 358.3477657157283
+   "adj": 312.0
   },
   {
    "closer": "THE TERRACE",
@@ -6161,7 +6161,7 @@
    "n_close": 54,
    "n_far": 41,
    "raw": 55,
-   "adj": -72.00618530674072
+   "adj": -59
   },
   {
    "closer": "THE TERRACE",
@@ -6185,7 +6185,7 @@
    "n_close": 18,
    "n_far": 10,
    "raw": 178.5,
-   "adj": 51.49381469325928
+   "adj": 64.5
   },
   {
    "closer": "THE TANAMERA",
@@ -6209,7 +6209,7 @@
    "n_close": 7,
    "n_far": 3,
    "raw": 16,
-   "adj": 139.5274751201098
+   "adj": 126
   },
   {
    "closer": "THE TANAMERA",
@@ -6233,7 +6233,7 @@
    "n_close": 8,
    "n_far": 12,
    "raw": 22.5,
-   "adj": 146.0274751201098
+   "adj": 132.5
   },
   {
    "closer": "OPTIMA @ TANAH MERAH",
@@ -6257,7 +6257,7 @@
    "n_close": 13,
    "n_far": 3,
    "raw": 314.0,
-   "adj": -7.171435312285553
+   "adj": 28.0
   },
   {
    "closer": "OPTIMA @ TANAH MERAH",
@@ -6281,7 +6281,7 @@
    "n_close": 6,
    "n_far": 12,
    "raw": 456.0,
-   "adj": 134.82856468771445
+   "adj": 170.0
   },
   {
    "closer": "CASA MERAH",
@@ -6305,7 +6305,7 @@
    "n_close": 10,
    "n_far": 3,
    "raw": 270.5,
-   "adj": -1.2604452642415822
+   "adj": 28.5
   },
   {
    "closer": "CASA MERAH",
@@ -6329,7 +6329,7 @@
    "n_close": 28,
    "n_far": 12,
    "raw": 362.5,
-   "adj": 90.73955473575842
+   "adj": 120.5
   },
   {
    "closer": "EAST MEADOWS",
@@ -6353,7 +6353,7 @@
    "n_close": 23,
    "n_far": 12,
    "raw": 129.0,
-   "adj": 54.8835149279341
+   "adj": 63.0
   },
   {
    "closer": "THE SPRINGBLOOM",
@@ -6377,7 +6377,7 @@
    "n_close": 6,
    "n_far": 9,
    "raw": 36.0,
-   "adj": -62.821980096087856
+   "adj": -52.0
   },
   {
    "closer": "THE SPRINGBLOOM",
@@ -6401,7 +6401,7 @@
    "n_close": 10,
    "n_far": 11,
    "raw": 93.5,
-   "adj": -5.321980096087856
+   "adj": 5.5
   },
   {
    "closer": "CHILTERN PARK",
@@ -6425,7 +6425,7 @@
    "n_close": 9,
    "n_far": 6,
    "raw": -420.0,
-   "adj": 49.404405456417294
+   "adj": -2.0
   },
   {
    "closer": "PALM ISLES",
@@ -6449,7 +6449,7 @@
    "n_close": 13,
    "n_far": 17,
    "raw": -133.5,
-   "adj": -91.1646048977531
+   "adj": -87.5
   },
   {
    "closer": "PALM ISLES",
@@ -6473,7 +6473,7 @@
    "n_close": 13,
    "n_far": 18,
    "raw": -93.5,
-   "adj": -51.164604897753094
+   "adj": -47.5
   },
   {
    "closer": "PALM ISLES",
@@ -6497,7 +6497,7 @@
    "n_close": 15,
    "n_far": 6,
    "raw": -2.0,
-   "adj": 40.335395102246906
+   "adj": 44.0
   },
   {
    "closer": "THE EDEN AT TAMPINES",
@@ -6521,7 +6521,7 @@
    "n_close": 24,
    "n_far": 6,
    "raw": -54.0,
-   "adj": 242.4659402882636
+   "adj": 234.0
   },
   {
    "closer": "THE EDEN AT TAMPINES",
@@ -6545,7 +6545,7 @@
    "n_close": 5,
    "n_far": 4,
    "raw": -26.5,
-   "adj": 269.9659402882636
+   "adj": 261.5
   },
   {
    "closer": "THE JOVELL",
@@ -6569,7 +6569,7 @@
    "n_close": 11,
    "n_far": 17,
    "raw": 111,
-   "adj": -143.01237061348144
+   "adj": -165
   },
   {
    "closer": "THE JOVELL",
@@ -6593,7 +6593,7 @@
    "n_close": 18,
    "n_far": 18,
    "raw": 162.5,
-   "adj": -91.51237061348144
+   "adj": -113.5
   },
   {
    "closer": "THE JOVELL",
@@ -6617,7 +6617,7 @@
    "n_close": 18,
    "n_far": 6,
    "raw": 229.0,
-   "adj": -25.012370613481437
+   "adj": -47.0
   },
   {
    "closer": "THE JOVELL",
@@ -6641,7 +6641,7 @@
    "n_close": 4,
    "n_far": 4,
    "raw": 213.0,
-   "adj": -41.01237061348144
+   "adj": -63.0
   },
   {
    "closer": "THE INFLORA",
@@ -6665,7 +6665,7 @@
    "n_close": 17,
    "n_far": 11,
    "raw": 36.5,
-   "adj": -48.17079020449381
+   "adj": -31.5
   },
   {
    "closer": "THE INFLORA",
@@ -6689,7 +6689,7 @@
    "n_close": 18,
    "n_far": 29,
    "raw": 45.0,
-   "adj": -39.67079020449381
+   "adj": -23.0
   },
   {
    "closer": "THE INFLORA",
@@ -6713,7 +6713,7 @@
    "n_close": 6,
    "n_far": 26,
    "raw": -21.0,
-   "adj": -105.67079020449381
+   "adj": -89.0
   },
   {
    "closer": "THE INFLORA",
@@ -6737,7 +6737,7 @@
    "n_close": 4,
    "n_far": 5,
    "raw": -49.5,
-   "adj": -134.1707902044938
+   "adj": -117.5
   },
   {
    "closer": "PARC OLYMPIA",
@@ -6761,7 +6761,7 @@
    "n_close": 3,
    "n_far": 17,
    "raw": -57,
-   "adj": -57.0
+   "adj": -57
   },
   {
    "closer": "PARC OLYMPIA",
@@ -6785,7 +6785,7 @@
    "n_close": 22,
    "n_far": 18,
    "raw": -56,
-   "adj": -56.0
+   "adj": -56
   },
   {
    "closer": "PARC OLYMPIA",
@@ -6857,7 +6857,7 @@
    "n_close": 19,
    "n_far": 6,
    "raw": 238.5,
-   "adj": -15.512370613481437
+   "adj": -37.5
   },
   {
    "closer": "SENGKANG GRAND RESIDENCES",
@@ -6881,7 +6881,7 @@
    "n_close": 32,
    "n_far": 41,
    "raw": 310,
-   "adj": 55.98762938651856
+   "adj": 34
   },
   {
    "closer": "SENGKANG GRAND RESIDENCES",
@@ -6905,7 +6905,7 @@
    "n_close": 38,
    "n_far": 31,
    "raw": 236.5,
-   "adj": -17.512370613481437
+   "adj": -39.5
   },
   {
    "closer": "SENGKANG GRAND RESIDENCES",
@@ -6929,7 +6929,7 @@
    "n_close": 32,
    "n_far": 29,
    "raw": 363.5,
-   "adj": 24.81683918202475
+   "adj": 19.5
   },
   {
    "closer": "SENGKANG GRAND RESIDENCES",
@@ -6953,7 +6953,7 @@
    "n_close": 38,
    "n_far": 43,
    "raw": 406.5,
-   "adj": 67.81683918202475
+   "adj": 62.5
   },
   {
    "closer": "SENGKANG GRAND RESIDENCES",
@@ -6977,7 +6977,7 @@
    "n_close": 38,
    "n_far": 37,
    "raw": 622.5,
-   "adj": 72.13986367079019
+   "adj": 168.5
   },
   {
    "closer": "PASIR RIS 8",
@@ -7001,7 +7001,7 @@
    "n_close": 15,
    "n_far": 38,
    "raw": 775,
-   "adj": 224.6398636707902
+   "adj": 249
   },
   {
    "closer": "LIVIA",
@@ -7025,7 +7025,7 @@
    "n_close": 38,
    "n_far": 4,
    "raw": -129.0,
-   "adj": -30.178019903912144
+   "adj": -17.0
   },
   {
    "closer": "LIVIA",
@@ -7049,7 +7049,7 @@
    "n_close": 18,
    "n_far": 16,
    "raw": -73.5,
-   "adj": 25.321980096087856
+   "adj": 38.5
   },
   {
    "closer": "D'NEST",
@@ -7073,7 +7073,7 @@
    "n_close": 27,
    "n_far": 18,
    "raw": 170.5,
-   "adj": 121.08900995195607
+   "adj": 126.5
   },
   {
    "closer": "LIVIA",
@@ -7097,7 +7097,7 @@
    "n_close": 38,
    "n_far": 39,
    "raw": -98.0,
-   "adj": -23.8835149279341
+   "adj": -32.0
   },
   {
    "closer": "LIVIA",
@@ -7121,7 +7121,7 @@
    "n_close": 18,
    "n_far": 7,
    "raw": 2,
-   "adj": 76.1164850720659
+   "adj": 68
   },
   {
    "closer": "LIVIA",
@@ -7145,7 +7145,7 @@
    "n_close": 38,
    "n_far": 9,
    "raw": -40.5,
-   "adj": 58.321980096087856
+   "adj": 71.5
   },
   {
    "closer": "LIVIA",
@@ -7169,7 +7169,7 @@
    "n_close": 18,
    "n_far": 4,
    "raw": 138.5,
-   "adj": 237.32198009608786
+   "adj": 250.5
   },
   {
    "closer": "EASTVALE",
@@ -7193,7 +7193,7 @@
    "n_close": 12,
    "n_far": 38,
    "raw": -236.5,
-   "adj": 59.965940288263596
+   "adj": 27.5
   },
   {
    "closer": "LIVIA",
@@ -7217,7 +7217,7 @@
    "n_close": 38,
    "n_far": 39,
    "raw": 190,
-   "adj": 41.7670298558682
+   "adj": 58
   },
   {
    "closer": "NV RESIDENCES",
@@ -7265,7 +7265,7 @@
    "n_close": 38,
    "n_far": 38,
    "raw": 242.0,
-   "adj": 192.5890099519561
+   "adj": 198.0
   },
   {
    "closer": "THE PALETTE",
@@ -7289,7 +7289,7 @@
    "n_close": 11,
    "n_far": 18,
    "raw": 139.0,
-   "adj": 89.58900995195607
+   "adj": 95.0
   },
   {
    "closer": "COCO PALMS",
@@ -7313,7 +7313,7 @@
    "n_close": 22,
    "n_far": 18,
    "raw": 264,
-   "adj": 264.0
+   "adj": 264
   },
   {
    "closer": "LIVIA",
@@ -7361,7 +7361,7 @@
    "n_close": 38,
    "n_far": 16,
    "raw": 338.0,
-   "adj": -81.99341540837338
+   "adj": -36.0
   },
   {
    "closer": "THE EDEN AT TAMPINES",
@@ -7385,7 +7385,7 @@
    "n_close": 24,
    "n_far": 15,
    "raw": -52.0,
-   "adj": 219.76044526424158
+   "adj": 190.0
   },
   {
    "closer": "PALM ISLES",
@@ -7409,7 +7409,7 @@
    "n_close": 13,
    "n_far": 11,
    "raw": -244.5,
-   "adj": 51.847765715728315
+   "adj": 77.5
   },
   {
    "closer": "PALM ISLES",
@@ -7433,7 +7433,7 @@
    "n_close": 13,
    "n_far": 18,
    "raw": -256.0,
-   "adj": 40.347765715728315
+   "adj": 66.0
   },
   {
    "closer": "PALM ISLES",
@@ -7457,7 +7457,7 @@
    "n_close": 15,
    "n_far": 18,
    "raw": -231.0,
-   "adj": 65.34776571572831
+   "adj": 91.0
   },
   {
    "closer": "PALM ISLES",
@@ -7481,7 +7481,7 @@
    "n_close": 13,
    "n_far": 11,
    "raw": -97.0,
-   "adj": -121.70549502402196
+   "adj": -119.0
   },
   {
    "closer": "PALM ISLES",
@@ -7505,7 +7505,7 @@
    "n_close": 13,
    "n_far": 29,
    "raw": -48.5,
-   "adj": -73.20549502402196
+   "adj": -70.5
   },
   {
    "closer": "PALM ISLES",
@@ -7529,7 +7529,7 @@
    "n_close": 15,
    "n_far": 26,
    "raw": -23,
-   "adj": -47.705495024021964
+   "adj": -45
   },
   {
    "closer": "PALM ISLES",
@@ -7553,7 +7553,7 @@
    "n_close": 13,
    "n_far": 3,
    "raw": -76.5,
-   "adj": -34.164604897753094
+   "adj": -30.5
   },
   {
    "closer": "PALM ISLES",
@@ -7577,7 +7577,7 @@
    "n_close": 13,
    "n_far": 22,
    "raw": -37.5,
-   "adj": 4.835395102246906
+   "adj": 8.5
   },
   {
    "closer": "PALM ISLES",
@@ -7601,7 +7601,7 @@
    "n_close": 15,
    "n_far": 22,
    "raw": 81,
-   "adj": 123.3353951022469
+   "adj": 127
   },
   {
    "closer": "SUNGLADE",
@@ -7625,7 +7625,7 @@
    "n_close": 16,
    "n_far": 21,
    "raw": -467.0,
-   "adj": -71.71207961564858
+   "adj": 5.0
   },
   {
    "closer": "A TREASURE TROVE",
@@ -7649,7 +7649,7 @@
    "n_close": 33,
    "n_far": 11,
    "raw": -62.5,
-   "adj": -20.164604897753094
+   "adj": -16.5
   },
   {
    "closer": "A TREASURE TROVE",
@@ -7673,7 +7673,7 @@
    "n_close": 46,
    "n_far": 13,
    "raw": -62,
-   "adj": -19.664604897753094
+   "adj": -16
   },
   {
    "closer": "A TREASURE TROVE",
@@ -7697,7 +7697,7 @@
    "n_close": 10,
    "n_far": 11,
    "raw": -95.0,
-   "adj": -52.664604897753094
+   "adj": -49.0
   },
   {
    "closer": "PARC CENTROS",
@@ -7721,7 +7721,7 @@
    "n_close": 13,
    "n_far": 65,
    "raw": 161.0,
-   "adj": 118.6646048977531
+   "adj": 115.0
   },
   {
    "closer": "PARC CENTROS",
@@ -7745,7 +7745,7 @@
    "n_close": 11,
    "n_far": 10,
    "raw": 107.0,
-   "adj": 64.6646048977531
+   "adj": 61.0
   },
   {
    "closer": "WATERTOWN",
@@ -7769,7 +7769,7 @@
    "n_close": 25,
    "n_far": 11,
    "raw": 69.0,
-   "adj": 111.3353951022469
+   "adj": 115.0
   },
   {
    "closer": "WATERTOWN",
@@ -7793,7 +7793,7 @@
    "n_close": 12,
    "n_far": 13,
    "raw": 308.5,
-   "adj": 350.83539510224693
+   "adj": 354.5
   },
   {
    "closer": "WATERTOWN",
@@ -7817,7 +7817,7 @@
    "n_close": 8,
    "n_far": 11,
    "raw": 400.0,
-   "adj": 442.33539510224693
+   "adj": 446.0
   },
   {
    "closer": "RIVERSOUND RESIDENCE",
@@ -7841,7 +7841,7 @@
    "n_close": 24,
    "n_far": 12,
    "raw": 268.0,
-   "adj": 20.945049759780375
+   "adj": 48.0
   },
   {
    "closer": "RIVERSOUND RESIDENCE",
@@ -7865,7 +7865,7 @@
    "n_close": 5,
    "n_far": 24,
    "raw": 78,
-   "adj": 53.294504975978036
+   "adj": 56
   },
   {
    "closer": "RIVERSOUND RESIDENCE",
@@ -7889,7 +7889,7 @@
    "n_close": 24,
    "n_far": 53,
    "raw": 45,
-   "adj": 20.294504975978036
+   "adj": 23
   },
   {
    "closer": "RIVERSOUND RESIDENCE",
@@ -7913,7 +7913,7 @@
    "n_close": 21,
    "n_far": 11,
    "raw": -32.0,
-   "adj": -56.705495024021964
+   "adj": -54.0
   },
   {
    "closer": "RIVERSOUND RESIDENCE",
@@ -7937,7 +7937,7 @@
    "n_close": 24,
    "n_far": 29,
    "raw": 62,
-   "adj": 104.3353951022469
+   "adj": 108
   },
   {
    "closer": "RIVERSOUND RESIDENCE",
@@ -7961,7 +7961,7 @@
    "n_close": 21,
    "n_far": 23,
    "raw": -67.5,
-   "adj": -25.164604897753094
+   "adj": -21.5
   },
   {
    "closer": "RIVERSOUND RESIDENCE",
@@ -7985,7 +7985,7 @@
    "n_close": 6,
    "n_far": 15,
    "raw": 57,
-   "adj": 57.0
+   "adj": 57
   },
   {
    "closer": "RIVERSOUND RESIDENCE",
@@ -8009,7 +8009,7 @@
    "n_close": 5,
    "n_far": 29,
    "raw": -25,
-   "adj": -25.0
+   "adj": -25
   },
   {
    "closer": "RIVERSOUND RESIDENCE",
@@ -8081,7 +8081,7 @@
    "n_close": 6,
    "n_far": 32,
    "raw": 27.5,
-   "adj": 154.50618530674072
+   "adj": 165.5
   },
   {
    "closer": "RIVERSOUND RESIDENCE",
@@ -8105,7 +8105,7 @@
    "n_close": 5,
    "n_far": 46,
    "raw": -66.5,
-   "adj": 60.50618530674072
+   "adj": 71.5
   },
   {
    "closer": "RIVERSOUND RESIDENCE",
@@ -8129,7 +8129,7 @@
    "n_close": 24,
    "n_far": 54,
    "raw": -18.5,
-   "adj": 108.50618530674072
+   "adj": 119.5
   },
   {
    "closer": "RIVERSOUND RESIDENCE",
@@ -8153,7 +8153,7 @@
    "n_close": 21,
    "n_far": 8,
    "raw": -84.0,
-   "adj": 43.00618530674072
+   "adj": 54.0
   },
   {
    "closer": "RIVERSOUND RESIDENCE",
@@ -8177,7 +8177,7 @@
    "n_close": 5,
    "n_far": 6,
    "raw": 44,
-   "adj": 44.0
+   "adj": 44
   },
   {
    "closer": "RIVERSOUND RESIDENCE",
@@ -8249,7 +8249,7 @@
    "n_close": 14,
    "n_far": 30,
    "raw": 397.0,
-   "adj": 273.4725248798902
+   "adj": 263.0
   },
   {
    "closer": "KOVAN REGENCY",
@@ -8273,7 +8273,7 @@
    "n_close": 10,
    "n_far": 40,
    "raw": 336.0,
-   "adj": 212.4725248798902
+   "adj": 202.0
   },
   {
    "closer": "KOVAN RESIDENCES",
@@ -8297,7 +8297,7 @@
    "n_close": 10,
    "n_far": 14,
    "raw": -80.5,
-   "adj": 43.02747512010981
+   "adj": 53.5
   },
   {
    "closer": "KOVAN RESIDENCES",
@@ -8321,7 +8321,7 @@
    "n_close": 16,
    "n_far": 10,
    "raw": -76.0,
-   "adj": 47.52747512010981
+   "adj": 58.0
   },
   {
    "closer": "KOVAN MELODY",
@@ -8345,7 +8345,7 @@
    "n_close": 12,
    "n_far": 14,
    "raw": -213.5,
-   "adj": -15.856039807824288
+   "adj": -13.5
   },
   {
    "closer": "KOVAN MELODY",
@@ -8369,7 +8369,7 @@
    "n_close": 25,
    "n_far": 10,
    "raw": -186.0,
-   "adj": 11.643960192175712
+   "adj": 14.0
   },
   {
    "closer": "MY MANHATTAN",
@@ -8393,7 +8393,7 @@
    "n_close": 9,
    "n_far": 23,
    "raw": -88.5,
-   "adj": 250.18316081797525
+   "adj": 255.5
   },
   {
    "closer": "EASTPOINT GREEN",
@@ -8417,7 +8417,7 @@
    "n_close": 33,
    "n_far": 103,
    "raw": -666.5,
-   "adj": -122.97910947151684
+   "adj": -14.5
   },
   {
    "closer": "DOUBLE BAY RESIDENCES",
@@ -8441,7 +8441,7 @@
    "n_close": 7,
    "n_far": 64,
    "raw": -317,
-   "adj": 106.35395102246906
+   "adj": 71
   },
   {
    "closer": "JEWEL @ BUANGKOK",
@@ -8465,7 +8465,7 @@
    "n_close": 41,
    "n_far": 29,
    "raw": 53.5,
-   "adj": -31.170790204493812
+   "adj": -14.5
   },
   {
    "closer": "JEWEL @ BUANGKOK",
@@ -8489,7 +8489,7 @@
    "n_close": 31,
    "n_far": 43,
    "raw": 170,
-   "adj": 85.32920979550619
+   "adj": 102
   },
   {
    "closer": "JEWEL @ BUANGKOK",
@@ -8513,7 +8513,7 @@
    "n_close": 4,
    "n_far": 5,
    "raw": 144,
-   "adj": 59.32920979550619
+   "adj": 76
   },
   {
    "closer": "THE QUARTZ",
@@ -8537,7 +8537,7 @@
    "n_close": 37,
    "n_far": 31,
    "raw": -386.0,
-   "adj": -213.06153483184625
+   "adj": -208.0
   },
   {
    "closer": "TERRASSE",
@@ -8561,7 +8561,7 @@
    "n_close": 3,
    "n_far": 18,
    "raw": -250,
-   "adj": 46.347765715728315
+   "adj": 48
   },
   {
    "closer": "TERRASSE",
@@ -8585,7 +8585,7 @@
    "n_close": 10,
    "n_far": 6,
    "raw": -449.0,
-   "adj": -152.65223428427169
+   "adj": -151.0
   },
   {
    "closer": "TERRASSE",
@@ -8609,7 +8609,7 @@
    "n_close": 3,
    "n_far": 47,
    "raw": -184,
-   "adj": 154.68316081797525
+   "adj": 160
   },
   {
    "closer": "TERRASSE",
@@ -8633,7 +8633,7 @@
    "n_close": 9,
    "n_far": 65,
    "raw": -238.5,
-   "adj": 100.18316081797525
+   "adj": 105.5
   },
   {
    "closer": "TERRASSE",
@@ -8657,7 +8657,7 @@
    "n_close": 10,
    "n_far": 15,
    "raw": -191.0,
-   "adj": 147.68316081797525
+   "adj": 153.0
   },
   {
    "closer": "SKY VUE",
@@ -8681,7 +8681,7 @@
    "n_close": 7,
    "n_far": 15,
    "raw": 554.0,
-   "adj": 405.7670298558682
+   "adj": 374.0
   },
   {
    "closer": "SKY HABITAT",
@@ -8705,7 +8705,7 @@
    "n_close": 8,
    "n_far": 15,
    "raw": 226.5,
-   "adj": 127.67801990391214
+   "adj": 138.5
   },
   {
    "closer": "SKY HABITAT",
@@ -8729,7 +8729,7 @@
    "n_close": 5,
    "n_far": 10,
    "raw": 44,
-   "adj": -54.821980096087856
+   "adj": -44
   },
   {
    "closer": "BISHAN 8",
@@ -8753,7 +8753,7 @@
    "n_close": 12,
    "n_far": 15,
    "raw": -97.5,
-   "adj": 174.26044526424158
+   "adj": 144.5
   },
   {
    "closer": "WATERFRONT GOLD",
@@ -8777,7 +8777,7 @@
    "n_close": 8,
    "n_far": 17,
    "raw": 325.5,
-   "adj": 4.328564687714447
+   "adj": 39.5
   },
   {
    "closer": "WATERFRONT GOLD",
@@ -8801,7 +8801,7 @@
    "n_close": 12,
    "n_far": 32,
    "raw": 368.0,
-   "adj": 46.82856468771445
+   "adj": 82.0
   },
   {
    "closer": "WATERFRONT KEY",
@@ -8825,7 +8825,7 @@
    "n_close": 4,
    "n_far": 17,
    "raw": 442.5,
-   "adj": 170.73955473575842
+   "adj": 200.5
   },
   {
    "closer": "WATERFRONT KEY",
@@ -8849,7 +8849,7 @@
    "n_close": 13,
    "n_far": 32,
    "raw": 366.0,
-   "adj": 94.23955473575842
+   "adj": 124.0
   },
   {
    "closer": "THE CLEARWATER",
@@ -8873,7 +8873,7 @@
    "n_close": 13,
    "n_far": 32,
    "raw": 45.0,
-   "adj": 20.294504975978036
+   "adj": 23.0
   },
   {
    "closer": "BAYWATER",
@@ -8897,7 +8897,7 @@
    "n_close": 4,
    "n_far": 17,
    "raw": 1.5,
-   "adj": -122.02747512010981
+   "adj": -108.5
   },
   {
    "closer": "BAYWATER",
@@ -8921,7 +8921,7 @@
    "n_close": 9,
    "n_far": 32,
    "raw": 10.0,
-   "adj": -113.52747512010981
+   "adj": -100.0
   },
   {
    "closer": "WATERFRONT WAVES",
@@ -8945,7 +8945,7 @@
    "n_close": 3,
    "n_far": 17,
    "raw": 224.5,
-   "adj": -47.26044526424158
+   "adj": -17.5
   },
   {
    "closer": "WATERFRONT WAVES",
@@ -8969,7 +8969,7 @@
    "n_close": 12,
    "n_far": 32,
    "raw": 303.0,
-   "adj": 31.239554735758418
+   "adj": 61.0
   },
   {
    "closer": "AQUARIUS BY THE PARK",
@@ -8993,7 +8993,7 @@
    "n_close": 17,
    "n_far": 17,
    "raw": -310.5,
-   "adj": 10.671435312285553
+   "adj": -24.5
   },
   {
    "closer": "AQUARIUS BY THE PARK",
@@ -9017,7 +9017,7 @@
    "n_close": 32,
    "n_far": 16,
    "raw": -407.0,
-   "adj": -85.82856468771445
+   "adj": -121.0
   },
   {
    "closer": "SIMEI GREEN CONDOMINIUM",
@@ -9041,7 +9041,7 @@
    "n_close": 31,
    "n_far": 26,
    "raw": -71.0,
-   "adj": 27.821980096087856
+   "adj": 17.0
   },
   {
    "closer": "SIMEI GREEN CONDOMINIUM",
@@ -9065,7 +9065,7 @@
    "n_close": 4,
    "n_far": 15,
    "raw": -105.5,
-   "adj": -6.678019903912144
+   "adj": -17.5
   },
   {
    "closer": "CHANGI RISE CONDOMINIUM",
@@ -9113,7 +9113,7 @@
    "n_close": 21,
    "n_far": 14,
    "raw": 1191.0,
-   "adj": 696.8900995195607
+   "adj": 631.0
   },
   {
    "closer": "VILLA MARINA",
@@ -9137,7 +9137,7 @@
    "n_close": 18,
    "n_far": 21,
    "raw": -977.5,
-   "adj": -458.6846044955388
+   "adj": -395.5
   },
   {
    "closer": "MY MANHATTAN",
@@ -9161,7 +9161,7 @@
    "n_close": 19,
    "n_far": 23,
    "raw": 443.5,
-   "adj": 97.62306966369249
+   "adj": 135.5
   },
   {
    "closer": "MY MANHATTAN",
@@ -9185,7 +9185,7 @@
    "n_close": 19,
    "n_far": 50,
    "raw": 640.0,
-   "adj": 195.30108956760466
+   "adj": 244.0
   },
   {
    "closer": "MY MANHATTAN",
@@ -9209,7 +9209,7 @@
    "n_close": 19,
    "n_far": 13,
    "raw": 143.5,
-   "adj": 94.08900995195607
+   "adj": 99.5
   },
   {
    "closer": "THE TROPICA",
@@ -9233,7 +9233,7 @@
    "n_close": 15,
    "n_far": 30,
    "raw": -181.5,
-   "adj": 238.49341540837338
+   "adj": 240.5
   },
   {
    "closer": "THE SANTORINI",
@@ -9257,7 +9257,7 @@
    "n_close": 30,
    "n_far": 13,
    "raw": 375,
-   "adj": -20.287920384351423
+   "adj": -25
   },
   {
    "closer": "THE SANTORINI",
@@ -9281,7 +9281,7 @@
    "n_close": 16,
    "n_far": 36,
    "raw": -288.5,
-   "adj": -119.15841959101238
+   "adj": -104.5
   },
   {
    "closer": "THE SANTORINI",
@@ -9305,7 +9305,7 @@
    "n_close": 13,
    "n_far": 44,
    "raw": -238.0,
-   "adj": -68.65841959101238
+   "adj": -54.0
   },
   {
    "closer": "THE SANTORINI",
@@ -9329,7 +9329,7 @@
    "n_close": 30,
    "n_far": 45,
    "raw": -257,
-   "adj": -87.65841959101238
+   "adj": -73
   },
   {
    "closer": "THE SANTORINI",
@@ -9353,7 +9353,7 @@
    "n_close": 13,
    "n_far": 22,
    "raw": 6.0,
-   "adj": -121.00618530674072
+   "adj": -108.0
   },
   {
    "closer": "THE SANTORINI",
@@ -9377,7 +9377,7 @@
    "n_close": 30,
    "n_far": 23,
    "raw": -61,
-   "adj": -188.00618530674072
+   "adj": -175
   },
   {
    "closer": "THE SANTORINI",
@@ -9401,7 +9401,7 @@
    "n_close": 5,
    "n_far": 4,
    "raw": -25.0,
-   "adj": -152.00618530674072
+   "adj": -139.0
   },
   {
    "closer": "THE SANTORINI",
@@ -9425,7 +9425,7 @@
    "n_close": 16,
    "n_far": 12,
    "raw": -9.0,
-   "adj": -51.335395102246906
+   "adj": -55.0
   },
   {
    "closer": "THE SANTORINI",
@@ -9449,7 +9449,7 @@
    "n_close": 13,
    "n_far": 15,
    "raw": -3.0,
-   "adj": -45.335395102246906
+   "adj": -49.0
   },
   {
    "closer": "THE SANTORINI",
@@ -9473,7 +9473,7 @@
    "n_close": 30,
    "n_far": 36,
    "raw": -65,
-   "adj": -107.3353951022469
+   "adj": -111
   },
   {
    "closer": "THE SANTORINI",
@@ -9497,7 +9497,7 @@
    "n_close": 16,
    "n_far": 21,
    "raw": -126.5,
-   "adj": -41.82920979550619
+   "adj": -34.5
   },
   {
    "closer": "THE SANTORINI",
@@ -9521,7 +9521,7 @@
    "n_close": 13,
    "n_far": 33,
    "raw": -3.0,
-   "adj": 81.67079020449381
+   "adj": 89.0
   },
   {
    "closer": "THE SANTORINI",
@@ -9545,7 +9545,7 @@
    "n_close": 30,
    "n_far": 26,
    "raw": -43,
-   "adj": 41.67079020449381
+   "adj": 49
   },
   {
    "closer": "THE SANTORINI",
@@ -9569,7 +9569,7 @@
    "n_close": 5,
    "n_far": 3,
    "raw": -75,
-   "adj": 9.670790204493812
+   "adj": 17
   },
   {
    "closer": "THE EDEN AT TAMPINES",
@@ -9593,7 +9593,7 @@
    "n_close": 5,
    "n_far": 4,
    "raw": -239.5,
-   "adj": 205.19891043239534
+   "adj": 324.5
   },
   {
    "closer": "THE EDEN AT TAMPINES",
@@ -9617,7 +9617,7 @@
    "n_close": 24,
    "n_far": 26,
    "raw": -75.0,
-   "adj": 172.05495024021963
+   "adj": 145.0
   },
   {
    "closer": "THE EDEN AT TAMPINES",
@@ -9641,7 +9641,7 @@
    "n_close": 5,
    "n_far": 5,
    "raw": -76,
-   "adj": 171.05495024021963
+   "adj": 144
   },
   {
    "closer": "THE EDEN AT TAMPINES",
@@ -9665,7 +9665,7 @@
    "n_close": 24,
    "n_far": 22,
    "raw": 29.0,
-   "adj": 325.4659402882636
+   "adj": 317.0
   },
   {
    "closer": "THE EDEN AT TAMPINES",
@@ -9689,7 +9689,7 @@
    "n_close": 5,
    "n_far": 7,
    "raw": 53.0,
-   "adj": 349.4659402882636
+   "adj": 341.0
   },
   {
    "closer": "THE TROPICA",
@@ -9713,7 +9713,7 @@
    "n_close": 15,
    "n_far": 13,
    "raw": 193.5,
-   "adj": 218.20549502402196
+   "adj": 215.5
   },
   {
    "closer": "THE TROPICA",
@@ -9737,7 +9737,7 @@
    "n_close": 15,
    "n_far": 45,
    "raw": -438.5,
-   "adj": 80.31539550446121
+   "adj": 167.5
   },
   {
    "closer": "THE TROPICA",
@@ -9761,7 +9761,7 @@
    "n_close": 15,
    "n_far": 23,
    "raw": -242.5,
-   "adj": 103.37693033630751
+   "adj": 65.5
   },
   {
    "closer": "THE TROPICA",
@@ -9785,7 +9785,7 @@
    "n_close": 15,
    "n_far": 36,
    "raw": -246.5,
-   "adj": 148.78792038435142
+   "adj": 129.5
   },
   {
    "closer": "THE TROPICA",
@@ -9809,7 +9809,7 @@
    "n_close": 15,
    "n_far": 26,
    "raw": -224.5,
-   "adj": 244.9044054564173
+   "adj": 289.5
   },
   {
    "closer": "SCENECA RESIDENCE",
@@ -9833,7 +9833,7 @@
    "n_close": 4,
    "n_far": 33,
    "raw": 706.5,
-   "adj": 325.4814440797778
+   "adj": 292.5
   },
   {
    "closer": "SCENECA RESIDENCE",
@@ -9857,7 +9857,7 @@
    "n_close": 4,
    "n_far": 19,
    "raw": 833.5,
-   "adj": 452.4814440797778
+   "adj": 419.5
   },
   {
    "closer": "URBAN VISTA",
@@ -9881,7 +9881,7 @@
    "n_close": 21,
    "n_far": 16,
    "raw": -109.0,
-   "adj": -66.6646048977531
+   "adj": -63.0
   },
   {
    "closer": "URBAN VISTA",
@@ -9905,7 +9905,7 @@
    "n_close": 33,
    "n_far": 37,
    "raw": -135,
-   "adj": -92.6646048977531
+   "adj": -89
   },
   {
    "closer": "URBAN VISTA",
@@ -9929,7 +9929,7 @@
    "n_close": 19,
    "n_far": 15,
    "raw": -234.5,
-   "adj": -192.1646048977531
+   "adj": -188.5
   },
   {
    "closer": "PASIR RIS 8",
@@ -9953,7 +9953,7 @@
    "n_close": 15,
    "n_far": 7,
    "raw": 976,
-   "adj": 171.6274930573088
+   "adj": 318
   },
   {
    "closer": "THE ESPARIS",
@@ -9977,7 +9977,7 @@
    "n_close": 7,
    "n_far": 16,
    "raw": -252.0,
-   "adj": -4.945049759780375
+   "adj": -8.0
   },
   {
    "closer": "THE ESPARIS",
@@ -10001,7 +10001,7 @@
    "n_close": 7,
    "n_far": 10,
    "raw": -252.5,
-   "adj": -30.15054478380233
+   "adj": -54.5
   },
   {
    "closer": "WATERCOLOURS",
@@ -10025,7 +10025,7 @@
    "n_close": 43,
    "n_far": 7,
    "raw": 132.5,
-   "adj": -114.55495024021963
+   "adj": -111.5
   },
   {
    "closer": "THE ESPARIS",
@@ -10049,7 +10049,7 @@
    "n_close": 7,
    "n_far": 30,
    "raw": -267.5,
-   "adj": -45.15054478380233
+   "adj": -69.5
   },
   {
    "closer": "SEA HORIZON",
@@ -10073,7 +10073,7 @@
    "n_close": 16,
    "n_far": 7,
    "raw": 162,
-   "adj": -109.76044526424158
+   "adj": -128
   },
   {
    "closer": "SEA HORIZON",
@@ -10097,7 +10097,7 @@
    "n_close": 34,
    "n_far": 12,
    "raw": 185.5,
-   "adj": -86.26044526424158
+   "adj": -104.5
   },
   {
    "closer": "EASTVALE",
@@ -10121,7 +10121,7 @@
    "n_close": 12,
    "n_far": 7,
    "raw": -35.5,
-   "adj": 112.7329701441318
+   "adj": 96.5
   },
   {
    "closer": "A TREASURE TROVE",
@@ -10241,7 +10241,7 @@
    "n_close": 8,
    "n_far": 10,
    "raw": 495,
-   "adj": 495.0
+   "adj": 495
   },
   {
    "closer": "PASIR RIS 8",
@@ -10265,7 +10265,7 @@
    "n_close": 32,
    "n_far": 13,
    "raw": 701.5,
-   "adj": 320.4814440797778
+   "adj": 287.5
   },
   {
    "closer": "PASIR RIS 8",
@@ -10289,7 +10289,7 @@
    "n_close": 15,
    "n_far": 16,
    "raw": 724.0,
-   "adj": 342.9814440797778
+   "adj": 310.0
   },
   {
    "closer": "PASIR RIS 8",
@@ -10313,7 +10313,7 @@
    "n_close": 10,
    "n_far": 19,
    "raw": 706.0,
-   "adj": 282.64604897753094
+   "adj": 246.0
   },
   {
    "closer": "PASIR RIS 8",
@@ -10337,7 +10337,7 @@
    "n_close": 32,
    "n_far": 8,
    "raw": 777.5,
-   "adj": 354.14604897753094
+   "adj": 317.5
   },
   {
    "closer": "PASIR RIS 8",
@@ -10361,7 +10361,7 @@
    "n_close": 15,
    "n_far": 10,
    "raw": 723.5,
-   "adj": 300.14604897753094
+   "adj": 263.5
   },
   {
    "closer": "PASIR RIS 8",
@@ -10385,7 +10385,7 @@
    "n_close": 32,
    "n_far": 11,
    "raw": 610.0,
-   "adj": 228.98144407977782
+   "adj": 196.0
   },
   {
    "closer": "PASIR RIS 8",
@@ -10409,7 +10409,7 @@
    "n_close": 15,
    "n_far": 4,
    "raw": 646.0,
-   "adj": 264.9814440797778
+   "adj": 232.0
   },
   {
    "closer": "PASIR RIS 8",
@@ -10433,7 +10433,7 @@
    "n_close": 32,
    "n_far": 13,
    "raw": 854.0,
-   "adj": 472.9814440797778
+   "adj": 440.0
   },
   {
    "closer": "PASIR RIS 8",
@@ -10457,7 +10457,7 @@
    "n_close": 15,
    "n_far": 43,
    "raw": 843.5,
-   "adj": 462.4814440797778
+   "adj": 429.5
   },
   {
    "closer": "PASIR RIS 8",
@@ -10481,7 +10481,7 @@
    "n_close": 10,
    "n_far": 13,
    "raw": 512.5,
-   "adj": 89.14604897753094
+   "adj": 52.5
   },
   {
    "closer": "PASIR RIS 8",
@@ -10505,7 +10505,7 @@
    "n_close": 32,
    "n_far": 30,
    "raw": 663.0,
-   "adj": 239.64604897753094
+   "adj": 203.0
   },
   {
    "closer": "PASIR RIS 8",
@@ -10529,7 +10529,7 @@
    "n_close": 15,
    "n_far": 30,
    "raw": 708.5,
-   "adj": 285.14604897753094
+   "adj": 248.5
   },
   {
    "closer": "PASIR RIS 8",
@@ -10553,7 +10553,7 @@
    "n_close": 10,
    "n_far": 10,
    "raw": 373.5,
-   "adj": -92.18934612471594
+   "adj": -108.5
   },
   {
    "closer": "PASIR RIS 8",
@@ -10577,7 +10577,7 @@
    "n_close": 32,
    "n_far": 25,
    "raw": 603.5,
-   "adj": 137.81065387528406
+   "adj": 121.5
   },
   {
    "closer": "PASIR RIS 8",
@@ -10601,7 +10601,7 @@
    "n_close": 15,
    "n_far": 29,
    "raw": 583.5,
-   "adj": 117.81065387528406
+   "adj": 101.5
   },
   {
    "closer": "PASIR RIS 8",
@@ -10625,7 +10625,7 @@
    "n_close": 15,
    "n_far": 39,
    "raw": 677.0,
-   "adj": 253.64604897753094
+   "adj": 217.0
   },
   {
    "closer": "PASIR RIS 8",
@@ -10649,7 +10649,7 @@
    "n_close": 10,
    "n_far": 7,
    "raw": 483.5,
-   "adj": 102.48144407977782
+   "adj": 69.5
   },
   {
    "closer": "PASIR RIS 8",
@@ -10673,7 +10673,7 @@
    "n_close": 32,
    "n_far": 9,
    "raw": 755.0,
-   "adj": 373.9814440797778
+   "adj": 341.0
   },
   {
    "closer": "PASIR RIS 8",
@@ -10697,7 +10697,7 @@
    "n_close": 15,
    "n_far": 9,
    "raw": 734.5,
-   "adj": 353.4814440797778
+   "adj": 320.5
   },
   {
    "closer": "PASIR RIS 8",
@@ -10721,7 +10721,7 @@
    "n_close": 32,
    "n_far": 9,
    "raw": 817.0,
-   "adj": 478.31683918202475
+   "adj": 449.0
   },
   {
    "closer": "PASIR RIS 8",
@@ -10745,7 +10745,7 @@
    "n_close": 15,
    "n_far": 16,
    "raw": 814,
-   "adj": 475.31683918202475
+   "adj": 446
   },
   {
    "closer": "PASIR RIS 8",
@@ -10769,7 +10769,7 @@
    "n_close": 15,
    "n_far": 12,
    "raw": 1011.5,
-   "adj": 393.86262439945085
+   "adj": 221.5
   },
   {
    "closer": "PASIR RIS 8",
@@ -10793,7 +10793,7 @@
    "n_close": 32,
    "n_far": 32,
    "raw": 674.0,
-   "adj": 123.63986367079019
+   "adj": 148.0
   },
   {
    "closer": "PASIR RIS 8",
@@ -10817,7 +10817,7 @@
    "n_close": 15,
    "n_far": 15,
    "raw": 706.0,
-   "adj": 155.6398636707902
+   "adj": 180.0
   },
   {
    "closer": "PASIR RIS 8",
@@ -10841,7 +10841,7 @@
    "n_close": 32,
    "n_far": 16,
    "raw": 492.0,
-   "adj": 26.31065387528406
+   "adj": 10.0
   },
   {
    "closer": "PASIR RIS 8",
@@ -10865,7 +10865,7 @@
    "n_close": 15,
    "n_far": 38,
    "raw": 533.0,
-   "adj": 67.31065387528406
+   "adj": 51.0
   },
   {
    "closer": "PASIR RIS 8",
@@ -10889,7 +10889,7 @@
    "n_close": 10,
    "n_far": 13,
    "raw": 222.5,
-   "adj": -327.8601363292098
+   "adj": -303.5
   },
   {
    "closer": "PASIR RIS 8",
@@ -10913,7 +10913,7 @@
    "n_close": 32,
    "n_far": 26,
    "raw": 373.5,
-   "adj": -176.8601363292098
+   "adj": -152.5
   },
   {
    "closer": "PASIR RIS 8",
@@ -10937,7 +10937,7 @@
    "n_close": 15,
    "n_far": 28,
    "raw": 396.0,
-   "adj": -154.3601363292098
+   "adj": -130.0
   },
   {
    "closer": "PASIR RIS 8",
@@ -10961,7 +10961,7 @@
    "n_close": 15,
    "n_far": 12,
    "raw": 853.0,
-   "adj": 302.6398636707902
+   "adj": 327.0
   },
   {
    "closer": "COSTA DEL SOL",
@@ -10985,7 +10985,7 @@
    "n_close": 37,
    "n_far": 28,
    "raw": 504,
-   "adj": 405.1780199039122
+   "adj": 416
   },
   {
    "closer": "COSTA DEL SOL",
@@ -11009,7 +11009,7 @@
    "n_close": 26,
    "n_far": 7,
    "raw": 481.5,
-   "adj": 382.6780199039122
+   "adj": 393.5
   },
   {
    "closer": "TROPICAL SPRING",
@@ -11033,7 +11033,7 @@
    "n_close": 15,
    "n_far": 33,
    "raw": 66.5,
-   "adj": 41.794504975978036
+   "adj": 44.5
   },
   {
    "closer": "EASTPOINT GREEN",
@@ -11057,7 +11057,7 @@
    "n_close": 23,
    "n_far": 50,
    "raw": 196.5,
-   "adj": 97.67801990391214
+   "adj": 108.5
   },
   {
    "closer": "EASTPOINT GREEN",
@@ -11081,7 +11081,7 @@
    "n_close": 33,
    "n_far": 46,
    "raw": 203.5,
-   "adj": 104.67801990391214
+   "adj": 115.5
   },
   {
    "closer": "MODENA",
@@ -11105,7 +11105,7 @@
    "n_close": 7,
    "n_far": 33,
    "raw": 113.5,
-   "adj": 88.79450497597804
+   "adj": 91.5
   },
   {
    "closer": "DOUBLE BAY RESIDENCES",
@@ -11129,7 +11129,7 @@
    "n_close": 13,
    "n_far": 23,
    "raw": 300.0,
-   "adj": 3.534059711736404
+   "adj": 36.0
   },
   {
    "closer": "DOUBLE BAY RESIDENCES",
@@ -11153,7 +11153,7 @@
    "n_close": 23,
    "n_far": 33,
    "raw": 312.0,
-   "adj": 15.534059711736404
+   "adj": 48.0
   },
   {
    "closer": "RAFFLESIA CONDOMINIUM",
@@ -11177,7 +11177,7 @@
    "n_close": 9,
    "n_far": 4,
    "raw": 122.5,
-   "adj": 97.79450497597804
+   "adj": 100.5
   },
   {
    "closer": "RAFFLESIA CONDOMINIUM",
@@ -11201,7 +11201,7 @@
    "n_close": 9,
    "n_far": 9,
    "raw": 89.0,
-   "adj": 64.29450497597804
+   "adj": 67.0
   },
   {
    "closer": "JADESCAPE",
@@ -11225,7 +11225,7 @@
    "n_close": 74,
    "n_far": 9,
    "raw": 716.0,
-   "adj": 197.1846044955388
+   "adj": 86.0
   },
   {
    "closer": "JADESCAPE",
@@ -11249,7 +11249,7 @@
    "n_close": 27,
    "n_far": 9,
    "raw": 886.5,
-   "adj": 367.6846044955388
+   "adj": 256.5
   },
   {
    "closer": "TROPICAL SPRING",
@@ -11273,7 +11273,7 @@
    "n_close": 15,
    "n_far": 46,
    "raw": 270,
-   "adj": 146.4725248798902
+   "adj": 160
   },
   {
    "closer": "MODENA",
@@ -11297,7 +11297,7 @@
    "n_close": 7,
    "n_far": 15,
    "raw": 47,
-   "adj": 47.0
+   "adj": 47
   },
   {
    "closer": "TROPICAL SPRING",
@@ -11321,7 +11321,7 @@
    "n_close": 15,
    "n_far": 23,
    "raw": -245.5,
-   "adj": 26.260445264241582
+   "adj": -3.5
   },
   {
    "closer": "KOVAN RESIDENCES",
@@ -11393,7 +11393,7 @@
    "n_close": 12,
    "n_far": 30,
    "raw": 183.5,
-   "adj": 257.61648507206587
+   "adj": 249.5
   },
   {
    "closer": "KOVAN MELODY",
@@ -11417,7 +11417,7 @@
    "n_close": 25,
    "n_far": 40,
    "raw": 150.0,
-   "adj": 224.1164850720659
+   "adj": 216.0
   },
   {
    "closer": "KOVAN MELODY",
@@ -11441,7 +11441,7 @@
    "n_close": 6,
    "n_far": 10,
    "raw": 175,
-   "adj": 249.1164850720659
+   "adj": 241
   },
   {
    "closer": "LA FIESTA",
@@ -11465,7 +11465,7 @@
    "n_close": 21,
    "n_far": 27,
    "raw": 173.0,
-   "adj": 130.6646048977531
+   "adj": 127.0
   },
   {
    "closer": "LA FIESTA",
@@ -11489,7 +11489,7 @@
    "n_close": 22,
    "n_far": 26,
    "raw": 130.0,
-   "adj": 87.6646048977531
+   "adj": 84.0
   },
   {
    "closer": "COMPASS HEIGHTS",
@@ -11513,7 +11513,7 @@
    "n_close": 6,
    "n_far": 12,
    "raw": -384,
-   "adj": -87.5340597117364
+   "adj": -96
   },
   {
    "closer": "THE JOVELL",
@@ -11537,7 +11537,7 @@
    "n_close": 11,
    "n_far": 11,
    "raw": 147.5,
-   "adj": -191.18316081797525
+   "adj": -196.5
   },
   {
    "closer": "THE JOVELL",
@@ -11561,7 +11561,7 @@
    "n_close": 18,
    "n_far": 29,
    "raw": 207.5,
-   "adj": -131.18316081797525
+   "adj": -136.5
   },
   {
    "closer": "THE JOVELL",
@@ -11585,7 +11585,7 @@
    "n_close": 18,
    "n_far": 26,
    "raw": 208.0,
-   "adj": -130.68316081797525
+   "adj": -136.0
   },
   {
    "closer": "THE JOVELL",
@@ -11609,7 +11609,7 @@
    "n_close": 4,
    "n_far": 5,
    "raw": 163.5,
-   "adj": -175.18316081797525
+   "adj": -180.5
   },
   {
    "closer": "PARC OLYMPIA",
@@ -11633,7 +11633,7 @@
    "n_close": 3,
    "n_far": 11,
    "raw": -168,
-   "adj": 86.01237061348144
+   "adj": 108
   },
   {
    "closer": "PARC OLYMPIA",
@@ -11657,7 +11657,7 @@
    "n_close": 22,
    "n_far": 18,
    "raw": -218.5,
-   "adj": 35.51237061348144
+   "adj": 57.5
   },
   {
    "closer": "PARC OLYMPIA",
@@ -11681,7 +11681,7 @@
    "n_close": 7,
    "n_far": 4,
    "raw": -292.5,
-   "adj": -38.48762938651856
+   "adj": -16.5
   },
   {
    "closer": "JADESCAPE",
@@ -11705,7 +11705,7 @@
    "n_close": 27,
    "n_far": 9,
    "raw": 975.5,
-   "adj": 431.97910947151684
+   "adj": 323.5
   },
   {
    "closer": "AUSTVILLE RESIDENCES",
@@ -11729,7 +11729,7 @@
    "n_close": 53,
    "n_far": 12,
    "raw": 223.0,
-   "adj": 0.6505447838023315
+   "adj": 25.0
   },
   {
    "closer": "PARK GREEN",
@@ -11753,7 +11753,7 @@
    "n_close": 12,
    "n_far": 29,
    "raw": -206.0,
-   "adj": 65.76044526424158
+   "adj": 60.0
   },
   {
    "closer": "PARK GREEN",
@@ -11777,7 +11777,7 @@
    "n_close": 6,
    "n_far": 23,
    "raw": -303.0,
-   "adj": -31.239554735758418
+   "adj": -37.0
   },
   {
    "closer": "PARK GREEN",
@@ -11801,7 +11801,7 @@
    "n_close": 12,
    "n_far": 29,
    "raw": -398.0,
-   "adj": -150.94504975978037
+   "adj": -178.0
   },
   {
    "closer": "PARK GREEN",
@@ -11825,7 +11825,7 @@
    "n_close": 6,
    "n_far": 6,
    "raw": -240.0,
-   "adj": 7.054950240219625
+   "adj": -20.0
   },
   {
    "closer": "PARK GREEN",
@@ -11849,7 +11849,7 @@
    "n_close": 12,
    "n_far": 22,
    "raw": -259.0,
-   "adj": -11.945049759780375
+   "adj": -39.0
   },
   {
    "closer": "PARK GREEN",
@@ -11873,7 +11873,7 @@
    "n_close": 6,
    "n_far": 4,
    "raw": -302.5,
-   "adj": -55.445049759780375
+   "adj": -82.5
   },
   {
    "closer": "WATERVIEW",
@@ -11897,7 +11897,7 @@
    "n_close": 23,
    "n_far": 13,
    "raw": 436,
-   "adj": 114.82856468771445
+   "adj": 150
   },
   {
    "closer": "Q BAY RESIDENCES",
@@ -11921,7 +11921,7 @@
    "n_close": 36,
    "n_far": 13,
    "raw": 440,
-   "adj": 69.41757463967053
+   "adj": 86
   },
   {
    "closer": "SEA ESTA",
@@ -11945,7 +11945,7 @@
    "n_close": 13,
    "n_far": 8,
    "raw": 76.0,
-   "adj": 33.664604897753094
+   "adj": 30.0
   },
   {
    "closer": "SEA ESTA",
@@ -11969,7 +11969,7 @@
    "n_close": 16,
    "n_far": 10,
    "raw": -0.5,
-   "adj": -42.835395102246906
+   "adj": -46.5
   },
   {
    "closer": "WATERCOLOURS",
@@ -12065,7 +12065,7 @@
    "n_close": 13,
    "n_far": 30,
    "raw": -38.5,
-   "adj": -80.8353951022469
+   "adj": -84.5
   },
   {
    "closer": "SEA ESTA",
@@ -12089,7 +12089,7 @@
    "n_close": 16,
    "n_far": 30,
    "raw": -15.5,
-   "adj": -57.835395102246906
+   "adj": -61.5
   },
   {
    "closer": "SEA HORIZON",
@@ -12113,7 +12113,7 @@
    "n_close": 9,
    "n_far": 13,
    "raw": -115.5,
-   "adj": -157.8353951022469
+   "adj": -161.5
   },
   {
    "closer": "SEA HORIZON",
@@ -12137,7 +12137,7 @@
    "n_close": 16,
    "n_far": 16,
    "raw": -90.0,
-   "adj": -132.3353951022469
+   "adj": -136.0
   },
   {
    "closer": "SEA HORIZON",
@@ -12161,7 +12161,7 @@
    "n_close": 34,
    "n_far": 8,
    "raw": 65.5,
-   "adj": 23.164604897753094
+   "adj": 19.5
   },
   {
    "closer": "EASTVALE",
@@ -12185,7 +12185,7 @@
    "n_close": 12,
    "n_far": 16,
    "raw": -287.5,
-   "adj": 107.78792038435142
+   "adj": 88.5
   },
   {
    "closer": "WATERCOLOURS",
@@ -12209,7 +12209,7 @@
    "n_close": 13,
    "n_far": 8,
    "raw": -76.5,
-   "adj": -118.8353951022469
+   "adj": -122.5
   },
   {
    "closer": "WATERCOLOURS",
@@ -12233,7 +12233,7 @@
    "n_close": 43,
    "n_far": 10,
    "raw": -120.0,
-   "adj": -162.3353951022469
+   "adj": -166.0
   },
   {
    "closer": "SEASTRAND",
@@ -12329,7 +12329,7 @@
    "n_close": 9,
    "n_far": 8,
    "raw": -39.5,
-   "adj": -124.17079020449381
+   "adj": -131.5
   },
   {
    "closer": "SEA HORIZON",
@@ -12353,7 +12353,7 @@
    "n_close": 16,
    "n_far": 10,
    "raw": -90.5,
-   "adj": -175.1707902044938
+   "adj": -182.5
   },
   {
    "closer": "EASTVALE",
@@ -12377,7 +12377,7 @@
    "n_close": 12,
    "n_far": 10,
    "raw": -288.0,
-   "adj": 82.58242536032947
+   "adj": 42.0
   },
   {
    "closer": "NUOVO",
@@ -12401,7 +12401,7 @@
    "n_close": 11,
    "n_far": 23,
    "raw": -94,
-   "adj": -69.29450497597804
+   "adj": -72
   },
   {
    "closer": "BELYSA",
@@ -12425,7 +12425,7 @@
    "n_close": 39,
    "n_far": 4,
    "raw": -31.0,
-   "adj": 11.335395102246906
+   "adj": 15.0
   },
   {
    "closer": "BELYSA",
@@ -12449,7 +12449,7 @@
    "n_close": 7,
    "n_far": 16,
    "raw": -75.5,
-   "adj": -33.164604897753094
+   "adj": -29.5
   },
   {
    "closer": "STRATUM",
@@ -12521,7 +12521,7 @@
    "n_close": 4,
    "n_far": 39,
    "raw": 319.0,
-   "adj": 71.94504975978037
+   "adj": 75.0
   },
   {
    "closer": "NV RESIDENCES",
@@ -12545,7 +12545,7 @@
    "n_close": 32,
    "n_far": 11,
    "raw": -64,
-   "adj": 34.821980096087856
+   "adj": 48
   },
   {
    "closer": "NV RESIDENCES",
@@ -12569,7 +12569,7 @@
    "n_close": 15,
    "n_far": 4,
    "raw": -60.0,
-   "adj": 38.821980096087856
+   "adj": 52.0
   },
   {
    "closer": "THE PALETTE",
@@ -12593,7 +12593,7 @@
    "n_close": 16,
    "n_far": 11,
    "raw": 118,
-   "adj": 202.6707902044938
+   "adj": 186
   },
   {
    "closer": "THE PALETTE",
@@ -12617,7 +12617,7 @@
    "n_close": 38,
    "n_far": 4,
    "raw": 113.0,
-   "adj": 197.6707902044938
+   "adj": 181.0
   },
   {
    "closer": "THE PALETTE",
@@ -12641,7 +12641,7 @@
    "n_close": 11,
    "n_far": 16,
    "raw": 65.5,
-   "adj": 150.1707902044938
+   "adj": 133.5
   },
   {
    "closer": "COCO PALMS",
@@ -12665,7 +12665,7 @@
    "n_close": 26,
    "n_far": 11,
    "raw": 236.5,
-   "adj": 335.3219800960878
+   "adj": 348.5
   },
   {
    "closer": "COCO PALMS",
@@ -12689,7 +12689,7 @@
    "n_close": 28,
    "n_far": 4,
    "raw": 250.0,
-   "adj": 348.8219800960878
+   "adj": 362.0
   },
   {
    "closer": "COCO PALMS",
@@ -12713,7 +12713,7 @@
    "n_close": 22,
    "n_far": 16,
    "raw": 190.5,
-   "adj": 289.3219800960878
+   "adj": 302.5
   },
   {
    "closer": "OASIS @ ELIAS",
@@ -12737,7 +12737,7 @@
    "n_close": 6,
    "n_far": 11,
    "raw": -313,
-   "adj": -214.17801990391214
+   "adj": -201
   },
   {
    "closer": "OASIS @ ELIAS",
@@ -12761,7 +12761,7 @@
    "n_close": 12,
    "n_far": 4,
    "raw": -207.0,
-   "adj": -108.17801990391214
+   "adj": -95.0
   },
   {
    "closer": "WATERCOLOURS",
@@ -12785,7 +12785,7 @@
    "n_close": 13,
    "n_far": 30,
    "raw": -191,
-   "adj": -233.3353951022469
+   "adj": -237
   },
   {
    "closer": "WATERCOLOURS",
@@ -12809,7 +12809,7 @@
    "n_close": 43,
    "n_far": 30,
    "raw": -135.0,
-   "adj": -177.3353951022469
+   "adj": -181.0
   },
   {
    "closer": "SEA HORIZON",
@@ -12833,7 +12833,7 @@
    "n_close": 9,
    "n_far": 13,
    "raw": 37,
-   "adj": -5.335395102246906
+   "adj": -9
   },
   {
    "closer": "SEA HORIZON",
@@ -12857,7 +12857,7 @@
    "n_close": 16,
    "n_far": 43,
    "raw": 29.5,
-   "adj": -12.835395102246906
+   "adj": -16.5
   },
   {
    "closer": "EASTVALE",
@@ -12881,7 +12881,7 @@
    "n_close": 12,
    "n_far": 43,
    "raw": -168.0,
-   "adj": 227.28792038435142
+   "adj": 208.0
   },
   {
    "closer": "COMPASS HEIGHTS",
@@ -12905,7 +12905,7 @@
    "n_close": 6,
    "n_far": 8,
    "raw": 36.5,
-   "adj": 308.2604452642416
+   "adj": 278.5
   },
   {
    "closer": "THE TAPESTRY",
@@ -12929,7 +12929,7 @@
    "n_close": 45,
    "n_far": 23,
    "raw": 196,
-   "adj": -100.34776571572831
+   "adj": -102
   },
   {
    "closer": "Q BAY RESIDENCES",
@@ -12953,7 +12953,7 @@
    "n_close": 12,
    "n_far": 36,
    "raw": -279.5,
-   "adj": -67.82302448876547
+   "adj": -49.5
   },
   {
    "closer": "Q BAY RESIDENCES",
@@ -12977,7 +12977,7 @@
    "n_close": 15,
    "n_far": 44,
    "raw": -235.0,
-   "adj": -23.32302448876547
+   "adj": -5.0
   },
   {
    "closer": "Q BAY RESIDENCES",
@@ -13001,7 +13001,7 @@
    "n_close": 36,
    "n_far": 45,
    "raw": -192,
-   "adj": 19.67697551123453
+   "adj": 38
   },
   {
    "closer": "THE TAPESTRY",
@@ -13025,7 +13025,7 @@
    "n_close": 36,
    "n_far": 21,
    "raw": 162.0,
-   "adj": 77.32920979550619
+   "adj": 70.0
   },
   {
    "closer": "THE TAPESTRY",
@@ -13049,7 +13049,7 @@
    "n_close": 44,
    "n_far": 33,
    "raw": 235,
-   "adj": 150.3292097955062
+   "adj": 143
   },
   {
    "closer": "THE TAPESTRY",
@@ -13073,7 +13073,7 @@
    "n_close": 45,
    "n_far": 26,
    "raw": 214,
-   "adj": 129.3292097955062
+   "adj": 122
   },
   {
    "closer": "THE TAPESTRY",
@@ -13097,7 +13097,7 @@
    "n_close": 3,
    "n_far": 3,
    "raw": 149,
-   "adj": 64.32920979550619
+   "adj": 57
   },
   {
    "closer": "PRIVE",
@@ -13121,7 +13121,7 @@
    "n_close": 20,
    "n_far": 3,
    "raw": 87,
-   "adj": 171.6707902044938
+   "adj": 155
   },
   {
    "closer": "PRIVE",
@@ -13145,7 +13145,7 @@
    "n_close": 52,
    "n_far": 28,
    "raw": 109.5,
-   "adj": 194.1707902044938
+   "adj": 177.5
   },
   {
    "closer": "PRIVE",
@@ -13169,7 +13169,7 @@
    "n_close": 5,
    "n_far": 16,
    "raw": 38,
-   "adj": 122.67079020449381
+   "adj": 106
   },
   {
    "closer": "SEA HORIZON",
@@ -13193,7 +13193,7 @@
    "n_close": 9,
    "n_far": 30,
    "raw": -154,
-   "adj": -238.6707902044938
+   "adj": -246
   },
   {
    "closer": "SEA HORIZON",
@@ -13217,7 +13217,7 @@
    "n_close": 16,
    "n_far": 30,
    "raw": -105.5,
-   "adj": -190.1707902044938
+   "adj": -197.5
   },
   {
    "closer": "EASTVALE",
@@ -13241,7 +13241,7 @@
    "n_close": 12,
    "n_far": 30,
    "raw": -303.0,
-   "adj": 67.58242536032947
+   "adj": 27.0
   },
   {
    "closer": "BARTLEY RESIDENCES",
@@ -13265,7 +13265,7 @@
    "n_close": 17,
    "n_far": 29,
    "raw": -14,
-   "adj": 113.00618530674072
+   "adj": 124
   },
   {
    "closer": "BARTLEY RESIDENCES",
@@ -13289,7 +13289,7 @@
    "n_close": 27,
    "n_far": 57,
    "raw": -200,
-   "adj": -72.99381469325928
+   "adj": -62
   },
   {
    "closer": "BARTLEY RESIDENCES",
@@ -13313,7 +13313,7 @@
    "n_close": 22,
    "n_far": 22,
    "raw": -370.5,
-   "adj": -243.49381469325928
+   "adj": -232.5
   },
   {
    "closer": "PARC OLYMPIA",
@@ -13337,7 +13337,7 @@
    "n_close": 3,
    "n_far": 11,
    "raw": -20.5,
-   "adj": -105.17079020449381
+   "adj": -88.5
   },
   {
    "closer": "PARC OLYMPIA",
@@ -13361,7 +13361,7 @@
    "n_close": 22,
    "n_far": 29,
    "raw": -11.0,
-   "adj": -95.67079020449381
+   "adj": -79.0
   },
   {
    "closer": "PARC OLYMPIA",
@@ -13385,7 +13385,7 @@
    "n_close": 22,
    "n_far": 26,
    "raw": -104,
-   "adj": -188.6707902044938
+   "adj": -172
   },
   {
    "closer": "PARC OLYMPIA",
@@ -13409,7 +13409,7 @@
    "n_close": 7,
    "n_far": 5,
    "raw": -129.0,
-   "adj": -213.6707902044938
+   "adj": -197.0
   },
   {
    "closer": "THE VALES",
@@ -13433,7 +13433,7 @@
    "n_close": 42,
    "n_far": 43,
    "raw": 64.0,
-   "adj": 106.3353951022469
+   "adj": 110.0
   },
   {
    "closer": "THE VALES",
@@ -13457,7 +13457,7 @@
    "n_close": 10,
    "n_far": 9,
    "raw": 26.0,
-   "adj": 68.3353951022469
+   "adj": 72.0
   },
   {
    "closer": "WATERTOWN",
@@ -13529,7 +13529,7 @@
    "n_close": 31,
    "n_far": 14,
    "raw": -56.0,
-   "adj": 413.4044054564173
+   "adj": 362.0
   },
   {
    "closer": "MANDARIN GARDENS",
@@ -13553,7 +13553,7 @@
    "n_close": 8,
    "n_far": 3,
    "raw": -31.5,
-   "adj": 314.3769303363075
+   "adj": 276.5
   },
   {
    "closer": "MANDARIN GARDENS",
@@ -13577,7 +13577,7 @@
    "n_close": 36,
    "n_far": 14,
    "raw": 24.0,
-   "adj": 369.8769303363075
+   "adj": 332.0
   },
   {
    "closer": "VILLA MARINA",
@@ -13601,7 +13601,7 @@
    "n_close": 18,
    "n_far": 14,
    "raw": 213.5,
-   "adj": 238.20549502402196
+   "adj": 235.5
   },
   {
    "closer": "Q BAY RESIDENCES",
@@ -13625,7 +13625,7 @@
    "n_close": 36,
    "n_far": 23,
    "raw": 4,
-   "adj": -80.67079020449381
+   "adj": -64
   },
   {
    "closer": "WATERVIEW",
@@ -13649,7 +13649,7 @@
    "n_close": 23,
    "n_far": 26,
    "raw": 18,
-   "adj": 229.67697551123453
+   "adj": 224
   },
   {
    "closer": "WATERVIEW",
@@ -13673,7 +13673,7 @@
    "n_close": 4,
    "n_far": 3,
    "raw": -50.0,
-   "adj": 161.67697551123453
+   "adj": 156.0
   },
   {
    "closer": "OPTIMA @ TANAH MERAH",
@@ -13697,7 +13697,7 @@
    "n_close": 13,
    "n_far": 7,
    "raw": 298.0,
-   "adj": -146.69891043239534
+   "adj": -98.0
   },
   {
    "closer": "OPTIMA @ TANAH MERAH",
@@ -13721,7 +13721,7 @@
    "n_close": 6,
    "n_far": 8,
    "raw": 433.5,
-   "adj": -11.198910432395337
+   "adj": 37.5
   },
   {
    "closer": "CASA MERAH",
@@ -13745,7 +13745,7 @@
    "n_close": 10,
    "n_far": 7,
    "raw": 254.5,
-   "adj": -140.78792038435142
+   "adj": -97.5
   },
   {
    "closer": "CASA MERAH",
@@ -13769,7 +13769,7 @@
    "n_close": 28,
    "n_far": 8,
    "raw": 340,
-   "adj": -55.28792038435142
+   "adj": -12
   },
   {
    "closer": "EAST MEADOWS",
@@ -13793,7 +13793,7 @@
    "n_close": 23,
    "n_far": 8,
    "raw": 106.5,
-   "adj": -91.14396019217571
+   "adj": -69.5
   },
   {
    "closer": "WATERFRONT KEY",
@@ -13817,7 +13817,7 @@
    "n_close": 4,
    "n_far": 8,
    "raw": 117.0,
-   "adj": 166.4109900480439
+   "adj": 161.0
   },
   {
    "closer": "WATERFRONT KEY",
@@ -13841,7 +13841,7 @@
    "n_close": 13,
    "n_far": 12,
    "raw": -2.0,
-   "adj": 47.41099004804393
+   "adj": 42.0
   },
   {
    "closer": "WATERFRONT KEY",
@@ -13865,7 +13865,7 @@
    "n_close": 7,
    "n_far": 6,
    "raw": 155,
-   "adj": 204.4109900480439
+   "adj": 199
   },
   {
    "closer": "THE CLEARWATER",
@@ -13889,7 +13889,7 @@
    "n_close": 13,
    "n_far": 12,
    "raw": -323.0,
-   "adj": -26.534059711736404
+   "adj": -59.0
   },
   {
    "closer": "BAYWATER",
@@ -13913,7 +13913,7 @@
    "n_close": 4,
    "n_far": 8,
    "raw": -324.0,
-   "adj": -126.35603980782429
+   "adj": -148.0
   },
   {
    "closer": "BAYWATER",
@@ -13937,7 +13937,7 @@
    "n_close": 9,
    "n_far": 12,
    "raw": -358.0,
-   "adj": -160.3560398078243
+   "adj": -182.0
   },
   {
    "closer": "WATERFRONT WAVES",
@@ -13961,7 +13961,7 @@
    "n_close": 3,
    "n_far": 8,
    "raw": -101.0,
-   "adj": -51.58900995195607
+   "adj": -57.0
   },
   {
    "closer": "WATERFRONT WAVES",
@@ -13985,7 +13985,7 @@
    "n_close": 12,
    "n_far": 12,
    "raw": -65.0,
-   "adj": -15.589009951956072
+   "adj": -21.0
   },
   {
    "closer": "WATERFRONT WAVES",
@@ -14009,7 +14009,7 @@
    "n_close": 6,
    "n_far": 6,
    "raw": -99.0,
-   "adj": -49.58900995195607
+   "adj": -55.0
   },
   {
    "closer": "WATERFRONT GOLD",
@@ -14033,7 +14033,7 @@
    "n_close": 6,
    "n_far": 12,
    "raw": 42,
-   "adj": 42.0
+   "adj": 42
   },
   {
    "closer": "WATERFRONT GOLD",
@@ -14105,7 +14105,7 @@
    "n_close": 4,
    "n_far": 40,
    "raw": 694,
-   "adj": 524.6584195910124
+   "adj": 510
   },
   {
    "closer": "LAGUNA PARK",
@@ -14129,7 +14129,7 @@
    "n_close": 31,
    "n_far": 36,
    "raw": -80.0,
-   "adj": 43.52747512010981
+   "adj": 30.0
   },
   {
    "closer": "LAGUNA PARK",
@@ -14153,7 +14153,7 @@
    "n_close": 31,
    "n_far": 18,
    "raw": -269.5,
-   "adj": 175.19891043239534
+   "adj": 126.5
   },
   {
    "closer": "LAGUNA PARK",
@@ -14201,7 +14201,7 @@
    "n_close": 47,
    "n_far": 18,
    "raw": -66,
-   "adj": -108.3353951022469
+   "adj": -112
   },
   {
    "closer": "AFFINITY AT SERANGOON",
@@ -14225,7 +14225,7 @@
    "n_close": 52,
    "n_far": 44,
    "raw": -42.5,
-   "adj": -84.8353951022469
+   "adj": -88.5
   },
   {
    "closer": "AFFINITY AT SERANGOON",
@@ -14249,7 +14249,7 @@
    "n_close": 15,
    "n_far": 6,
    "raw": -258.0,
-   "adj": -300.33539510224693
+   "adj": -304.0
   },
   {
    "closer": "VILLA MARINA",
@@ -14273,7 +14273,7 @@
    "n_close": 18,
    "n_far": 36,
    "raw": 189.5,
-   "adj": -131.67143531228555
+   "adj": -96.5
   },
   {
    "closer": "LAGOON VIEW",
@@ -14297,7 +14297,7 @@
    "n_close": 11,
    "n_far": 36,
    "raw": -110.0,
-   "adj": 13.527475120109813
+   "adj": 0.0
   },
   {
    "closer": "WATERFRONT KEY",
@@ -14321,7 +14321,7 @@
    "n_close": 13,
    "n_far": 13,
    "raw": 321,
-   "adj": 73.94504975978037
+   "adj": 101
   },
   {
    "closer": "BAYWATER",
@@ -14345,7 +14345,7 @@
    "n_close": 4,
    "n_far": 4,
    "raw": -441.0,
-   "adj": -292.7670298558682
+   "adj": -309.0
   },
   {
    "closer": "BAYWATER",
@@ -14369,7 +14369,7 @@
    "n_close": 9,
    "n_far": 13,
    "raw": -356.0,
-   "adj": -207.7670298558682
+   "adj": -224.0
   },
   {
    "closer": "WATERFRONT KEY",
@@ -14417,7 +14417,7 @@
    "n_close": 13,
    "n_far": 12,
    "raw": 63,
-   "adj": 63.0
+   "adj": 63
   },
   {
    "closer": "WATERFRONT KEY",
@@ -14465,7 +14465,7 @@
    "n_close": 4,
    "n_far": 17,
    "raw": 132.0,
-   "adj": 181.4109900480439
+   "adj": 176.0
   },
   {
    "closer": "WATERFRONT KEY",
@@ -14489,7 +14489,7 @@
    "n_close": 13,
    "n_far": 16,
    "raw": -41,
-   "adj": 8.410990048043928
+   "adj": 3
   },
   {
    "closer": "AUSTVILLE RESIDENCES",
@@ -14513,7 +14513,7 @@
    "n_close": 53,
    "n_far": 29,
    "raw": 17,
-   "adj": 101.67079020449381
+   "adj": 85
   },
   {
    "closer": "AUSTVILLE RESIDENCES",
@@ -14537,7 +14537,7 @@
    "n_close": 11,
    "n_far": 23,
    "raw": -35.5,
-   "adj": 49.17079020449381
+   "adj": 32.5
   },
   {
    "closer": "AUSTVILLE RESIDENCES",
@@ -14561,7 +14561,7 @@
    "n_close": 24,
    "n_far": 29,
    "raw": -103,
-   "adj": -78.29450497597804
+   "adj": -81
   },
   {
    "closer": "AUSTVILLE RESIDENCES",
@@ -14585,7 +14585,7 @@
    "n_close": 53,
    "n_far": 29,
    "raw": -175.0,
-   "adj": -150.29450497597804
+   "adj": -153.0
   },
   {
    "closer": "AUSTVILLE RESIDENCES",
@@ -14609,7 +14609,7 @@
    "n_close": 11,
    "n_far": 6,
    "raw": 27.5,
-   "adj": 52.205495024021964
+   "adj": 49.5
   },
   {
    "closer": "AUSTVILLE RESIDENCES",
@@ -14633,7 +14633,7 @@
    "n_close": 24,
    "n_far": 46,
    "raw": -144.5,
-   "adj": 24.841580408987625
+   "adj": 15.5
   },
   {
    "closer": "AUSTVILLE RESIDENCES",
@@ -14657,7 +14657,7 @@
    "n_close": 53,
    "n_far": 54,
    "raw": -63.5,
-   "adj": 105.84158040898762
+   "adj": 96.5
   },
   {
    "closer": "AUSTVILLE RESIDENCES",
@@ -14681,7 +14681,7 @@
    "n_close": 11,
    "n_far": 8,
    "raw": -52.0,
-   "adj": 117.34158040898762
+   "adj": 108.0
   },
   {
    "closer": "AUSTVILLE RESIDENCES",
@@ -14705,7 +14705,7 @@
    "n_close": 24,
    "n_far": 6,
    "raw": -34,
-   "adj": -9.294504975978036
+   "adj": -12
   },
   {
    "closer": "AUSTVILLE RESIDENCES",
@@ -14729,7 +14729,7 @@
    "n_close": 53,
    "n_far": 22,
    "raw": -36.0,
-   "adj": -11.294504975978036
+   "adj": -14.0
   },
   {
    "closer": "AUSTVILLE RESIDENCES",
@@ -14753,7 +14753,7 @@
    "n_close": 11,
    "n_far": 4,
    "raw": -35.0,
-   "adj": -10.294504975978036
+   "adj": -13.0
   },
   {
    "closer": "MAYFAIR GARDENS",
@@ -14777,7 +14777,7 @@
    "n_close": 9,
    "n_far": 3,
    "raw": 295.0,
-   "adj": -174.4044054564173
+   "adj": -291.0
   },
   {
    "closer": "RIVERSAILS",
@@ -14801,7 +14801,7 @@
    "n_close": 29,
    "n_far": 29,
    "raw": 192.0,
-   "adj": 234.3353951022469
+   "adj": 238.0
   },
   {
    "closer": "RIVERSAILS",
@@ -14825,7 +14825,7 @@
    "n_close": 6,
    "n_far": 23,
    "raw": -63,
-   "adj": -20.664604897753094
+   "adj": -17
   },
   {
    "closer": "HERON BAY",
@@ -14849,7 +14849,7 @@
    "n_close": 29,
    "n_far": 54,
    "raw": -80.5,
-   "adj": 4.170790204493812
+   "adj": 11.5
   },
   {
    "closer": "HERON BAY",
@@ -14873,7 +14873,7 @@
    "n_close": 23,
    "n_far": 8,
    "raw": -16.5,
-   "adj": 68.17079020449381
+   "adj": 75.5
   },
   {
    "closer": "HERON BAY",
@@ -14897,7 +14897,7 @@
    "n_close": 29,
    "n_far": 22,
    "raw": -53.0,
-   "adj": -95.3353951022469
+   "adj": -99.0
   },
   {
    "closer": "HERON BAY",
@@ -14921,7 +14921,7 @@
    "n_close": 23,
    "n_far": 4,
    "raw": 0.5,
-   "adj": -41.835395102246906
+   "adj": -45.5
   },
   {
    "closer": "THOMSON GRAND",
@@ -14945,7 +14945,7 @@
    "n_close": 8,
    "n_far": 8,
    "raw": -259,
-   "adj": -47.32302448876547
+   "adj": -53
   },
   {
    "closer": "THE GARDENS AT BISHAN",
@@ -14969,7 +14969,7 @@
    "n_close": 14,
    "n_far": 8,
    "raw": -56.0,
-   "adj": 265.17143531228555
+   "adj": 230.0
   },
   {
    "closer": "THE GARDENS AT BISHAN",
@@ -14993,7 +14993,7 @@
    "n_close": 23,
    "n_far": 28,
    "raw": 11.0,
-   "adj": 332.17143531228555
+   "adj": 297.0
   },
   {
    "closer": "FLO RESIDENCE",
@@ -15017,7 +15017,7 @@
    "n_close": 7,
    "n_far": 5,
    "raw": -139.0,
-   "adj": -96.6646048977531
+   "adj": -93.0
   },
   {
    "closer": "FLO RESIDENCE",
@@ -15041,7 +15041,7 @@
    "n_close": 26,
    "n_far": 36,
    "raw": -63.5,
-   "adj": -21.164604897753094
+   "adj": -17.5
   },
   {
    "closer": "FLO RESIDENCE",
@@ -15065,7 +15065,7 @@
    "n_close": 5,
    "n_far": 11,
    "raw": -179,
-   "adj": -136.6646048977531
+   "adj": -133
   },
   {
    "closer": "FLO RESIDENCE",
@@ -15089,7 +15089,7 @@
    "n_close": 26,
    "n_far": 9,
    "raw": -92.5,
-   "adj": -7.829209795506188
+   "adj": -0.5
   },
   {
    "closer": "FLO RESIDENCE",
@@ -15113,7 +15113,7 @@
    "n_close": 5,
    "n_far": 19,
    "raw": -133,
-   "adj": -48.32920979550619
+   "adj": -41
   },
   {
    "closer": "THE FLORIDA",
@@ -15137,7 +15137,7 @@
    "n_close": 33,
    "n_far": 27,
    "raw": -109.0,
-   "adj": -10.178019903912144
+   "adj": -21.0
   },
   {
    "closer": "RIVERSAILS",
@@ -15161,7 +15161,7 @@
    "n_close": 15,
    "n_far": 32,
    "raw": -29.5,
-   "adj": 97.50618530674072
+   "adj": 108.5
   },
   {
    "closer": "RIVERSAILS",
@@ -15185,7 +15185,7 @@
    "n_close": 6,
    "n_far": 8,
    "raw": -79.5,
-   "adj": 47.50618530674072
+   "adj": 58.5
   },
   {
    "closer": "RIVERSAILS",
@@ -15209,7 +15209,7 @@
    "n_close": 15,
    "n_far": 6,
    "raw": 162,
-   "adj": 162.0
+   "adj": 162
   },
   {
    "closer": "RIVERSAILS",
@@ -15233,7 +15233,7 @@
    "n_close": 29,
    "n_far": 6,
    "raw": 69,
-   "adj": 69.0
+   "adj": 69
   },
   {
    "closer": "RIVERSAILS",
@@ -15305,7 +15305,7 @@
    "n_close": 29,
    "n_far": 39,
    "raw": 93.5,
-   "adj": 118.20549502402196
+   "adj": 115.5
   },
   {
    "closer": "D'NEST",
@@ -15329,7 +15329,7 @@
    "n_close": 27,
    "n_far": 7,
    "raw": 172.5,
-   "adj": 197.20549502402196
+   "adj": 194.5
   },
   {
    "closer": "D'NEST",
@@ -15353,7 +15353,7 @@
    "n_close": 10,
    "n_far": 7,
    "raw": 110.0,
-   "adj": 194.6707902044938
+   "adj": 178.0
   },
   {
    "closer": "D'NEST",
@@ -15377,7 +15377,7 @@
    "n_close": 25,
    "n_far": 9,
    "raw": 151.5,
-   "adj": 236.1707902044938
+   "adj": 219.5
   },
   {
    "closer": "D'NEST",
@@ -15401,7 +15401,7 @@
    "n_close": 29,
    "n_far": 9,
    "raw": 151.0,
-   "adj": 235.6707902044938
+   "adj": 219.0
   },
   {
    "closer": "D'NEST",
@@ -15425,7 +15425,7 @@
    "n_close": 25,
    "n_far": 32,
    "raw": 70.5,
-   "adj": 21.089009951956072
+   "adj": 26.5
   },
   {
    "closer": "D'NEST",
@@ -15449,7 +15449,7 @@
    "n_close": 29,
    "n_far": 15,
    "raw": 122.5,
-   "adj": 73.08900995195607
+   "adj": 78.5
   },
   {
    "closer": "D'NEST",
@@ -15545,7 +15545,7 @@
    "n_close": 13,
    "n_far": 10,
    "raw": 151.0,
-   "adj": 200.4109900480439
+   "adj": 195.0
   },
   {
    "closer": "COCO PALMS",
@@ -15569,7 +15569,7 @@
    "n_close": 26,
    "n_far": 25,
    "raw": 230.0,
-   "adj": 279.4109900480439
+   "adj": 274.0
   },
   {
    "closer": "COCO PALMS",
@@ -15593,7 +15593,7 @@
    "n_close": 28,
    "n_far": 29,
    "raw": 187.5,
-   "adj": 236.9109900480439
+   "adj": 231.5
   },
   {
    "closer": "COCO PALMS",
@@ -15617,7 +15617,7 @@
    "n_close": 22,
    "n_far": 27,
    "raw": 93.5,
-   "adj": 142.9109900480439
+   "adj": 137.5
   },
   {
    "closer": "REGENTVILLE",
@@ -15641,7 +15641,7 @@
    "n_close": 27,
    "n_far": 117,
    "raw": -679.0,
-   "adj": -184.89009951956075
+   "adj": -119.0
   },
   {
    "closer": "RIVERFRONT RESIDENCES",
@@ -15665,7 +15665,7 @@
    "n_close": 67,
    "n_far": 7,
    "raw": 210.0,
-   "adj": -128.68316081797525
+   "adj": -134.0
   },
   {
    "closer": "EVERGREEN PARK",
@@ -15689,7 +15689,7 @@
    "n_close": 14,
    "n_far": 67,
    "raw": -661.5,
-   "adj": -93.27361444749488
+   "adj": 12.5
   },
   {
    "closer": "BELYSA",
@@ -15713,7 +15713,7 @@
    "n_close": 39,
    "n_far": 9,
    "raw": 57.5,
-   "adj": 99.8353951022469
+   "adj": 103.5
   },
   {
    "closer": "EASTVALE",
@@ -15737,7 +15737,7 @@
    "n_close": 12,
    "n_far": 39,
    "raw": -334.5,
-   "adj": 36.08242536032947
+   "adj": -4.5
   },
   {
    "closer": "BELYSA",
@@ -15761,7 +15761,7 @@
    "n_close": 39,
    "n_far": 39,
    "raw": 288.0,
-   "adj": 65.65054478380233
+   "adj": 90.0
   },
   {
    "closer": "NV RESIDENCES",
@@ -15785,7 +15785,7 @@
    "n_close": 15,
    "n_far": 39,
    "raw": -29.0,
-   "adj": 45.1164850720659
+   "adj": 37.0
   },
   {
    "closer": "THE PALETTE",
@@ -15809,7 +15809,7 @@
    "n_close": 38,
    "n_far": 39,
    "raw": 144.0,
-   "adj": 168.70549502402196
+   "adj": 166.0
   },
   {
    "closer": "THE PALETTE",
@@ -15833,7 +15833,7 @@
    "n_close": 11,
    "n_far": 7,
    "raw": 141.0,
-   "adj": 165.70549502402196
+   "adj": 163.0
   },
   {
    "closer": "COCO PALMS",
@@ -15857,7 +15857,7 @@
    "n_close": 28,
    "n_far": 39,
    "raw": 281.0,
-   "adj": 355.11648507206587
+   "adj": 347.0
   },
   {
    "closer": "COCO PALMS",
@@ -15881,7 +15881,7 @@
    "n_close": 22,
    "n_far": 7,
    "raw": 266,
-   "adj": 340.11648507206587
+   "adj": 332
   },
   {
    "closer": "BELYSA",
@@ -15905,7 +15905,7 @@
    "n_close": 39,
    "n_far": 12,
    "raw": 176.0,
-   "adj": 101.8835149279341
+   "adj": 110.0
   },
   {
    "closer": "MODENA",
@@ -15929,7 +15929,7 @@
    "n_close": 7,
    "n_far": 46,
    "raw": 317,
-   "adj": 193.4725248798902
+   "adj": 207
   },
   {
    "closer": "DOUBLE BAY RESIDENCES",
@@ -15953,7 +15953,7 @@
    "n_close": 13,
    "n_far": 50,
    "raw": 496.5,
-   "adj": 101.21207961564858
+   "adj": 144.5
   },
   {
    "closer": "DOUBLE BAY RESIDENCES",
@@ -15977,7 +15977,7 @@
    "n_close": 23,
    "n_far": 46,
    "raw": 515.5,
-   "adj": 120.21207961564858
+   "adj": 163.5
   },
   {
    "closer": "EASTVALE",
@@ -16001,7 +16001,7 @@
    "n_close": 12,
    "n_far": 9,
    "raw": -277.0,
-   "adj": 118.28792038435142
+   "adj": 99.0
   },
   {
    "closer": "STRATUM",
@@ -16025,7 +16025,7 @@
    "n_close": 9,
    "n_far": 39,
    "raw": 230.5,
-   "adj": -16.554950240219625
+   "adj": -13.5
   },
   {
    "closer": "NV RESIDENCES",
@@ -16049,7 +16049,7 @@
    "n_close": 32,
    "n_far": 9,
    "raw": 81.0,
-   "adj": 179.82198009608786
+   "adj": 193.0
   },
   {
    "closer": "NV RESIDENCES",
@@ -16073,7 +16073,7 @@
    "n_close": 15,
    "n_far": 9,
    "raw": 28.5,
-   "adj": 127.32198009608786
+   "adj": 140.5
   },
   {
    "closer": "THE PALETTE",
@@ -16097,7 +16097,7 @@
    "n_close": 16,
    "n_far": 9,
    "raw": 263.0,
-   "adj": 347.6707902044938
+   "adj": 331.0
   },
   {
    "closer": "THE PALETTE",
@@ -16121,7 +16121,7 @@
    "n_close": 38,
    "n_far": 9,
    "raw": 201.5,
-   "adj": 286.1707902044938
+   "adj": 269.5
   },
   {
    "closer": "COCO PALMS",
@@ -16145,7 +16145,7 @@
    "n_close": 13,
    "n_far": 7,
    "raw": 261.0,
-   "adj": 359.8219800960878
+   "adj": 373.0
   },
   {
    "closer": "COCO PALMS",
@@ -16169,7 +16169,7 @@
    "n_close": 26,
    "n_far": 9,
    "raw": 381.5,
-   "adj": 480.3219800960878
+   "adj": 493.5
   },
   {
    "closer": "COCO PALMS",
@@ -16193,7 +16193,7 @@
    "n_close": 28,
    "n_far": 9,
    "raw": 338.5,
-   "adj": 437.3219800960878
+   "adj": 450.5
   },
   {
    "closer": "OASIS @ ELIAS",
@@ -16217,7 +16217,7 @@
    "n_close": 6,
    "n_far": 9,
    "raw": -168.0,
-   "adj": -69.17801990391214
+   "adj": -56.0
   },
   {
    "closer": "OASIS @ ELIAS",
@@ -16241,7 +16241,7 @@
    "n_close": 12,
    "n_far": 9,
    "raw": -118.5,
-   "adj": -19.678019903912144
+   "adj": -6.5
   },
   {
    "closer": "THE GARDENS AT BISHAN",
@@ -16265,7 +16265,7 @@
    "n_close": 14,
    "n_far": 8,
    "raw": -315.0,
-   "adj": 129.69891043239534
+   "adj": 177.0
   },
   {
    "closer": "THE GARDENS AT BISHAN",
@@ -16289,7 +16289,7 @@
    "n_close": 23,
    "n_far": 11,
    "raw": -408.5,
-   "adj": 36.19891043239534
+   "adj": 83.5
   },
   {
    "closer": "EASTVALE",
@@ -16313,7 +16313,7 @@
    "n_close": 12,
    "n_far": 16,
    "raw": -197.5,
-   "adj": 222.49341540837338
+   "adj": 224.5
   },
   {
    "closer": "COCO PALMS",
@@ -16337,7 +16337,7 @@
    "n_close": 26,
    "n_far": 9,
    "raw": 443.5,
-   "adj": 567.0274751201098
+   "adj": 601.5
   },
   {
    "closer": "COCO PALMS",
@@ -16361,7 +16361,7 @@
    "n_close": 28,
    "n_far": 16,
    "raw": 418.0,
-   "adj": 541.5274751201098
+   "adj": 576.0
   },
   {
    "closer": "COCO PALMS",
@@ -16385,7 +16385,7 @@
    "n_close": 22,
    "n_far": 34,
    "raw": 293.5,
-   "adj": 417.0274751201098
+   "adj": 451.5
   },
   {
    "closer": "MODENA",
@@ -16409,7 +16409,7 @@
    "n_close": 7,
    "n_far": 23,
    "raw": -198.5,
-   "adj": 73.26044526424158
+   "adj": 43.5
   },
   {
    "closer": "BAYWATER",
@@ -16433,7 +16433,7 @@
    "n_close": 9,
    "n_far": 13,
    "raw": -35.0,
-   "adj": -133.82198009608786
+   "adj": -123.0
   },
   {
    "closer": "WATERFRONT WAVES",
@@ -16457,7 +16457,7 @@
    "n_close": 12,
    "n_far": 13,
    "raw": 258,
-   "adj": 10.945049759780375
+   "adj": 38
   },
   {
    "closer": "THE CLEARWATER",
@@ -16481,7 +16481,7 @@
    "n_close": 13,
    "n_far": 16,
    "raw": -362,
-   "adj": -65.5340597117364
+   "adj": -98
   },
   {
    "closer": "GRANDEUR PARK RESIDENCES",
@@ -16505,7 +16505,7 @@
    "n_close": 8,
    "n_far": 10,
    "raw": 423.0,
-   "adj": 253.65841959101238
+   "adj": 239.0
   },
   {
    "closer": "Q BAY RESIDENCES",
@@ -16529,7 +16529,7 @@
    "n_close": 12,
    "n_far": 21,
    "raw": -117.5,
-   "adj": 9.506185306740718
+   "adj": 20.5
   },
   {
    "closer": "Q BAY RESIDENCES",
@@ -16553,7 +16553,7 @@
    "n_close": 15,
    "n_far": 33,
    "raw": 0.0,
-   "adj": 127.00618530674072
+   "adj": 138.0
   },
   {
    "closer": "Q BAY RESIDENCES",
@@ -16577,7 +16577,7 @@
    "n_close": 36,
    "n_far": 26,
    "raw": 22,
-   "adj": 149.00618530674072
+   "adj": 160
   },
   {
    "closer": "SKY VUE",
@@ -16601,7 +16601,7 @@
    "n_close": 22,
    "n_far": 18,
    "raw": 319.0,
-   "adj": 234.3292097955062
+   "adj": 227.0
   },
   {
    "closer": "SKY VUE",
@@ -16625,7 +16625,7 @@
    "n_close": 7,
    "n_far": 8,
    "raw": 327.5,
-   "adj": 242.8292097955062
+   "adj": 235.5
   },
   {
    "closer": "BISHAN 8",
@@ -16649,7 +16649,7 @@
    "n_close": 12,
    "n_far": 7,
    "raw": -651.5,
-   "adj": -231.50658459162662
+   "adj": -229.5
   },
   {
    "closer": "EASTVALE",
@@ -16673,7 +16673,7 @@
    "n_close": 12,
    "n_far": 15,
    "raw": -305.5,
-   "adj": -9.034059711736404
+   "adj": -41.5
   },
   {
    "closer": "EASTVALE",
@@ -16697,7 +16697,7 @@
    "n_close": 12,
    "n_far": 38,
    "raw": -478.5,
-   "adj": -132.6230696636925
+   "adj": -170.5
   },
   {
    "closer": "EASTVALE",
@@ -16721,7 +16721,7 @@
    "n_close": 12,
    "n_far": 12,
    "raw": -158.5,
-   "adj": 137.9659402882636
+   "adj": 105.5
   },
   {
    "closer": "BAYWATER",
@@ -16745,7 +16745,7 @@
    "n_close": 4,
    "n_far": 3,
    "raw": -223,
-   "adj": -74.7670298558682
+   "adj": -91
   },
   {
    "closer": "BAYWATER",
@@ -16769,7 +16769,7 @@
    "n_close": 9,
    "n_far": 12,
    "raw": -293.0,
-   "adj": -144.7670298558682
+   "adj": -161.0
   },
   {
    "closer": "BAYWATER",
@@ -16793,7 +16793,7 @@
    "n_close": 4,
    "n_far": 17,
    "raw": -309,
-   "adj": -111.35603980782429
+   "adj": -133
   },
   {
    "closer": "BAYWATER",
@@ -16817,7 +16817,7 @@
    "n_close": 9,
    "n_far": 16,
    "raw": -397.0,
-   "adj": -199.3560398078243
+   "adj": -221.0
   },
   {
    "closer": "SIMEI GREEN CONDOMINIUM",
@@ -16841,7 +16841,7 @@
    "n_close": 31,
    "n_far": 27,
    "raw": -55,
-   "adj": 43.821980096087856
+   "adj": 33
   },
   {
    "closer": "OPTIMA @ TANAH MERAH",
@@ -16865,7 +16865,7 @@
    "n_close": 13,
    "n_far": 4,
    "raw": -792.5,
-   "adj": -242.1398636707902
+   "adj": -266.5
   },
   {
    "closer": "SCENECA RESIDENCE",
@@ -16889,7 +16889,7 @@
    "n_close": 4,
    "n_far": 37,
    "raw": 571.5,
-   "adj": 232.81683918202475
+   "adj": 203.5
   },
   {
    "closer": "SCENECA RESIDENCE",
@@ -16913,7 +16913,7 @@
    "n_close": 4,
    "n_far": 15,
    "raw": 599,
-   "adj": 260.31683918202475
+   "adj": 231
   },
   {
    "closer": "SCENECA RESIDENCE",
@@ -16937,7 +16937,7 @@
    "n_close": 4,
    "n_far": 28,
    "raw": 821,
-   "adj": 185.96907346629644
+   "adj": 251
   },
   {
    "closer": "SCENECA RESIDENCE",
@@ -16961,7 +16961,7 @@
    "n_close": 4,
    "n_far": 23,
    "raw": 1054.5,
-   "adj": 486.2736144474949
+   "adj": 308.5
   },
   {
    "closer": "NV RESIDENCES",
@@ -16985,7 +16985,7 @@
    "n_close": 15,
    "n_far": 39,
    "raw": 259.0,
-   "adj": 110.7670298558682
+   "adj": 127.0
   },
   {
    "closer": "OASIS @ ELIAS",
@@ -17009,7 +17009,7 @@
    "n_close": 12,
    "n_far": 39,
    "raw": 112.0,
-   "adj": -36.2329701441318
+   "adj": -20.0
   },
   {
    "closer": "BISHAN 8",
@@ -17033,7 +17033,7 @@
    "n_close": 12,
    "n_far": 8,
    "raw": -324.0,
-   "adj": 46.58242536032947
+   "adj": 6.0
   },
   {
    "closer": "STARS OF KOVAN",
@@ -17057,7 +17057,7 @@
    "n_close": 6,
    "n_far": 47,
    "raw": 126.5,
-   "adj": 253.50618530674072
+   "adj": 264.5
   },
   {
    "closer": "STARS OF KOVAN",
@@ -17081,7 +17081,7 @@
    "n_close": 23,
    "n_far": 88,
    "raw": 68.0,
-   "adj": 195.00618530674072
+   "adj": 206.0
   },
   {
    "closer": "STARS OF KOVAN",
@@ -17105,7 +17105,7 @@
    "n_close": 8,
    "n_far": 27,
    "raw": 56.5,
-   "adj": 183.50618530674072
+   "adj": 194.5
   },
   {
    "closer": "BOATHOUSE RESIDENCES",
@@ -17129,7 +17129,7 @@
    "n_close": 6,
    "n_far": 46,
    "raw": -110.5,
-   "adj": 16.50618530674072
+   "adj": 27.5
   },
   {
    "closer": "BOATHOUSE RESIDENCES",
@@ -17153,7 +17153,7 @@
    "n_close": 22,
    "n_far": 54,
    "raw": -27.5,
-   "adj": 99.50618530674072
+   "adj": 110.5
   },
   {
    "closer": "BOATHOUSE RESIDENCES",
@@ -17177,7 +17177,7 @@
    "n_close": 4,
    "n_far": 8,
    "raw": -17.0,
-   "adj": 110.00618530674072
+   "adj": 121.0
   },
   {
    "closer": "WATERWOODS",
@@ -17201,7 +17201,7 @@
    "n_close": 9,
    "n_far": 36,
    "raw": 29.0,
-   "adj": -13.335395102246906
+   "adj": -17.0
   },
   {
    "closer": "WATERWOODS",
@@ -17225,7 +17225,7 @@
    "n_close": 19,
    "n_far": 11,
    "raw": -46,
-   "adj": -88.3353951022469
+   "adj": -92
   },
   {
    "closer": "NV RESIDENCES",
@@ -17249,7 +17249,7 @@
    "n_close": 32,
    "n_far": 16,
    "raw": -182,
-   "adj": -132.5890099519561
+   "adj": -138
   },
   {
    "closer": "NV RESIDENCES",
@@ -17273,7 +17273,7 @@
    "n_close": 15,
    "n_far": 38,
    "raw": -173.0,
-   "adj": -123.58900995195607
+   "adj": -129.0
   },
   {
    "closer": "COCO PALMS",
@@ -17345,7 +17345,7 @@
    "n_close": 13,
    "n_far": 10,
    "raw": 43.5,
-   "adj": -5.910990048043928
+   "adj": -0.5
   },
   {
    "closer": "OPTIMA @ TANAH MERAH",
@@ -17369,7 +17369,7 @@
    "n_close": 6,
    "n_far": 28,
    "raw": 93.5,
-   "adj": 44.08900995195607
+   "adj": 49.5
   },
   {
    "closer": "OPTIMA @ TANAH MERAH",
@@ -17393,7 +17393,7 @@
    "n_close": 6,
    "n_far": 23,
    "raw": 327.0,
-   "adj": 79.94504975978037
+   "adj": 107.0
   },
   {
    "closer": "THE GLADES",
@@ -17417,7 +17417,7 @@
    "n_close": 15,
    "n_far": 23,
    "raw": 455.5,
-   "adj": 84.91757463967053
+   "adj": 77.5
   },
   {
    "closer": "THE QUARTZ",
@@ -17441,7 +17441,7 @@
    "n_close": 37,
    "n_far": 43,
    "raw": -216.0,
-   "adj": -92.47252487989019
+   "adj": -106.0
   },
   {
    "closer": "COCO PALMS",
@@ -17465,7 +17465,7 @@
    "n_close": 26,
    "n_far": 16,
    "raw": 118.5,
-   "adj": 167.9109900480439
+   "adj": 162.5
   },
   {
    "closer": "COCO PALMS",
@@ -17489,7 +17489,7 @@
    "n_close": 28,
    "n_far": 38,
    "raw": 137.0,
-   "adj": 186.4109900480439
+   "adj": 181.0
   },
   {
    "closer": "COCO PALMS",
@@ -17513,7 +17513,7 @@
    "n_close": 22,
    "n_far": 11,
    "raw": 125.0,
-   "adj": 174.4109900480439
+   "adj": 169.0
   },
   {
    "closer": "THE PALETTE",
@@ -17537,7 +17537,7 @@
    "n_close": 38,
    "n_far": 12,
    "raw": 320.0,
-   "adj": 270.5890099519561
+   "adj": 276.0
   },
   {
    "closer": "EVERGREEN PARK",
@@ -17561,7 +17561,7 @@
    "n_close": 14,
    "n_far": 7,
    "raw": -451.5,
-   "adj": -80.91757463967053
+   "adj": -121.5
   },
   {
    "closer": "WATERFRONT WAVES",
@@ -17585,7 +17585,7 @@
    "n_close": 3,
    "n_far": 17,
    "raw": -86,
-   "adj": -36.58900995195607
+   "adj": -42
   },
   {
    "closer": "WATERFRONT WAVES",
@@ -17609,7 +17609,7 @@
    "n_close": 12,
    "n_far": 16,
    "raw": -104,
-   "adj": -54.58900995195607
+   "adj": -60
   },
   {
    "closer": "CASA MERAH",
@@ -17633,7 +17633,7 @@
    "n_close": 28,
    "n_far": 23,
    "raw": 233.5,
-   "adj": 35.85603980782429
+   "adj": 57.5
   },
   {
    "closer": "FAR HORIZON GARDENS",
@@ -17657,7 +17657,7 @@
    "n_close": 7,
    "n_far": 8,
    "raw": -197,
-   "adj": 124.17143531228555
+   "adj": 89
   },
   {
    "closer": "FAR HORIZON GARDENS",
@@ -17681,7 +17681,7 @@
    "n_close": 7,
    "n_far": 15,
    "raw": -240,
-   "adj": 31.760445264241582
+   "adj": 2
   },
   {
    "closer": "WATER PLACE",
@@ -17705,7 +17705,7 @@
    "n_close": 24,
    "n_far": 24,
    "raw": 192,
-   "adj": 167.29450497597804
+   "adj": 170
   },
   {
    "closer": "WATER PLACE",
@@ -17729,7 +17729,7 @@
    "n_close": 4,
    "n_far": 8,
    "raw": 306.0,
-   "adj": 281.29450497597804
+   "adj": 284.0
   },
   {
    "closer": "THE SHORE RESIDENCES",
@@ -17753,7 +17753,7 @@
    "n_close": 21,
    "n_far": 7,
    "raw": -87.5,
-   "adj": -136.9109900480439
+   "adj": -131.5
   },
   {
    "closer": "THE SHORE RESIDENCES",
@@ -17777,7 +17777,7 @@
    "n_close": 5,
    "n_far": 27,
    "raw": -15.5,
-   "adj": -64.91099004804393
+   "adj": -59.5
   },
   {
    "closer": "KOVAN RESIDENCES",
@@ -17801,7 +17801,7 @@
    "n_close": 10,
    "n_far": 12,
    "raw": 133.0,
-   "adj": 58.8835149279341
+   "adj": 67.0
   },
   {
    "closer": "KOVAN RESIDENCES",
@@ -17825,7 +17825,7 @@
    "n_close": 16,
    "n_far": 25,
    "raw": 110.0,
-   "adj": 35.8835149279341
+   "adj": 44.0
   },
   {
    "closer": "WINDERMERE",
@@ -17849,7 +17849,7 @@
    "n_close": 14,
    "n_far": 12,
    "raw": -88.5,
-   "adj": 59.7329701441318
+   "adj": 43.5
   },
   {
    "closer": "REGENT GROVE",
@@ -17873,7 +17873,7 @@
    "n_close": 28,
    "n_far": 12,
    "raw": -78,
-   "adj": 70.2329701441318
+   "adj": 54
   },
   {
    "closer": "REGENT GROVE",
@@ -17897,7 +17897,7 @@
    "n_close": 3,
    "n_far": 3,
    "raw": -63,
-   "adj": 85.2329701441318
+   "adj": 69
   },
   {
    "closer": "THE QUINTET",
@@ -17921,7 +17921,7 @@
    "n_close": 12,
    "n_far": 23,
    "raw": 24.0,
-   "adj": -124.2329701441318
+   "adj": -108.0
   },
   {
    "closer": "THE QUINTET",
@@ -17945,7 +17945,7 @@
    "n_close": 3,
    "n_far": 12,
    "raw": -4,
-   "adj": -152.2329701441318
+   "adj": -136
   },
   {
    "closer": "THE WISTERIA",
@@ -17969,7 +17969,7 @@
    "n_close": 6,
    "n_far": 5,
    "raw": -19,
-   "adj": -61.335395102246906
+   "adj": -65
   },
   {
    "closer": "THE WISTERIA",
@@ -17993,7 +17993,7 @@
    "n_close": 13,
    "n_far": 48,
    "raw": 30.0,
-   "adj": -12.335395102246906
+   "adj": -16.0
   },
   {
    "closer": "THE WISTERIA",
@@ -18017,7 +18017,7 @@
    "n_close": 5,
    "n_far": 17,
    "raw": 75,
-   "adj": 32.664604897753094
+   "adj": 29
   },
   {
    "closer": "THE WISTERIA",
@@ -18041,7 +18041,7 @@
    "n_close": 13,
    "n_far": 18,
    "raw": 184,
-   "adj": -27.67697551123453
+   "adj": -22
   },
   {
    "closer": "THE WISTERIA",
@@ -18065,7 +18065,7 @@
    "n_close": 4,
    "n_far": 8,
    "raw": 18.5,
-   "adj": -108.50618530674072
+   "adj": -119.5
   },
   {
    "closer": "THE WISTERIA",
@@ -18089,7 +18089,7 @@
    "n_close": 6,
    "n_far": 15,
    "raw": 93,
-   "adj": -34.00618530674072
+   "adj": -45
   },
   {
    "closer": "THE WISTERIA",
@@ -18113,7 +18113,7 @@
    "n_close": 13,
    "n_far": 24,
    "raw": 149,
-   "adj": 21.99381469325928
+   "adj": 11
   },
   {
    "closer": "THE WISTERIA",
@@ -18137,7 +18137,7 @@
    "n_close": 6,
    "n_far": 13,
    "raw": 80,
-   "adj": 37.664604897753094
+   "adj": 34
   },
   {
    "closer": "THE WISTERIA",
@@ -18161,7 +18161,7 @@
    "n_close": 13,
    "n_far": 40,
    "raw": 109,
-   "adj": 66.6646048977531
+   "adj": 63
   },
   {
    "closer": "THE WISTERIA",
@@ -18185,7 +18185,7 @@
    "n_close": 5,
    "n_far": 17,
    "raw": 77.0,
-   "adj": 34.664604897753094
+   "adj": 31.0
   },
   {
    "closer": "WOODSVALE",
@@ -18233,7 +18233,7 @@
    "n_close": 37,
    "n_far": 71,
    "raw": -333.5,
-   "adj": 111.19891043239534
+   "adj": 158.5
   },
   {
    "closer": "WOODSVALE",
@@ -18257,7 +18257,7 @@
    "n_close": 37,
    "n_far": 35,
    "raw": -399.5,
-   "adj": -4.212079615648577
+   "adj": 0.5
   },
   {
    "closer": "THE LAKESHORE",
@@ -18281,7 +18281,7 @@
    "n_close": 35,
    "n_far": 9,
    "raw": -351,
-   "adj": -29.828564687714447
+   "adj": 31
   },
   {
    "closer": "LAKE GRANDE",
@@ -18305,7 +18305,7 @@
    "n_close": 50,
    "n_far": 28,
    "raw": 146.5,
-   "adj": 61.82920979550619
+   "adj": 54.5
   },
   {
    "closer": "LAKE GRANDE",
@@ -18329,7 +18329,7 @@
    "n_close": 9,
    "n_far": 17,
    "raw": -9.5,
-   "adj": -94.17079020449381
+   "adj": -101.5
   },
   {
    "closer": "LAKE GRANDE",
@@ -18353,7 +18353,7 @@
    "n_close": 8,
    "n_far": 17,
    "raw": 36.5,
-   "adj": -48.17079020449381
+   "adj": -55.5
   },
   {
    "closer": "THE LAKEFRONT RESIDENCES",
@@ -18377,7 +18377,7 @@
    "n_close": 6,
    "n_far": 13,
    "raw": -198.0,
-   "adj": 13.67697551123453
+   "adj": 8.0
   },
   {
    "closer": "THE LAKEFRONT RESIDENCES",
@@ -18401,7 +18401,7 @@
    "n_close": 7,
    "n_far": 50,
    "raw": -83.0,
-   "adj": 128.67697551123453
+   "adj": 123.0
   },
   {
    "closer": "THE LAKEFRONT RESIDENCES",
@@ -18425,7 +18425,7 @@
    "n_close": 21,
    "n_far": 9,
    "raw": -117.5,
-   "adj": 94.17697551123453
+   "adj": 88.5
   },
   {
    "closer": "THE MADEIRA",
@@ -18449,7 +18449,7 @@
    "n_close": 8,
    "n_far": 8,
    "raw": 89.0,
-   "adj": -9.821980096087856
+   "adj": 1.0
   },
   {
    "closer": "THE MADEIRA",
@@ -18473,7 +18473,7 @@
    "n_close": 17,
    "n_far": 12,
    "raw": -40,
-   "adj": -138.82198009608786
+   "adj": -128
   },
   {
    "closer": "TWIN FOUNTAINS",
@@ -18545,7 +18545,7 @@
    "n_close": 20,
    "n_far": 36,
    "raw": -266.0,
-   "adj": -68.35603980782429
+   "adj": -66.0
   },
   {
    "closer": "MI CASA",
@@ -18569,7 +18569,7 @@
    "n_close": 4,
    "n_far": 3,
    "raw": -210.5,
-   "adj": -136.3835149279341
+   "adj": -144.5
   },
   {
    "closer": "LA CASA",
@@ -18593,7 +18593,7 @@
    "n_close": 13,
    "n_far": 3,
    "raw": -215.5,
-   "adj": -17.85603980782429
+   "adj": -15.5
   },
   {
    "closer": "LA CASA",
@@ -18617,7 +18617,7 @@
    "n_close": 20,
    "n_far": 39,
    "raw": -123,
-   "adj": 74.64396019217571
+   "adj": 77
   },
   {
    "closer": "THE BROWNSTONE",
@@ -18641,7 +18641,7 @@
    "n_close": 3,
    "n_far": 5,
    "raw": 310,
-   "adj": 140.65841959101238
+   "adj": 150
   },
   {
    "closer": "THE BROWNSTONE",
@@ -18665,7 +18665,7 @@
    "n_close": 48,
    "n_far": 11,
    "raw": 308.0,
-   "adj": 138.65841959101238
+   "adj": 148.0
   },
   {
    "closer": "THE BROWNSTONE",
@@ -18689,7 +18689,7 @@
    "n_close": 3,
    "n_far": 41,
    "raw": -215,
-   "adj": 39.01237061348144
+   "adj": 61
   },
   {
    "closer": "THE BROWNSTONE",
@@ -18713,7 +18713,7 @@
    "n_close": 48,
    "n_far": 28,
    "raw": -225.5,
-   "adj": 28.512370613481437
+   "adj": 50.5
   },
   {
    "closer": "THE BROWNSTONE",
@@ -18737,7 +18737,7 @@
    "n_close": 21,
    "n_far": 10,
    "raw": -356.5,
-   "adj": -102.48762938651856
+   "adj": -80.5
   },
   {
    "closer": "THE COMMODORE",
@@ -18761,7 +18761,7 @@
    "n_close": 19,
    "n_far": 3,
    "raw": 259.0,
-   "adj": 4.987629386518563
+   "adj": -17.0
   },
   {
    "closer": "THE COMMODORE",
@@ -18785,7 +18785,7 @@
    "n_close": 11,
    "n_far": 48,
    "raw": 209.5,
-   "adj": -44.51237061348144
+   "adj": -66.5
   },
   {
    "closer": "THE COMMODORE",
@@ -18809,7 +18809,7 @@
    "n_close": 8,
    "n_far": 21,
    "raw": 275.0,
-   "adj": 20.987629386518563
+   "adj": -1.0
   },
   {
    "closer": "THE BROWNSTONE",
@@ -18833,7 +18833,7 @@
    "n_close": 3,
    "n_far": 5,
    "raw": 215,
-   "adj": 87.99381469325928
+   "adj": 77
   },
   {
    "closer": "THE BROWNSTONE",
@@ -18857,7 +18857,7 @@
    "n_close": 48,
    "n_far": 24,
    "raw": 257.5,
-   "adj": 130.49381469325928
+   "adj": 119.5
   },
   {
    "closer": "THE BROWNSTONE",
@@ -18881,7 +18881,7 @@
    "n_close": 48,
    "n_far": 57,
    "raw": 194.0,
-   "adj": 109.32920979550619
+   "adj": 102.0
   },
   {
    "closer": "THE BROWNSTONE",
@@ -18905,7 +18905,7 @@
    "n_close": 3,
    "n_far": 6,
    "raw": -15,
-   "adj": 27.335395102246906
+   "adj": 31
   },
   {
    "closer": "THE BROWNSTONE",
@@ -18929,7 +18929,7 @@
    "n_close": 48,
    "n_far": 70,
    "raw": 42.5,
-   "adj": 84.8353951022469
+   "adj": 88.5
   },
   {
    "closer": "THE BROWNSTONE",
@@ -18953,7 +18953,7 @@
    "n_close": 21,
    "n_far": 19,
    "raw": -43.0,
-   "adj": -0.6646048977530938
+   "adj": 3.0
   },
   {
    "closer": "REGENT GROVE",
@@ -19049,7 +19049,7 @@
    "n_close": 3,
    "n_far": 12,
    "raw": -67,
-   "adj": -67.0
+   "adj": -67
   },
   {
    "closer": "MIDWOOD",
@@ -19073,7 +19073,7 @@
    "n_close": 45,
    "n_far": 8,
    "raw": 320.0,
-   "adj": 65.98762938651856
+   "adj": 44.0
   },
   {
    "closer": "MIDWOOD",
@@ -19097,7 +19097,7 @@
    "n_close": 16,
    "n_far": 27,
    "raw": 209.5,
-   "adj": -44.51237061348144
+   "adj": -66.5
   },
   {
    "closer": "MIDWOOD",
@@ -19121,7 +19121,7 @@
    "n_close": 4,
    "n_far": 7,
    "raw": 361.5,
-   "adj": 107.48762938651856
+   "adj": 85.5
   },
   {
    "closer": "THE SKYWOODS",
@@ -19145,7 +19145,7 @@
    "n_close": 8,
    "n_far": 35,
    "raw": -141.0,
-   "adj": 113.01237061348144
+   "adj": 135.0
   },
   {
    "closer": "THE SKYWOODS",
@@ -19169,7 +19169,7 @@
    "n_close": 27,
    "n_far": 24,
    "raw": -127.5,
-   "adj": 126.51237061348144
+   "adj": 148.5
   },
   {
    "closer": "SEASONS PARK",
@@ -19193,7 +19193,7 @@
    "n_close": 8,
    "n_far": 15,
    "raw": -43,
-   "adj": -92.41099004804393
+   "adj": -87
   },
   {
    "closer": "SEASONS PARK",
@@ -19217,7 +19217,7 @@
    "n_close": 9,
    "n_far": 19,
    "raw": 7.5,
-   "adj": -41.91099004804393
+   "adj": -36.5
   },
   {
    "closer": "PARC BOTANNIA",
@@ -19241,7 +19241,7 @@
    "n_close": 21,
    "n_far": 29,
    "raw": -38,
-   "adj": -122.67079020449381
+   "adj": -130
   },
   {
    "closer": "PARC BOTANNIA",
@@ -19265,7 +19265,7 @@
    "n_close": 39,
    "n_far": 61,
    "raw": 5.5,
-   "adj": -79.17079020449381
+   "adj": -86.5
   },
   {
    "closer": "PARC BOTANNIA",
@@ -19289,7 +19289,7 @@
    "n_close": 33,
    "n_far": 26,
    "raw": 148,
-   "adj": 63.32920979550619
+   "adj": 56
   },
   {
    "closer": "SOL ACRES",
@@ -19337,7 +19337,7 @@
    "n_close": 17,
    "n_far": 3,
    "raw": 10,
-   "adj": 10.0
+   "adj": 10
   },
   {
    "closer": "PALM GARDENS",
@@ -19361,7 +19361,7 @@
    "n_close": 29,
    "n_far": 40,
    "raw": -480.5,
-   "adj": -35.80108956760466
+   "adj": -12.5
   },
   {
    "closer": "PALM GARDENS",
@@ -19385,7 +19385,7 @@
    "n_close": 8,
    "n_far": 3,
    "raw": -398.0,
-   "adj": 46.69891043239534
+   "adj": 70.0
   },
   {
    "closer": "THE LAKESHORE",
@@ -19409,7 +19409,7 @@
    "n_close": 22,
    "n_far": 28,
    "raw": -233.5,
-   "adj": 38.26044526424158
+   "adj": 56.5
   },
   {
    "closer": "THE LAKESHORE",
@@ -19433,7 +19433,7 @@
    "n_close": 35,
    "n_far": 17,
    "raw": -360.5,
-   "adj": -88.73955473575842
+   "adj": -70.5
   },
   {
    "closer": "THE LAKESHORE",
@@ -19457,7 +19457,7 @@
    "n_close": 5,
    "n_far": 17,
    "raw": -563.5,
-   "adj": -291.7395547357584
+   "adj": -273.5
   },
   {
    "closer": "THE LAKESHORE",
@@ -19481,7 +19481,7 @@
    "n_close": 22,
    "n_far": 3,
    "raw": 214.0,
-   "adj": 189.29450497597804
+   "adj": 192.0
   },
   {
    "closer": "THE LAKESHORE",
@@ -19505,7 +19505,7 @@
    "n_close": 35,
    "n_far": 8,
    "raw": 214,
-   "adj": 189.29450497597804
+   "adj": 192
   },
   {
    "closer": "THE LAKESHORE",
@@ -19529,7 +19529,7 @@
    "n_close": 5,
    "n_far": 6,
    "raw": -37.5,
-   "adj": -62.205495024021964
+   "adj": -59.5
   },
   {
    "closer": "PARC VISTA",
@@ -19553,7 +19553,7 @@
    "n_close": 27,
    "n_far": 22,
    "raw": -324,
-   "adj": -151.06153483184625
+   "adj": -170
   },
   {
    "closer": "PARC VISTA",
@@ -19577,7 +19577,7 @@
    "n_close": 16,
    "n_far": 35,
    "raw": -352,
-   "adj": -179.06153483184625
+   "adj": -198
   },
   {
    "closer": "THE LAKESHORE",
@@ -19601,7 +19601,7 @@
    "n_close": 22,
    "n_far": 7,
    "raw": 493.0,
-   "adj": 23.595594543582706
+   "adj": 75.0
   },
   {
    "closer": "THE LAKEFRONT RESIDENCES",
@@ -19625,7 +19625,7 @@
    "n_close": 21,
    "n_far": 35,
    "raw": 233.5,
-   "adj": 35.85603980782429
+   "adj": 57.5
   },
   {
    "closer": "CASPIAN",
@@ -19649,7 +19649,7 @@
    "n_close": 5,
    "n_far": 22,
    "raw": -1,
-   "adj": -149.2329701441318
+   "adj": -133
   },
   {
    "closer": "CASPIAN",
@@ -19673,7 +19673,7 @@
    "n_close": 21,
    "n_far": 35,
    "raw": 26,
-   "adj": -122.2329701441318
+   "adj": -106
   },
   {
    "closer": "CASPIAN",
@@ -19697,7 +19697,7 @@
    "n_close": 11,
    "n_far": 5,
    "raw": 328.0,
-   "adj": 179.7670298558682
+   "adj": 196.0
   },
   {
    "closer": "REGENT HEIGHTS",
@@ -19721,7 +19721,7 @@
    "n_close": 26,
    "n_far": 7,
    "raw": -87.0,
-   "adj": 36.52747512010981
+   "adj": 23.0
   },
   {
    "closer": "REGENT HEIGHTS",
@@ -19745,7 +19745,7 @@
    "n_close": 17,
    "n_far": 36,
    "raw": -69,
-   "adj": 54.52747512010981
+   "adj": 41
   },
   {
    "closer": "REGENT HEIGHTS",
@@ -19769,7 +19769,7 @@
    "n_close": 26,
    "n_far": 16,
    "raw": 21.0,
-   "adj": -3.705495024021964
+   "adj": -1.0
   },
   {
    "closer": "REGENT HEIGHTS",
@@ -19793,7 +19793,7 @@
    "n_close": 17,
    "n_far": 23,
    "raw": 132,
-   "adj": 107.29450497597804
+   "adj": 110
   },
   {
    "closer": "THE DEW",
@@ -19817,7 +19817,7 @@
    "n_close": 5,
    "n_far": 17,
    "raw": 20,
-   "adj": -103.52747512010981
+   "adj": -90
   },
   {
    "closer": "THE WATERGARDENS AT CANBERRA",
@@ -19841,7 +19841,7 @@
    "n_close": 41,
    "n_far": 5,
    "raw": 525,
-   "adj": 101.64604897753094
+   "adj": 89
   },
   {
    "closer": "THE WATERGARDENS AT CANBERRA",
@@ -19865,7 +19865,7 @@
    "n_close": 28,
    "n_far": 11,
    "raw": 533.5,
-   "adj": 110.14604897753094
+   "adj": 97.5
   },
   {
    "closer": "THE COMMODORE",
@@ -19889,7 +19889,7 @@
    "n_close": 19,
    "n_far": 5,
    "raw": 569.0,
-   "adj": 145.64604897753094
+   "adj": 133.0
   },
   {
    "closer": "THE COMMODORE",
@@ -19913,7 +19913,7 @@
    "n_close": 11,
    "n_far": 11,
    "raw": 517.5,
-   "adj": 94.14604897753094
+   "adj": 81.5
   },
   {
    "closer": "THE NAUTICAL",
@@ -19937,7 +19937,7 @@
    "n_close": 5,
    "n_far": 5,
    "raw": 95,
-   "adj": 70.29450497597804
+   "adj": 73
   },
   {
    "closer": "THE NAUTICAL",
@@ -19961,7 +19961,7 @@
    "n_close": 24,
    "n_far": 11,
    "raw": 50.5,
-   "adj": 25.794504975978036
+   "adj": 28.5
   },
   {
    "closer": "CANBERRA RESIDENCES",
@@ -19985,7 +19985,7 @@
    "n_close": 11,
    "n_far": 57,
    "raw": -114.0,
-   "adj": -29.329209795506188
+   "adj": -46.0
   },
   {
    "closer": "THE VISIONAIRE",
@@ -20009,7 +20009,7 @@
    "n_close": 6,
    "n_far": 5,
    "raw": 325,
-   "adj": 113.32302448876547
+   "adj": 119
   },
   {
    "closer": "THE VISIONAIRE",
@@ -20033,7 +20033,7 @@
    "n_close": 70,
    "n_far": 11,
    "raw": 265.5,
-   "adj": 53.82302448876547
+   "adj": 59.5
   },
   {
    "closer": "PALM GARDENS",
@@ -20057,7 +20057,7 @@
    "n_close": 29,
    "n_far": 64,
    "raw": -425.5,
-   "adj": 19.198910432395337
+   "adj": 42.5
   },
   {
    "closer": "PALM GARDENS",
@@ -20081,7 +20081,7 @@
    "n_close": 8,
    "n_far": 17,
    "raw": -408.0,
-   "adj": 36.69891043239534
+   "adj": 60.0
   },
   {
    "closer": "THE COMMODORE",
@@ -20177,7 +20177,7 @@
    "n_close": 41,
    "n_far": 5,
    "raw": 430,
-   "adj": 48.981444079777816
+   "adj": 16
   },
   {
    "closer": "THE WATERGARDENS AT CANBERRA",
@@ -20201,7 +20201,7 @@
    "n_close": 28,
    "n_far": 24,
    "raw": 483.0,
-   "adj": 101.98144407977782
+   "adj": 69.0
   },
   {
    "closer": "THE WATERGARDENS AT CANBERRA",
@@ -20225,7 +20225,7 @@
    "n_close": 28,
    "n_far": 57,
    "raw": 419.5,
-   "adj": 80.81683918202475
+   "adj": 51.5
   },
   {
    "closer": "THE WATERGARDENS AT CANBERRA",
@@ -20249,7 +20249,7 @@
    "n_close": 41,
    "n_far": 6,
    "raw": 200,
-   "adj": -11.67697551123453
+   "adj": -30
   },
   {
    "closer": "THE WATERGARDENS AT CANBERRA",
@@ -20273,7 +20273,7 @@
    "n_close": 28,
    "n_far": 70,
    "raw": 268.0,
-   "adj": 56.32302448876547
+   "adj": 38.0
   },
   {
    "closer": "THE WATERGARDENS AT CANBERRA",
@@ -20297,7 +20297,7 @@
    "n_close": 10,
    "n_far": 19,
    "raw": 313.5,
-   "adj": 101.82302448876547
+   "adj": 83.5
   },
   {
    "closer": "H2O RESIDENCES",
@@ -20321,7 +20321,7 @@
    "n_close": 20,
    "n_far": 6,
    "raw": 377.5,
-   "adj": 56.32856468771445
+   "adj": 91.5
   },
   {
    "closer": "H2O RESIDENCES",
@@ -20345,7 +20345,7 @@
    "n_close": 13,
    "n_far": 12,
    "raw": 432.0,
-   "adj": 110.82856468771445
+   "adj": 146.0
   },
   {
    "closer": "LUSH ACRES",
@@ -20369,7 +20369,7 @@
    "n_close": 26,
    "n_far": 12,
    "raw": 355.0,
-   "adj": -40.28792038435142
+   "adj": -45.0
   },
   {
    "closer": "RIVERTREES RESIDENCES",
@@ -20393,7 +20393,7 @@
    "n_close": 14,
    "n_far": 12,
    "raw": 548.0,
-   "adj": 152.71207961564858
+   "adj": 148.0
   },
   {
    "closer": "HILLVIEW REGENCY",
@@ -20417,7 +20417,7 @@
    "n_close": 7,
    "n_far": 16,
    "raw": 108.0,
-   "adj": -40.2329701441318
+   "adj": -24.0
   },
   {
    "closer": "HILLVIEW REGENCY",
@@ -20441,7 +20441,7 @@
    "n_close": 36,
    "n_far": 23,
    "raw": 201,
-   "adj": 52.7670298558682
+   "adj": 69
   },
   {
    "closer": "THE DEW",
@@ -20465,7 +20465,7 @@
    "n_close": 5,
    "n_far": 36,
    "raw": -49,
-   "adj": -49.0
+   "adj": -49
   },
   {
    "closer": "KINGSFORD . HILLVIEW PEAK",
@@ -20489,7 +20489,7 @@
    "n_close": 29,
    "n_far": 29,
    "raw": -357.0,
-   "adj": -102.98762938651856
+   "adj": -81.0
   },
   {
    "closer": "KINGSFORD . HILLVIEW PEAK",
@@ -20513,7 +20513,7 @@
    "n_close": 20,
    "n_far": 45,
    "raw": -467.5,
-   "adj": -213.48762938651856
+   "adj": -191.5
   },
   {
    "closer": "MIDWOOD",
@@ -20585,7 +20585,7 @@
    "n_close": 11,
    "n_far": 45,
    "raw": -248.0,
-   "adj": 48.347765715728315
+   "adj": 74.0
   },
   {
    "closer": "H2O RESIDENCES",
@@ -20609,7 +20609,7 @@
    "n_close": 13,
    "n_far": 26,
    "raw": 77,
-   "adj": 204.00618530674072
+   "adj": 191
   },
   {
    "closer": "H2O RESIDENCES",
@@ -20633,7 +20633,7 @@
    "n_close": 5,
    "n_far": 16,
    "raw": 150.0,
-   "adj": 277.0061853067407
+   "adj": 264.0
   },
   {
    "closer": "H2O RESIDENCES",
@@ -20657,7 +20657,7 @@
    "n_close": 20,
    "n_far": 19,
    "raw": -115.5,
-   "adj": 11.506185306740718
+   "adj": -1.5
   },
   {
    "closer": "H2O RESIDENCES",
@@ -20681,7 +20681,7 @@
    "n_close": 13,
    "n_far": 14,
    "raw": -116,
-   "adj": 11.006185306740718
+   "adj": -2
   },
   {
    "closer": "H2O RESIDENCES",
@@ -20705,7 +20705,7 @@
    "n_close": 5,
    "n_far": 6,
    "raw": -104,
-   "adj": 23.00618530674072
+   "adj": 10
   },
   {
    "closer": "H2O RESIDENCES",
@@ -20729,7 +20729,7 @@
    "n_close": 20,
    "n_far": 15,
    "raw": -7,
-   "adj": 120.00618530674072
+   "adj": 107
   },
   {
    "closer": "H2O RESIDENCES",
@@ -20753,7 +20753,7 @@
    "n_close": 13,
    "n_far": 21,
    "raw": 19,
-   "adj": 146.00618530674072
+   "adj": 133
   },
   {
    "closer": "H2O RESIDENCES",
@@ -20777,7 +20777,7 @@
    "n_close": 5,
    "n_far": 5,
    "raw": 14,
-   "adj": 141.00618530674072
+   "adj": 128
   },
   {
    "closer": "THE COMMODORE",
@@ -20801,7 +20801,7 @@
    "n_close": 5,
    "n_far": 4,
    "raw": 342.5,
-   "adj": -38.518555920222184
+   "adj": -71.5
   },
   {
    "closer": "THE COMMODORE",
@@ -20825,7 +20825,7 @@
    "n_close": 19,
    "n_far": 5,
    "raw": 474.0,
-   "adj": 92.98144407977782
+   "adj": 60.0
   },
   {
    "closer": "THE COMMODORE",
@@ -20849,7 +20849,7 @@
    "n_close": 11,
    "n_far": 24,
    "raw": 467.0,
-   "adj": 85.98144407977782
+   "adj": 53.0
   },
   {
    "closer": "THE COMMODORE",
@@ -20873,7 +20873,7 @@
    "n_close": 11,
    "n_far": 57,
    "raw": 403.5,
-   "adj": 64.81683918202475
+   "adj": 35.5
   },
   {
    "closer": "THE COMMODORE",
@@ -20897,7 +20897,7 @@
    "n_close": 19,
    "n_far": 6,
    "raw": 244.0,
-   "adj": 32.32302448876547
+   "adj": 14.0
   },
   {
    "closer": "THE COMMODORE",
@@ -20921,7 +20921,7 @@
    "n_close": 11,
    "n_far": 70,
    "raw": 252.0,
-   "adj": 40.32302448876547
+   "adj": 22.0
   },
   {
    "closer": "THE COMMODORE",
@@ -20945,7 +20945,7 @@
    "n_close": 8,
    "n_far": 19,
    "raw": 232,
-   "adj": 20.32302448876547
+   "adj": 2
   },
   {
    "closer": "ORCHID PARK CONDOMINIUM",
@@ -20969,7 +20969,7 @@
    "n_close": 29,
    "n_far": 16,
    "raw": -285.5,
-   "adj": 134.49341540837338
+   "adj": 88.5
   },
   {
    "closer": "ORCHID PARK CONDOMINIUM",
@@ -20993,7 +20993,7 @@
    "n_close": 23,
    "n_far": 10,
    "raw": -308.0,
-   "adj": 111.99341540837338
+   "adj": 66.0
   },
   {
    "closer": "ORCHID PARK CONDOMINIUM",
@@ -21017,7 +21017,7 @@
    "n_close": 3,
    "n_far": 5,
    "raw": -305,
-   "adj": 114.99341540837338
+   "adj": 69
   },
   {
    "closer": "ECO SANCTUARY",
@@ -21041,7 +21041,7 @@
    "n_close": 13,
    "n_far": 5,
    "raw": 138,
-   "adj": 63.8835149279341
+   "adj": 48
   },
   {
    "closer": "ECO SANCTUARY",
@@ -21065,7 +21065,7 @@
    "n_close": 11,
    "n_far": 14,
    "raw": 157,
-   "adj": 82.8835149279341
+   "adj": 67
   },
   {
    "closer": "TREE HOUSE",
@@ -21089,7 +21089,7 @@
    "n_close": 5,
    "n_far": 6,
    "raw": -73.5,
-   "adj": -24.089009951956072
+   "adj": -29.5
   },
   {
    "closer": "TREE HOUSE",
@@ -21113,7 +21113,7 @@
    "n_close": 14,
    "n_far": 25,
    "raw": -49.5,
-   "adj": -0.08900995195607209
+   "adj": -5.5
   },
   {
    "closer": "TREE HOUSE",
@@ -21137,7 +21137,7 @@
    "n_close": 6,
    "n_far": 5,
    "raw": 217,
-   "adj": 266.4109900480439
+   "adj": 261
   },
   {
    "closer": "YISHUN EMERALD",
@@ -21161,7 +21161,7 @@
    "n_close": 6,
    "n_far": 13,
    "raw": -299,
-   "adj": -2.534059711736404
+   "adj": -35
   },
   {
    "closer": "YISHUN EMERALD",
@@ -21185,7 +21185,7 @@
    "n_close": 8,
    "n_far": 27,
    "raw": -254,
-   "adj": 42.465940288263596
+   "adj": 10
   },
   {
    "closer": "YISHUN SAPPHIRE",
@@ -21209,7 +21209,7 @@
    "n_close": 22,
    "n_far": 8,
    "raw": -7,
-   "adj": -7.0
+   "adj": -7
   },
   {
    "closer": "YISHUN SAPPHIRE",
@@ -21257,7 +21257,7 @@
    "n_close": 14,
    "n_far": 26,
    "raw": 193,
-   "adj": 193.0
+   "adj": 193
   },
   {
    "closer": "RIVERTREES RESIDENCES",
@@ -21305,7 +21305,7 @@
    "n_close": 21,
    "n_far": 26,
    "raw": 58,
-   "adj": 58.0
+   "adj": 58
   },
   {
    "closer": "RIVERBANK @ FERNVALE",
@@ -21353,7 +21353,7 @@
    "n_close": 8,
    "n_far": 17,
    "raw": -574.5,
-   "adj": -278.0340597117364
+   "adj": -262.5
   },
   {
    "closer": "LAKEHOLMZ",
@@ -21377,7 +21377,7 @@
    "n_close": 6,
    "n_far": 17,
    "raw": -526.0,
-   "adj": -229.5340597117364
+   "adj": -214.0
   },
   {
    "closer": "PARC VISTA",
@@ -21401,7 +21401,7 @@
    "n_close": 16,
    "n_far": 17,
    "raw": -712.5,
-   "adj": -267.80108956760466
+   "adj": -268.5
   },
   {
    "closer": "THE LAKEFRONT RESIDENCES",
@@ -21425,7 +21425,7 @@
    "n_close": 7,
    "n_far": 28,
    "raw": 63.5,
-   "adj": 190.50618530674072
+   "adj": 177.5
   },
   {
    "closer": "THE LAKEFRONT RESIDENCES",
@@ -21449,7 +21449,7 @@
    "n_close": 21,
    "n_far": 17,
    "raw": -127.0,
-   "adj": 0.006185306740718488
+   "adj": -13.0
   },
   {
    "closer": "CASPIAN",
@@ -21473,7 +21473,7 @@
    "n_close": 5,
    "n_far": 28,
    "raw": -234.5,
-   "adj": -110.97252487989019
+   "adj": -76.5
   },
   {
    "closer": "CASPIAN",
@@ -21497,7 +21497,7 @@
    "n_close": 21,
    "n_far": 17,
    "raw": -334.5,
-   "adj": -210.9725248798902
+   "adj": -176.5
   },
   {
    "closer": "CASPIAN",
@@ -21521,7 +21521,7 @@
    "n_close": 11,
    "n_far": 17,
    "raw": -235.5,
-   "adj": -111.97252487989019
+   "adj": -77.5
   },
   {
    "closer": "THE NAUTICAL",
@@ -21545,7 +21545,7 @@
    "n_close": 24,
    "n_far": 57,
    "raw": -63.5,
-   "adj": -21.164604897753094
+   "adj": -17.5
   },
   {
    "closer": "THE VISIONAIRE",
@@ -21569,7 +21569,7 @@
    "n_close": 6,
    "n_far": 5,
    "raw": 230,
-   "adj": 60.658419591012375
+   "adj": 46
   },
   {
    "closer": "THE VISIONAIRE",
@@ -21593,7 +21593,7 @@
    "n_close": 70,
    "n_far": 24,
    "raw": 215.0,
-   "adj": 45.658419591012375
+   "adj": 31.0
   },
   {
    "closer": "NORTHOAKS",
@@ -21617,7 +21617,7 @@
    "n_close": 46,
    "n_far": 71,
    "raw": -348.0,
-   "adj": 96.69891043239534
+   "adj": 144.0
   },
   {
    "closer": "PARC VISTA",
@@ -21641,7 +21641,7 @@
    "n_close": 27,
    "n_far": 3,
    "raw": -110.0,
-   "adj": 38.2329701441318
+   "adj": 22.0
   },
   {
    "closer": "PARC VISTA",
@@ -21665,7 +21665,7 @@
    "n_close": 16,
    "n_far": 8,
    "raw": -138,
-   "adj": 10.232970144131798
+   "adj": -6
   },
   {
    "closer": "LAKEPOINT CONDOMINIUM",
@@ -21689,7 +21689,7 @@
    "n_close": 7,
    "n_far": 3,
    "raw": -279.0,
-   "adj": 165.69891043239534
+   "adj": 117.0
   },
   {
    "closer": "THE LAKEFRONT RESIDENCES",
@@ -21713,7 +21713,7 @@
    "n_close": 21,
    "n_far": 8,
    "raw": 447.5,
-   "adj": 225.15054478380233
+   "adj": 249.5
   },
   {
    "closer": "CASPIAN",
@@ -21737,7 +21737,7 @@
    "n_close": 5,
    "n_far": 3,
    "raw": 213.0,
-   "adj": 40.061534831846245
+   "adj": 59.0
   },
   {
    "closer": "CASPIAN",
@@ -21761,7 +21761,7 @@
    "n_close": 21,
    "n_far": 8,
    "raw": 240,
-   "adj": 67.06153483184625
+   "adj": 86
   },
   {
    "closer": "CASPIAN",
@@ -21785,7 +21785,7 @@
    "n_close": 11,
    "n_far": 6,
    "raw": 290.5,
-   "adj": 117.56153483184625
+   "adj": 136.5
   },
   {
    "closer": "WOODHAVEN",
@@ -21809,7 +21809,7 @@
    "n_close": 14,
    "n_far": 12,
    "raw": 406.0,
-   "adj": 60.12306966369249
+   "adj": 98.0
   },
   {
    "closer": "ROSEWOOD",
@@ -21833,7 +21833,7 @@
    "n_close": 12,
    "n_far": 14,
    "raw": -324,
-   "adj": -52.23955473575842
+   "adj": -82
   },
   {
    "closer": "CASABLANCA",
@@ -21857,7 +21857,7 @@
    "n_close": 20,
    "n_far": 14,
    "raw": -294.5,
-   "adj": -47.445049759780375
+   "adj": -74.5
   },
   {
    "closer": "THE CRITERION",
@@ -21881,7 +21881,7 @@
    "n_close": 5,
    "n_far": 17,
    "raw": 189,
-   "adj": 19.658419591012375
+   "adj": 29
   },
   {
    "closer": "THE CRITERION",
@@ -21905,7 +21905,7 @@
    "n_close": 5,
    "n_far": 15,
    "raw": 112,
-   "adj": 27.329209795506188
+   "adj": 20
   },
   {
    "closer": "THE CRITERION",
@@ -21929,7 +21929,7 @@
    "n_close": 48,
    "n_far": 24,
    "raw": 119.0,
-   "adj": 34.32920979550619
+   "adj": 27.0
   },
   {
    "closer": "SIGNATURE AT YISHUN",
@@ -21953,7 +21953,7 @@
    "n_close": 13,
    "n_far": 5,
    "raw": -99,
-   "adj": -99.0
+   "adj": -99
   },
   {
    "closer": "SIGNATURE AT YISHUN",
@@ -22025,7 +22025,7 @@
    "n_close": 70,
    "n_far": 57,
    "raw": 151.5,
-   "adj": 24.49381469325928
+   "adj": 13.5
   },
   {
    "closer": "THE DEW",
@@ -22049,7 +22049,7 @@
    "n_close": 5,
    "n_far": 23,
    "raw": 152,
-   "adj": 3.767029855868202
+   "adj": 20
   },
   {
    "closer": "NORTH PARK RESIDENCES",
@@ -22073,7 +22073,7 @@
    "n_close": 27,
    "n_far": 5,
    "raw": 741.0,
-   "adj": 529.3230244887654
+   "adj": 535.0
   },
   {
    "closer": "NORTH PARK RESIDENCES",
@@ -22097,7 +22097,7 @@
    "n_close": 12,
    "n_far": 24,
    "raw": 788.0,
-   "adj": 576.3230244887654
+   "adj": 582.0
   },
   {
    "closer": "NORTH PARK RESIDENCES",
@@ -22121,7 +22121,7 @@
    "n_close": 12,
    "n_far": 15,
    "raw": 991.5,
-   "adj": 620.9175746396705
+   "adj": 565.5
   },
   {
    "closer": "PARC OASIS",
@@ -22145,7 +22145,7 @@
    "n_close": 27,
    "n_far": 18,
    "raw": 61.5,
-   "adj": 185.0274751201098
+   "adj": 171.5
   },
   {
    "closer": "ROSEWOOD SUITES",
@@ -22169,7 +22169,7 @@
    "n_close": 6,
    "n_far": 6,
    "raw": -36.5,
-   "adj": 37.6164850720659
+   "adj": 29.5
   },
   {
    "closer": "LA CASA",
@@ -22193,7 +22193,7 @@
    "n_close": 20,
    "n_far": 6,
    "raw": -25.5,
-   "adj": 147.43846516815375
+   "adj": 128.5
   },
   {
    "closer": "THE TOPIARY",
@@ -22217,7 +22217,7 @@
    "n_close": 8,
    "n_far": 10,
    "raw": 190,
-   "adj": 115.8835149279341
+   "adj": 100
   },
   {
    "closer": "THE TOPIARY",
@@ -22241,7 +22241,7 @@
    "n_close": 69,
    "n_far": 6,
    "raw": 158.5,
-   "adj": 84.3835149279341
+   "adj": 68.5
   },
   {
    "closer": "THE GREENWICH",
@@ -22265,7 +22265,7 @@
    "n_close": 14,
    "n_far": 11,
    "raw": -24.0,
-   "adj": 25.410990048043928
+   "adj": 20.0
   },
   {
    "closer": "THE GREENWICH",
@@ -22289,7 +22289,7 @@
    "n_close": 10,
    "n_far": 16,
    "raw": 89,
-   "adj": 138.4109900480439
+   "adj": 133
   },
   {
    "closer": "ROSEWOOD",
@@ -22313,7 +22313,7 @@
    "n_close": 12,
    "n_far": 12,
    "raw": 82.0,
-   "adj": 7.883514927934101
+   "adj": 16.0
   },
   {
    "closer": "CASABLANCA",
@@ -22337,7 +22337,7 @@
    "n_close": 20,
    "n_far": 12,
    "raw": 111.5,
-   "adj": 12.678019903912144
+   "adj": 23.5
   },
   {
    "closer": "THE CANOPY",
@@ -22361,7 +22361,7 @@
    "n_close": 24,
    "n_far": 15,
    "raw": 203.5,
-   "adj": -43.554950240219625
+   "adj": -16.5
   },
   {
    "closer": "YISHUN SAPPHIRE",
@@ -22385,7 +22385,7 @@
    "n_close": 22,
    "n_far": 27,
    "raw": -261,
-   "adj": 35.465940288263596
+   "adj": 3
   },
   {
    "closer": "KINGSFORD . HILLVIEW PEAK",
@@ -22409,7 +22409,7 @@
    "n_close": 20,
    "n_far": 35,
    "raw": -288.5,
-   "adj": -34.48762938651856
+   "adj": -12.5
   },
   {
    "closer": "THE HILLIER",
@@ -22433,7 +22433,7 @@
    "n_close": 31,
    "n_far": 29,
    "raw": 59.0,
-   "adj": 101.3353951022469
+   "adj": 105.0
   },
   {
    "closer": "THE HILLIER",
@@ -22457,7 +22457,7 @@
    "n_close": 11,
    "n_far": 20,
    "raw": 219.5,
-   "adj": 261.83539510224693
+   "adj": 265.5
   },
   {
    "closer": "THE TOPIARY",
@@ -22481,7 +22481,7 @@
    "n_close": 8,
    "n_far": 16,
    "raw": 279,
-   "adj": 236.6646048977531
+   "adj": 233
   },
   {
    "closer": "THE TOPIARY",
@@ -22505,7 +22505,7 @@
    "n_close": 29,
    "n_far": 4,
    "raw": -52.0,
-   "adj": -94.3353951022469
+   "adj": -98.0
   },
   {
    "closer": "PARC VISTA",
@@ -22529,7 +22529,7 @@
    "n_close": 27,
    "n_far": 7,
    "raw": 169.0,
-   "adj": -127.4659402882636
+   "adj": -95.0
   },
   {
    "closer": "THE LAKEFRONT RESIDENCES",
@@ -22553,7 +22553,7 @@
    "n_close": 21,
    "n_far": 16,
    "raw": 585.5,
-   "adj": 214.91757463967053
+   "adj": 255.5
   },
   {
    "closer": "CASPIAN",
@@ -22577,7 +22577,7 @@
    "n_close": 5,
    "n_far": 27,
    "raw": 323,
-   "adj": 1.8285646877144472
+   "adj": 37
   },
   {
    "closer": "CASPIAN",
@@ -22601,7 +22601,7 @@
    "n_close": 21,
    "n_far": 16,
    "raw": 378,
-   "adj": 56.82856468771445
+   "adj": 92
   },
   {
    "closer": "RIVERTREES RESIDENCES",
@@ -22649,7 +22649,7 @@
    "n_close": 14,
    "n_far": 21,
    "raw": 135,
-   "adj": 135.0
+   "adj": 135
   },
   {
    "closer": "RIVERTREES RESIDENCES",
@@ -22673,7 +22673,7 @@
    "n_close": 6,
    "n_far": 5,
    "raw": 118,
-   "adj": 118.0
+   "adj": 118
   },
   {
    "closer": "CASPIAN",
@@ -22697,7 +22697,7 @@
    "n_close": 5,
    "n_far": 7,
    "raw": 492.0,
-   "adj": -125.63737560054915
+   "adj": -58.0
   },
   {
    "closer": "SKIES MILTONIA",
@@ -22721,7 +22721,7 @@
    "n_close": 15,
    "n_far": 17,
    "raw": 77,
-   "adj": -7.670790204493812
+   "adj": 9
   },
   {
    "closer": "SKIES MILTONIA",
@@ -22745,7 +22745,7 @@
    "n_close": 24,
    "n_far": 18,
    "raw": 35,
-   "adj": -49.67079020449381
+   "adj": -33
   },
   {
    "closer": "SIGNATURE AT YISHUN",
@@ -22769,7 +22769,7 @@
    "n_close": 13,
    "n_far": 17,
    "raw": 90,
-   "adj": -79.34158040898762
+   "adj": -70
   },
   {
    "closer": "SIGNATURE AT YISHUN",
@@ -22793,7 +22793,7 @@
    "n_close": 40,
    "n_far": 18,
    "raw": 75,
-   "adj": -94.34158040898762
+   "adj": -85
   },
   {
    "closer": "LENTOR MODERN",
@@ -22817,7 +22817,7 @@
    "n_close": 39,
    "n_far": 19,
    "raw": 1023.5,
-   "adj": 331.746139327385
+   "adj": 167.5
   },
   {
    "closer": "LENTOR MODERN",
@@ -22841,7 +22841,7 @@
    "n_close": 5,
    "n_far": 4,
    "raw": 835.0,
-   "adj": 143.24613932738498
+   "adj": -21.0
   },
   {
    "closer": "ROSEWOOD",
@@ -22865,7 +22865,7 @@
    "n_close": 5,
    "n_far": 7,
    "raw": -67,
-   "adj": -42.294504975978036
+   "adj": -45
   },
   {
    "closer": "ROSEWOOD",
@@ -22889,7 +22889,7 @@
    "n_close": 12,
    "n_far": 20,
    "raw": -29.5,
-   "adj": -4.794504975978036
+   "adj": -7.5
   },
   {
    "closer": "THE HILLIER",
@@ -22913,7 +22913,7 @@
    "n_close": 11,
    "n_far": 35,
    "raw": -69.0,
-   "adj": 227.34776571572831
+   "adj": 253.0
   },
   {
    "closer": "THE LAKEFRONT RESIDENCES",
@@ -22937,7 +22937,7 @@
    "n_close": 21,
    "n_far": 21,
    "raw": 207.5,
-   "adj": 158.0890099519561
+   "adj": 163.5
   },
   {
    "closer": "SKYPARK RESIDENCES",
@@ -22961,7 +22961,7 @@
    "n_close": 16,
    "n_far": 79,
    "raw": -29.5,
-   "adj": 12.835395102246906
+   "adj": 16.5
   },
   {
    "closer": "SKYPARK RESIDENCES",
@@ -22985,7 +22985,7 @@
    "n_close": 33,
    "n_far": 15,
    "raw": -16,
-   "adj": 26.335395102246906
+   "adj": 30
   },
   {
    "closer": "HILLION RESIDENCES",
@@ -23009,7 +23009,7 @@
    "n_close": 14,
    "n_far": 15,
    "raw": 571,
-   "adj": 101.5955945435827
+   "adj": 105
   },
   {
    "closer": "SIGNATURE AT YISHUN",
@@ -23033,7 +23033,7 @@
    "n_close": 13,
    "n_far": 15,
    "raw": 13,
-   "adj": -71.67079020449381
+   "adj": -79
   },
   {
    "closer": "SIGNATURE AT YISHUN",
@@ -23057,7 +23057,7 @@
    "n_close": 40,
    "n_far": 24,
    "raw": 40,
-   "adj": -44.67079020449381
+   "adj": -52
   },
   {
    "closer": "LA CASA",
@@ -23081,7 +23081,7 @@
    "n_close": 13,
    "n_far": 3,
    "raw": -0.5,
-   "adj": 98.32198009608786
+   "adj": 87.5
   },
   {
    "closer": "LA CASA",
@@ -23105,7 +23105,7 @@
    "n_close": 20,
    "n_far": 6,
    "raw": 11.0,
-   "adj": 109.82198009608786
+   "adj": 99.0
   },
   {
    "closer": "THE WARREN",
@@ -23129,7 +23129,7 @@
    "n_close": 6,
    "n_far": 14,
    "raw": 96.5,
-   "adj": -51.7329701441318
+   "adj": -35.5
   },
   {
    "closer": "THE WARREN",
@@ -23153,7 +23153,7 @@
    "n_close": 25,
    "n_far": 18,
    "raw": 100.5,
-   "adj": -47.7329701441318
+   "adj": -31.5
   },
   {
    "closer": "ECO SANCTUARY",
@@ -23177,7 +23177,7 @@
    "n_close": 13,
    "n_far": 6,
    "raw": 64.5,
-   "adj": 22.164604897753094
+   "adj": 18.5
   },
   {
    "closer": "ECO SANCTUARY",
@@ -23201,7 +23201,7 @@
    "n_close": 11,
    "n_far": 25,
    "raw": 107.5,
-   "adj": 65.1646048977531
+   "adj": 61.5
   }
  ],
  "early": {
@@ -23220,9 +23220,9 @@
    {
     "key": "near|mid",
     "label": "Under 5 min vs 5-10 min",
-    "adj": 22.253691400026597,
-    "lo": -2.781305765900809,
-    "hi": 47.05765697673194,
+    "adj": 19.96875,
+    "lo": -3.7,
+    "hi": 44.51197604790419,
     "cells": 176,
     "pairs": 99,
     "devs": 105
@@ -23230,9 +23230,9 @@
    {
     "key": "mid|far",
     "label": "5-10 min vs over 10 min",
-    "adj": 107.08465933283763,
-    "lo": 73.8600819196255,
-    "hi": 138.919920407661,
+    "adj": 110.02777777777777,
+    "lo": 77.19867549668874,
+    "hi": 142.2357142857143,
     "cells": 144,
     "pairs": 77,
     "devs": 68
@@ -23240,14 +23240,14 @@
    {
     "key": "near|far",
     "label": "Under 5 min vs over 10 min",
-    "adj": 92.22654759580936,
-    "lo": 37.01485877593156,
-    "hi": 158.80169590781503,
+    "adj": 85.42307692307692,
+    "lo": 29.94736842105263,
+    "hi": 152.47297297297297,
     "cells": 39,
     "pairs": 17,
     "devs": 21
    }
   ],
-  "placebo": 3.7127883605709227
+  "placebo": 9.031468531468532
  }
 }

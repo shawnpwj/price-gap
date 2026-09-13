@@ -2642,7 +2642,7 @@ the walk. What is left is the building sitting on the station.</p>
         <li>within <b>{G['pair_cap']:,} m</b> of each other</li>
         <li>median sizes within <b>20%</b>, bedroom by bedroom</li></ul></div>
       <div class="card"><h3>Adjusted out</h3><ul>
-        <li><b>lease</b>, at ${G['lease_old']:,.0f} / ${G['lease_new']:,.0f} by midpoint</li>
+        <li><b>lease</b>, at ${LPW1:,.0f} / ${LPW2:,.0f}, each year of the gap at its own band</li>
         <li><b>walking distance</b>, at ${G['slope']:.0f} per 100 m</li>
         <li>both measured here, neither assumed</li></ul></div>
       <div class="card"><h3>Not controlled</h3><ul>

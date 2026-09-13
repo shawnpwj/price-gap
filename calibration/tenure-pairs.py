@@ -91,12 +91,37 @@ for nm, lo, hi in (('old', 1900, BAND_BOUND), ('new', BAND_BOUND, 3000)):
     sel = [r for r in _lp if lo <= (r['ls_old'] + r['ls_new']) / 2 < hi]
     BANDR[nm] = fitted(sel)
 
+
+# ── THE LEASE ADJUSTMENT IS PIECEWISE (Shawn, 2026-09-13) ─────────────────────────────
+# Each calendar year of the lease gap is priced at its own band and the legs are summed —
+# NOT one rate read at the pair's midpoint. Reading at the midpoint assigned a whole gap to
+# one band by where it was centred and put a cliff in the rule; this study adjusted the lease
+# out that way until now, so its own figure inherited the cliff.
+# THE CONSTANTS ARE READ FROM lease-pairs.json's `pw`, which is the PUBLISHED pair (hand-set
+# whole dollars), not a refit. Deriving them here is how 25/44 went stale once already.
+def _pw():
+    import json as _j, os as _o
+    d = _j.load(open(_o.path.join(_o.path.dirname(_o.path.abspath(__file__)),
+                                  'lease-pairs.json')))['pw']
+    return d['bound'], d['pre'], d['post']
+PW_BOUND, PW_PRE, PW_POST = _pw()
+def lease_adj(ls_from, ls_to):
+    """Total psf for moving from one lease start to the other, signed."""
+    lo, hi = min(ls_from, ls_to), max(ls_from, ls_to)
+    pre  = max(0, min(hi, PW_BOUND) - lo)
+    post = max(0, hi - max(lo, PW_BOUND))
+    return (1 if ls_to >= ls_from else -1) * (PW_PRE * pre + PW_POST * post)
+
 def band_rate(top_a, top_b):
-    """The measured lease rate, read at the midpoint of the two LEASE-START EQUIVALENTS.
+    """The EFFECTIVE per-year lease rate for this pair under the piecewise form: the total
+    adjustment across the gap, divided by the gap. Equal to a band rate when the gap sits
+    inside one band, a blend when it spans the boundary. Returned per-year because the
+    estimator multiplies it by dv, and that shape is load-bearing here.
     A freehold has no lease start, so TOP - CONSTRUCTION_YEARS stands in for both sides —
     the same offset the engine itself uses when it has to invent one."""
-    mid = (top_a + top_b) / 2 - CONSTRUCTION_YEARS
-    return BANDR['old'] if mid < BAND_BOUND else BANDR['new']
+    dv = top_a - top_b
+    if not dv: return PW_PRE
+    return lease_adj(top_b - CONSTRUCTION_YEARS, top_a - CONSTRUCTION_YEARS) / dv
 
 # ── geo ───────────────────────────────────────────────────────────────────────────────
 R = 6371000

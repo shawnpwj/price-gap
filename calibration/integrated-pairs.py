@@ -100,8 +100,28 @@ def _bands():
         o[nm] = (sum(r['diff'] * r['gap'] for r in rs)  # least squares through the origin —
                      / sum(r['gap'] ** 2 for r in rs))    # matches lease-pairs.py fitted()
     return o
-LB = _bands()
-lease_rate = lambda m: LB['old'] if m <= 2010.5 else LB['new']
+LB = _bands()          # the RETIRED midpoint bands, kept only for the page's method note
+
+# ── THE LEASE ADJUSTMENT IS PIECEWISE (Shawn, 2026-09-13) ─────────────────────────────
+# Each calendar year of the lease gap is priced at its own band and the legs are summed —
+# NOT one rate read at the pair's midpoint. Reading at the midpoint assigned a whole gap to
+# one band by where it was centred and put a cliff in the rule; this study adjusted the lease
+# out that way until now, so its own figure inherited the cliff.
+# THE CONSTANTS ARE READ FROM lease-pairs.json's `pw`, which is the PUBLISHED pair (hand-set
+# whole dollars), not a refit. Deriving them here is how 25/44 went stale once already.
+def _pw():
+    import json as _j, os as _o
+    d = _j.load(open(_o.path.join(_o.path.dirname(_o.path.abspath(__file__)),
+                                  'lease-pairs.json')))['pw']
+    return d['bound'], d['pre'], d['post']
+PW_BOUND, PW_PRE, PW_POST = _pw()
+def lease_adj(ls_from, ls_to):
+    """Total psf for moving from one lease start to the other, signed."""
+    lo, hi = min(ls_from, ls_to), max(ls_from, ls_to)
+    pre  = max(0, min(hi, PW_BOUND) - lo)
+    post = max(0, hi - max(lo, PW_BOUND))
+    return (1 if ls_to >= ls_from else -1) * (PW_PRE * pre + PW_POST * post)
+
 
 import cut                      # THE PINNED CUT — a crawl must not move the figures
 LAST = cut.last_month(psf)      # Shawn, 2026-09-10: the study is a dated cut, not a live feed
@@ -158,7 +178,7 @@ def build(kind):
             raw   = ci['psf'] - cn['psf']
             lg    = I['ls'] - N['ls']
             dg    = N['metres'] - I['metres']
-            lease = lease_rate((I['ls'] + N['ls']) / 2) * lg
+            lease = lease_adj(N['ls'], I['ls'])
             dist  = SLOPE / 100 * dg
             rows.append(dict(a=I['name'], b=N['name'], bed=bd, region=I['region'],
                              station=I['station'].replace(' MRT Station', '').replace(' LRT Station', ''),

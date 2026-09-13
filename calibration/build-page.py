@@ -2251,10 +2251,11 @@ of a newer building &mdash; on the only clock both sides share, <b>completion</b
 
 {hero('$' + str(round(BANDR[OLD_NM])) + ' / $' + str(round(BANDR[NEW_NM])),
       'lease bands, read on the TOP clock',
-      [(f'${AGPW1:,.1f}', AGNM[0], None, None),
-       (f'${AGPW2:,.1f}', AGNM[1], ndev(AGR), ntx(AGR))],
-      f'Two rates, and a gap that spans {AGB} is split between them. The engine applies one '
-      f'lease band across the whole gap, and a freehold pair is not a lease pair.')}
+      [(f'${AGPW1:,.1f}', AGNM[0], None), (f'${AGPW2:,.1f}', AGNM[1], None)],
+      f'A gap that spans {AGB} is split between the two rates. '
+      f'{ndev(AGR)} developments, {ntx(AGR):,} transactions. '
+      f'The engine applies one lease band across the whole gap, and a freehold pair is not a '
+      f'lease pair.')}
 
 <section>
   <div class="sechead"><h2 class="disp">How to use it</h2></div>

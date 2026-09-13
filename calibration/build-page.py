@@ -76,6 +76,29 @@ money  = lambda v: '—' if v is None else f'{v:+,.0f}'
 
 def band_of(m): return next(n for lo, hi, n in BANDS if lo <= m < hi)
 def rate(m):    return BANDR[band_of(m)]
+
+# ── THE ADOPTED FORM, for every table that predicts a pair ──────────────────
+# The panel's face is piecewise: each calendar year of the lease gap priced at its own band.
+# Anything on this page that says "what the rate predicts" has to predict THE SAME WAY, or the
+# evidence stops tying back to the headline. It said "$25 and $42" under a face reading $22 and
+# $46 until 2026-09-13, which is exactly the drift this now closes.
+def lease_split(ls_old, ls_new):
+    """Years of this gap each side of the boundary."""
+    lo, hi = min(ls_old, ls_new), max(ls_old, ls_new)
+    return (max(0, min(hi, LPWB) - lo), max(0, hi - max(lo, LPWB)))
+def lease_pred(r):
+    """What the published rule says this pair's psf difference should be, signed."""
+    a, b = lease_split(r['ls_old'], r['ls_new'])
+    return (1 if r['ls_new'] >= r['ls_old'] else -1) * (LPW1 * a + LPW2 * b)
+def fit_pw_rows(rows):
+    """Refit the two legs on a SUBSET — least squares through the origin, two regressors.
+    Used by the robustness cuts, which must be refitted the way the headline is fitted."""
+    s11 = s12 = s22 = t1 = t2 = 0.0
+    for r in rows:
+        x1, x2 = lease_split(r['ls_old'], r['ls_new'])
+        s11 += x1*x1; s12 += x1*x2; s22 += x2*x2; t1 += x1*r['diff']; t2 += x2*r['diff']
+    det = s11*s22 - s12*s12
+    return ((s22*t1 - s12*t2)/det, (s11*t2 - s12*t1)/det) if abs(det) > 1e-9 else (None, None)
 def rows_in(nm):
     lo, hi = next((l, h) for l, h, n in BANDS if n == nm)
     return [r for r in ALL if lo <= mid(r) < hi]
@@ -496,16 +519,23 @@ def why_table():
               ('Only close lease gaps, 1&ndash;4 years', lambda r: r['gap'] <= 4, False),
               ('Only wide lease gaps, 5 years and over', lambda r: r['gap'] > 4, False)]
     h = ['<table class="fig"><thead><tr><th>Looking only at&hellip;</th>'
-         f'<th class="num">{OLD_NM}</th><th class="num">{NEW_NM}</th>'
+         f'<th class="num">before {LPWB}</th><th class="num">from {LPWB}</th>'
          '<th class="num">the jump</th><th class="num">pairs</th></tr></thead><tbody>']
     for lab, f, head in SPLITS:
+        sub = [r for r in ALL if f(r)]
         a, b = g(*O, f), g(*N, f)
         if len(a) < 10 or len(b) < 10: continue
-        jump = fit(b) - fit(a)
+        # REFITTED PIECEWISE, the way the headline is fitted. Refitting the subset the OLD way
+        # under a new headline is how a robustness table stops being one.
+        # THE ALL-PAIRS ROW SHOWS THE PUBLISHED CONSTANTS, NOT ITS OWN REFIT. It is the same
+        # sample as the headline, so anything else is the page disagreeing with itself over a
+        # rounding — the fit is 21.87/46.54 and the published pair is hand-set 22/46.
+        pre, post = (LPW1, LPW2) if head else fit_pw_rows(sub)
+        if pre is None: continue
         h.append(f'<tr{" class=head" if head else ""}><th>{"<b>" if head else ""}{lab}{"</b>" if head else ""}</th>'
-                 f'<td class="num">${fit(a):,.0f}</td><td class="num">${fit(b):,.0f}</td>'
-                 f'<td class="num big">+${jump:,.0f}</td>'
-                 f'<td class="num quiet">{npairs(a)+npairs(b)}</td></tr>')
+                 f'<td class="num">${pre:,.0f}</td><td class="num">${post:,.0f}</td>'
+                 f'<td class="num big">+${post - pre:,.0f}</td>'
+                 f'<td class="num quiet">{npairs(sub)}</td></tr>')
     return ''.join(h) + '</tbody></table>'
 
 # ── does the rate actually fit a pair? (Shawn, 2026-09-10) ──────────────────
@@ -535,12 +565,12 @@ def holds_table():
          '</tr></thead><tbody>']
     for _, _, nm in BANDS:
         rows = rows_in(nm)
-        h.append(f'<tr class="sep"><th colspan="5">{nm} &mdash; ${BANDR[nm]:,.0f} a year</th></tr>')
+        h.append(f'<tr class="sep"><th colspan="5">{nm}</th></tr>')
         for lab, lo, hi in GBUCKETS:
             s_ = [r for r in rows if lo <= r['gap'] <= hi]
             if not s_: continue
             obs  = st.median(r['diff'] for r in s_)
-            pred = BANDR[nm] * st.median(r['gap'] for r in s_)
+            pred = st.median(abs(lease_pred(r)) for r in s_)
             thin = len(s_) < 10
             h.append(f'<tr{" class=dim" if thin else ""}><th>{lab}</th>'
                      f'<td class="num quiet">{len(s_)}</td>'
@@ -675,7 +705,7 @@ def pairtable():
     nm_ = lambda x, ls: f'{html.escape(x.title())} <i class="age">{ls}</i>'
     h = ['<table class="fig pairs"><thead><tr><th class="num">#</th><th>older</th><th>newer</th>'
          '<th class="num">gap</th><th>bed</th><th class="num">difference</th>'
-         '<th class="num">$ / yr</th><th class="num">the rate says</th>'
+         '<th class="num">the rule says</th>'
          '<th class="num">off by</th><th class="num">sales</th></tr></thead><tbody>']
     for i, r in enumerate(rows, 1):
         h.append(
@@ -683,10 +713,9 @@ def pairtable():
             f'<td>{nm_(r["older"], r["ls_old"])}</td>'
             f'<td>{nm_(r["newer"], r["ls_new"])}</td>'
             f'<td class="num">{r["gap"]}y</td><td class="quiet">{r["bed"]}</td>'
-            f'<td class="num">{r["diff"]:+,.0f}</td>'
-            f'<td class="num big">{dol(own(r))}</td>'
-            f'<td class="num quiet">${rate(mid(r)):,.0f}</td>'
-            f'<td class="num quiet">{dol(own(r) - rate(mid(r)))}</td>'
+            f'<td class="num big">{r["diff"]:+,.0f}</td>'
+            f'<td class="num quiet">{lease_pred(r):+,.0f}</td>'
+            f'<td class="num quiet">{r["diff"] - lease_pred(r):+,.0f}</td>'
             f'<td class="num quiet">{r["n_old"]} / {r["n_new"]}</td></tr>')
     return ''.join(h) + '</tbody></table>'
 
@@ -2144,6 +2173,27 @@ QDATA = []
 PAIRTABLE = pairtable()          # populates QDATA — must run before any template
 QJSON = json.dumps(QDATA, separators=(',', ':'))
 
+def check_panels(body):
+    """Every panel must be a SIBLING. Counts opens against closes for the tags that can nest
+    a panel inside another when one is left hanging. Raises rather than writing a page whose
+    navigation silently half-works."""
+    import re as _re
+    marks = [(m.start(), _re.search(r'data-p="([a-z]+)"', m.group(0)).group(1))
+             for m in _re.finditer(r'<div class="panel" data-p="[a-z]+"[^>]*>', body)]
+    if not marks: raise SystemExit('check_panels: no panels found — the template moved')
+    bounds = [m[0] for m in marks] + [len(body)]
+    bad = []
+    for (start, name), stop in zip(marks, bounds[1:]):
+        seg = body[start:stop]
+        for t in ('div', 'section', 'p', 'b', 'i', 'span', 'table', 'tbody', 'thead',
+                  'tr', 'td', 'th', 'details', 'summary', 'label', 'button', 'a', 'em'):
+            o = len(_re.findall(r'<%s\b' % t, seg)); c = len(_re.findall(r'</%s>' % t, seg))
+            if o != c: bad.append(f'  panel "{name}": <{t}> {o} open, {c} close')
+    if bad:
+        raise SystemExit('check_panels: UNBALANCED TAGS — panels would nest inside each '
+                         'other and the nav would render blank panels.\n' + '\n'.join(bad))
+    return len(marks)
+
 BODY = f"""
 <div class="panel" data-p="summary">
 <h1 class="disp">Where the constants now stand</h1>
@@ -2294,7 +2344,7 @@ the first one measured against the market.</p>
     the rate first</b> and walking out to the furthest. <b>Difference</b> is what the market
     shows between the two; <b>$ / yr</b> is that difference over the lease gap; <b>the rate
     says</b> is the published figure for this pair&rsquo;s band &mdash; the same
-    ${BANDR[OLD_NM]:,.0f} and ${BANDR[NEW_NM]:,.0f} on the panel above &mdash; so every row ties
+    ${LPW1:,.0f} and ${LPW2:,.0f} on the panel above &mdash; so every row ties
     straight back to the headline. <b>Sales</b> is the transactions behind each side. Nothing in
     a row is adjusted for anything. <b>Click any row</b> to open the quarters behind it.</p>
     <div class="scroll" style="margin-top:12px">{PAIRTABLE}</div>
@@ -2311,7 +2361,7 @@ lease got longer. Between two freeholds there is no lease to lengthen. What is l
 of a newer building &mdash; on the only clock both sides share, <b>completion</b>.</p>
 
 {hero('$' + str(round(BANDR[OLD_NM])) + ' / $' + str(round(BANDR[NEW_NM])),
-      'lease bands, read on the TOP clock',
+      'the retired lease bands, one rate at the TOP midpoint',
       [(f'${AGPW1:,.0f}', AGNM[0], None), (f'${AGPW2:,.0f}', AGNM[1], None)],
       f'A gap that spans {AGB} is split between the two rates. The engine applies one lease '
       f'band across the whole gap, and a freehold pair is not a lease pair.',
@@ -2350,6 +2400,7 @@ of a newer building &mdash; on the only clock both sides share, <b>completion</b
   sub-sale to {cut.CUT_END}. Identical screens to the 99-year study; ECs cannot appear on either
   side, because an EC is leasehold.</p></div>
 </section>
+</div>
 
 <div class="panel" data-p="mrt" hidden>
 <h1 class="disp">What the market pays for the walk to the station</h1>
@@ -2496,7 +2547,7 @@ the walk. What is left is the building sitting on the station.</p>
     <p class="expl">These {G['n_integrated']} are a classification made for this study and audited
     by hand &mdash; a judgement, not a datum.</p>
     <div class="scroll">{int_devs()}</div>
-    <p class="expl"><b>Read the lease-gap column beside the premium column. <b>The
+    <p class="expl"><b>Read the lease-gap column beside the premium column.</b> <b>The
   developments that read low are not simply the ones with the widest lease gaps</b> &mdash;
   {INT_LOW_NOTE} &mdash; so the gap does not explain them on its own. What the thin ones share
   is how little sits behind them: {INT_THIN} of these {len(G['devs'])} rest on three pairs or
@@ -2551,9 +2602,8 @@ constant at all.</p>
       <p>Take the <b>difference in completion year</b> &mdash; TOP, not lease start. A freehold
       has no lease start to difference against.</p></div>
     <div class="step"><span class="sn">2</span>
-      <p>Price that at the <b>measured lease rate</b>: ${T['bands']['old']:,.0f} a year up to
-      {T['band_bound']-1}, ${T['bands']['new']:,.0f} from {T['band_bound']}, read at the
-      midpoint.</p></div>
+      <p>Price that at the <b>measured lease rate</b>: each year of the gap at its own band,
+      ${LPW1:,.0f} before {LPWB} and ${LPW2:,.0f} from {LPWB}.</p></div>
     <div class="step"><span class="sn">3</span>
       <p>Then take off the <b>freehold percentage for the lease the leasehold side has
       left</b>, from the table below.</p></div>
@@ -2898,6 +2948,7 @@ HTML = f"""<!doctype html>
 <script>{JS.replace('%TENB%', TENB_JS).replace('%TENS%', TENS_JS).replace('%PW%', PW_JS).replace('%LO%', f'{MID_LO}').replace('%HI%', f'{MID_HI}').replace('%VLO%', f"{VR['lo']}").replace('%VHI%', f"{VR['hi']}").replace('%VMID%', f"{VR['ratio']}").replace('%VFS%', f"{V['meta']['floor_step']}")}</script>
 </body></html>
 """
+NPANELS = check_panels(BODY)      # refuses to write a page whose panels nest
 open(OUT, 'w').write(HTML)
 print(f'wrote {os.path.relpath(OUT, HERE)}  ({len(HTML)//1024} KB)')
 print(f'  {NDEV} developments · {npairs(ALL)} pairs · {len(ALL)} cells')

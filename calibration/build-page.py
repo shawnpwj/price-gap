@@ -718,7 +718,7 @@ def pairtable():
          '<th class="num">off by</th><th class="num">sales</th></tr></thead><tbody>']
     for i, r in enumerate(rows, 1):
         h.append(
-            f'<tr data-q="{i-1}" tabindex="0"><td class="num quiet">{i}</td>'
+            f'<tr data-q="{i-1}" tabindex="0" role="button" aria-expanded="false"><td class="num quiet">{i}</td>'
             f'<td>{nm_(r["older"], r["ls_old"])}</td>'
             f'<td>{nm_(r["newer"], r["ls_new"])}</td>'
             f'<td class="num">{r["gap"]}y</td><td class="quiet">{r["bed"]}</td>'
@@ -756,24 +756,23 @@ letter-spacing:.18em;text-transform:uppercase;color:var(--slate-500);white-space
 h3.sub{font:600 17px/1.3 Optima,Candara,sans-serif;color:var(--slate-100);margin:34px 0 4px}
 h1{font:600 clamp(28px,4vw,36px)/1.15 Optima,Candara,sans-serif;color:var(--slate-100);
 letter-spacing:.01em;margin:52px 0 10px}
-.kicker{font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--gold);margin-top:52px}
 /* THE TERM BAR. Five constants, one row, each its own view. It replaces the old single-term
    kicker: this page is no longer about the lease alone. It rides inside the sticky header so
    it stays reachable at any scroll depth, which is the point of splitting the page up. */
-.terms{display:flex;flex-wrap:wrap;gap:0;border-top:1px solid var(--ink);
+.terms{display:flex;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;gap:0;border-top:1px solid var(--ink);
 max-width:1180px;margin:0 auto;padding:0 24px}
-.terms button{flex:1 1 0;min-width:0;padding:13px 11px 12px;text-align:left;
+.terms button{flex:1 0 auto;min-width:0;padding:13px 8px 12px;text-align:left;
 background:none;border:0;border-right:1px solid var(--ink);cursor:pointer;font:inherit;
 color:inherit;position:relative;
 transition:background .18s cubic-bezier(.22,1,.36,1),color .18s cubic-bezier(.22,1,.36,1)}
 .terms button:last-child{border-right:0}
 .terms button:hover{background:var(--navy-850)}
 .terms button:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
-.terms .tn{display:block;font:600 14.5px/1.25 Optima,Candara,sans-serif;
+.terms .tn{display:block;white-space:nowrap;font:600 13px/1.25 Optima,Candara,sans-serif;
 color:var(--slate-400);letter-spacing:.005em}
 /* The sub-label is the panel's ANSWER, not a status word, so it is set as a figure:
    readable size, no uppercase, gold on a measured panel. Shawn, 2026-09-08. */
-.terms .ts{display:block;margin-top:4px;font-size:12.5px;letter-spacing:.02em;
+.terms .ts{display:block;white-space:nowrap;margin-top:4px;font-size:12px;letter-spacing:0;
 color:var(--slate-600);font-variant-numeric:tabular-nums}
 .terms button.done .ts{color:rgba(201,169,106,.75)}
 .terms button[aria-current="true"]{background:var(--navy-850)}
@@ -797,7 +796,7 @@ section{margin-top:46px}
 /* verdict */
 .verdict{margin-top:30px;border:1px solid rgba(201,169,106,.34);border-radius:14px;
 background:linear-gradient(180deg,var(--navy-800),var(--navy-850));
-box-shadow:0 10px 40px -12px rgba(0,0,0,.55);padding:26px 28px}
+padding:26px 28px}
 .vgrid{display:flex;gap:34px;flex-wrap:wrap;align-items:flex-end}
 .vcell .lab{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--slate-500);margin-bottom:6px}
 .vcell .val{font:600 38px/1 Optima,Candara,sans-serif;color:var(--slate-100);white-space:nowrap}
@@ -865,7 +864,7 @@ tr.sep th{padding-top:20px;font-size:11px;letter-spacing:.16em;text-transform:up
 color:var(--gold);border-bottom:1px solid var(--ink)}
 tr.dim td{color:var(--slate-600)}
 tr.dim td.big{color:var(--slate-500);font-weight:400}
-.cross td i{display:block;font-style:normal;font-size:10.5px;color:var(--slate-600);margin-top:1px}
+.cross td i{display:block;font-style:normal;font-size:12px;color:var(--slate-600);margin-top:1px}
 .cross .tot{color:var(--gold-soft)}
 .cross tr.tot th,.cross tr.tot td{border-top:1px solid var(--ink)}
 .wins{display:grid;grid-template-columns:repeat(auto-fit,minmax(430px,1fr));gap:34px}
@@ -895,13 +894,15 @@ details{border-top:1px solid var(--ink);margin-top:16px}
 summary{cursor:pointer;padding:13px 0;font-size:13px;letter-spacing:.01em;
 color:var(--slate-400);list-style:none}
 summary::-webkit-details-marker{display:none}
-summary::before{content:'▸ ';color:var(--gold)}
-details[open] summary::before{content:'▾ '}
+summary::before{content:'';display:inline-block;width:6px;height:6px;margin:0 11px 2px 2px;
+border-right:1.5px solid var(--gold);border-bottom:1.5px solid var(--gold);transform:rotate(-45deg);
+transition:transform .18s cubic-bezier(.22,1,.36,1)}
+details[open] summary::before{transform:rotate(45deg)}
+summary:focus-visible{outline:2px solid var(--gold);outline-offset:2px;border-radius:4px}
 summary:hover{color:var(--gold-soft)}
 .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
 .expl{color:var(--slate-400);max-width:76ch;margin:10px 0 14px;font-size:13px}
 .expl b{color:var(--slate-100);font-weight:600}
-details{border-top:1px solid var(--ink);margin-top:16px}
 details .expl:first-of-type{margin-top:0}
 .caveat{border-left:2px solid var(--warn);padding:2px 0 2px 16px;margin:12px 0;color:var(--slate-400);max-width:74ch}
 .caveat b{color:var(--warn);font-weight:600}
@@ -914,11 +915,11 @@ CSS += """
    see that the other direction exists without having to discover it. */
 .dirs{display:flex;gap:6px;margin:0 0 14px}
 .dirs button{flex:1;padding:12px 10px;font:inherit;font-size:12.5px;letter-spacing:.04em;
-  border-radius:7px;cursor:pointer;background:transparent;color:var(--ink-2,#aeb6c8);
-  border:1px solid rgba(255,255,255,.13)}
-.dirs button.on{background:rgba(198,164,94,.13);border-color:var(--gold-soft);
+  border-radius:7px;cursor:pointer;background:transparent;color:var(--slate-400);
+  border:1px solid var(--ink)}
+.dirs button.on{background:rgba(201,169,106,.13);border-color:var(--gold-soft);
   color:var(--gold-soft)}
-.dirs button:hover{border-color:rgba(255,255,255,.3)}
+.dirs button:hover{border-color:var(--slate-600)}
 
 .calc label{position:relative}
 
@@ -935,7 +936,7 @@ color:var(--gold);display:grid;place-items:center;font:600 11px/1 Optima,Candara
 .step p{color:var(--slate-400);font-size:12.5px}
 .step p b{color:var(--slate-100);font-weight:600}
 .look td.big{color:var(--gold-soft)}
-i.age{font-style:normal;font-size:11px;color:var(--slate-600);margin-left:9px;white-space:nowrap}
+i.age{font-style:normal;font-size:12px;color:var(--slate-600);margin-left:9px;white-space:nowrap}
 /* Two columns that become one on a narrow screen. Used by the freehold panel's
    boundary-bootstrap and region tables, which read as a pair of exhibits. */
 .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:26px;min-width:0}
@@ -948,9 +949,6 @@ tr.head th,tr.head td{border-bottom:1px solid var(--ink);padding-bottom:11px}
 tr.head td.big{color:var(--gold)}
 .note.wide{width:52%;font-size:12px}
 @media (max-width:900px){.note.wide{display:none}}
-.expl{color:var(--slate-400);max-width:78ch;margin:10px 0 14px;font-size:13px}
-.expl b{color:var(--slate-100);font-weight:600}
-details{border-top:1px solid var(--ink);margin-top:16px}
 .calc{margin-top:22px;border:1px solid rgba(201,169,106,.3);border-radius:12px;
 background:linear-gradient(180deg,var(--navy-800),var(--navy-850));padding:20px 22px}
 .calc h3{margin-bottom:12px}
@@ -960,12 +958,12 @@ display:flex;flex-direction:column;gap:7px}
 .cin input{background:var(--navy-950);border:1px solid var(--ink);border-radius:8px;
 padding:9px 12px;color:var(--slate-100);font:600 17px/1 Optima,Candara,sans-serif;
 width:130px;font-variant-numeric:tabular-nums}
-.cin input:focus{outline:none;border-color:rgba(201,169,106,.6)}
+.cin input:focus{outline:2px solid var(--gold);outline-offset:1px;border-color:rgba(201,169,106,.6)}
 .cout{border-top:1px solid var(--ink);padding-top:14px}
 .cout.bad{color:var(--slate-600);font-style:italic}
 .crow{display:flex;justify-content:space-between;gap:16px;padding:5px 0;color:var(--slate-400);align-items:center}
 .crow b{color:var(--slate-100);font-variant-numeric:tabular-nums;font-weight:600}
-.crow i.cflat{font-style:normal;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+.crow i.cflat{font-style:normal;font-size:11px;letter-spacing:.14em;text-transform:uppercase;
 color:var(--gold);border:1px solid rgba(201,169,106,.4);border-radius:999px;padding:2px 9px;margin-left:10px}
 .crow.big{border-top:1px solid var(--ink);margin-top:8px;padding-top:12px;font-size:15px}
 .crow.big b{color:var(--gold);font:600 21px/1 Optima,Candara,sans-serif}
@@ -1188,7 +1186,8 @@ JS = """
   });
   function toggle(tr){
     var nx=tr.nextElementSibling;
-    if(nx&&nx.classList.contains('qd')){ nx.remove(); tr.classList.remove('open'); return; }
+    if(nx&&nx.classList.contains('qd')){ nx.remove(); tr.classList.remove('open'); tr.setAttribute('aria-expanded','false'); return; }
+    tr.setAttribute('aria-expanded','true');
     var rows=QD[+tr.getAttribute('data-q')]||[];
     var cols=tr.children.length;
     var d=document.createElement('tr'); d.className='qd';
@@ -2304,8 +2303,8 @@ BODY = f"""
   <div class="calc">
     <h3>Try a pair</h3>
     <div class="cin">
-      <label>Comparable lease start<input id="lsA" type="number" value="2005" min="1960" max="2040" step="1"></label>
-      <label>Subject lease start<input id="lsB" type="number" value="2025" min="1960" max="2040" step="1"></label>
+      <label>Comparable lease start<input id="lsA" type="number" inputmode="decimal" value="2005" min="1960" max="2040" step="1"></label>
+      <label>Subject lease start<input id="lsB" type="number" inputmode="decimal" value="2025" min="1960" max="2040" step="1"></label>
     </div>
     <div id="calcOut" class="cout"></div>
   </div>
@@ -2602,9 +2601,9 @@ down.</p>
       <button type="button" id="tdL">Leasehold &rarr; freehold</button>
     </div>
     <div class="cin">
-      <label id="tpL">Freehold comparable &mdash; psf<input id="tfP" type="number" value="2100" min="200" max="9000" step="10"></label>
-      <label>Freehold TOP year<input id="tfT" type="number" value="2005" min="1960" max="2035" step="1"></label>
-      <label>Leasehold TOP year<input id="tlT" type="number" value="2015" min="1960" max="2035" step="1"></label>
+      <label id="tpL">Freehold comparable &mdash; psf<input id="tfP" type="number" inputmode="decimal" value="2100" min="200" max="9000" step="10"></label>
+      <label>Freehold TOP year<input id="tfT" type="number" inputmode="decimal" value="2005" min="1960" max="2035" step="1"></label>
+      <label>Leasehold TOP year<input id="tlT" type="number" inputmode="decimal" value="2015" min="1960" max="2035" step="1"></label>
     </div>
     <div id="tenOut" class="cout"></div>
   </div>
@@ -2668,10 +2667,10 @@ down.</p>
   <div class="calc">
     <h3>What should the penthouse cost</h3>
     <div class="cin">
-      <label>Unit below &mdash; sqft<input id="vbS" type="number" value="1216" min="200" max="9000" step="1"></label>
-      <label>Unit below &mdash; psf<input id="vbP" type="number" value="2662" min="200" max="9000" step="10"></label>
-      <label>Penthouse sqft<input id="vpS" type="number" value="1421" min="200" max="9000" step="1"></label>
-      <label>Floors below<input id="vF" type="number" value="1" min="0" max="70" step="1"></label>
+      <label>Unit below &mdash; sqft<input id="vbS" type="number" inputmode="decimal" value="1216" min="200" max="9000" step="1"></label>
+      <label>Unit below &mdash; psf<input id="vbP" type="number" inputmode="decimal" value="2662" min="200" max="9000" step="10"></label>
+      <label>Penthouse sqft<input id="vpS" type="number" inputmode="decimal" value="1421" min="200" max="9000" step="1"></label>
+      <label>Floors below<input id="vF" type="number" inputmode="decimal" value="1" min="0" max="70" step="1"></label>
     </div>
     <div id="voidOut" class="cout"></div>
   </div>

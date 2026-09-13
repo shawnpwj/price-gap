@@ -78,7 +78,7 @@ is the market's price for a year of lease.
 Read-only consumer of ../../property-analyzer/data/. Run:
     python3 lease-pairs.py
 """
-import json, math, itertools, collections, statistics as st, os, sys
+import json, math, itertools, collections, statistics as st, os, sys, random
 
 DATA = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                     '..', '..', 'property-analyzer', 'data')
@@ -403,13 +403,63 @@ if __name__ == '__main__':
             s11 += x1*x1; s12 += x1*x2; s22 += x2*x2; t1 += x1*r['diff']; t2 += x2*r['diff']
         det = s11*s22 - s12*s12
         return ((s22*t1 - s12*t2)/det, (s11*t2 - s12*t1)/det) if abs(det) > 1e-9 else (None, None)
-    pw_pre, pw_post = fit_piecewise(out[24], BOUND)
+    pw_pre_fit, pw_post_fit = fit_piecewise(out[24], BOUND)
+    # THE PUBLISHED CONSTANTS ARE HAND-SET, NOT ROUNDED (Shawn, 2026-09-13: "lets do 22, 46,
+    # 10, 39"). He was shown one-decimal figures, $21.9 and $46.5; the fits are 21.8728 and
+    # 46.5355, so 46.5355 would round UP to 47 under any rule. He was told that and chose 46
+    # anyway. IT IS A DOLLAR BELOW THE FIT AND THAT IS DELIBERATE — do not "correct" it.
+    # Both sit well inside the interval, so nothing on the page is misstated by them.
+    #
+    # SET AT SOURCE, NOT AT DISPLAY. The engine and the page both read these, so a worked
+    # example on the page equals the workup's own arithmetic. Rounding only in the text is how
+    # the two drift apart.
+    PUBLISHED = {'pre': 22, 'post': 46}
+    pw_pre, pw_post = PUBLISHED['pre'], PUBLISHED['post']
+    # A RE-CUT MUST NOT LEAVE THESE SILENTLY STALE. The fit moves with the window; a hand-set
+    # constant does not. Shout when they part company by more than a rounding's worth.
+    for _w, _fit, _pub in (('pre', pw_pre_fit, pw_pre), ('post', pw_post_fit, pw_post)):
+        if abs(_fit - _pub) > 1.5:
+            print(f'  !! PUBLISHED {_w} is ${_pub} but this cut fits ${_fit:.2f} — '
+                  f'the hand-set constant has gone stale. Take it back to Shawn.')
     straddle = sum(1 for r in out[24] if r['ls_old'] < BOUND < r['ls_new'])
-    print(f'\n  ADOPTED FORM — piecewise at {BOUND}: ${pw_pre:.1f} / ${pw_post:.1f}  '
+
+    # Per-LEG evidence. A leg is a run of YEARS, not a set of pairs, so "developments in the
+    # 2011 band" is not a thing any more — what is countable is how many pairs contribute any
+    # years to that leg, and that is what the table reports.
+    def leg_rows(which):
+        return [r for r in out[24]
+                if (max(0, min(r['ls_new'], BOUND) - r['ls_old']) if which == 'pre'
+                    else max(0, r['ls_new'] - max(r['ls_old'], BOUND))) > 0]
+    def boot_pw(which, B=2000, seed=17):
+        g = random.Random(seed)
+        ps = sorted({(r['older'], r['newer']) for r in out[24]})
+        byp = collections.defaultdict(list)
+        for r in out[24]: byp[(r['older'], r['newer'])].append(r)
+        vals = []
+        for _ in range(B):
+            smp = [x for _ in ps for x in byp[ps[g.randrange(len(ps))]]]
+            a, b = fit_piecewise(smp, BOUND)
+            if a is not None: vals.append(a if which == 'pre' else b)
+        vals.sort()
+        return vals[int(.025*len(vals))], vals[int(.975*len(vals))-1]
+    legs = {}
+    for which in ('pre', 'post'):
+        rs = leg_rows(which); lo, hi = boot_pw(which)
+        legs[which] = dict(cells=len(rs),
+                           pairs=len({(r['older'], r['newer']) for r in rs}),
+                           devs=len({x for r in rs for x in (r['older'], r['newer'])}),
+                           ci_lo=lo, ci_hi=hi)
+    print(f'\n  ADOPTED FORM — piecewise at {BOUND}: '
+          f'${pw_pre_fit:.2f} -> ${pw_pre} / ${pw_post_fit:.2f} -> ${pw_post}  '
           f'({straddle} of {len(out[24])} cells span the boundary)')
+    for w in ('pre', 'post'):
+        print(f'    {w:>4s}: {legs[w]["cells"]} cells, {legs[w]["pairs"]} pairs, '
+              f'{legs[w]["devs"]} devs, 95% ${legs[w]["ci_lo"]:.1f}..${legs[w]["ci_hi"]:.1f}')
 
     json.dump({**{str(w): out[w] for w in WINDOWS}, 'pooled24': pooled,
-               'pw': dict(bound=BOUND, pre=pw_pre, post=pw_post, straddle=straddle),
+               'pw': dict(bound=BOUND, pre=pw_pre, post=pw_post,
+                          pre_fit=pw_pre_fit, post_fit=pw_post_fit,
+                          straddle=straddle, legs=legs),
                'early24': early, 'early_window': [FIRST, months_back(FIRST, -23)],
                'late_window': [months_back(LAST, 23), LAST]},
               open(os.path.join(d, 'lease-pairs.json'), 'w'), indent=1)

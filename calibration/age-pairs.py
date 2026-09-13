@@ -614,7 +614,19 @@ for W in WINDOWS:
     # into `evidence` for a live constant. Boundary HAND-SET from the midpoint form's identified
     # break; rates fitted piecewise. See the calibration page's "why the break is found one way
     # and applied another".
-    OUT[str(W)] = dict(pw=(dict(bound=BB, pre=pw1, post=pw2_) if pm is not None else None),
+    # THE PUBLISHED CONSTANTS ARE HAND-SET (Shawn, 2026-09-13: "lets do 22, 46, 10, 39").
+    # The fits are 10.5324 and 39.0057; 10.5324 rounds UP to 11 under any rule. He was told
+    # that and chose 10. A DOLLAR BELOW THE FIT, DELIBERATELY — do not "correct" it. See
+    # lease-pairs.py, which carries the same arrangement and the same warning.
+    AGE_PUBLISHED = {'pre': 10, 'post': 39}
+    if pm is not None:
+        for _w, _fit, _pub in (('pre', pw1, AGE_PUBLISHED['pre']),
+                               ('post', pw2_, AGE_PUBLISHED['post'])):
+            if abs(_fit - _pub) > 1.5:
+                print(f'  !! PUBLISHED {_w} is ${_pub} but this cut fits ${_fit:.2f} — '
+                      f'the hand-set constant has gone stale. Take it back to Shawn.')
+    OUT[str(W)] = dict(pw=(dict(bound=BB, pre=AGE_PUBLISHED['pre'], post=AGE_PUBLISHED['post'],
+                                pre_fit=pw1, post_fit=pw2_) if pm is not None else None),
                        evidence=ev, cells=len(rows), pairs=len(pairs), devs=len(devs),
                        rate=a, lo=lo, hi=hi, pct=apct,
                        intercept=c, intercept_se=se_c, slope_with_intercept=a_int,

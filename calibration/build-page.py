@@ -1879,7 +1879,23 @@ AGPOST= [r for r in AGR if r['mid'] >= AGB]
 # The two band names, in the page's own words. READ AT THE MIDPOINT of the two completion
 # years — the same convention the 99-year panel uses on lease starts, and for the same reason:
 # a pair straddling the boundary needs no decision made about it.
-AGNM  = (f'up to {AGB - 1}', f'{AGB} onward')
+AGNM  = (f'years before {AGB}', f'years from {AGB}')
+# THE APPLIED FORM IS PIECEWISE (Shawn, 2026-09-13). The midpoint form is what IDENTIFIES the
+# boundary — bootstrap the search and it lands on {AGB} in 92% of resamples, where the piecewise
+# knot never settles. But the midpoint form is not what you APPLY, because assigning a whole
+# pair to one band by where it is centred puts a cliff in the middle of the rule: two pairs one
+# year apart in centring take rates 2.8x apart. So: FIND THE BREAK WITH THE FORM THAT IDENTIFIES
+# IT, APPLY IT WITH THE FORM THAT IS CONTINUOUS. They score level held-out, so nothing is given
+# up. The midpoint rates stay on the page as the alternative and as the identifying evidence.
+AGPW1 = AGFM.get('pw_pre', 0)
+AGPW2 = AGFM.get('pw_post', 0)
+def age_split(top_old, top_new, k=None):
+    """How many years of this gap fall each side of the boundary."""
+    k = AGB if k is None else k
+    return max(0.0, min(top_new, k) - top_old), max(0.0, top_new - max(top_old, k))
+def age_adj(top_old, top_new):
+    pre, post = age_split(top_old, top_new)
+    return AGPW1 * pre + AGPW2 * post
 
 def age_gap_table():
     """What the rate reads inside each gap band. AN OUTPUT, NEVER A SCREEN — the estimator is
@@ -1946,7 +1962,8 @@ def age_region_table():
     central, so "2010 onward" could just be "CCR" wearing a date."""
     if not AGEV.get('region'): return ''
     r = ['<table class="fig"><thead><tr><th>Region</th>'
-         f'<th class="num">{AGNM[0]}</th><th class="num">{AGNM[1]}</th></tr></thead><tbody>']
+         f'<th class="num">centred before {AGB}</th>'
+         f'<th class="num">centred {AGB} onward</th></tr></thead><tbody>']
     for g in AGEV['region']:
         def cell(c):
             if c['rate'] is None:
@@ -2003,15 +2020,52 @@ def age_knot_ladder():
                  f'${v:,.0f} / yr</td></tr>')
     return ''.join(r) + '</tbody></table>'
 
+def age_cliff_table():
+    """The two near-identical pairs the midpoint form answers 2.8x apart. The single clearest
+    reason the APPLIED rule is the piecewise one."""
+    if not AGFM.get('cliff'): return ''
+    r = ['<table class="fig"><thead><tr><th>Comparable</th><th class="num">centred</th>'
+         '<th class="num">gap</th><th class="num">midpoint form</th>'
+         '<th class="num">split at the year</th></tr></thead><tbody>']
+    for c in AGFM['cliff']:
+        r.append(f'<tr><th>{c["top_old"]} against {c["top_new"]}</th>'
+                 f'<td class="num quiet">{c["mid"]:.1f}</td>'
+                 f'<td class="num quiet">{c["gap"]} yr</td>'
+                 f'<td class="num quiet">${c["mid_says"]:,.0f}</td>'
+                 f'<td class="num big">${c["pw_says"]:,.0f}</td></tr>')
+    return ''.join(r) + '</tbody></table>'
+
+def age_era_table():
+    """Freehold against leasehold ON THE SAME COMPLETION ERA. Answers Shawn's challenge that
+    $39 sits implausibly close to the leasehold $42."""
+    E_ = AGEV.get('era')
+    if not E_: return ''
+    r = ['<table class="fig"><thead><tr><th>Pairs completed around&hellip;</th>'
+         '<th class="num">cells</th><th class="num">reads</th>'
+         '<th class="num">as a %</th></tr></thead><tbody>']
+    for e_ in E_['rows']:
+        if e_['rate'] is None: continue
+        r.append(f'<tr><th>freehold, midpoint {e_["from_year"]} onward</th>'
+                 f'<td class="num quiet">{e_["cells"]}</td>'
+                 f'<td class="num">${e_["rate"]:,.1f}</td>'
+                 f'<td class="num quiet">{e_["pct"]*100:+.2f}% / yr</td></tr>')
+    r.append(f'<tr class="hi"><th>leasehold, the {E_["lease_band_start"]} lease-start band '
+             f'&mdash; completions ~{E_["lease_band_completion"]} onward</th>'
+             f'<td class="num quiet">&mdash;</td>'
+             f'<td class="num big">${E_["lease_rate"]:,.1f}</td>'
+             f'<td class="num quiet">&mdash;</td></tr>')
+    return ''.join(r) + '</tbody></table>'
+
 def age_pair_table():
     """Every cell tied back to the headline, closest to the fitted rate first (Shawn's ordering
     ruling on the lease panel, applied here for the same reason)."""
     if not AGR: return ''
-    band = lambda x: fitted_age(AGPOST if x['mid'] >= AGB else AGPRE)
-    rows = sorted(AGR, key=lambda x: abs(x['per_yr'] - band(x)))
+    # Closest to what the APPLIED (piecewise) rule predicts for that cell.
+    rows = sorted(AGR, key=lambda x: abs(x['diff'] - age_adj(x['top_old'], x['top_new'])))
     r = ['<table class="fig pairs"><thead><tr><th>Older</th><th>Newer</th>'
          '<th class="num">apart</th><th></th><th class="num">completion</th>'
-         '<th class="num">gap</th><th>band</th><th class="num">psf difference</th>'
+         '<th class="num">gap</th><th>split at ' + str(AGB) + '</th>'
+         '<th class="num">psf difference</th>'
          '<th class="num">per year</th></tr></thead><tbody>']
     for x in rows:
         post = x['mid'] >= AGB
@@ -2020,7 +2074,8 @@ def age_pair_table():
                  f'<td class="num quiet">{x["metres"]}m</td><td class="quiet">{x["bed"]}</td>'
                  f'<td class="num quiet">{x["top_old"]}&rarr;{x["top_new"]}</td>'
                  f'<td class="num quiet">{x["gap"]} yr</td>'
-                 f'<td class="quiet">{AGNM[1] if post else AGNM[0]}</td>'
+                 f'<td class="quiet">{age_split(x["top_old"], x["top_new"])[0]:.0f}'
+                 f'&thinsp;+&thinsp;{age_split(x["top_old"], x["top_new"])[1]:.0f} yr</td>'
                  f'<td class="num quiet">${x["diff"]:,.0f}</td>'
                  f'<td class="num">${x["per_yr"]:,.0f}</td></tr>')
     return ''.join(r) + '</tbody></table>'
@@ -2042,9 +2097,9 @@ on one screen; every figure below has a panel of its own.</p>
     <td style="color:var(--gold-soft)">${BANDR[OLD_NM]:,.0f} and ${BANDR[NEW_NM]:,.0f}, by midpoint</td></tr>
   <tr><th><a href="#fhage">Lease difference (FH) &mdash; a year of completion</a></th>
     <td class="num big">the same $40</td>
-    <td style="color:var(--gold-soft)">${fitted_age(AGPRE):,.0f} on {AGNM[0]} stock and
-    ${fitted_age(AGPOST):,.0f} on {AGNM[1]} &mdash; two bands, as the lease figure has, but
-    split on a different year</td></tr>
+    <td style="color:var(--gold-soft)">${AGPW1:,.1f} a year before {AGB} and
+    ${AGPW2:,.1f} from {AGB}, a gap spanning it split between the two &mdash; two bands, as the
+    lease figure has, but on a different year and applied per year</td></tr>
   <tr><th><a href="#tenure">Tenure &middot; freehold vs leasehold</a></th><td class="num big">&divide; 1.15</td>
     <td style="color:var(--gold-soft)">+{THP['p']*100:.0f}% on average, and
     +{TGL[0]['pct']*100:.0f}% to +{TGL[-1]['pct']*100:.0f}% by the lease left</td></tr>
@@ -2196,10 +2251,10 @@ of a newer building &mdash; on the only clock both sides share, <b>completion</b
 
 {hero('$' + str(round(BANDR[OLD_NM])) + ' / $' + str(round(BANDR[NEW_NM])),
       'lease bands, read on the TOP clock',
-      [(f'${fitted_age(AGPRE):,.0f}', AGNM[0], ndev(AGPRE), ntx(AGPRE)),
-       (f'${fitted_age(AGPOST):,.0f}', AGNM[1], ndev(AGPOST), ntx(AGPOST))],
-      f'Two rates, not one. Both are well under the leasehold figure for the same era &mdash; '
-      f'a freehold pair is not a lease pair, and the engine prices it as though it were.')}
+      [(f'${AGPW1:,.1f}', AGNM[0], None, None),
+       (f'${AGPW2:,.1f}', AGNM[1], ndev(AGR), ntx(AGR))],
+      f'Two rates, and a gap that spans {AGB} is split between them. The engine applies one '
+      f'lease band across the whole gap, and a freehold pair is not a lease pair.')}
 
 <section>
   <div class="sechead"><h2 class="disp">How to use it</h2></div>
@@ -2208,16 +2263,21 @@ of a newer building &mdash; on the only clock both sides share, <b>completion</b
       <p>Both sides <b>freehold</b> &mdash; 999-year counts as freehold. If either side is
       leasehold this is the wrong figure; use the 99-year panel.</p></div>
     <div class="step"><span class="sn">2</span>
-      <p>Average the <b>two completion years</b>. That is the midpoint &mdash; not the lease
-      starts, because a freehold has none to difference against.</p></div>
+      <p>Split the <b>completion gap</b> at {AGB}. Count the years each side &mdash; not the
+      lease starts, because a freehold has none to difference against.</p></div>
     <div class="step"><span class="sn">3</span>
-      <p>Midpoint <b>{AGNM[0]}</b> &rarr; ${fitted_age(AGPRE):,.0f}. <b>{AGNM[1]}</b> &rarr;
-      ${fitted_age(AGPOST):,.0f}. Multiply by the <b>completion gap</b> and add to the
-      comparable's psf.</p></div>
+      <p>Years <b>before {AGB}</b> at ${AGPW1:,.1f}. Years <b>from {AGB}</b> at ${AGPW2:,.1f}.
+      Add the two and add that to the comparable's psf.</p></div>
   </div>
-  <p class="expl">Same midpoint convention as the 99-year panel, for the same reason: a pair
-  that straddles the boundary &mdash; a 2004-against-{AGB + 6} comparable &mdash; is centred on
-  {AGB} and takes the newer rate, without anyone having to decide which side it belongs to.</p>
+  <p class="expl"><b>Worked:</b> a 2000-against-2025 comparable is
+  {AGB - 2000} years at ${AGPW1:,.1f} plus {2025 - AGB} at ${AGPW2:,.1f} &mdash;
+  ${AGPW1 * (AGB - 2000):,.0f} + ${AGPW2 * (2025 - AGB):,.0f} =
+  <b>${AGPW1 * (AGB - 2000) + AGPW2 * (2025 - AGB):,.0f} psf</b>. A pair wholly on one side of
+  {AGB} is simply its gap times that side's rate.</p>
+  <p class="expl"><b>This is not the convention the 99-year panel uses</b>, and the difference is
+  deliberate. That panel reads one rate at the midpoint of the two lease starts. This one prices
+  each year at its own rate, because the midpoint form puts a cliff in the middle of the
+  rule &mdash; see below.</p>
 </section>
 
 <section>
@@ -2263,7 +2323,7 @@ of a newer building &mdash; on the only clock both sides share, <b>completion</b
   <div class="scroll">{age_bound_bar()}</div>
   </div>
   <div>
-  <p class="expl"><b>Is &ldquo;{AGNM[1]}&rdquo; really just &ldquo;CCR&rdquo;?</b> Post-{AGB}
+  <p class="expl"><b>Is the newer band really just &ldquo;CCR&rdquo;?</b> Post-{AGB}
   freehold stock is disproportionately central, so the date could be standing in for the
   address. It is not: the step appears <b>inside</b> CCR and <b>inside</b> RCR separately, at
   much the same size. OCR has too little new freehold stock to check, and that is the honest
@@ -2299,50 +2359,75 @@ of a newer building &mdash; on the only clock both sides share, <b>completion</b
     flat rate.</p>
   </details>
 
-  <details><summary>A pair that spans {AGB} &mdash; one rate, or split across both?</summary>
-    <p class="expl">Shawn, 2026-09-13: <i>&ldquo;are we talking about the midpoint? or should we
-    do a blended rate &mdash; if I am comparing 2000 to 2025, ${fitted_age(AGPRE):,.0f} &times; 9
-    plus ${fitted_age(AGPOST):,.0f} &times; 16?&rdquo;</i> <b>It is the midpoint today</b>, and
-    the two are different models, not two spellings of one. The midpoint says the band belongs to
-    the <b>pair</b> &mdash; one rate across the whole gap, chosen by where the pair is centred.
-    Splitting it says the band belongs to the <b>calendar year</b> &mdash; each year priced at
-    its own rate and summed. Fitted that second way the rates are
-    <b>${AGFM['pw_pre']:,.1f} and ${AGFM['pw_post']:,.1f}</b>.</p>
-    <p class="expl"><b>They predict the same.</b> Scored on the same {AGFM['paired']['folds']}
-    held-out folds, midpoint is ahead by ${abs(AGFM['paired']['mean']):,.0f} a fold with a 95%
-    interval of ${AGFM['paired']['lo']:+,.0f} to ${AGFM['paired']['hi']:+,.0f} &mdash; which
-    covers zero. Accuracy does not choose between them.</p>
-    <p class="expl"><b>What chooses is whether the break holds still.</b> The midpoint boundary
-    lands on {AGB} in {AGEV['bound_boot']['share']:.0%} of resamples. The split form's knot does
-    not settle &mdash; its best position is {AGFM['knot_best']} and no year holds more than
-    {AGFM['knot_share']:.0%} of resamples. Push the knot later and the newer rate runs away while
-    the fit keeps improving, which is what a model does when it is <b>absorbing a trend rather
-    than locating a break</b>. Price the years individually and the study can no longer tell you
-    where the boundary is; the newer rate becomes whatever you set it to.</p>
+  <details><summary>Why the break is found one way and applied another</summary>
+    <p class="expl">Two forms, and the page uses <b>both, for different jobs</b>. The
+    <b>midpoint</b> form assigns a whole pair to one band by where it is centred, and reads
+    ${fitted_age(AGPRE):,.1f} / ${fitted_age(AGPOST):,.1f}. The <b>piecewise</b> form prices
+    each calendar year of the gap at its own rate and sums, and reads ${AGPW1:,.1f} /
+    ${AGPW2:,.1f}. <b>They predict the same</b> &mdash; scored on the same
+    {AGFM['paired']['folds']} held-out folds, midpoint is ahead by
+    ${abs(AGFM['paired']['mean']):,.0f} a fold with a 95% interval of
+    ${AGFM['paired']['lo']:+,.0f} to ${AGFM['paired']['hi']:+,.0f}, which covers zero.</p>
+    <p class="expl"><b>The midpoint form is what locates the boundary.</b> Bootstrap its search
+    and it lands on {AGB} in {AGEV['bound_boot']['share']:.0%} of resamples. The piecewise knot
+    never settles &mdash; its best position is {AGFM['knot_best']}, no year holds more than
+    {AGFM['knot_share']:.0%}, and pushing the knot later makes the newer rate run away while the
+    fit keeps improving. That is a model absorbing a trend, not locating a break. So the
+    boundary is <b>not</b> found by letting this form choose it; {AGB} comes from the midpoint
+    evidence and is then held fixed.</p>
     <div class="grid2">
-      <div><div class="scroll">{age_knot_ladder()}</div></div>
-      <div><p class="expl">So the rule stays the midpoint. It is also mostly moot:
-      <b>{AGFM['diverge_small']} of {len(AGR)} cells</b> come out within $50 either way, and only
-      <b>{AGFM['diverge_big']}</b> differ by more than $150. The two forms only part company on a
-      long gap that spans {AGB}.</p></div>
+      <div><div class="scroll">{age_knot_ladder()}</div>
+      <p class="expl">What the piecewise form does to its own newer rate when the knot is left
+      free. This is why the knot is pinned, not fitted.</p></div>
+      <div><div class="scroll">{age_cliff_table()}</div>
+      <p class="expl"><b>And this is why the midpoint form is not the one applied.</b> Two
+      comparables one year apart in centring, the same {AGFM['cliff'][0]['gap']}-year gap, the
+      same stock &mdash; and the midpoint rule answers them
+      {AGFM['cliff'][1]['mid_says'] / AGFM['cliff'][0]['mid_says']:.1f}&times; apart, because
+      one falls either side of the centring line. The split form has no such edge.</p></div>
     </div>
-    <p class="expl"><b>And that is where the midpoint is blunt.</b> It charges the whole gap at
-    the newer rate even when most of the years sit on the older side &mdash; a 2000-against-2025
-    comparable is centred {2012.5:.1f}, so it takes ${fitted_age(AGPOST):,.0f} across all 25
-    years (${fitted_age(AGPOST) * 25:,.0f}) where splitting gives
-    ${AGFM['pw_pre'] * 10 + AGFM['pw_post'] * 15:,.0f}. Here is every cell in the study shaped
-    like that &mdash; and there are {len(AGFM['wide'])}, over {AGFM['wide_pairs']} pairs, which is
-    the entire evidence base for the question:</p>
+    <p class="expl">Find the break with the form that identifies it; apply it with the form that
+    is continuous. Nothing is given up, because the two score level.</p>
+    <p class="expl">It is also mostly moot in size: <b>{AGFM['diverge_small']} of {len(AGR)}
+    cells</b> come out within $50 either way and only <b>{AGFM['diverge_big']}</b> differ by more
+    than $150. Where they part company is a long gap spanning {AGB} &mdash; and there the
+    midpoint overshoots. Every cell in the study shaped like that, all
+    {len(AGFM['wide'])} of them over {AGFM['wide_pairs']} pairs:</p>
     <div class="scroll">{age_form_table()}</div>
     <p class="expl">On the two widest &mdash; the {AGFM['wide'][0]['gap']}-year and
     {AGFM['wide'][1]['gap']}-year gaps, where most of the span sits on the older side &mdash;
-    <b>the split form is closer</b>, and the midpoint overshoots by
+    the split form is closer, and the midpoint overshoots by
     ${AGFM['wide'][0]['mid'] - AGFM['wide'][0]['actual']:,.0f} and
-    ${AGFM['wide'][1]['mid'] - AGFM['wide'][1]['actual']:,.0f}. The two narrower cells are the
-    same pair read on two bedrooms and they disagree with each other, which is the size of the
-    evidence here. <b>The rule is not moved on {AGFM['wide_pairs']} pairs</b> &mdash; but a gap
-    over about fifteen years spanning {AGB} is the known weak spot, and worth reading both ways
-    before quoting.</p>
+    ${AGFM['wide'][1]['mid'] - AGFM['wide'][1]['actual']:,.0f}. The two narrower cells are one
+    pair read on two bedrooms and they disagree with each other, which is the size of the
+    evidence here. <b>It is the cliff, not these three pairs, that decides the form.</b></p>
+  </details>
+
+  <details><summary>Is ${AGPW2:,.0f} too close to the leasehold ${BANDR[NEW_NM]:,.0f}?</summary>
+    <p class="expl">Shawn, 2026-09-13: <i>&ldquo;don't you think {AGPW2:.0f} is a bit too high?
+    It's like saying 99-year leasehold is {BANDR[NEW_NM]:.0f} but freehold is {AGPW2:.0f}, when
+    in fact one decays and one doesn't.&rdquo;</i> The premise is right and the two figures are
+    closer still than that, because <b>they are not reading the same era</b>. The leasehold band
+    is a <b>lease start</b> of {AGEV['era']['lease_band_start']} onward, which at a
+    {A['meta']['construction_years']}-year build gap is a <b>completion</b> of about
+    {AGEV['era']['lease_band_completion']} onward. The freehold band starts at completion
+    {AGB} &mdash; five years earlier. Match them on completion and the freehold rate rises to
+    meet it.</p>
+    <div class="scroll">{age_era_table()}</div>
+    <p class="expl"><b>And that near-equality is what the lease curve predicts, not a
+    contradiction of it.</b> The decay is real but it is almost flat at the top, and these pairs
+    live at the top: median lease left across all {AGEV['era']['all_sides']} leasehold sides is
+    <b>{AGEV['era']['all_left_median']:.0f} years</b>, and only {AGEV['era']['under60']} sides
+    are under 60. In the {AGEV['era']['lease_band_start']} band itself the median is
+    {AGEV['era']['left_median']:.0f} years and the shortest is
+    {AGEV['era']['left_min']:.0f}.</p>
+    <p class="expl">On the standard leasehold curve, 99 years down to 90 is 1.26 points of value
+    over nine years &mdash; about <b>$2.80 a year</b> on a $2,000 psf home. So the leasehold rate
+    should sit a couple of dollars above the freehold one on the same era, and era-matched it
+    sits <b>${AGEV['era']['lease_rate'] - (AGEV['era']['rows'][1]['rate'] or 0):,.1f}</b> above.
+    Same order. <b>The two panels corroborate each other.</b> Lease decay will separate them
+    properly only when the leasehold stock drops under about 60 years left, which on this roster
+    is almost nobody today.</p>
   </details>
 
   <details><summary>What is thin about this, and what would move it</summary>
@@ -2366,9 +2451,9 @@ of a newer building &mdash; on the only clock both sides share, <b>completion</b
 
 <div class="caveat" style="margin-top:18px"><b>Measured, not adopted.</b> Nothing on this panel
 is wired to the engine. The Price Gap workup still restates a freehold comparable with the
-99-year bands &mdash; which at a twenty-year gap on {AGNM[0]} stock overstates the correction by
-about ${(BANDR[NEW_NM] - fitted_age(AGPRE)) * 20:,.0f} psf. Changing that is a separate
-decision.</div>
+99-year bands &mdash; which on a comparable twenty years older and wholly before {AGB}
+overstates the correction by about ${(BANDR[NEW_NM] - AGPW1) * 20:,.0f} psf. Changing that is a
+separate decision.</div>
 </div>
 
 <div class="panel" data-p="mrt" hidden>
@@ -2884,7 +2969,7 @@ HTML = f"""<!doctype html>
       <span class="ts">${BANDR[OLD_NM]:,.0f} / ${BANDR[NEW_NM]:,.0f} a year</span></button>
     <button type="button" class="done" data-go="fhage">
       <span class="tn">Lease Difference (FH)</span>
-      <span class="ts">${fitted_age(AGPRE):,.0f} / ${fitted_age(AGPOST):,.0f} a year</span></button>
+      <span class="ts">${AGPW1:,.1f} / ${AGPW2:,.1f} a year</span></button>
     <button type="button" class="done" data-go="mrt">
       <span class="tn">MRT Distance</span>
       <span class="ts">${M['bands'][0]['adj']:,.0f} / ${M['bands'][1]['adj']:,.0f} /

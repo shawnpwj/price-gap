@@ -543,7 +543,59 @@ for W in WINDOWS:
         print(f'    cells where the two forms differ by $150+: '
               f'{ev["form"]["diverge_big"]} of {len(rows)}')
 
-    #  (f) the honest race — the boundary re-searched inside every training fold
+    #  (f) THE CLIFF, and the cross-check against the 99-year panel.
+    #      TWO THINGS SHAWN ASKED ON 2026-09-13, both of which change what the page says.
+    #
+    #      THE CLIFF. The midpoint form assigns a whole pair to one band by where it is
+    #      centred, so two near-identical pairs land on opposite rates. A 2000-vs-2019
+    #      comparable is centred 2009.5 and takes the old rate across all 19 years; shift both
+    #      ends one year and it is centred 2010.5 and takes the new rate across all 19. Same
+    #      gap, same stock, nearly 3x the correction. The piecewise form has no such edge.
+    cliff = []
+    for o, n in ((BB - 10, BB + 9), (BB - 9, BB + 10)):
+        e = dict(top_old=o, top_new=n, gap=n - o, mid=(o + n) / 2)
+        a_, b_ = split_years(e, BB)
+        cliff.append(dict(top_old=o, top_new=n, gap=n - o, mid=e['mid'],
+                          mid_says=(fitted([r for r in rows if r['mid'] >= BB]) if e['mid'] >= BB
+                                    else fitted([r for r in rows if r['mid'] < BB])) * e['gap'],
+                          pw_says=pw1 * a_ + pw2_ * b_))
+    if ev.get('form'): ev['form']['cliff'] = cliff   # None on a window too thin to fit
+
+    #      THE CROSS-CHECK. Shawn: "39 seems too high — it's like saying 99-year leasehold is
+    #      42 but freehold is 39, when one decays and one doesn't." The premise is right and
+    #      the eras are not matched: the lease band "2011 onward" is a LEASE START of 2011+,
+    #      which at a 4-year build gap is a COMPLETION of ~2015+. Matched on completion, the
+    #      two rates land within a couple of dollars — and that is exactly what the top of the
+    #      lease curve predicts, because the decay is worth single dollars a year at 85 years
+    #      left. The two studies corroborate; they do not contradict.
+    era = []
+    for k in (BB + 3, LEASE_BAND_BOUND + CONSTRUCTION_YEARS, BB + 7):
+        sel = [r for r in rows if r['mid'] >= k]
+        era.append(dict(from_year=k, cells=len(sel),
+                        pairs=len({(r['older'], r['newer']) for r in sel}),
+                        rate=fitted(sel) if len(sel) >= 4 else None,
+                        pct=fitted_pct(sel) if len(sel) >= 4 else None))
+    now_y = int(LAST[:4])
+    left = sorted(x for r in _lp24 if (r['ls_old'] + r['ls_new']) / 2 >= LEASE_BAND_BOUND
+                  for x in (r['ls_old'] + 99 - now_y, r['ls_new'] + 99 - now_y))
+    all_left = sorted(x for r in _lp24 for x in (r['ls_old'] + 99 - now_y,
+                                                 r['ls_new'] + 99 - now_y))
+    ev['era'] = dict(rows=era, lease_rate=LB['new'],
+                     lease_band_start=LEASE_BAND_BOUND,
+                     lease_band_completion=LEASE_BAND_BOUND + CONSTRUCTION_YEARS,
+                     left_median=st.median(left), left_min=min(left),
+                     all_left_median=st.median(all_left),
+                     under60=sum(1 for x in all_left if x < 60), all_sides=len(all_left))
+    print(f'\n  CROSS-CHECK AGAINST THE 99-YEAR PANEL (era-matched on COMPLETION):')
+    for e_ in era:
+        if e_['rate']: print(f'    freehold, completion midpoint {e_["from_year"]}+: '
+                             f'${e_["rate"]:.1f}/yr on {e_["cells"]} cells')
+    print(f'    leasehold "{LEASE_BAND_BOUND} onward" band = completions ~'
+          f'{LEASE_BAND_BOUND + CONSTRUCTION_YEARS}+: ${LB["new"]:.1f}/yr')
+    print(f'    lease left in that band: median {st.median(left):.0f} yrs, min {min(left):.0f} '
+          f'— the decay is worth a few $/yr up there, which is the whole gap')
+
+    #  (g) the honest race — the boundary re-searched inside every training fold
     ev['race_honest'] = {
         'no age term at all (zero)': holdout(rows, shape_zero),
         f'FLAT — one rate ${a:,.1f}/yr': holdout(rows, shape_flat),

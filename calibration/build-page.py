@@ -877,6 +877,9 @@ tr.lgrp.bad>td{color:var(--warn);opacity:.72}
 span.lnote{display:inline;margin-left:12px;letter-spacing:.03em;text-transform:none;
   font-weight:400;color:var(--slate-500)}
 td.lhit,tr.lhit td.lbig{color:var(--gold)}
+span.lok{color:var(--go);font-weight:600}
+span.lwarn{color:var(--warn);font-weight:600}
+span.lbad{color:var(--warn);opacity:.7;font-weight:600}
 table.lroom{font-size:12px}
 table.lroom th,table.lroom td{padding:7px 0 7px 14px}
 .pad{padding-left:18px}
@@ -2288,6 +2291,9 @@ def check_panels(body):
     return len(marks)
 
 LC = LAYOUT.counts()
+import json as _json
+_norm = _json.load(open('../../layout-study/out/normalisation.json'))['floor']['TREASURE AT TAMPINES']
+FLOOR_STEP, FLOOR_N = _norm['pct_per_floor'], f"{_norm['pairs']:,}"
 LAYOUT_PAIRS = LAYOUT.pairs_table()
 LAYOUT_JUMPS = LAYOUT.jumps_table()
 LAYOUT_ROOMS = LAYOUT.rooms_table()
@@ -2818,10 +2824,30 @@ at resale.</p>
 
 <div class="panel" data-p="layout" hidden>
 <h1 class="disp">What the resale market pays for a layout</h1>
-<p class="lede">Treasure at Tampines, the pilot. Every figure is a RAW price difference between
-two named layouts, matched on the <b>same floor exactly</b>, the <b>same facing</b>, within
-<b>six months</b>, <b>resale only</b>. Nothing is modelled &mdash; once those four are held there
-is nothing left to adjust for. <b>One development: none of this is a Singapore-wide figure.</b></p>
+<p class="lede">Treasure at Tampines, the pilot. Resale only, within <b>six months</b>, and every
+figure is shown <b>twice</b>. <b>Exact match</b> is the same floor and the same facing, so the raw
+price difference is the premium and nothing is modelled. <b>Adjusted</b> lets floor and facing
+differ and moves the base price using this development&rsquo;s own measured floor step and facing
+premiums. <b>One development: none of this is a Singapore-wide figure.</b></p>
+
+<section>
+  <div class="sechead"><h2 class="disp">Does adjusting work? The test says mostly yes</h2></div>
+  <p class="expl">Adjusting is not modelling, and the difference is why the first version of this
+  study was withdrawn: that one fitted a residual to the same pairs it was measuring. Here both
+  adjusters are measured <b>somewhere else, on other pairs</b> &mdash; the floor step from
+  <b>same-stack repeat sales</b> ({FLOOR_STEP}%/floor, {FLOOR_N} pairs), the facing premiums from the
+  stack study&rsquo;s resale pairs, direct only, never chained.</p>
+  <p class="expl">The <b>test</b> column compares the exact figure against <b>only the pairs the
+  exact rule throws away</b> &mdash; different floor, different facing, or both. The two sets share
+  no transaction, so if adjusting works the discarded pairs should reproduce the exact answer.
+  On the best-sampled contrast they do: <b>C6 &rarr; C9P reads $237,500 on 34 exact pairs and
+  $238,835 on 937 adjusted ones &mdash; a gap of $1,335, or 0.6%.</b></p>
+  <p class="expl">One guard came straight out of this test. Treasure&rsquo;s facing premiums were
+  measured on <b>3BR and 4BR only</b>. Applied to 2BR units they pulled every 2BR contrast down by
+  11&ndash;35%; refusing to extrapolate them cut that to 3&ndash;8%. <b>A facing move is now
+  refused for any bedroom class the facing premium was not measured on.</b> The floor step is
+  measured on every stack, so it carries everywhere.</p>
+</section>
 
 <section>
   <div class="sechead"><h2 class="disp">What a feature is worth</h2></div>

@@ -17,6 +17,12 @@ Shawn, 2026-09-18, three cuts, all of them "I dont need this":
     crossings are labelled by PRODUCT CLASS, with no strata areas, because the class is what
     aggregates across developments. See layout-study/src/product_class.py.
 
+And, 2026-09-18: "we DONT need same floor exactly. we also dont need same facing ... can you
+have one where its EXACT match, and then one that we adjust for facing / floor". So every
+figure is shown TWICE -- the exact match, and the adjusted pool -- side by side, never blended.
+The "agree" column is the test: it compares the exact figure against ONLY the pairs the exact
+rule throws away, which share no transaction with it. See layout-study/src/adjusted.py.
+
 Reads the layout-study outputs. Nothing here is computed; this is a window onto that repo.
 """
 import json, os
@@ -29,7 +35,7 @@ def _load(p, default=None):
     if not os.path.exists(f): return default
     return json.load(open(f))
 
-PAIRS  = _load('out/library-layout-pairs.json', [])
+PAIRS  = _load('out/two-track.json', [])
 JUMPS  = _load('out/class-jumps.json', [])
 ROOMS  = _load('data/annotations/room-areas.json', {}) or {}
 LAY    = (_load('data/annotations/treasure-at-tampines.json', {}) or {}).get('layouts', {})
@@ -49,37 +55,44 @@ BAND = {'COMPARABLE': ('ok', 'passed the 80% gate')}
 def _row(cells, cls=""):
     return f'<tr class="{cls}">' + "".join(cells) + "</tr>"
 
+def _agree(r):
+    g = r.get('test_gap_pct')
+    if g is None: return '&mdash;'
+    cls = 'lok' if abs(g) <= 5 else ('lwarn' if abs(g) <= 10 else 'lbad')
+    return f'<span class="{cls}">{g:+.1f}%</span>'
+
+def _two(r, key_exact='exact', key_adj='all'):
+    """the two tracks as four cells: exact $ / n, adjusted $ / n"""
+    e, a = r.get(key_exact), r.get(key_adj)
+    ce = (f'<td class="num lbig">{_money(e["med"])}<span class="lsub">{e["pairs"]} pairs</span></td>'
+          if e else '<td class="num">&mdash;</td>')
+    ca = (f'<td class="num lbig">{_money(a["med"])}<span class="lsub">{a["pairs"]} pairs</span></td>'
+          if a else '<td class="num">&mdash;</td>')
+    return ce + ca
+
 def pairs_table():
-    """One line per pair, with what-differs on its own full-width line underneath so the
-    numbers are not fighting a sentence for space."""
+    """One line per pair, both tracks, with what-differs on its own full-width line beneath."""
     if not PAIRS: return '<p class="expl">layout-study outputs not found.</p>'
-    groups = {}
-    for r in PAIRS:
-        groups.setdefault(r['comparability'].split(' (')[0], []).append(r)
+    rs = [r for r in PAIRS if r['comparability'].split(' (')[0] == 'COMPARABLE']
+    if not rs: return '<p class="expl">no pair passed the gate.</p>'
     out = []
-    for key in ('COMPARABLE',):
-        rs = groups.get(key)
-        if not rs: continue
-        cls, note = BAND[key]
-        out.append(f'<tr class="lgrp {cls}"><td colspan="5">{key.replace("_"," ")}'
-                   f'<span class="lnote">{note}</span></td></tr>')
-        for r in sorted(rs, key=lambda x: -x['pairs']):
-            why = r['comparability'].split('(',1)[1].rstrip(')') if '(' in r['comparability'] else ''
-            out.append(
-                '<tr class="lmain">'
-                f'<td class="lpair">{r["base_layout"]} &rarr; {r["feature_layout"]}</td>'
-                f'<td class="num">{r["base_sqft"]:,} &rarr; {r["feature_sqft"]:,}<span class="lsub">'
-                f'{r["delta_sqft"]:+} sqft</span></td>'
-                f'<td class="num">{r["pairs"]}<span class="lsub">pairs</span></td>'
-                f'<td class="num lbig">{_money(r["premium_sgd"])}<span class="lsub">'
-                f'{r["premium_pct"]}%</span></td>'
-                f'<td class="num">{_ci(r["ci95_low"], r["ci95_high"])}</td></tr>')
-            out.append(f'<tr class="lwhy"><td colspan="5"><b>{r["base_class"]} &rarr; '
-                       f'{r["feature_class"]}</b> &nbsp;&middot;&nbsp; {r["feature_difference"]}'
-                       + (f' &nbsp;&middot;&nbsp; <i>{why}</i>' if why else '') + '</td></tr>')
+    for r in sorted(rs, key=lambda x: -x['exact']['pairs']):
+        why = r['comparability'].split('(',1)[1].rstrip(')') if '(' in r['comparability'] else ''
+        e = r['exact']
+        out.append(
+            '<tr class="lmain">'
+            f'<td class="lpair">{r["base_layout"]} &rarr; {r["feature_layout"]}</td>'
+            f'<td class="num">{r["base_sqft"]:,} &rarr; {r["feature_sqft"]:,}'
+            f'<span class="lsub">{r["delta_sqft"]:+} sqft</span></td>'
+            + _two(r) +
+            f'<td class="num">{_agree(r)}<span class="lsub">agree</span></td></tr>')
+        out.append(f'<tr class="lwhy"><td colspan="5"><b>{r["base_class"]} &rarr; '
+                   f'{r["feature_class"]}</b> &nbsp;&middot;&nbsp; {r["feature_difference"]}'
+                   + (f' &nbsp;&middot;&nbsp; <i>{why}</i>' if why else '')
+                   + f' &nbsp;&middot;&nbsp; 95% CI exact {_ci(e["ci"][0], e["ci"][1])}</td></tr>')
     return ('<table class="lt"><thead><tr><th>pair</th><th class="num">strata</th>'
-            '<th class="num">matched</th><th class="num">premium</th>'
-            '<th class="num">95% CI</th></tr></thead><tbody>'
+            '<th class="num">exact match</th><th class="num">adjusted</th>'
+            '<th class="num">test</th></tr></thead><tbody>'
             + ''.join(out) + '</tbody></table>')
 
 def jumps_table():
@@ -92,18 +105,25 @@ def jumps_table():
     if not JUMPS: return '<p class="expl">no class jumps computed.</p>'
     rows = []
     for j in JUMPS:
+        ao = j.get('adjusted_all') or j.get('adjusted_only')
+        g = (round((j['test_gap']) / abs(j['med']) * 100, 1)
+             if j.get('test_gap') is not None and j['med'] else None)
+        cls = '&mdash;' if g is None else (
+            'lok' if abs(g) <= 5 else ('lwarn' if abs(g) <= 10 else 'lbad'))
+        agree = '&mdash;' if g is None else f'<span class="{cls}">{g:+.1f}%</span>'
         rows.append(
             f'<tr class="lmain"><td class="lpair">{j["jump"].replace(" -> ", " &rarr; ")}</td>'
-            f'<td class="num">{j["pairs"]}<span class="lsub">pairs</span></td>'
             f'<td class="num">{_money(j["base"])}<span class="lsub">base quantum</span></td>'
-            f'<td class="num lbig">{_money(j["med"])}<span class="lsub">{j["pct"]}%</span></td>'
-            f'<td class="num">{_ci(j["ci"][0], j["ci"][1])}</td></tr>')
+            f'<td class="num lbig">{_money(j["med"])}<span class="lsub">{j["pairs"]} pairs</span></td>'
+            + (f'<td class="num lbig">{_money(ao["med"])}<span class="lsub">{ao["pairs"]} pairs'
+               f'</span></td>' if ao else '<td class="num">&mdash;</td>')
+            + f'<td class="num">{agree}<span class="lsub">agree</span></td></tr>')
         rows.append(f'<tr class="lwhy"><td colspan="5">'
                     f'{" + ".join(j["base_layouts"])} &rarr; {" + ".join(j["feature_layouts"])}'
-                    f'</td></tr>')
-    return ('<table class="lt"><thead><tr><th>crossing</th><th class="num">matched</th>'
-            '<th class="num">base quantum</th><th class="num">premium</th>'
-            '<th class="num">95% CI</th></tr></thead><tbody>' + ''.join(rows) + '</tbody></table>')
+                    f' &nbsp;&middot;&nbsp; 95% CI exact {_ci(j["ci"][0], j["ci"][1])}</td></tr>')
+    return ('<table class="lt"><thead><tr><th>crossing</th><th class="num">base quantum</th>'
+            '<th class="num">exact match</th><th class="num">adjusted</th>'
+            '<th class="num">test</th></tr></thead><tbody>' + ''.join(rows) + '</tbody></table>')
 
 ROOM_ORDER = ['living', 'dining', 'master', 'bedroom_1', 'bedroom_2', 'bedroom_3', 'bedroom_4',
               'bath_1', 'bath_2', 'wc', 'kitchen', 'yard', 'household_shelter', 'store',

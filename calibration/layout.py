@@ -39,6 +39,7 @@ PAIRS  = _load('out/two-track.json', [])
 JUMPS  = _load('out/class-jumps.json', [])
 XDEV   = _load('out/all-developments-crossings.json', [])
 XPOOL  = _load('out/crossings-pooled.json', [])
+PARC   = _load('out/parc-esta-contrasts.json', [])
 ROOMS  = _load('data/annotations/room-areas.json', {}) or {}
 LAY    = (_load('data/annotations/treasure-at-tampines.json', {}) or {}).get('layouts', {})
 
@@ -141,6 +142,36 @@ def jumps_table():
     return ('<table class="lt"><thead><tr><th>crossing</th><th class="num">base quantum</th>'
             '<th class="num">exact match</th><th class="num">adjusted</th>'
             '<th class="num">test</th></tr></thead><tbody>' + ''.join(rows) + '</tbody></table>')
+
+def parc_table():
+    """Parc Esta, the second development read off the plans (2026-09-18). Bedroom crossings only:
+    its feature contrasts (B -> BP one bathroom, BP -> BD study, C -> CP WC + utility, D -> DP WC +
+    store) all step 100+ sqft, far more than the added rooms occupy, so they fail the
+    comparability gate the same way Treasure's D1 -> D8P did and are kept off the page.
+    A crossing shows when EITHER track carries 5+ pairs -- Shawn: both tracks, always."""
+    if not PARC: return '<p class="expl">Parc Esta not run.</p>'
+    beds = lambda c: int(c.split('BR')[0])
+    rows, last = [], None
+    for r in PARC:
+        a, b = r['contrast'].split(' -> ')
+        if beds(b) != beds(a) + 1: continue
+        e, o = r.get('exact'), r.get('adjusted_only')
+        if (not e or e['thin']) and (not o or o['thin']): continue
+        grp = f'{beds(a)}BR &rarr; {beds(b)}BR'
+        if grp != last:
+            rows.append(f'<tr class="lgrp ok"><td colspan="4">{grp}</td></tr>'); last = grp
+        g = r.get('test_pct')
+        agree = ('<span class="lthin">&mdash;</span>' if g is None else
+                 f'<span class="{"lok" if abs(g) <= 5 else ("lwarn" if abs(g) <= 10 else "lbad")}">{g:+.1f}%</span>')
+        rows.append(f'<tr class="lmain"><td class="lpair">{r["contrast"].replace(" -> ", " &rarr; ")}</td>'
+                    + _cell(e) + _cell(o)
+                    + f'<td class="num">{agree}<span class="lsub">agree</span></td></tr>')
+        base = lambda cs: " + ".join(sorted({c.split("-")[0] for c in cs}))   # -P/-R: same drawing
+        rows.append(f'<tr class="lwhy"><td colspan="4">{base(r["base_layouts"])} &rarr; '
+                    f'{base(r["feature_layouts"])} &nbsp;&middot;&nbsp; with their ground/top-floor variants</td></tr>')
+    return ('<div class="scroll"><table class="lt"><thead><tr><th>crossing</th>'
+            '<th class="num">exact match</th><th class="num">adjusted</th>'
+            '<th class="num">test</th></tr></thead><tbody>' + ''.join(rows) + '</tbody></table></div>')
 
 def xdev_table():
     """Shawn, 2026-09-18: "Can you now move on to the rest of the developments."

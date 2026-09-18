@@ -2298,6 +2298,7 @@ FLOOR_STEP, FLOOR_N = _norm['pct_per_floor'], f"{_norm['pairs']:,}"
 LAYOUT_PAIRS = LAYOUT.pairs_table()
 LAYOUT_JUMPS = LAYOUT.jumps_table()
 LAYOUT_XDEV  = LAYOUT.xdev_table()
+LAYOUT_PARC  = LAYOUT.parc_table()
 LAYOUT_ROOMS = LAYOUT.rooms_table()
 BODY = f"""
 <div class="panel" data-p="summary">
@@ -2873,6 +2874,18 @@ premiums. <b>One development: none of this is a Singapore-wide figure.</b></p>
   own tier names do not travel; some print none. The small line under each row is which
   layouts went in.</p>
   <div class="scroll">{LAYOUT_JUMPS}</div>
+</section>
+
+<section>
+  <div class="sechead"><h2 class="disp">Parc Esta &mdash; the second development read</h2></div>
+  <p class="expl">All 70 layouts from 2BR up read off the plan sheets. Same rule, same classes.
+  <b>No household shelter on any Parc Esta plan</b>, 2BR to 5BR, so +HS never appears here.
+  Top-floor units carry 66&ndash;215 sqft of <b>void</b> (air over the living room) in their strata
+  area, and ground-floor units a PES; neither is ever paired with its own standard unit.
+  Its feature steps (a second bathroom, a study, a WC with a utility room) all add 100+ sqft, far
+  more than the rooms themselves, so they fail the comparability gate and are held back. Where
+  exact pairs are thin the adjusted track carries the row.</p>
+  {LAYOUT_PARC}
 </section>
 
 <section>

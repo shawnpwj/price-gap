@@ -201,23 +201,35 @@ def feature_summary_table():
              'shelter + yard + WC + enclosed kitchen': 'Shelter + yard + WC + enclosed kitchen',
              'study -> bedroom': 'Study &rarr; bedroom', 'one more bedroom (same package)': 'One more bedroom, same package'}
     MEAS = {'quantum': 'quantum', 'psf': '$/sqft', 'pct': '% of price'}
-    def rng(v, f): return f(v[1]) + (f'<span class="lsub">{f(v[0])} &ndash; {f(v[2])}</span>' if v[0] != v[2] else '<span class="lsub">one pair</span>')
+    def k(x): return f"${x/1000:.0f}k" if x >= 10000 else f"${round(x):,}"
+    def rng(v, f, g=None):
+        g = g or f
+        return f(v[1]) + (f'<span class="lsub">{g(v[0])}&ndash;{g(v[2])}</span>' if v[0] != v[2] else '<span class="lsub">one pair</span>')
+    def split(g, suf):
+        if not g: return '&mdash;'
+        return ''.join(f'<span class="lsplit">{k}{suf} <b>{v["median"]:.1f}%</b> <span class="lthin">({v["n"]})</span></span>'
+                       for k, v in g.items())
     rows = []
     for o in FSUM:
         c = o['cv']
         if o['steadiest'] is None: st = '<span class="lthin">one pair</span>'
-        elif len(set(c.values())) == 1: st = 'no difference'
+        elif max(c.values()) - min(c.values()) <= 2: st = 'no difference'   # within 2 points is noise
         else: st = f'<b>{MEAS[o["steadiest"]]}</b>'
         SHORT = {'quantum': 'qtm', 'psf': 'psf', 'pct': '%'}
         spread = ' &middot; '.join(f'{SHORT[k]} {c[k]}' for k in ('pct', 'psf', 'quantum') if c[k] is not None)
         devs = ', '.join(d.replace('-', ' ').title() for d in o['developments'])
-        rows.append(f'<tr class="lmain"><td class="lpair">{NAMES.get(o["feature"], o["feature"])}'
-                    f'<span class="lsub">{o["pairs"]} pair{"s" if o["pairs"] != 1 else ""} &middot; {devs}</span></td>'
+        rows.append(f'<tr class="lmain"><td class="lpair fsum">{NAMES.get(o["feature"], o["feature"])}'
+                    f'<span class="lsub">{o["pairs"]} layout pair{"s" if o["pairs"] != 1 else ""}</span>'
+                    f'<span class="lsub">{o.get("sale_pairs_exact", 0):,} exact + {o.get("sale_pairs_adjusted", 0):,} adjusted sales</span>'
+                    f'<span class="lsub">{devs}</span></td>'
                     f'<td class="num lbig">{rng(o["pct"], lambda x: f"{x:.1f}%")}</td>'
+                    f'<td class="num">{split(o.get("by_region", {}), "")}</td>'
+                    f'<td class="num">{split(o.get("by_beds", {}), "BR")}</td>'
                     f'<td class="num">{rng(o["psf"], lambda x: "$" + format(round(x), ","))}</td>'
-                    f'<td class="num">{rng(o["quantum"], lambda x: "$" + format(round(x), ","))}</td>'
+                    f'<td class="num">{rng(o["quantum"], lambda x: "$" + format(round(x), ","), k)}</td>'
                     f'<td class="num">{st}<span class="lsub">{spread}</span></td></tr>')
     return ('<div class="scroll"><table class="lt"><thead><tr><th>feature</th><th class="num">% of price</th>'
+            '<th class="num">by region</th><th class="num">by bedrooms</th>'
             '<th class="num">$ per unit sqft</th><th class="num">quantum</th><th class="num">steadiest</th>'
             '</tr></thead><tbody>' + ''.join(rows) + '</tbody></table></div>')
 

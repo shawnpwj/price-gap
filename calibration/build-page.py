@@ -866,6 +866,9 @@ tr.lmain>td{border-top:1px solid var(--ink);color:var(--slate-300)}
 tr.lmain:hover>td{background:rgba(36,48,80,.22)}
 td.lpair{font-weight:600;color:var(--slate-100);white-space:nowrap}
 td.lbig{font-weight:600;font-size:15px;color:var(--slate-100)}
+td.fsum{max-width:230px;white-space:normal}
+td.fsum span.lsub{white-space:normal}
+span.lsplit{display:block;white-space:nowrap;font-size:12.5px}
 span.lsub{display:block;font-size:10.5px;letter-spacing:.04em;color:var(--slate-500);
   font-weight:400;margin-top:3px;text-transform:uppercase}
 tr.lwhy>td{padding:0 0 12px 0;font-size:12px;color:var(--slate-400);line-height:1.5}
@@ -2839,20 +2842,23 @@ development has been read yet.</b></p>
   <div class="sechead"><h2 class="disp">What each feature is worth</h2></div>
   <p class="expl">Every feature in all three measures: <b>% of the unit&rsquo;s price</b>, <b>$ per
   square foot of the whole unit</b>, and <b>quantum</b>. Large figure is the median; the small line
-  is the range. <b>Steadiest</b> is the measure that varies least across the pairs (coefficient of
+  is the range. <b>Layout pairs</b> are the named plan pairs (High Park 2D1 &rarr; 2S1 is one); each rests on
+  many matched sales, counted underneath on <b>both tracks</b> &mdash; exact (same floor, same facing) and
+  adjusted. The figure is the exact median where it has 5+ sales, otherwise the adjusted one. <b>By region</b>
+  and <b>by bedrooms</b> split the % of price, with the number of layout pairs in brackets. <b>Steadiest</b> is the measure that varies least across the pairs (coefficient of
   variation), with all three spreads underneath.</p>
   {LAYOUT_FSUM}
   <p class="expl"><b>The pattern so far.</b> Across developments, <b>% of price</b> varies least
-  &mdash; study (40% against 54&ndash;60%) and study &rarr; bedroom (26% against 36&ndash;42%). It
+  &mdash; study (43% against 56&ndash;62%) and study &rarr; bedroom (25% against 36&ndash;42%). It
   carries each development&rsquo;s price level with it: Parc Esta sells at about $2,300 psf and its
   3BR study reads $141&ndash;241 per unit sqft, against about $100 at the $1,100&ndash;1,300 psf
-  developments, yet 5.9&ndash;10.7% of price like the rest. <b>Within one development, quantum</b>
+  developments, yet 6.0&ndash;10.6% of price like the rest. <b>Within one development, quantum</b>
   varies least (Treasure&rsquo;s service package, five pairs: 14% against 17&ndash;18%). The extra
-  bathroom barely separates them (25% against 26&ndash;27%). <b>Working answer: quote a feature as % of price</b>
-  &mdash; a study about 8&ndash;9%.</p>
-  <p class="expl"><b>Two cautions.</b> Parc Esta&rsquo;s 2BR study (BP5 &rarr; BD3) reads 19%: a third
+  bathroom does not separate them (26&ndash;27% each). <b>Working answer: quote a feature as % of price</b>
+  &mdash; a study about 9%.</p>
+  <p class="expl"><b>Two cautions.</b> Parc Esta&rsquo;s 2BR study (BP5 &rarr; BD3) reads 20%: a third
   of its extra space is kitchen and living, which the price also pays for. Without it the study is
-  5.9&ndash;10.7%. And <b>at the same floor area Treasure&rsquo;s study nook is worth nothing</b>
+  6.0&ndash;10.6%. And <b>at the same floor area Treasure&rsquo;s study nook is worth nothing</b>
   (B5P &rarr; B7S $0, B6P &rarr; B7S &minus;$10,000, on 3&ndash;5 pairs): part of a study premium may be
   the extra space that holds it. A same-size study pair with a proper enclosed study would settle it.
   Parc Esta figures are adjusted-track only.</p>

@@ -2839,8 +2839,10 @@ at resale.</p>
 <h1 class="disp">What the resale market pays for a layout</h1>
 <p class="lede">Six developments with plans measured room by room &mdash; Treasure at Tampines,
 Parc Esta, High Park Residences, Riversails, Symphony Suites and Sims Urban Oasis &mdash; plus A
-Treasure Trove for the study &rarr; bedroom step. Resale only, within <b>six months</b>. A pair counts when the features
-that differ make up at least <b>60%</b> of the extra square feet. <b>OCR and RCR only &mdash; no CCR
+Treasure Trove for the study &rarr; bedroom step. <b>Resale and sub-sale</b>, within <b>six months</b>,
+and never one paired against the other &mdash; a sub-sale is an uncompleted unit and a resale a completed
+one. A pair counts when the features that differ make up at least <b>60%</b> of the extra square feet
+<b>and no more than 40% of the step went into corridor</b>. <b>OCR and RCR only &mdash; no CCR
 development has been read yet.</b></p>
 
 <section>
@@ -2866,9 +2868,16 @@ development has been read yet.</b></p>
   varies least (Treasure&rsquo;s service package, five layout pairs: 14% against 17&ndash;18%). The extra
   bathroom does not separate them (26&ndash;27% each). <b>Working answer: quote a feature as % of price</b>
   &mdash; a study about 9%.</p>
+  <p class="expl"><b>The premium is partly the SPACE, not the feature.</b> Median area step by feature:
+  study <b>54 sqft</b>, extra bathroom <b>75</b>, the Treasure package <b>162</b> &mdash; almost exactly the
+  ranking by % of price. Price the step against the development&rsquo;s own psf and the order inverts:
+  a study&rsquo;s square feet cost <b>1.53&times;</b> the development&rsquo;s psf, an extra bathroom&rsquo;s
+  <b>1.15&times;</b>. <b>Per square foot it occupies, the study is the most valuable feature measured
+  &mdash; it just occupies the least.</b> A larger step reads a lower marginal psf by construction, so
+  compare study against bathroom, not either against the 162 sqft package.</p>
   <p class="expl"><b>Two cautions.</b> Parc Esta&rsquo;s 2BR study (BP5 &rarr; BD3) reads 20%: a third
   of its extra space is kitchen and living, which the price also pays for. Without it the study is
-  6.0&ndash;10.6%. And <b>at the same floor area Treasure&rsquo;s study nook is worth nothing</b>
+  5.8&ndash;10.6%. And <b>at the same floor area Treasure&rsquo;s study nook is worth nothing</b>
   (B5P &rarr; B7S $0, B6P &rarr; B7S &minus;$10,000, on 3&ndash;5 sale pairs): part of a study premium may be
   the extra space that holds it. A same-size study pair with a proper enclosed study would settle it.
   Parc Esta figures are adjusted-track only.</p>
@@ -2897,8 +2906,10 @@ development has been read yet.</b></p>
 <section>
   <div class="sechead"><h2 class="disp">What a feature is worth</h2></div>
   <p class="expl">Every pair here has <b>passed the gate</b>: the differing features are absent on
-  one side and present on the other, and at least <b>60% of the area step is the added rooms</b>,
-  measured off the plans. Pairs that failed &mdash; same feature both sides at a different size, or
+  one side and present on the other, at least <b>60% of the area step is the added rooms</b>, measured
+  off the plans, and <b>no more than 40% of the step went into corridor</b> &mdash; the circulation
+  guard, added 2026-09-19. It removed Symphony Suites B1 &rarr; C1, whose +107 sqft put +49 into
+  hallway, and with it the only WC + utility + yard pair the study had. Pairs that failed &mdash; same feature both sides at a different size, or
   an area step too big for the rooms added &mdash; are <b>not shown</b>, and neither is any pair
   without a feature difference at all. They stay recorded with their reasons in
   <code>out/library-layout-pairs.csv</code>. The line in bold under each row is the

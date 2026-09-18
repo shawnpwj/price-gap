@@ -108,8 +108,10 @@ def jumps_table():
     you start aggregating it across developments, the sizing dont matter, what matters is 3BR Prem
     to 4BR compact is the premium we're trying to find out."
 
-    One row per bedroom crossing, priced the cheapest way across: the PREMIUM class of one
-    bedroom count against the COMPACT class of the next. No strata areas anywhere."""
+    One row per bedroom crossing, priced the cheapest way across: the top class of one bedroom
+    count against the bottom class of the next. Classes are what the plan draws -- bedrooms,
+    bathrooms, WC, study ("3BR2B+WC") -- Shawn's amendment of the same day, because Parc Esta
+    prints no tier banner. See layout-study/src/product_class.py. No strata areas anywhere."""
     if not JUMPS: return '<p class="expl">no class jumps computed.</p>'
     rows = []
     for j in JUMPS:
@@ -136,9 +138,8 @@ def jumps_table():
 def xdev_table():
     """Shawn, 2026-09-18: "Can you now move on to the rest of the developments."
 
-    Bedroom COUNT to bedroom COUNT, every development with a facing read. Tier is absent on
-    purpose: ruling 6 takes it from the printed plan-sheet banner, and only Treasure has been
-    read. Deriving it from strata area would break that ruling and would also be wrong -- at
+    Bedroom COUNT to bedroom COUNT, every development with a facing read. The class (bathrooms,
+    WC, study) is absent on purpose: it is read off the plans, and only Treasure has been read. Deriving it from strata area would break that ruling and would also be wrong -- at
     Treasure, D3 (base) and D7P (premium) are both 1,270 sqft."""
     if not XDEV: return '<p class="expl">no cross-development run yet.</p>'
     rows, last = [], None

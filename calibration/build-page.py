@@ -2864,13 +2864,14 @@ premiums. <b>One development: none of this is a Singapore-wide figure.</b></p>
 </section>
 
 <section>
-  <div class="sechead"><h2 class="disp">Crossing a bedroom tier</h2></div>
-  <p class="expl">Priced the <b>cheapest way across</b>: the Premium class of one bedroom count
-  against the Compact class of the next. <b>No strata areas</b> &mdash; the product class is the
-  unit, because that is what pools across developments, where the same class is a different size
-  in every project. The tier is <b>what the developer prints on the plan sheet</b> &mdash;
-  &ldquo;3 Bedroom&rdquo; against &ldquo;3 Bedroom Premium&rdquo; &mdash; never the area. The small
-  line under each row is which layouts went in.</p>
+  <div class="sechead"><h2 class="disp">Crossing a bedroom count</h2></div>
+  <p class="expl">Priced the <b>cheapest way across</b>: the top class of one bedroom count
+  against the bottom class of the next. <b>No strata areas</b> &mdash; the class is the unit,
+  because that is what pools across developments. The class is <b>what the plan draws</b>:
+  bedrooms, bathrooms, and a WC or study where there is one &mdash; 3BR2B+WC is what Treasure
+  sells as &ldquo;3 Bedroom Premium&rdquo;, 3BR2B its &ldquo;3 Bedroom&rdquo;. Developers&rsquo;
+  own tier names do not travel; some print none. The small line under each row is which
+  layouts went in.</p>
   <div class="scroll">{LAYOUT_JUMPS}</div>
 </section>
 
@@ -2881,12 +2882,11 @@ premiums. <b>One development: none of this is a Singapore-wide figure.</b></p>
   so it runs today across everything. <b>A feature premium is not</b> &mdash; which layout has a
   household shelter is in no transaction record, so that stays development-by-development through
   the plans, and Treasure is still the only one read.</p>
-  <p class="expl"><b>These are bedroom COUNT to bedroom COUNT, not tier to tier</b>, and they are
-  a coarser question than the Treasure table above. A tier comes from the printed plan-sheet
-  banner (ruling 6); taking it from strata area instead would be wrong as well as against the
-  rule &mdash; at Treasure, D3 and D7P are both 1,270 sqft and sit in different tiers. Pooling all
-  2BR against all 3BR also mixes a small 2BR into a large 3BR, which is why Treasure reads
-  $550,000 here and $405,000 as 2BR Premium &rarr; 3BR Compact.</p>
+  <p class="expl"><b>These are bedroom COUNT to bedroom COUNT, not class to class</b>, and they
+  are a coarser question than the Treasure table above. Bathrooms, WC and study come off the
+  plans, which only Treasure has had read. Pooling all 2BR against all 3BR also mixes a small 2BR
+  into a large 3BR, which is why Treasure reads $550,000 here and $406,000 as 2BR2B &rarr;
+  3BR2B.</p>
   <p class="expl"><b>Quantum does not travel between developments.</b> Ruling 4 was measured
   inside one project holding the feature package; across projects the 2BR &rarr; 3BR step runs
   from $117,000 to $980,000. Percent is the steadier of the two (CV 33&ndash;37% against

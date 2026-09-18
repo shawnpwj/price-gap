@@ -37,6 +37,8 @@ def _load(p, default=None):
 
 PAIRS  = _load('out/two-track.json', [])
 JUMPS  = _load('out/class-jumps.json', [])
+XDEV   = _load('out/all-developments-crossings.json', [])
+XPOOL  = _load('out/crossings-pooled.json', [])
 ROOMS  = _load('data/annotations/room-areas.json', {}) or {}
 LAY    = (_load('data/annotations/treasure-at-tampines.json', {}) or {}).get('layouts', {})
 
@@ -61,14 +63,18 @@ def _agree(r):
     cls = 'lok' if abs(g) <= 5 else ('lwarn' if abs(g) <= 10 else 'lbad')
     return f'<span class="{cls}">{g:+.1f}%</span>'
 
+def _cell(s):
+    """Shawn, 2026-09-18: "i recommend having both exact and adjusted shown at all times."
+    Both columns always appear. A track under the 5-pair minimum shows its count and a dash
+    rather than a figure -- present, visibly, but not quoted."""
+    if not s: return '<td class="num lthin">&mdash;<span class="lsub">no pairs</span></td>'
+    if s.get('thin'):
+        return (f'<td class="num lthin">&mdash;<span class="lsub">{s["pairs"]} pair'
+                f'{"" if s["pairs"] == 1 else "s"}, too thin</span></td>')
+    return f'<td class="num lbig">{_money(s["med"])}<span class="lsub">{s["pairs"]} pairs</span></td>'
+
 def _two(r, key_exact='exact', key_adj='all'):
-    """the two tracks as four cells: exact $ / n, adjusted $ / n"""
-    e, a = r.get(key_exact), r.get(key_adj)
-    ce = (f'<td class="num lbig">{_money(e["med"])}<span class="lsub">{e["pairs"]} pairs</span></td>'
-          if e else '<td class="num">&mdash;</td>')
-    ca = (f'<td class="num lbig">{_money(a["med"])}<span class="lsub">{a["pairs"]} pairs</span></td>'
-          if a else '<td class="num">&mdash;</td>')
-    return ce + ca
+    return _cell(r.get(key_exact)) + _cell(r.get(key_adj))
 
 def pairs_table():
     """One line per pair, both tracks, with what-differs on its own full-width line beneath."""
@@ -76,9 +82,10 @@ def pairs_table():
     rs = [r for r in PAIRS if r['comparability'].split(' (')[0] == 'COMPARABLE']
     if not rs: return '<p class="expl">no pair passed the gate.</p>'
     out = []
-    for r in sorted(rs, key=lambda x: -x['exact']['pairs']):
+    for r in sorted(rs, key=lambda x: -((x.get('exact') or {}).get('pairs', 0)
+                                        + (x.get('all') or {}).get('pairs', 0))):
         why = r['comparability'].split('(',1)[1].rstrip(')') if '(' in r['comparability'] else ''
-        e = r['exact']
+        e = r.get('exact')
         out.append(
             '<tr class="lmain">'
             f'<td class="lpair">{r["base_layout"]} &rarr; {r["feature_layout"]}</td>'
@@ -89,7 +96,8 @@ def pairs_table():
         out.append(f'<tr class="lwhy"><td colspan="5"><b>{r["base_class"]} &rarr; '
                    f'{r["feature_class"]}</b> &nbsp;&middot;&nbsp; {r["feature_difference"]}'
                    + (f' &nbsp;&middot;&nbsp; <i>{why}</i>' if why else '')
-                   + f' &nbsp;&middot;&nbsp; 95% CI exact {_ci(e["ci"][0], e["ci"][1])}</td></tr>')
+                   + (f' &nbsp;&middot;&nbsp; 95% CI exact {_ci(e["ci"][0], e["ci"][1])}'
+               if e and not e.get('thin') else '') + '</td></tr>')
     return ('<table class="lt"><thead><tr><th>pair</th><th class="num">strata</th>'
             '<th class="num">exact match</th><th class="num">adjusted</th>'
             '<th class="num">test</th></tr></thead><tbody>'
@@ -124,6 +132,40 @@ def jumps_table():
     return ('<table class="lt"><thead><tr><th>crossing</th><th class="num">base quantum</th>'
             '<th class="num">exact match</th><th class="num">adjusted</th>'
             '<th class="num">test</th></tr></thead><tbody>' + ''.join(rows) + '</tbody></table>')
+
+def xdev_table():
+    """Shawn, 2026-09-18: "Can you now move on to the rest of the developments."
+
+    Bedroom COUNT to bedroom COUNT, every development with a facing read. Tier is absent on
+    purpose: ruling 6 takes it from the printed plan-sheet banner, and only Treasure has been
+    read. Deriving it from strata area would break that ruling and would also be wrong -- at
+    Treasure, D3 (base) and D7P (premium) are both 1,270 sqft."""
+    if not XDEV: return '<p class="expl">no cross-development run yet.</p>'
+    rows, last = [], None
+    for r in sorted(XDEV, key=lambda x: (x['crossing'], -((x.get('exact') or {}).get('pairs', 0)))):
+        e, al, g = r.get('exact'), r.get('adjusted_all'), r.get('test_gap_pct')
+        if (not e or e['thin']) and (not al or al['thin']): continue
+        if r['crossing'] != last:
+            pool = next((p for p in XPOOL if p['crossing'] == r['crossing']), None)
+            note = (f'{pool["developments"]} developments &middot; median '
+                    f'{pool["median_pct"]}% &middot; quantum {_money(pool["quantum_lo"])} to '
+                    f'{_money(pool["quantum_hi"])}' if pool else '')
+            rows.append(f'<tr class="lgrp ok"><td colspan="5">{r["crossing"].replace(" -> ", " &rarr; ")}'
+                        f'<span class="lnote">{note}</span></td></tr>')
+            last = r['crossing']
+        if g is None: agree = '<span class="lthin">&mdash;</span>'
+        else:
+            cls = 'lok' if abs(g) <= 5 else ('lwarn' if abs(g) <= 10 else 'lbad')
+            agree = f'<span class="{cls}">{g:+.1f}%</span>'
+        rows.append(
+            f'<tr class="lmain"><td class="lpair">{r["name"].title()}</td>'
+            + _cell(e) + _cell(al)
+            + f'<td class="num">{(e or al)["pct"]}%<span class="lsub">of base</span></td>'
+            + f'<td class="num">{agree}<span class="lsub">agree</span></td></tr>')
+    return ('<div class="scroll"><table class="lt"><thead><tr><th>development</th>'
+            '<th class="num">exact match</th><th class="num">adjusted</th>'
+            '<th class="num">step</th><th class="num">test</th></tr></thead><tbody>'
+            + ''.join(rows) + '</tbody></table></div>')
 
 ROOM_ORDER = ['living', 'dining', 'master', 'bedroom_1', 'bedroom_2', 'bedroom_3', 'bedroom_4',
               'bath_1', 'bath_2', 'wc', 'kitchen', 'yard', 'household_shelter', 'store',

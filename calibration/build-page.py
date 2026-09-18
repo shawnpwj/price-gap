@@ -880,6 +880,7 @@ td.lhit,tr.lhit td.lbig{color:var(--gold)}
 span.lok{color:var(--go);font-weight:600}
 span.lwarn{color:var(--warn);font-weight:600}
 span.lbad{color:var(--warn);opacity:.7;font-weight:600}
+td.lthin{color:var(--slate-600)}
 table.lroom{font-size:12px}
 table.lroom th,table.lroom td{padding:7px 0 7px 14px}
 .pad{padding-left:18px}
@@ -2296,6 +2297,7 @@ _norm = _json.load(open('../../layout-study/out/normalisation.json'))['floor']['
 FLOOR_STEP, FLOOR_N = _norm['pct_per_floor'], f"{_norm['pairs']:,}"
 LAYOUT_PAIRS = LAYOUT.pairs_table()
 LAYOUT_JUMPS = LAYOUT.jumps_table()
+LAYOUT_XDEV  = LAYOUT.xdev_table()
 LAYOUT_ROOMS = LAYOUT.rooms_table()
 BODY = f"""
 <div class="panel" data-p="summary">
@@ -2870,6 +2872,28 @@ premiums. <b>One development: none of this is a Singapore-wide figure.</b></p>
   &ldquo;3 Bedroom&rdquo; against &ldquo;3 Bedroom Premium&rdquo; &mdash; never the area. The small
   line under each row is which layouts went in.</p>
   <div class="scroll">{LAYOUT_JUMPS}</div>
+</section>
+
+<section>
+  <div class="sechead"><h2 class="disp">Every development &mdash; crossing a bedroom count</h2></div>
+  <p class="expl">Twenty developments, every one with a facing read, both tracks. This needs
+  <b>no floor plan</b>: a bedroom count is already solved per project from the unit-mix crawls,
+  so it runs today across everything. <b>A feature premium is not</b> &mdash; which layout has a
+  household shelter is in no transaction record, so that stays development-by-development through
+  the plans, and Treasure is still the only one read.</p>
+  <p class="expl"><b>These are bedroom COUNT to bedroom COUNT, not tier to tier</b>, and they are
+  a coarser question than the Treasure table above. A tier comes from the printed plan-sheet
+  banner (ruling 6); taking it from strata area instead would be wrong as well as against the
+  rule &mdash; at Treasure, D3 and D7P are both 1,270 sqft and sit in different tiers. Pooling all
+  2BR against all 3BR also mixes a small 2BR into a large 3BR, which is why Treasure reads
+  $550,000 here and $405,000 as 2BR Premium &rarr; 3BR Compact.</p>
+  <p class="expl"><b>Quantum does not travel between developments.</b> Ruling 4 was measured
+  inside one project holding the feature package; across projects the 2BR &rarr; 3BR step runs
+  from $117,000 to $980,000. Percent is the steadier of the two (CV 33&ndash;37% against
+  40&ndash;48%) but a third is still not a national figure. <b>Read these per development.</b>
+  Nine of the thirty-five testable crossings fail the 10% test &mdash; there, only the exact
+  figure may be used.</p>
+  {LAYOUT_XDEV}
 </section>
 
 <section>

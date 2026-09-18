@@ -2843,16 +2843,16 @@ development has been read yet.</b></p>
   variation), with all three spreads underneath.</p>
   {LAYOUT_FSUM}
   <p class="expl"><b>The pattern so far.</b> Across developments, <b>% of price</b> varies least
-  &mdash; study (44% against 60&ndash;67%) and study &rarr; bedroom (26% against 36&ndash;42%). It
+  &mdash; study (40% against 54&ndash;60%) and study &rarr; bedroom (26% against 36&ndash;42%). It
   carries each development&rsquo;s price level with it: Parc Esta sells at about $2,300 psf and its
   3BR study reads $141&ndash;187 per unit sqft, against about $100 at the $1,100&ndash;1,300 psf
   developments, yet 5.9&ndash;8.1% of price like the rest. <b>Within one development, quantum</b>
   varies least (Treasure&rsquo;s service package, five pairs: 14% against 17&ndash;18%). The extra
-  bathroom does not separate the three yet. <b>Working answer: quote a feature as % of price</b>
-  &mdash; a study about 8%.</p>
+  bathroom barely separates them (25% against 26&ndash;27%). <b>Working answer: quote a feature as % of price</b>
+  &mdash; a study about 8&ndash;9%.</p>
   <p class="expl"><b>Two cautions.</b> Parc Esta&rsquo;s 2BR study (BP5 &rarr; BD3) reads 19%: a third
   of its extra space is kitchen and living, which the price also pays for. Without it the study is
-  5.9&ndash;9.6%. And <b>at the same floor area Treasure&rsquo;s study nook is worth nothing</b>
+  5.9&ndash;10.7%. And <b>at the same floor area Treasure&rsquo;s study nook is worth nothing</b>
   (B5P &rarr; B7S $0, B6P &rarr; B7S &minus;$10,000, on 3&ndash;5 pairs): part of a study premium may be
   the extra space that holds it. A same-size study pair with a proper enclosed study would settle it.
   Parc Esta figures are adjusted-track only.</p>

@@ -2886,7 +2886,7 @@ premiums. <b>One development: none of this is a Singapore-wide figure.</b></p>
   Where exact pairs are thin the adjusted track carries the row.</p>
   {LAYOUT_PARC}
   <p class="expl"><b>Feature pairs, rooms measured.</b> 18 plans measured room by room. Of 31
-  feature pairs with evidence, <b>two pass</b> the 80% gate &mdash; both a study added to a 3BR.
+  feature pairs with evidence, <b>pass</b> the gate (60% since 2026-09-19).
   The second bathroom never does: its best pair is 68%, and the rest of every 2BR1B &rarr; 2BR2B
   step is a second balcony and a bigger living room. The WC-and-utility pairs top out at 58%.
   Both passes are adjusted-track only (two exact pairs each), and they differ by $40,000 &mdash;

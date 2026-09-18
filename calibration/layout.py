@@ -40,6 +40,7 @@ JUMPS  = _load('out/class-jumps.json', [])
 XDEV   = _load('out/all-developments-crossings.json', [])
 XPOOL  = _load('out/crossings-pooled.json', [])
 PARC   = _load('out/parc-esta-contrasts.json', [])
+PGATE  = _load('out/parc-esta-gate.json', [])
 ROOMS  = _load('data/annotations/room-areas.json', {}) or {}
 LAY    = (_load('data/annotations/treasure-at-tampines.json', {}) or {}).get('layouts', {})
 
@@ -172,6 +173,23 @@ def parc_table():
     return ('<div class="scroll"><table class="lt"><thead><tr><th>crossing</th>'
             '<th class="num">exact match</th><th class="num">adjusted</th>'
             '<th class="num">test</th></tr></thead><tbody>' + ''.join(rows) + '</tbody></table></div>')
+
+def parc_features_table():
+    """Parc Esta feature pairs that PASS the measured 80% gate -- nothing else (Shawn: "for all
+    not comparable and needs room measurement, remove them"). The failures stay in
+    out/parc-esta-gate.json with the rooms that took the rest of the step."""
+    ok = [r for r in PGATE if r['verdict'] == 'COMPARABLE']
+    if not ok: return '<p class="expl">No Parc Esta feature pair passes the gate.</p>'
+    rows = []
+    for r in ok:
+        feat = ' + '.join(k.replace('_', ' ').replace('bath 2', 'second bathroom') for k in r['added'])
+        rows.append(f'<tr class="lmain"><td class="lpair">{r["base_layout"]} &rarr; {r["feature_layout"]}'
+                    f'<span class="lsub">{r["base_class"]} &rarr; {r["feature_class"]}</span></td>'
+                    + _cell(r.get('exact')) + _cell(r.get('adjusted_only'))
+                    + f'<td class="num">{round(r["share"]*100)}%<span class="lsub">of the step is the {feat}</span></td></tr>')
+    return ('<div class="scroll"><table class="lt"><thead><tr><th>pair</th>'
+            '<th class="num">exact match</th><th class="num">adjusted</th>'
+            '<th class="num">gate</th></tr></thead><tbody>' + ''.join(rows) + '</tbody></table></div>')
 
 def xdev_table():
     """Shawn, 2026-09-18: "Can you now move on to the rest of the developments."

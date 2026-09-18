@@ -2299,6 +2299,7 @@ LAYOUT_PAIRS = LAYOUT.pairs_table()
 LAYOUT_JUMPS = LAYOUT.jumps_table()
 LAYOUT_XDEV  = LAYOUT.xdev_table()
 LAYOUT_PARC  = LAYOUT.parc_table()
+LAYOUT_PARCF = LAYOUT.parc_features_table()
 LAYOUT_ROOMS = LAYOUT.rooms_table()
 BODY = f"""
 <div class="panel" data-p="summary">
@@ -2882,10 +2883,15 @@ premiums. <b>One development: none of this is a Singapore-wide figure.</b></p>
   <b>No household shelter on any Parc Esta plan</b>, 2BR to 5BR, so +HS never appears here.
   Top-floor units carry 66&ndash;215 sqft of <b>void</b> (air over the living room) in their strata
   area, and ground-floor units a PES; neither is ever paired with its own standard unit.
-  Its feature steps (a second bathroom, a study, a WC with a utility room) all add 100+ sqft, far
-  more than the rooms themselves, so they fail the comparability gate and are held back. Where
-  exact pairs are thin the adjusted track carries the row.</p>
+  Where exact pairs are thin the adjusted track carries the row.</p>
   {LAYOUT_PARC}
+  <p class="expl"><b>Feature pairs, rooms measured.</b> 18 plans measured room by room. Of 31
+  feature pairs with evidence, <b>two pass</b> the 80% gate &mdash; both a study added to a 3BR.
+  The second bathroom never does: its best pair is 68%, and the rest of every 2BR1B &rarr; 2BR2B
+  step is a second balcony and a bigger living room. The WC-and-utility pairs top out at 58%.
+  Both passes are adjusted-track only (two exact pairs each), and they differ by $40,000 &mdash;
+  C3 &rarr; CU1 adds 38 sqft of study on a 32 sqft step, so other rooms gave up space. Read the pair as a range, not a price: Treasure&rsquo;s same-package noise floor is $22,000.</p>
+  {LAYOUT_PARCF}
 </section>
 
 <section>
@@ -2894,10 +2900,10 @@ premiums. <b>One development: none of this is a Singapore-wide figure.</b></p>
   <b>no floor plan</b>: a bedroom count is already solved per project from the unit-mix crawls,
   so it runs today across everything. <b>A feature premium is not</b> &mdash; which layout has a
   household shelter is in no transaction record, so that stays development-by-development through
-  the plans, and Treasure is still the only one read.</p>
+  the plans &mdash; Treasure and Parc Esta so far.</p>
   <p class="expl"><b>These are bedroom COUNT to bedroom COUNT, not class to class</b>, and they
   are a coarser question than the Treasure table above. Bathrooms, WC and study come off the
-  plans, which only Treasure has had read. Pooling all 2BR against all 3BR also mixes a small 2BR
+  plans, which only Treasure and Parc Esta have had read. Pooling all 2BR against all 3BR also mixes a small 2BR
   into a large 3BR, which is why Treasure reads $550,000 here and $406,000 as 2BR2B &rarr;
   3BR2B.</p>
   <p class="expl"><b>Quantum does not travel between developments.</b> Ruling 4 was measured

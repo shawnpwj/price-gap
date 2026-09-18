@@ -2865,11 +2865,11 @@ premiums. <b>One development: none of this is a Singapore-wide figure.</b></p>
 
 <section>
   <div class="sechead"><h2 class="disp">Crossing a bedroom count</h2></div>
-  <p class="expl">Priced the <b>cheapest way across</b>: the top class of one bedroom count
-  against the bottom class of the next. <b>No strata areas</b> &mdash; the class is the unit,
+  <p class="expl">Every class of one bedroom count against every class of the next, so each row
+  says <b>which</b> smaller flat it starts from. <b>No strata areas</b> &mdash; the class is the unit,
   because that is what pools across developments. The class is <b>what the plan draws</b>:
-  bedrooms, bathrooms, and a WC or study where there is one &mdash; 3BR2B+WC is what Treasure
-  sells as &ldquo;3 Bedroom Premium&rdquo;, 3BR2B its &ldquo;3 Bedroom&rdquo;. Developers&rsquo;
+  bedrooms, bathrooms, and a WC (+WC), household shelter (+HS) or study (+S) where there is one
+  &mdash; 3BR2B+WC+HS is what Treasure sells as &ldquo;3 Bedroom Premium&rdquo;, 3BR2B its &ldquo;3 Bedroom&rdquo;. Developers&rsquo;
   own tier names do not travel; some print none. The small line under each row is which
   layouts went in.</p>
   <div class="scroll">{LAYOUT_JUMPS}</div>

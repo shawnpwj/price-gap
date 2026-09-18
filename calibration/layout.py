@@ -108,13 +108,20 @@ def jumps_table():
     you start aggregating it across developments, the sizing dont matter, what matters is 3BR Prem
     to 4BR compact is the premium we're trying to find out."
 
-    One row per bedroom crossing, priced the cheapest way across: the top class of one bedroom
-    count against the bottom class of the next. Classes are what the plan draws -- bedrooms,
+    Every class of one bedroom count against every class of the next, each named -- Shawn: "we
+    need to still show bedroom minus one, but we should indicate what that bedroom minus one
+    entails". Classes are what the plan draws -- bedrooms,
     bathrooms, WC, study ("3BR2B+WC") -- Shawn's amendment of the same day, because Parc Esta
     prints no tier banner. See layout-study/src/product_class.py. No strata areas anywhere."""
     if not JUMPS: return '<p class="expl">no class jumps computed.</p>'
-    rows = []
+    rows, last = [], None
     for j in JUMPS:
+        if j.get('thin'): continue
+        grp = j['base_class'].split('BR')[0] + 'BR &rarr; ' + j['feature_class'].split('BR')[0] + 'BR'
+        if grp != last:
+            rows.append(f'<tr class="lgrp ok"><td colspan="5">{grp}'
+                        f'<span class="lnote">which class of the smaller count, to which of the next</span></td></tr>')
+            last = grp
         ao = j.get('adjusted_all') or j.get('adjusted_only')
         g = (round((j['test_gap']) / abs(j['med']) * 100, 1)
              if j.get('test_gap') is not None and j['med'] else None)

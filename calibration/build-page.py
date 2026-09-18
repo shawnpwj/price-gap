@@ -2845,8 +2845,8 @@ development has been read yet.</b></p>
   <p class="expl"><b>The pattern so far.</b> Across developments, <b>% of price</b> varies least
   &mdash; study (40% against 54&ndash;60%) and study &rarr; bedroom (26% against 36&ndash;42%). It
   carries each development&rsquo;s price level with it: Parc Esta sells at about $2,300 psf and its
-  3BR study reads $141&ndash;187 per unit sqft, against about $100 at the $1,100&ndash;1,300 psf
-  developments, yet 5.9&ndash;8.1% of price like the rest. <b>Within one development, quantum</b>
+  3BR study reads $141&ndash;241 per unit sqft, against about $100 at the $1,100&ndash;1,300 psf
+  developments, yet 5.9&ndash;10.7% of price like the rest. <b>Within one development, quantum</b>
   varies least (Treasure&rsquo;s service package, five pairs: 14% against 17&ndash;18%). The extra
   bathroom barely separates them (25% against 26&ndash;27%). <b>Working answer: quote a feature as % of price</b>
   &mdash; a study about 8&ndash;9%.</p>

@@ -11,7 +11,7 @@ bedroom-tier jumps and the measured room areas.
 Shawn, 2026-09-18, three cuts, all of them "I dont need this":
   * "remove ALL area only" -- no pair without a feature difference is shown.
   * "for all not comparable and needs room measurement, remove them" -- only pairs that pass
-    the 80% gate reach this page. The rejected ones stay in out/library-layout-pairs.csv with
+    the 60% gate (80% until 2026-09-19) reach this page. The rejected ones stay in out/library-layout-pairs.csv with
     their reasons; the gate is auditable there, it is just not on his screen.
   * "i dont need the specfiic sizing ... what matters is 3BR Prem to 4BR compact" -- bedroom
     crossings are labelled by PRODUCT CLASS, with no strata areas, because the class is what
@@ -54,7 +54,7 @@ def _ci(lo, hi):
     if lo is None or hi is None: return '&mdash;'
     return _money(lo) + ' to ' + _money(hi)
 
-BAND = {'COMPARABLE': ('ok', 'passed the 80% gate')}
+BAND = {'COMPARABLE': ('ok', 'passed the 60% gate')}
 
 def _row(cells, cls=""):
     return f'<tr class="{cls}">' + "".join(cells) + "</tr>"
@@ -175,7 +175,7 @@ def parc_table():
             '<th class="num">test</th></tr></thead><tbody>' + ''.join(rows) + '</tbody></table></div>')
 
 def parc_features_table():
-    """Parc Esta feature pairs that PASS the measured 80% gate -- nothing else (Shawn: "for all
+    """Parc Esta feature pairs that PASS the measured 60% gate -- nothing else (Shawn: "for all
     not comparable and needs room measurement, remove them"). The failures stay in
     out/parc-esta-gate.json with the rooms that took the rest of the step."""
     ok = [r for r in PGATE if r['verdict'] == 'COMPARABLE']

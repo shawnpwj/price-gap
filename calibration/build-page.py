@@ -2885,12 +2885,10 @@ premiums. <b>One development: none of this is a Singapore-wide figure.</b></p>
   area, and ground-floor units a PES; neither is ever paired with its own standard unit.
   Where exact pairs are thin the adjusted track carries the row.</p>
   {LAYOUT_PARC}
-  <p class="expl"><b>Feature pairs, rooms measured.</b> 18 plans measured room by room. Of 31
-  feature pairs with evidence, <b>pass</b> the gate (60% since 2026-09-19).
-  The second bathroom never does: its best pair is 68%, and the rest of every 2BR1B &rarr; 2BR2B
-  step is a second balcony and a bigger living room. The WC-and-utility pairs top out at 58%.
-  Both passes are adjusted-track only (two exact pairs each), and they differ by $40,000 &mdash;
-  C3 &rarr; CU1 adds 38 sqft of study on a 32 sqft step, so other rooms gave up space. Read the pair as a range, not a price: Treasure&rsquo;s same-package noise floor is $22,000.</p>
+  <p class="expl"><b>Feature pairs, rooms measured.</b> 18 plans measured room by room. A pair
+  passes when the added feature rooms are at least <b>60%</b> of the extra square feet &mdash; lowered
+  from 80% on 2026-09-19, after Shawn judged Riversails&rsquo; study pairs (63&ndash;67%) to be the same
+  product plus a study. Six Parc Esta pairs pass. The study pairs are adjusted-track only.</p>
   {LAYOUT_PARCF}
 </section>
 

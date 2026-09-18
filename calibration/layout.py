@@ -69,12 +69,20 @@ def _agree(r):
 def _cell(s):
     """Shawn, 2026-09-18: "i recommend having both exact and adjusted shown at all times."
     Both columns always appear. A track under the 5-pair minimum shows its count and a dash
-    rather than a figure -- present, visibly, but not quoted."""
-    if not s: return '<td class="num lthin">&mdash;<span class="lsub">no pairs</span></td>'
+    rather than a figure -- present, visibly, but not quoted.
+
+    Shawn, 2026-09-19: lead with TRANSACTIONS ASSESSED. The sale-pair count is a cross product --
+    one caveat pairs with every qualifying caveat on the other side -- so it reads as more or less
+    evidence than there is. The transaction line is the distinct caveats; the pair line stays
+    underneath because the thinness rule (5 pairs) is still counted in pairs."""
+    if not s: return '<td class="num lthin">&mdash;<span class="lsub">no transactions</span></td>'
     if s.get('thin'):
-        return (f'<td class="num lthin">&mdash;<span class="lsub">{s["pairs"]} pair'
+        return (f'<td class="num lthin">&mdash;<span class="lsub">{s.get("txns", 0)} transactions</span>'
+                f'<span class="lsub lsub2">{s["pairs"]} sale pair'
                 f'{"" if s["pairs"] == 1 else "s"}, too thin</span></td>')
-    return f'<td class="num lbig">{_money(s["med"])}<span class="lsub">{s["pairs"]} pairs</span></td>'
+    return (f'<td class="num lbig">{_money(s["med"])}'
+            f'<span class="lsub">{s.get("txns", 0):,} transactions</span>'
+            f'<span class="lsub lsub2">{s["pairs"]:,} sale pairs</span></td>')
 
 def _two(r, key_exact='exact', key_adj='all'):
     return _cell(r.get(key_exact)) + _cell(r.get(key_adj))
@@ -134,9 +142,13 @@ def jumps_table():
         rows.append(
             f'<tr class="lmain"><td class="lpair">{j["jump"].replace(" -> ", " &rarr; ")}</td>'
             f'<td class="num">{_money(j["base"])}<span class="lsub">base quantum</span></td>'
-            f'<td class="num lbig">{_money(j["med"])}<span class="lsub">{j["pairs"]} pairs</span></td>'
-            + (f'<td class="num lbig">{_money(ao["med"])}<span class="lsub">{ao["pairs"]} pairs'
-               f'</span></td>' if ao else '<td class="num">&mdash;</td>')
+            f'<td class="num lbig">{_money(j["med"])}'
+            f'<span class="lsub">{j.get("txns", 0):,} transactions</span>'
+            f'<span class="lsub lsub2">{j["pairs"]:,} sale pairs</span></td>'
+            + (f'<td class="num lbig">{_money(ao["med"])}'
+               f'<span class="lsub">{ao.get("txns", 0):,} transactions</span>'
+               f'<span class="lsub lsub2">{ao["pairs"]:,} sale pairs</span></td>'
+               if ao else '<td class="num">&mdash;</td>')
             + f'<td class="num">{agree}<span class="lsub">agree</span></td></tr>')
         rows.append(f'<tr class="lwhy"><td colspan="5">'
                     f'{" + ".join(j["base_layouts"])} &rarr; {" + ".join(j["feature_layouts"])}'
@@ -204,24 +216,29 @@ def feature_summary_table():
     def k(x): return f"${x/1000:.0f}k" if x >= 10000 else f"${round(x):,}"
     def rng(v, f, g=None):
         g = g or f
-        return f(v[1]) + (f'<span class="lsub">{g(v[0])}&ndash;{g(v[2])}</span>' if v[0] != v[2] else '<span class="lsub">one pair</span>')
+        return f(v[1]) + (f'<span class="lsub">{g(v[0])}&ndash;{g(v[2])}</span>' if v[0] != v[2] else '<span class="lsub">one layout pair</span>')
     def split(g, suf):
+        """Shawn, 2026-09-19: the bracket is TRANSACTIONS, not layout pairs."""
         if not g: return '&mdash;'
-        return ''.join(f'<span class="lsplit">{k}{suf} <b>{v["median"]:.1f}%</b> <span class="lthin">({v["n"]})</span></span>'
+        return ''.join(f'<span class="lsplit">{k}{suf} <b>{v["median"]:.1f}%</b> '
+                       f'<span class="lthin">({v.get("txns", v["n"]):,} tx)</span></span>'
                        for k, v in g.items())
     rows = []
     for o in FSUM:
         c = o['cv']
-        if o['steadiest'] is None: st = '<span class="lthin">one pair</span>'
+        if o['steadiest'] is None: st = '<span class="lthin">one layout pair</span>'
         elif max(c.values()) - min(c.values()) <= 2: st = 'no difference'   # within 2 points is noise
         else: st = f'<b>{MEAS[o["steadiest"]]}</b>'
         SHORT = {'quantum': 'qtm', 'psf': 'psf', 'pct': '%'}
         spread = ' &middot; '.join(f'{SHORT[k]} {c[k]}' for k in ('pct', 'psf', 'quantum') if c[k] is not None)
         devs = ', '.join(d.replace('-', ' ').title() for d in o['developments'])
         rows.append(f'<tr class="lmain"><td class="lpair fsum">{NAMES.get(o["feature"], o["feature"])}'
-                    f'<span class="lsub">{o["pairs"]} layout pair{"s" if o["pairs"] != 1 else ""}</span>'
-                    f'<span class="lsub">{o.get("sale_pairs_exact", 0):,} exact + {o.get("sale_pairs_adjusted", 0):,} adjusted sales</span>'
-                    f'<span class="lsub">{devs}</span></td>'
+                    f'<span class="lsub ltx">{o.get("transactions", 0):,} transactions assessed</span>'
+                    f'<span class="lsub lsub2">{o.get("transactions_exact", 0):,} on the exact track, '
+                    f'{o.get("transactions_adjusted", 0):,} adjusted &middot; '
+                    f'{o.get("sale_pairs_exact", 0):,} + {o.get("sale_pairs_adjusted", 0):,} sale pairs</span>'
+                    f'<span class="lsub lsub2">{o["pairs"]} layout pair{"s" if o["pairs"] != 1 else ""} '
+                    f'&middot; {devs}</span></td>'
                     f'<td class="num lbig">{rng(o["pct"], lambda x: f"{x:.1f}%")}</td>'
                     f'<td class="num">{split(o.get("by_region", {}), "")}</td>'
                     f'<td class="num">{split(o.get("by_beds", {}), "BR")}</td>'

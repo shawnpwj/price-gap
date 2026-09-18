@@ -871,6 +871,11 @@ td.fsum span.lsub{white-space:normal}
 span.lsplit{display:block;white-space:nowrap;font-size:12.5px}
 span.lsub{display:block;font-size:10.5px;letter-spacing:.04em;color:var(--slate-500);
   font-weight:400;margin-top:3px;text-transform:uppercase}
+/* Shawn, 2026-09-19: TRANSACTIONS ASSESSED leads; the sale-pair and layout-pair counts sit
+   under it in a quieter, sentence-case line so the row reads evidence-first. */
+span.ltx{color:var(--slate-300);font-weight:600;font-size:11.5px;text-transform:none;
+  letter-spacing:.01em}
+span.lsub2{color:var(--slate-600);margin-top:1px;text-transform:none;letter-spacing:.02em}
 tr.lwhy>td{padding:0 0 12px 0;font-size:12px;color:var(--slate-400);line-height:1.5}
 tr.lwhy i{color:var(--slate-500);font-style:normal}
 tr.lgrp>td{padding:24px 0 7px 0;font-size:11px;letter-spacing:.1em;text-transform:uppercase;
@@ -2842,10 +2847,15 @@ development has been read yet.</b></p>
   <div class="sechead"><h2 class="disp">What each feature is worth</h2></div>
   <p class="expl">Every feature in all three measures: <b>% of the unit&rsquo;s price</b>, <b>$ per
   square foot of the whole unit</b>, and <b>quantum</b>. Large figure is the median; the small line
-  is the range. <b>Layout pairs</b> are the named plan pairs (High Park 2D1 &rarr; 2S1 is one); each rests on
-  many matched sales, counted underneath on <b>both tracks</b> &mdash; exact (same floor, same facing) and
-  adjusted. The figure is the exact median where it has 5+ sales, otherwise the adjusted one. <b>By region</b>
-  and <b>by bedrooms</b> split the % of price, with the number of layout pairs in brackets. <b>Steadiest</b> is the measure that varies least across the pairs (coefficient of
+  is the range. <b>Transactions assessed</b> is the evidence: the count of <b>distinct resale
+  caveats</b> that went into the feature, across both tracks &mdash; exact (same floor, same facing)
+  and adjusted. It is a count of sales, not of comparisons: each sale is matched against every
+  qualifying sale on the other side, which is why the <b>sale pairs</b> underneath run far higher,
+  and why the two track counts overlap rather than add. <b>Layout pairs</b> are the named plan
+  pairs the sales are grouped under (High Park 2D1 &rarr; 2S1 is one). The figure is the exact median
+  where its track has 5+ sale pairs, otherwise the adjusted one. <b>By region</b> and <b>by
+  bedrooms</b> split the % of price, with the transactions behind each split in brackets.
+  <b>Steadiest</b> is the measure that varies least across the layout pairs (coefficient of
   variation), with all three spreads underneath.</p>
   {LAYOUT_FSUM}
   <p class="expl"><b>The pattern so far.</b> Across developments, <b>% of price</b> varies least
@@ -2853,13 +2863,13 @@ development has been read yet.</b></p>
   carries each development&rsquo;s price level with it: Parc Esta sells at about $2,300 psf and its
   3BR study reads $141&ndash;241 per unit sqft, against about $100 at the $1,100&ndash;1,300 psf
   developments, yet 6.0&ndash;10.6% of price like the rest. <b>Within one development, quantum</b>
-  varies least (Treasure&rsquo;s service package, five pairs: 14% against 17&ndash;18%). The extra
+  varies least (Treasure&rsquo;s service package, five layout pairs: 14% against 17&ndash;18%). The extra
   bathroom does not separate them (26&ndash;27% each). <b>Working answer: quote a feature as % of price</b>
   &mdash; a study about 9%.</p>
   <p class="expl"><b>Two cautions.</b> Parc Esta&rsquo;s 2BR study (BP5 &rarr; BD3) reads 20%: a third
   of its extra space is kitchen and living, which the price also pays for. Without it the study is
   6.0&ndash;10.6%. And <b>at the same floor area Treasure&rsquo;s study nook is worth nothing</b>
-  (B5P &rarr; B7S $0, B6P &rarr; B7S &minus;$10,000, on 3&ndash;5 pairs): part of a study premium may be
+  (B5P &rarr; B7S $0, B6P &rarr; B7S &minus;$10,000, on 3&ndash;5 sale pairs): part of a study premium may be
   the extra space that holds it. A same-size study pair with a proper enclosed study would settle it.
   Parc Esta figures are adjusted-track only.</p>
 </section>
@@ -2869,13 +2879,14 @@ development has been read yet.</b></p>
   <p class="expl">Adjusting is not modelling, and the difference is why the first version of this
   study was withdrawn: that one fitted a residual to the same pairs it was measuring. Here both
   adjusters are measured <b>somewhere else, on other pairs</b> &mdash; the floor step from
-  <b>same-stack repeat sales</b> ({FLOOR_STEP}%/floor, {FLOOR_N} pairs), the facing premiums from the
+  <b>same-stack repeat sales</b> ({FLOOR_STEP}%/floor, {FLOOR_N} sale pairs), the facing premiums from the
   stack study&rsquo;s resale pairs, direct only, never chained.</p>
   <p class="expl">The <b>test</b> column compares the exact figure against <b>only the pairs the
   exact rule throws away</b> &mdash; different floor, different facing, or both. The two sets share
   no transaction, so if adjusting works the discarded pairs should reproduce the exact answer.
-  On the best-sampled contrast they do: <b>C6 &rarr; C9P reads $237,500 on 34 exact pairs and
-  $238,835 on 937 adjusted ones &mdash; a gap of $1,335, or 0.6%.</b></p>
+  On the best-sampled contrast they do: <b>C6 &rarr; C9P reads $237,500 on 34 exact sale pairs and
+  $238,835 on 937 adjusted ones &mdash; a gap of $1,335, or 0.6%.</b> That is 48 transactions on the
+  exact track and 104 on the adjusted one.</p>
   <p class="expl">One guard came straight out of this test. Treasure&rsquo;s facing premiums were
   measured on <b>3BR and 4BR only</b>. Applied to 2BR units they pulled every 2BR contrast down by
   11&ndash;35%; refusing to extrapolate them cut that to 3&ndash;8%. <b>A facing move is now

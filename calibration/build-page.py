@@ -2288,9 +2288,7 @@ def check_panels(body):
     return len(marks)
 
 LC = LAYOUT.counts()
-B4B5, C8C9 = LAYOUT.headline_steps()
 LAYOUT_PAIRS = LAYOUT.pairs_table()
-LAYOUT_STEPS = LAYOUT.steps_table()
 LAYOUT_JUMPS = LAYOUT.jumps_table()
 LAYOUT_ROOMS = LAYOUT.rooms_table()
 BODY = f"""
@@ -2828,21 +2826,12 @@ is nothing left to adjust for. <b>One development: none of this is a Singapore-w
 <section>
   <div class="sechead"><h2 class="disp">Every contrast, and whether it may be used</h2></div>
   <p class="expl">A pair is publishable only when the differing features are <b>absent on one side
-  and present on the other</b>, or when there is no feature difference at all. Where the same
-  feature sits on both sides at a different size, the pair is a product comparison and not a
-  feature contrast &mdash; Shawn's ruling on D1 &rarr; D8P, 2026-09-18.</p>
+  and present on the other</b> and at least <b>80% of the area step is the added rooms</b>, measured
+  off the plans. Where the same feature sits on both sides at a different size, the pair is a
+  product comparison and not a feature contrast &mdash; Shawn's ruling on D1 &rarr; D8P.
+  <b>A pair with no feature difference is not shown at all</b> &mdash; a step with the same package
+  on both sides prices a square foot, not a feature.</p>
   <div class="scroll">{LAYOUT_PAIRS}</div>
-</section>
-
-<section>
-  <div class="sechead"><h2 class="disp">Same package, area only</h2></div>
-  <p class="expl">Pairs whose recorded feature vector is identical and which differ only in strata
-  area. <b>The two 21 sqft steps are the thing to look at.</b> B4P &rarr; the 678 class gains 21 sqft and
-  <b>+40 sqft of living and dining</b>, and the market pays {B4B5}. C8P &rarr; C9P gains the same
-  21 sqft but its <b>living and dining is 36 sqft smaller</b>, and the market pays {C8C9}. Same
-  area step, opposite sign. Where the area goes matters more than how much of it there is &mdash;
-  though the pattern does not hold across every pair below, so it is a reading, not a rule.</p>
-  <div class="scroll">{LAYOUT_STEPS}</div>
 </section>
 
 <section>

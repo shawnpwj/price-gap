@@ -5,3 +5,4 @@ node_modules/
 # scripts/build-price-gap.mjs in a minute or two. Nothing here is source.
 /out/
 .ura-raw.json
+__pycache__/

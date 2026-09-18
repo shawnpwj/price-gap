@@ -22,6 +22,7 @@ moment the pair screen changed. If you add a claim, compute it.
 
   python3 lease-pairs.py && python3 build-page.py
 """
+import layout as LAYOUT   # Internal > Constant Calibration > Layout
 import json, math, os, html, random, statistics as st, datetime, sys
 
 # A page is only true for the data it was cut from. This REFUSES TO BUILD when any calibration
@@ -855,6 +856,7 @@ table.fig thead th{font-size:12.5px;letter-spacing:.02em;
 color:var(--slate-600);font-weight:400;border-bottom:1px solid var(--ink);white-space:nowrap}
 table.fig tbody th{font-weight:400;color:var(--slate-300);white-space:nowrap}
 .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pad{padding-left:18px}
 .big{color:var(--slate-100);font-weight:600}
 .quiet{color:var(--slate-600)}
 .nil{color:var(--slate-600);font-style:italic}
@@ -1166,6 +1168,21 @@ JS = """
   });
   window.addEventListener('hashchange',function(){show(location.hash.slice(1),false);});
   show((location.hash||'#summary').slice(1),false);
+
+  /* THE LAYOUT PANEL IS HIDDEN INSIDE A HIDDEN PAGE. Shawn, 2026-09-18: the Layout study is not
+     part of the constant set and must not sit in the nav strip. The way in is a DOUBLE-TAP on
+     the "Internal — Constant Calibration" chip, the same two-pointerups-inside-450ms handler the
+     calculator uses on its brand mark: iOS Safari does not fire dblclick from a double tap, it
+     treats the second tap as zoom, which touch-action:manipulation suppresses. A single tap does
+     nothing. Once opened the panel behaves like any other — #layout stays linkable. */
+  var key=document.getElementById('layoutKey'), lastTap=0;
+  if(key){
+    key.addEventListener('pointerup',function(){
+      var now=Date.now();
+      if(now-lastTap<450){ lastTap=0; show('layout',true); }
+      else lastTap=now;
+    });
+  }
 })();
 
 /* THE QUARTERLY DRILL-DOWN. Shawn, 2026-09-10: keep the 442 pooled rows as the evidence and put
@@ -2247,6 +2264,12 @@ def check_panels(body):
                          'other and the nav would render blank panels.\n' + '\n'.join(bad))
     return len(marks)
 
+LC = LAYOUT.counts()
+B4B5, C8C9 = LAYOUT.headline_steps()
+LAYOUT_PAIRS = LAYOUT.pairs_table()
+LAYOUT_STEPS = LAYOUT.steps_table()
+LAYOUT_JUMPS = LAYOUT.jumps_table()
+LAYOUT_ROOMS = LAYOUT.rooms_table()
 BODY = f"""
 <div class="panel" data-p="summary">
 <h1 class="disp">Where the constants now stand</h1>
@@ -2771,6 +2794,85 @@ at resale.</p>
 </section>
 </div>
 
+
+<div class="panel" data-p="layout" hidden>
+<h1 class="disp">What the resale market pays for a layout</h1>
+<p class="lede">Treasure at Tampines, the pilot. Every figure is a RAW price difference between two
+named layouts, matched on the <b>same floor exactly</b>, the <b>same facing</b>, within
+<b>six months</b>, <b>resale only</b>. Nothing is modelled, because once those four are held there
+is nothing left to adjust for.</p>
+
+<div class="verdict"><div class="vgrid">
+  <div class="vcell"><div class="lab">Layouts annotated</div>
+    <div class="val was">{LC['layouts']}</div><div class="sub">of 33; the two 1BR skipped</div></div>
+  <div class="arrow">&rarr;</div>
+  <div class="vcell"><div class="ans"><div class="n">{LC['publishable']}</div>
+    <div class="w">pairs publishable</div></div>
+  <div class="ans"><div class="n">{LC['rejected']}</div><div class="w">rejected outright</div></div>
+  <div class="ans"><div class="n">{LC['measured']}</div><div class="w">layouts with rooms measured</div></div>
+  </div></div>
+  <p class="call">One development. None of this is a Singapore-wide figure.</p>
+</div>
+
+<section>
+  <div class="sechead"><h2 class="disp">Every contrast, and whether it may be used</h2></div>
+  <p class="expl">A pair is publishable only when the differing features are <b>absent on one side
+  and present on the other</b>, or when there is no feature difference at all. Where the same
+  feature sits on both sides at a different size, the pair is a product comparison and not a
+  feature contrast &mdash; Shawn's ruling on D1 &rarr; D8P, 2026-09-18.</p>
+  <div class="scroll">{LAYOUT_PAIRS}</div>
+</section>
+
+<section>
+  <div class="sechead"><h2 class="disp">Same package, area only</h2></div>
+  <p class="expl">Pairs whose recorded feature vector is identical and which differ only in strata
+  area. <b>The two 21 sqft steps are the thing to look at.</b> B4P &rarr; the 678 class gains 21 sqft and
+  <b>+40 sqft of living and dining</b>, and the market pays {B4B5}. C8P &rarr; C9P gains the same
+  21 sqft but its <b>living and dining is 36 sqft smaller</b>, and the market pays {C8C9}. Same
+  area step, opposite sign. Where the area goes matters more than how much of it there is &mdash;
+  though the pattern does not hold across every pair below, so it is a reading, not a rule.</p>
+  <div class="scroll">{LAYOUT_STEPS}</div>
+</section>
+
+<section>
+  <div class="sechead"><h2 class="disp">Crossing a bedroom tier</h2></div>
+  <p class="expl">The tier edge is the biggest layout of one bedroom count against the smallest
+  usable of the next &mdash; the cheapest way across. Crossing from the top of a tier costs far
+  less than from the middle.</p>
+  <div class="scroll">{LAYOUT_JUMPS}</div>
+</section>
+
+<section>
+  <div class="sechead"><h2 class="disp">Measured room areas</h2></div>
+  <p class="expl">Rooms read off the plan sheets as rectangles, then <b>self-calibrated</b>: each
+  layout's room sum is set equal to its published strata area, which fixes sqft-per-pixel without
+  needing the drawing scale. <b>About &plusmn;10% on a large room and worse on a small one</b>;
+  circulation is absorbed into the adjacent room, so the kitchen figures for C4 and C7 are
+  overstated. Good enough to say whether a room is materially bigger. Not good enough to quote.</p>
+  {LAYOUT_ROOMS}
+</section>
+
+<section>
+  <div class="sechead"><h2 class="disp">Behind it</h2></div>
+  <div class="cards" style="margin-top:6px">
+    <div class="card"><h3>Held constant</h3><ul>
+      <li><b>same floor</b>, exactly &mdash; not a band, not a modelled step</li>
+      <li><b>same facing</b>, on the stack-study facingType</li>
+      <li><b>six months</b>, twelve at the outside</li>
+      <li><b>resale only</b> &mdash; the developer price list is not evidence of value</li></ul></div>
+    <div class="card"><h3>How a layout is identified</h3><ul>
+      <li>the <b>stack schedule printed on each plan sheet</b>, including mirror stacks</li>
+      <li>stack <b>and</b> floor range &mdash; a stack changes layout at the top floor</li>
+      <li>89.1% of the development's caveats link this way</li></ul></div>
+    <div class="card"><h3>Not controlled</h3><ul>
+      <li><b>renovation and condition</b> &mdash; not in REALIS</li>
+      <li>seller urgency, tenancy, mortgagee sales</li>
+      <li>room proportions the annotation does not measure &mdash; two layouts at the
+          same 678 sqft still differ by about $22,000</li></ul></div>
+  </div>
+</section>
+</div>
+
 """
 
 HTML = f"""<!doctype html>
@@ -2784,7 +2886,7 @@ HTML = f"""<!doctype html>
   <div class="hin">
     <div class="brand"><div class="mark">K</div>
       <div><p>KYA REAL ESTATE</p><p>Private Client Advisory</p></div></div>
-    <span class="chip"><b></b> Internal — Constant Calibration</span>
+    <span class="chip" id="layoutKey" style="touch-action:manipulation" title=""><b></b> Internal &mdash; Constant Calibration</span>
     <span class="chip asof">Figures as of {cut.VINTAGE}</span>
   </div>
   <nav class="terms" aria-label="The constants">

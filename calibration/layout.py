@@ -8,9 +8,14 @@ Everything the layout-feature study has measured at Treasure at Tampines, laid o
 audited: the matching rule, every published contrast, every rejected one and why, the
 bedroom-tier jumps and the measured room areas.
 
-Shawn, 2026-09-18: "I dont neeed area only, remove ALL area only." Nothing here shows a
-premium for a pair with no feature difference. The area-only diagnostic still exists in
-layout-study (out/diagnostic-area-only-steps.json) and is deliberately not read.
+Shawn, 2026-09-18, three cuts, all of them "I dont need this":
+  * "remove ALL area only" -- no pair without a feature difference is shown.
+  * "for all not comparable and needs room measurement, remove them" -- only pairs that pass
+    the 80% gate reach this page. The rejected ones stay in out/library-layout-pairs.csv with
+    their reasons; the gate is auditable there, it is just not on his screen.
+  * "i dont need the specfiic sizing ... what matters is 3BR Prem to 4BR compact" -- bedroom
+    crossings are labelled by PRODUCT CLASS, with no strata areas, because the class is what
+    aggregates across developments. See layout-study/src/product_class.py.
 
 Reads the layout-study outputs. Nothing here is computed; this is a window onto that repo.
 """
@@ -25,8 +30,7 @@ def _load(p, default=None):
     return json.load(open(f))
 
 PAIRS  = _load('out/library-layout-pairs.json', [])
-JUMPS  = _load('out/bedroom-jumps.json', [])
-EDGES  = _load('out/tier-edge-jumps.json', [])
+JUMPS  = _load('out/class-jumps.json', [])
 ROOMS  = _load('data/annotations/room-areas.json', {}) or {}
 LAY    = (_load('data/annotations/treasure-at-tampines.json', {}) or {}).get('layouts', {})
 
@@ -40,9 +44,7 @@ def _ci(lo, hi):
     if lo is None or hi is None: return '&mdash;'
     return _money(lo) + ' to ' + _money(hi)
 
-BAND = {'COMPARABLE': ('ok', 'publishable'),
-        'NEEDS_ROOM_MEASUREMENT': ('warn', 'not publishable &mdash; unexplained area'),
-        'NOT_COMPARABLE': ('bad', 'rejected')}
+BAND = {'COMPARABLE': ('ok', 'passed the 80% gate')}
 
 def _row(cells, cls=""):
     return f'<tr class="{cls}">' + "".join(cells) + "</tr>"
@@ -55,7 +57,7 @@ def pairs_table():
     for r in PAIRS:
         groups.setdefault(r['comparability'].split(' (')[0], []).append(r)
     out = []
-    for key in ('COMPARABLE', 'NEEDS_ROOM_MEASUREMENT', 'NOT_COMPARABLE'):
+    for key in ('COMPARABLE',):
         rs = groups.get(key)
         if not rs: continue
         cls, note = BAND[key]
@@ -72,7 +74,8 @@ def pairs_table():
                 f'<td class="num lbig">{_money(r["premium_sgd"])}<span class="lsub">'
                 f'{r["premium_pct"]}%</span></td>'
                 f'<td class="num">{_ci(r["ci95_low"], r["ci95_high"])}</td></tr>')
-            out.append(f'<tr class="lwhy"><td colspan="5">{r["feature_difference"]}'
+            out.append(f'<tr class="lwhy"><td colspan="5"><b>{r["base_class"]} &rarr; '
+                       f'{r["feature_class"]}</b> &nbsp;&middot;&nbsp; {r["feature_difference"]}'
                        + (f' &nbsp;&middot;&nbsp; <i>{why}</i>' if why else '') + '</td></tr>')
     return ('<table class="lt"><thead><tr><th>pair</th><th class="num">strata</th>'
             '<th class="num">matched</th><th class="num">premium</th>'
@@ -80,37 +83,27 @@ def pairs_table():
             + ''.join(out) + '</tbody></table>')
 
 def jumps_table():
+    """Shawn, 2026-09-18: "i dont need the specfiic sizing ... remove all the sizes because when
+    you start aggregating it across developments, the sizing dont matter, what matters is 3BR Prem
+    to 4BR compact is the premium we're trying to find out."
+
+    One row per bedroom crossing, priced the cheapest way across: the PREMIUM class of one
+    bedroom count against the COMPACT class of the next. No strata areas anywhere."""
+    if not JUMPS: return '<p class="expl">no class jumps computed.</p>'
     rows = []
-    if EDGES:
-        rows.append('<tr class="lgrp ok"><td colspan="5">tier edge'
-                    '<span class="lnote">biggest of one tier to the cheapest usable of the next'
-                    '</span></td></tr>')
-        for j in EDGES:
-            rows.append(
-                f'<tr class="lmain"><td class="lpair">{j["jump"].replace(" -> ", " &rarr; ")}</td>'
-                f'<td class="num">{j["base_sqft"]:,} &rarr; {j["feature_sqft"]:,}'
-                f'<span class="lsub">{j["delta_sqft"]:+} sqft</span></td>'
-                f'<td class="num">{j["pairs"]}<span class="lsub">pairs</span></td>'
-                f'<td class="num">{_money(j["base"])}<span class="lsub">base</span></td>'
-                f'<td class="num lbig">{_money(j["med"])}<span class="lsub">{j["pct"]}%</span>'
-                f'</td></tr>')
-            if j.get('rung'):
-                rows.append(f'<tr class="lwhy"><td colspan="5"><i>{j["rung_note"]}</i></td></tr>')
-    if JUMPS:
-        rows.append('<tr class="lgrp"><td colspan="5">other jumps'
-                    '<span class="lnote">bedroom step and its area together, not decomposable'
-                    '</span></td></tr>')
-        for j in JUMPS:
-            rows.append(
-                f'<tr class="lmain"><td class="lpair">{j["jump"].replace(" -> ", " &rarr; ")}</td>'
-                f'<td class="num">&mdash;</td>'
-                f'<td class="num">{j["pairs"]}<span class="lsub">pairs</span></td>'
-                f'<td class="num">{_money(j["base"])}<span class="lsub">base</span></td>'
-                f'<td class="num lbig">{_money(j["med"])}<span class="lsub">{j["pct"]}%</span>'
-                f'</td></tr>')
-    return ('<table class="lt"><thead><tr><th>jump</th><th class="num">strata</th>'
-            '<th class="num">matched</th><th class="num">base quantum</th>'
-            '<th class="num">premium</th></tr></thead><tbody>' + ''.join(rows) + '</tbody></table>')
+    for j in JUMPS:
+        rows.append(
+            f'<tr class="lmain"><td class="lpair">{j["jump"].replace(" -> ", " &rarr; ")}</td>'
+            f'<td class="num">{j["pairs"]}<span class="lsub">pairs</span></td>'
+            f'<td class="num">{_money(j["base"])}<span class="lsub">base quantum</span></td>'
+            f'<td class="num lbig">{_money(j["med"])}<span class="lsub">{j["pct"]}%</span></td>'
+            f'<td class="num">{_ci(j["ci"][0], j["ci"][1])}</td></tr>')
+        rows.append(f'<tr class="lwhy"><td colspan="5">'
+                    f'{" + ".join(j["base_layouts"])} &rarr; {" + ".join(j["feature_layouts"])}'
+                    f'</td></tr>')
+    return ('<table class="lt"><thead><tr><th>crossing</th><th class="num">matched</th>'
+            '<th class="num">base quantum</th><th class="num">premium</th>'
+            '<th class="num">95% CI</th></tr></thead><tbody>' + ''.join(rows) + '</tbody></table>')
 
 ROOM_ORDER = ['living', 'dining', 'master', 'bedroom_1', 'bedroom_2', 'bedroom_3', 'bedroom_4',
               'bath_1', 'bath_2', 'wc', 'kitchen', 'yard', 'household_shelter', 'store',

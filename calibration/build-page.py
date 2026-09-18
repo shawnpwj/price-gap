@@ -2824,21 +2824,25 @@ two named layouts, matched on the <b>same floor exactly</b>, the <b>same facing<
 is nothing left to adjust for. <b>One development: none of this is a Singapore-wide figure.</b></p>
 
 <section>
-  <div class="sechead"><h2 class="disp">Every contrast, and whether it may be used</h2></div>
-  <p class="expl">A pair is publishable only when the differing features are <b>absent on one side
-  and present on the other</b> and at least <b>80% of the area step is the added rooms</b>, measured
-  off the plans. Where the same feature sits on both sides at a different size, the pair is a
-  product comparison and not a feature contrast &mdash; Shawn's ruling on D1 &rarr; D8P.
-  <b>A pair with no feature difference is not shown at all</b> &mdash; a step with the same package
-  on both sides prices a square foot, not a feature.</p>
+  <div class="sechead"><h2 class="disp">What a feature is worth</h2></div>
+  <p class="expl">Every pair here has <b>passed the gate</b>: the differing features are absent on
+  one side and present on the other, and at least <b>80% of the area step is the added rooms</b>,
+  measured off the plans. Pairs that failed &mdash; same feature both sides at a different size, or
+  an area step too big for the rooms added &mdash; are <b>not shown</b>, and neither is any pair
+  without a feature difference at all. They stay recorded with their reasons in
+  <code>out/library-layout-pairs.csv</code>. The line in bold under each row is the
+  <b>product class</b> the figure belongs to, which is how it will pool with other developments.</p>
   <div class="scroll">{LAYOUT_PAIRS}</div>
 </section>
 
 <section>
   <div class="sechead"><h2 class="disp">Crossing a bedroom tier</h2></div>
-  <p class="expl">The tier edge is the biggest layout of one bedroom count against the smallest
-  usable of the next &mdash; the cheapest way across. Crossing from the top of a tier costs far
-  less than from the middle.</p>
+  <p class="expl">Priced the <b>cheapest way across</b>: the Premium class of one bedroom count
+  against the Compact class of the next. <b>No strata areas</b> &mdash; the product class is the
+  unit, because that is what pools across developments, where the same class is a different size
+  in every project. The tier is <b>what the developer prints on the plan sheet</b> &mdash;
+  &ldquo;3 Bedroom&rdquo; against &ldquo;3 Bedroom Premium&rdquo; &mdash; never the area. The small
+  line under each row is which layouts went in.</p>
   <div class="scroll">{LAYOUT_JUMPS}</div>
 </section>
 

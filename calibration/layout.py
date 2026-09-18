@@ -41,6 +41,7 @@ XDEV   = _load('out/all-developments-crossings.json', [])
 XPOOL  = _load('out/crossings-pooled.json', [])
 PARC   = _load('out/parc-esta-contrasts.json', [])
 PGATE  = _load('out/parc-esta-gate.json', [])
+FSUM   = _load('out/feature-summary.json', [])
 ROOMS  = _load('data/annotations/room-areas.json', {}) or {}
 LAY    = (_load('data/annotations/treasure-at-tampines.json', {}) or {}).get('layouts', {})
 
@@ -190,6 +191,35 @@ def parc_features_table():
     return ('<div class="scroll"><table class="lt"><thead><tr><th>pair</th>'
             '<th class="num">exact match</th><th class="num">adjusted</th>'
             '<th class="num">gate</th></tr></thead><tbody>' + ''.join(rows) + '</tbody></table></div>')
+
+def feature_summary_table():
+    """Shawn, 2026-09-19: "can you upload a summary of the data on the calibration/layout html".
+    One row per feature across every development read so far, in all three measures, with which
+    one varies least. From layout-study/src/feature_summary.py."""
+    if not FSUM: return '<p class="expl">no feature summary built.</p>'
+    NAMES = {'study': 'Study', 'extra bathroom': 'Extra bathroom', 'WC + utility (+ yard)': 'WC + utility + yard',
+             'shelter + yard + WC + enclosed kitchen': 'Shelter + yard + WC + enclosed kitchen',
+             'study -> bedroom': 'Study &rarr; bedroom', 'one more bedroom (same package)': 'One more bedroom, same package'}
+    MEAS = {'quantum': 'quantum', 'psf': '$/sqft', 'pct': '% of price'}
+    def rng(v, f): return f(v[1]) + (f'<span class="lsub">{f(v[0])} &ndash; {f(v[2])}</span>' if v[0] != v[2] else '<span class="lsub">one pair</span>')
+    rows = []
+    for o in FSUM:
+        c = o['cv']
+        if o['steadiest'] is None: st = '<span class="lthin">one pair</span>'
+        elif len(set(c.values())) == 1: st = 'no difference'
+        else: st = f'<b>{MEAS[o["steadiest"]]}</b>'
+        SHORT = {'quantum': 'qtm', 'psf': 'psf', 'pct': '%'}
+        spread = ' &middot; '.join(f'{SHORT[k]} {c[k]}' for k in ('pct', 'psf', 'quantum') if c[k] is not None)
+        devs = ', '.join(d.replace('-', ' ').title() for d in o['developments'])
+        rows.append(f'<tr class="lmain"><td class="lpair">{NAMES.get(o["feature"], o["feature"])}'
+                    f'<span class="lsub">{o["pairs"]} pair{"s" if o["pairs"] != 1 else ""} &middot; {devs}</span></td>'
+                    f'<td class="num lbig">{rng(o["pct"], lambda x: f"{x:.1f}%")}</td>'
+                    f'<td class="num">{rng(o["psf"], lambda x: "$" + format(round(x), ","))}</td>'
+                    f'<td class="num">{rng(o["quantum"], lambda x: "$" + format(round(x), ","))}</td>'
+                    f'<td class="num">{st}<span class="lsub">{spread}</span></td></tr>')
+    return ('<div class="scroll"><table class="lt"><thead><tr><th>feature</th><th class="num">% of price</th>'
+            '<th class="num">$ per unit sqft</th><th class="num">quantum</th><th class="num">steadiest</th>'
+            '</tr></thead><tbody>' + ''.join(rows) + '</tbody></table></div>')
 
 def xdev_table():
     """Shawn, 2026-09-18: "Can you now move on to the rest of the developments."

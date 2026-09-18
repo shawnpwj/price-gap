@@ -2301,6 +2301,7 @@ LAYOUT_XDEV  = LAYOUT.xdev_table()
 LAYOUT_PARC  = LAYOUT.parc_table()
 LAYOUT_PARCF = LAYOUT.parc_features_table()
 LAYOUT_ROOMS = LAYOUT.rooms_table()
+LAYOUT_FSUM  = LAYOUT.feature_summary_table()
 BODY = f"""
 <div class="panel" data-p="summary">
 <h1 class="disp">Where the constants now stand</h1>
@@ -2828,11 +2829,34 @@ at resale.</p>
 
 <div class="panel" data-p="layout" hidden>
 <h1 class="disp">What the resale market pays for a layout</h1>
-<p class="lede">Treasure at Tampines, the pilot. Resale only, within <b>six months</b>, and every
-figure is shown <b>twice</b>. <b>Exact match</b> is the same floor and the same facing, so the raw
-price difference is the premium and nothing is modelled. <b>Adjusted</b> lets floor and facing
-differ and moves the base price using this development&rsquo;s own measured floor step and facing
-premiums. <b>One development: none of this is a Singapore-wide figure.</b></p>
+<p class="lede">Six developments with plans measured room by room &mdash; Treasure at Tampines,
+Parc Esta, High Park Residences, Riversails, Symphony Suites and Sims Urban Oasis &mdash; plus A
+Treasure Trove for the study &rarr; bedroom step. Resale only, within <b>six months</b>. A pair counts when the features
+that differ make up at least <b>60%</b> of the extra square feet. <b>OCR and RCR only &mdash; no CCR
+development has been read yet.</b></p>
+
+<section>
+  <div class="sechead"><h2 class="disp">What each feature is worth</h2></div>
+  <p class="expl">Every feature in all three measures: <b>% of the unit&rsquo;s price</b>, <b>$ per
+  square foot of the whole unit</b>, and <b>quantum</b>. Large figure is the median; the small line
+  is the range. <b>Steadiest</b> is the measure that varies least across the pairs (coefficient of
+  variation), with all three spreads underneath.</p>
+  {LAYOUT_FSUM}
+  <p class="expl"><b>The pattern so far.</b> Across developments, <b>% of price</b> varies least
+  &mdash; study (44% against 60&ndash;67%) and study &rarr; bedroom (26% against 36&ndash;42%). It
+  carries each development&rsquo;s price level with it: Parc Esta sells at about $2,300 psf and its
+  3BR study reads $141&ndash;187 per unit sqft, against about $100 at the $1,100&ndash;1,300 psf
+  developments, yet 5.9&ndash;8.1% of price like the rest. <b>Within one development, quantum</b>
+  varies least (Treasure&rsquo;s service package, five pairs: 14% against 17&ndash;18%). The extra
+  bathroom does not separate the three yet. <b>Working answer: quote a feature as % of price</b>
+  &mdash; a study about 8%.</p>
+  <p class="expl"><b>Two cautions.</b> Parc Esta&rsquo;s 2BR study (BP5 &rarr; BD3) reads 19%: a third
+  of its extra space is kitchen and living, which the price also pays for. Without it the study is
+  5.9&ndash;9.6%. And <b>at the same floor area Treasure&rsquo;s study nook is worth nothing</b>
+  (B5P &rarr; B7S $0, B6P &rarr; B7S &minus;$10,000, on 3&ndash;5 pairs): part of a study premium may be
+  the extra space that holds it. A same-size study pair with a proper enclosed study would settle it.
+  Parc Esta figures are adjusted-track only.</p>
+</section>
 
 <section>
   <div class="sechead"><h2 class="disp">Does adjusting work? The test says mostly yes</h2></div>
@@ -2856,7 +2880,7 @@ premiums. <b>One development: none of this is a Singapore-wide figure.</b></p>
 <section>
   <div class="sechead"><h2 class="disp">What a feature is worth</h2></div>
   <p class="expl">Every pair here has <b>passed the gate</b>: the differing features are absent on
-  one side and present on the other, and at least <b>80% of the area step is the added rooms</b>,
+  one side and present on the other, and at least <b>60% of the area step is the added rooms</b>,
   measured off the plans. Pairs that failed &mdash; same feature both sides at a different size, or
   an area step too big for the rooms added &mdash; are <b>not shown</b>, and neither is any pair
   without a feature difference at all. They stay recorded with their reasons in

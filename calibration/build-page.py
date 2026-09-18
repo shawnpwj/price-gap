@@ -856,6 +856,29 @@ table.fig thead th{font-size:12.5px;letter-spacing:.02em;
 color:var(--slate-600);font-weight:400;border-bottom:1px solid var(--ink);white-space:nowrap}
 table.fig tbody th{font-weight:400;color:var(--slate-300);white-space:nowrap}
 .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+table.lt{width:100%;border-collapse:collapse;font-size:13px;margin-top:14px}
+table.lt th{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--slate-500);
+  font-weight:600;padding:0 0 8px 22px;border-bottom:1px solid rgba(36,48,80,.7)}
+table.lt th:first-child{padding-left:0}
+table.lt td{padding:11px 0 11px 22px;vertical-align:baseline}
+table.lt td:first-child{padding-left:0}
+tr.lmain>td{border-top:1px solid var(--ink);color:var(--slate-300)}
+tr.lmain:hover>td{background:rgba(36,48,80,.22)}
+td.lpair{font-weight:600;color:var(--slate-100);white-space:nowrap}
+td.lbig{font-weight:600;font-size:15px;color:var(--slate-100)}
+span.lsub{display:block;font-size:10.5px;letter-spacing:.04em;color:var(--slate-500);
+  font-weight:400;margin-top:3px;text-transform:uppercase}
+tr.lwhy>td{padding:0 0 12px 0;font-size:12px;color:var(--slate-400);line-height:1.5}
+tr.lwhy i{color:var(--slate-500);font-style:normal}
+tr.lgrp>td{padding:24px 0 7px 0;font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  font-weight:700;color:var(--gold)}
+tr.lgrp.warn>td{color:var(--warn)}
+tr.lgrp.bad>td{color:var(--warn);opacity:.72}
+span.lnote{display:inline;margin-left:12px;letter-spacing:.03em;text-transform:none;
+  font-weight:400;color:var(--slate-500)}
+td.lhit,tr.lhit td.lbig{color:var(--gold)}
+table.lroom{font-size:12px}
+table.lroom th,table.lroom td{padding:7px 0 7px 14px}
 .pad{padding-left:18px}
 .big{color:var(--slate-100);font-weight:600}
 .quiet{color:var(--slate-600)}
@@ -2797,22 +2820,10 @@ at resale.</p>
 
 <div class="panel" data-p="layout" hidden>
 <h1 class="disp">What the resale market pays for a layout</h1>
-<p class="lede">Treasure at Tampines, the pilot. Every figure is a RAW price difference between two
-named layouts, matched on the <b>same floor exactly</b>, the <b>same facing</b>, within
-<b>six months</b>, <b>resale only</b>. Nothing is modelled, because once those four are held there
-is nothing left to adjust for.</p>
-
-<div class="verdict"><div class="vgrid">
-  <div class="vcell"><div class="lab">Layouts annotated</div>
-    <div class="val was">{LC['layouts']}</div><div class="sub">of 33; the two 1BR skipped</div></div>
-  <div class="arrow">&rarr;</div>
-  <div class="vcell"><div class="ans"><div class="n">{LC['publishable']}</div>
-    <div class="w">pairs publishable</div></div>
-  <div class="ans"><div class="n">{LC['rejected']}</div><div class="w">rejected outright</div></div>
-  <div class="ans"><div class="n">{LC['measured']}</div><div class="w">layouts with rooms measured</div></div>
-  </div></div>
-  <p class="call">One development. None of this is a Singapore-wide figure.</p>
-</div>
+<p class="lede">Treasure at Tampines, the pilot. Every figure is a RAW price difference between
+two named layouts, matched on the <b>same floor exactly</b>, the <b>same facing</b>, within
+<b>six months</b>, <b>resale only</b>. Nothing is modelled &mdash; once those four are held there
+is nothing left to adjust for. <b>One development: none of this is a Singapore-wide figure.</b></p>
 
 <section>
   <div class="sechead"><h2 class="disp">Every contrast, and whether it may be used</h2></div>

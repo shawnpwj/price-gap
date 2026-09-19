@@ -205,46 +205,63 @@ def parc_features_table():
             '<th class="num">gate</th></tr></thead><tbody>' + ''.join(rows) + '</tbody></table></div>')
 
 def feature_summary_table():
-    """Shawn, 2026-09-19: "can you upload a summary of the data on the calibration/layout html".
-    One row per feature across every development read so far, in all three measures, with which
-    one varies least. From layout-study/src/feature_summary.py."""
+    """Shawn, 2026-09-19: *"dont kill the pairs, but i want aggregation of 'just bathroom that fits
+    the gate', bathroom that does not fit the gates and hence its xxx sqft extra for bathroom +
+    others."*
+
+    So every feature gets TWO rows, not one. The first is the feature on its own -- the pairs where
+    the added rooms are most of the area step. The second is the same feature where the step brought
+    other space with it, and it is named by the SIZE of that step, never by a list of the rooms."""
     if not FSUM: return '<p class="expl">no feature summary built.</p>'
     NAMES = {'study': 'Study', 'extra bathroom': 'Extra bathroom', 'WC + utility (+ yard)': 'WC + utility + yard',
              'shelter + yard + WC + enclosed kitchen': 'Shelter + yard + WC + enclosed kitchen',
              'study -> bedroom': 'Study &rarr; bedroom', 'one more bedroom (same package)': 'One more bedroom, same package'}
     MEAS = {'quantum': 'quantum', 'psf': '$/sqft', 'pct': '% of price'}
+    SHORT = {'quantum': 'qtm', 'psf': 'psf', 'pct': '%'}
     def k(x): return f"${x/1000:.0f}k" if x >= 10000 else f"${round(x):,}"
     def rng(v, f, g=None):
         g = g or f
-        return f(v[1]) + (f'<span class="lsub">{g(v[0])}&ndash;{g(v[2])}</span>' if v[0] != v[2] else '<span class="lsub">one layout pair</span>')
+        return f(v[1]) + (f'<span class="lsub">{g(v[0])}&ndash;{g(v[2])}</span>' if v[0] != v[2]
+                          else '<span class="lsub">one layout pair</span>')
     def split(g, suf):
-        """Shawn, 2026-09-19: the bracket is TRANSACTIONS, not layout pairs."""
         if not g: return '&mdash;'
-        return ''.join(f'<span class="lsplit">{k}{suf} <b>{v["median"]:.1f}%</b> '
+        return ''.join(f'<span class="lsplit">{kk}{suf} <b>{v["median"]:.1f}%</b> '
                        f'<span class="lthin">({v.get("txns", v["n"]):,} tx)</span></span>'
-                       for k, v in g.items())
+                       for kk, v in g.items())
     rows = []
     for o in FSUM:
-        c = o['cv']
-        if o['steadiest'] is None: st = '<span class="lthin">one layout pair</span>'
-        elif max(c.values()) - min(c.values()) <= 2: st = 'no difference'   # within 2 points is noise
-        else: st = f'<b>{MEAS[o["steadiest"]]}</b>'
-        SHORT = {'quantum': 'qtm', 'psf': 'psf', 'pct': '%'}
-        spread = ' &middot; '.join(f'{SHORT[k]} {c[k]}' for k in ('pct', 'psf', 'quantum') if c[k] is not None)
-        devs = ', '.join(d.replace('-', ' ').title() for d in o['developments'])
-        rows.append(f'<tr class="lmain"><td class="lpair fsum">{NAMES.get(o["feature"], o["feature"])}'
-                    f'<span class="lsub ltx">{o.get("transactions", 0):,} transactions assessed</span>'
-                    f'<span class="lsub lsub2">{o.get("transactions_exact", 0):,} on the exact track, '
-                    f'{o.get("transactions_adjusted", 0):,} adjusted &middot; '
-                    f'{o.get("sale_pairs_exact", 0):,} + {o.get("sale_pairs_adjusted", 0):,} sale pairs</span>'
-                    f'<span class="lsub lsub2">{o["pairs"]} layout pair{"s" if o["pairs"] != 1 else ""} '
-                    f'&middot; {devs}</span></td>'
-                    f'<td class="num lbig">{rng(o["pct"], lambda x: f"{x:.1f}%")}</td>'
-                    f'<td class="num">{split(o.get("by_region", {}), "")}</td>'
-                    f'<td class="num">{split(o.get("by_beds", {}), "BR")}</td>'
-                    f'<td class="num">{rng(o["psf"], lambda x: "$" + format(round(x), ","))}</td>'
-                    f'<td class="num">{rng(o["quantum"], lambda x: "$" + format(round(x), ","), k)}</td>'
-                    f'<td class="num">{st}<span class="lsub">{spread}</span></td></tr>')
+        name = NAMES.get(o["feature"], o["feature"])
+        for which, b in (('alone', o.get('feature_alone')), ('area', o.get('feature_plus_area'))):
+            if not b: continue
+            c = b['cv']
+            if b['steadiest'] is None: st = '<span class="lthin">one layout pair</span>'
+            elif max(c.values()) - min(c.values()) <= 2: st = 'no difference'
+            else: st = f'<b>{MEAS[b["steadiest"]]}</b>'
+            spread = ' &middot; '.join(f'{SHORT[kk]} {c[kk]}' for kk in ('pct', 'psf', 'quantum')
+                                       if c[kk] is not None)
+            devs = ', '.join(d.replace('-', ' ').title() for d in b['developments'])
+            sq = b.get('step_sqft')
+            if which == 'alone':
+                head = (f'{name}<span class="lsub ltx">the feature on its own</span>')
+            else:
+                # NAMED BY THE SIZE OF THE STEP, which is what he asked for
+                span = (f'+{sq[0]}&ndash;{sq[2]} sqft' if sq and sq[0] != sq[2]
+                        else (f'+{sq[1]} sqft' if sq else 'a larger step'))
+                head = (f'{name}<span class="lsub ltx lwide">{span} &mdash; the feature '
+                        f'+ other areas</span>')
+            rows.append(
+                f'<tr class="lmain {"lb-alone" if which=="alone" else "lb-area"}">'
+                f'<td class="lpair fsum">{head}'
+                f'<span class="lsub lsub2">{b.get("transactions", 0):,} transactions assessed &middot; '
+                f'{b.get("sale_pairs_exact", 0):,} + {b.get("sale_pairs_adjusted", 0):,} sale pairs</span>'
+                f'<span class="lsub lsub2">{b["pairs"]} layout pair{"s" if b["pairs"] != 1 else ""} '
+                f'&middot; {devs}</span></td>'
+                f'<td class="num lbig">{rng(b["pct"], lambda x: f"{x:.1f}%")}</td>'
+                f'<td class="num">{split(b.get("by_region", {}), "")}</td>'
+                f'<td class="num">{split(b.get("by_beds", {}), "BR")}</td>'
+                f'<td class="num">{rng(b["psf"], lambda x: "$" + format(round(x), ","))}</td>'
+                f'<td class="num">{rng(b["quantum"], lambda x: "$" + format(round(x), ","), k)}</td>'
+                f'<td class="num">{st}<span class="lsub">{spread}</span></td></tr>')
     return ('<div class="scroll"><table class="lt"><thead><tr><th>feature</th><th class="num">% of price</th>'
             '<th class="num">by region</th><th class="num">by bedrooms</th>'
             '<th class="num">$ per unit sqft</th><th class="num">quantum</th><th class="num">steadiest</th>'

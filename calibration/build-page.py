@@ -876,6 +876,13 @@ span.lsub{display:block;font-size:10.5px;letter-spacing:.04em;color:var(--slate-
 span.ltx{color:var(--slate-300);font-weight:600;font-size:11.5px;text-transform:none;
   letter-spacing:.01em}
 span.lsub2{color:var(--slate-600);margin-top:1px;text-transform:none;letter-spacing:.02em}
+/* Shawn, 2026-09-19: the gates classify rather than kill, so every feature can show twice --
+   once on its own, once with the area its step brought. The second row is named by the SIZE of
+   the step. A hairline ties the pair together and the second is tinted so they never read as
+   two unrelated features. */
+tr.lb-area>td{border-top:1px dashed rgba(36,48,80,.75)}
+tr.lb-area>td:first-child{padding-left:14px;border-left:2px solid var(--gold);opacity:.92}
+span.lwide{color:var(--gold);letter-spacing:.02em}
 tr.lwhy>td{padding:0 0 12px 0;font-size:12px;color:var(--slate-400);line-height:1.5}
 tr.lwhy i{color:var(--slate-500);font-style:normal}
 tr.lgrp>td{padding:24px 0 7px 0;font-size:11px;letter-spacing:.1em;text-transform:uppercase;
@@ -2849,8 +2856,13 @@ development has been read yet.</b></p>
   <div class="sechead"><h2 class="disp">What each feature is worth</h2></div>
   <p class="expl">Every feature in all three measures: <b>% of the unit&rsquo;s price</b>, <b>$ per
   square foot of the whole unit</b>, and <b>quantum</b>. Large figure is the median; the small line
-  is the range. <b>Transactions assessed</b> is the evidence: the count of <b>distinct resale
-  caveats</b> that went into the feature, across both tracks &mdash; exact (same floor, same facing)
+  is the range. <b>Every feature can appear twice.</b> The first row is <b>the feature on its own</b>
+  &mdash; pairs where the added rooms are most of the extra square feet and the corridor is not.
+  The second, marked in gold with the size of the step, is <b>the same feature where the step
+  brought other space with it</b>: at JadeScape an extra bathroom arrives with +118 sqft of which
+  the bathroom is 47, the kitchen 32 and the corridor 52. Both are real prices; they answer
+  different questions, and neither is adjusted into the other. <b>Transactions assessed</b> is the
+  evidence: the count of <b>distinct resale caveats</b> that went into the feature, across both tracks &mdash; exact (same floor, same facing)
   and adjusted. It is a count of sales, not of comparisons: each sale is matched against every
   qualifying sale on the other side, which is why the <b>sale pairs</b> underneath run far higher,
   and why the two track counts overlap rather than add. <b>Layout pairs</b> are the named plan
@@ -2868,13 +2880,12 @@ development has been read yet.</b></p>
   varies least (Treasure&rsquo;s service package, five layout pairs: 14% against 17&ndash;18%). The extra
   bathroom does not separate them (26&ndash;27% each). <b>Working answer: quote a feature as % of price</b>
   &mdash; a study about 9%.</p>
-  <p class="expl"><b>The premium is partly the SPACE, not the feature.</b> Median area step by feature:
-  study <b>54 sqft</b>, extra bathroom <b>75</b>, the Treasure package <b>162</b> &mdash; almost exactly the
-  ranking by % of price. Price the step against the development&rsquo;s own psf and the order inverts:
-  a study&rsquo;s square feet cost <b>1.53&times;</b> the development&rsquo;s psf, an extra bathroom&rsquo;s
-  <b>1.15&times;</b>. <b>Per square foot it occupies, the study is the most valuable feature measured
-  &mdash; it just occupies the least.</b> A larger step reads a lower marginal psf by construction, so
-  compare study against bathroom, not either against the 162 sqft package.</p>
+  <p class="expl"><b>The two rows are the answer to &ldquo;why does a bathroom out-earn a study?&rdquo;</b>
+  An extra bathroom on its own is <b>14.0% of price</b>; the same bathroom arriving with a bigger
+  step is <b>15.5%</b>. The gap is the space, and it is shown rather than removed &mdash; nothing here
+  is adjusted for area. Read the <b>step size</b> on the second row before comparing it with
+  anything: a feature that arrives with +118 sqft is not the same purchase as one that arrives
+  with +32.</p>
   <p class="expl"><b>Two cautions.</b> Parc Esta&rsquo;s 2BR study (BP5 &rarr; BD3) reads 20%: a third
   of its extra space is kitchen and living, which the price also pays for. Without it the study is
   5.8&ndash;10.6%. And <b>at the same floor area Treasure&rsquo;s study nook is worth nothing</b>

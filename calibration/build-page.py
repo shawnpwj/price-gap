@@ -2920,12 +2920,24 @@ development has been read yet.</b></p>
   one side and present on the other, at least <b>60% of the area step is the added rooms</b>, measured
   off the plans, and <b>no more than 40% of the step went into corridor</b> &mdash; the circulation
   guard, added 2026-09-19. It removed Symphony Suites B1 &rarr; C1, whose +107 sqft put +49 into
-  hallway, and with it the only WC + utility + yard pair the study had. Pairs that failed &mdash; same feature both sides at a different size, or
+  hallway. Pairs that failed &mdash; same feature both sides at a different size, or
   an area step too big for the rooms added &mdash; are <b>not shown</b>, and neither is any pair
   without a feature difference at all. They stay recorded with their reasons in
   <code>out/library-layout-pairs.csv</code>. The line in bold under each row is the
   <b>product class</b> the figure belongs to, which is how it will pool with other developments.</p>
   <div class="scroll">{LAYOUT_PAIRS}</div>
+  <p class="expl"><b>The WC is quoted by package, not as one number, and that is a correction.</b>
+  Until 2026-09-19 this page carried a single &ldquo;WC + utility + yard&rdquo; row at
+  <b>11.6% / $173,484</b>. It was the median of two pairs &mdash; Symphony Suites at $113,000, whose
+  step is 46% corridor, and Parc Esta at $233,967, which had <b>no exact pairs at all</b> and was
+  carried on the adjusted track. Shawn found the error by hand-pricing one pair at Affinity at
+  Serangoon, where 904 sqft and 1,076 sqft are the same three-bedroom plan apart from a yard, a
+  utility room and a WC, and the gap is about $465,000. The candidate screen had never proposed
+  that pair, because it capped a step at 160 sqft and this one is +172. With the cap dropped there
+  are twelve readings instead of two, and they do not describe one product: <b>a WC on its own is
+  worth 5.7%</b>, while a WC arriving with a yard and a wet-service room runs <b>18% to 24%</b>.
+  The WC is the cheap part. Each row below is therefore a package, not a tick-box, and the rows
+  drawn from a linked development are matched on <b>product class</b> rather than on strata area.</p>
 </section>
 
 <section>

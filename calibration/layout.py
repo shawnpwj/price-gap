@@ -223,8 +223,12 @@ def feature_summary_table():
     NAMES = {'study': 'Study', 'extra bathroom': 'Extra bathroom', 'WC + utility (+ yard)': 'WC + utility + yard',
              'shelter + yard + WC + enclosed kitchen': 'Shelter + yard + WC + enclosed kitchen',
              'study -> bedroom': 'Study &rarr; bedroom', 'one more bedroom (same package)': 'One more bedroom, same package'}
-    MEAS = {'quantum': 'quantum', 'psf': '$/sqft', 'pct': '% of price'}
-    SHORT = {'quantum': 'qtm', 'psf': 'psf', 'pct': '%'}
+    # Only the DIMENSIONLESS measures can win "steadiest" -- a quantum or a raw $/sqft carries
+    # the price level of the development it came from, so its spread across developments
+    # describes the sample, not the feature (Shawn, 2026-09-20). Both are still shown.
+    MEAS = {'quantum': 'quantum', 'psf': '$/sqft', 'pct': '% of price',
+            'ratio': 'multiple of the project&rsquo;s own psf'}
+    SHORT = {'quantum': 'qtm', 'psf': 'psf', 'pct': '%', 'ratio': 'x psf'}
     def k(x): return f"${x/1000:.0f}k" if x >= 10000 else f"${round(x):,}"
     def rng(v, f, g=None):
         # A class-linked row has no step in sqft, so it has no $/sqft either -- that is a real
@@ -244,11 +248,16 @@ def feature_summary_table():
         for which, b in (('alone', o.get('feature_alone')), ('area', o.get('feature_plus_area'))):
             if not b: continue
             c = {k: v for k, v in (b['cv'] or {}).items() if v is not None}
-            if b['steadiest'] is None or not c: st = '<span class="lthin">one layout pair</span>'
-            elif max(c.values()) - min(c.values()) <= 2: st = 'no difference'
+            contest = b.get('contest') or ['pct', 'ratio']
+            run = {k: v for k, v in c.items() if k in contest}
+            if b['steadiest'] is None or not run:
+                st = ('<span class="lthin">one development</span>' if (b.get('developments_n') or 0) < 2
+                      else '<span class="lthin">only one measure available</span>')
+            elif max(run.values()) - min(run.values()) <= 2: st = 'no difference'
             else: st = f'<b>{MEAS[b["steadiest"]]}</b>'
-            spread = ' &middot; '.join(f'{SHORT[kk]} {c[kk]}' for kk in ('pct', 'psf', 'quantum')
-                                       if c.get(kk) is not None)
+            spread = ' &middot; '.join(
+                f'{SHORT[kk]} {c[kk]}' + ('' if kk in contest else '<span class="lthin">*</span>')
+                for kk in ('pct', 'ratio', 'psf', 'quantum') if c.get(kk) is not None)
             devs = ', '.join(d.replace('-', ' ').title() for d in b['developments'])
             sq = b.get('step_sqft')
             if which == 'alone':
@@ -270,12 +279,26 @@ def feature_summary_table():
                 f'<td class="num">{split(b.get("by_region", {}), "")}</td>'
                 f'<td class="num">{split(b.get("by_beds", {}), "BR")}</td>'
                 f'<td class="num">{rng(b["psf"], lambda x: "$" + format(round(x), ","))}</td>'
+                f'<td class="num">{rng(b.get("ratio"), lambda x: f"{x:.2f}&times;")}</td>'
                 f'<td class="num">{rng(b["quantum"], lambda x: "$" + format(round(x), ","), k)}</td>'
                 f'<td class="num">{st}<span class="lsub">{spread}</span></td></tr>')
     return ('<div class="scroll"><table class="lt"><thead><tr><th>feature</th><th class="num">% of price</th>'
             '<th class="num">by region</th><th class="num">by bedrooms</th>'
-            '<th class="num">$ per unit sqft</th><th class="num">quantum</th><th class="num">steadiest</th>'
-            '</tr></thead><tbody>' + ''.join(rows) + '</tbody></table></div>')
+            '<th class="num">$ per sqft of the step</th>'
+            '<th class="num">against the project&rsquo;s own psf</th>'
+            '<th class="num">quantum</th><th class="num">steadiest</th>'
+            '</tr></thead><tbody>' + ''.join(rows) + '</tbody></table></div>'
+            + '<p class="expl"><b>&ldquo;Steadiest&rdquo; is contested only between the two '
+              'measures that can travel</b> &mdash; the share of price, and the step&rsquo;s '
+              '$/sqft against the development&rsquo;s own psf. A quantum and a raw $/sqft both '
+              'carry the price level of the project they came from, so a small spread in either '
+              'one across a set of developments describes how similar that <i>sample</i> is, '
+              'not how reliable the feature is. They are marked <span class="lthin">*</span> '
+              'and shown, because the quantum is the figure to quote and its spread is worth '
+              'seeing &mdash; they just cannot win. Two features, two different answers: the '
+              'WC&nbsp;+&nbsp;yard package is remarkably steady as a <b>multiple of whatever '
+              'the development charges per square foot</b>, while an extra bathroom is steadier '
+              'as a <b>share of the price</b>, because bathrooms arrive at different sizes.</p>')
 
 DEVNAME = {'parc-esta': 'Parc Esta', 'riverfront-residences': 'Riverfront', 'treasure-at-tampines': 'Treasure',
            'a-treasure-trove': 'A Treasure Trove', 'affinity-at-serangoon': 'Affinity', 'symphony-suites': 'Symphony',
@@ -752,7 +775,10 @@ def worked_examples():
             f'<td class="warr">&rarr;</td>'
             f'<td class="wc">{_cv(e["b"])[0]}<span class="lsub">{_cv(e["b"])[1]}</span></td>'
             f'<td class="num">{_cv(e["b"])[2]}</td>'
-            f'<td class="num wdiff">{_money(e["diff"])}</td></tr>'
+            f'<td class="num wdiff">{_money(e["diff"])}</td>'
+            + (f'<td class="num woff">{_money(e["off"], sign=True)}</td>'
+               if e.get('off') is not None else '<td class="num woff"></td>')
+            + '</tr>'
             for e in w['exact'])
         a = w.get('adjusted')
         adj = ''
@@ -784,7 +810,10 @@ def worked_examples():
                                  f'&mdash; {_money(st["before"])} rebased = <b>{_money(st["after"])}</b></li>')
             adj = (f'<div class="wadj"><p>One of the {w["adj_n"]:,} pairs the exact rule turned away, and '
                    f'everything done to it. The base sale is moved to the other unit&rsquo;s floor and facing '
-                   f'using rates measured on <i>different</i> pairs, then differenced.</p>'
+                   f'using rates measured on <i>different</i> pairs, then differenced. This is the pair '
+                   f'closest to <i>that pool&rsquo;s own</i> figure of {_money(w["adj_med"])} &mdash; not '
+                   f'the one that best matches the matched-pair answer, which would be picking on the '
+                   f'agreement the two tracks exist to test.</p>'
                    f'<p class="wcav">{_cv(a["a"])[0]} &middot; {_cv(a["a"])[1]} &middot; '
                    f'<b>{_cv(a["a"])[2]}</b> &nbsp;&rarr;&nbsp; {_cv(a["b"])[0]} &middot; '
                    f'{_cv(a["b"])[1]} &middot; <b>{_cv(a["b"])[2]}</b></p>'
@@ -800,11 +829,16 @@ def worked_examples():
             f'{html.escape(w["contrast"])}</p></div>'
             f'<div class="wfig">{_money(w["exact_med"])}<span>trimmed average of {w["exact_n"]} matched pairs</span></div></div>'
             f'<table class="wt"><thead><tr><th colspan="2">the smaller layout</th><th></th>'
-            f'<th colspan="2">the larger layout</th><th class="num">difference</th></tr></thead>'
+            f'<th colspan="2">the larger layout</th><th class="num">difference</th>'
+            f'<th class="num">off the figure</th></tr></thead>'
             f'<tbody>{rows}</tbody></table>'
             f'<p class="wnote">Same floor, same facing, both sales within six months. '
-            f'<b>Nothing is adjusted &mdash; the difference is the figure.</b> Three of '
-            f'{w["exact_n"]} shown: the highest, the middle and the lowest.</p>'
+            f'<b>Nothing is adjusted &mdash; the difference is the figure.</b> The three of '
+            f'{w["exact_n"]} closest to it are shown, so what you are reading is the method '
+            f'rather than its noise. <b>The noise is real and it is this:</b> across all '
+            f'{w["exact_n"]} pairs the difference runs 'f'{_money(w["exact_lo"])} to {_money(w["exact_hi"])}, and the middle half sits '
+            f'between {_money(w["exact_q1"])} and {_money(w["exact_q3"])}. '
+            f'One pair prices one pair; {w["exact_n"]} of them price the feature.</p>'
             f'{adj}'
             f'<div class="wfoot"><span>{w["exact_n"]} matched pairs <b>{_money(w["exact_med"])}</b></span>'
             f'<span>{w["adj_n"]:,} adjusted pairs <b>{_money(w["adj_med"])}</b></span>'

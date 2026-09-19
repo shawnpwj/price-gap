@@ -867,6 +867,9 @@ table.wt tbody tr+tr td{border-top:1px solid rgba(36,48,80,.55)}
 td.wc{white-space:nowrap;color:var(--slate-200)}
 td.warr{color:var(--slate-600);padding:10px 14px}
 td.wdiff{color:var(--gold-soft);font-weight:600}
+/* how far this pair sits from the published figure -- quiet, because it is a reassurance,
+   not a finding. The three shown are the closest three; the full spread is in .wnote. */
+td.woff{color:var(--slate-500);font-size:12px}
 .wnote{font-size:12.5px;color:var(--slate-400);margin-top:13px;max-width:78ch}
 .wnote b{color:var(--slate-100);font-weight:600}
 .wadj{margin-top:18px;padding-top:16px;border-top:1px solid var(--ink)}
@@ -896,6 +899,8 @@ color:var(--slate-500)}
   table.wt tbody tr+tr td{border-top:0}
   table.wt td.num{text-align:left}
   td.wdiff{margin-top:6px;font-size:15px}
+  td.woff:not(:empty){margin-top:1px}
+  td.woff:not(:empty)::before{content:"off the figure ";color:var(--slate-600)}
 }
 .spread{width:100%;height:auto;display:block;margin:12px 0 4px;
 border:1px solid var(--ink);border-radius:11px;background:var(--navy-900);padding:4px}

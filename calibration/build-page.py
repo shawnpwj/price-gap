@@ -2381,6 +2381,10 @@ LAYOUT_FOYER = LAYOUT.foyer_block()         # does an entrance foyer price?
 # ones (the withdrawn 11.6% and its two component pairs, the 160 sqft cap) stay as literals.
 LXF = LAYOUT.facts()
 LX_BEST     = LXF.get('best', '')
+LX_SPREAD_N   = LXF.get('spread_n', '')
+LX_SPREAD_Q1  = f"${LXF['spread_q1']:,.0f}" if LXF.get('spread_q1') else ''
+LX_SPREAD_Q3  = f"${LXF['spread_q3']:,.0f}" if LXF.get('spread_q3') else ''
+LX_SPREAD_MID = f"${LXF['spread_mid']:,.0f}" if LXF.get('spread_mid') else ''
 LX_SCREEN   = f"{LXF['screen_now']:,}"
 LX_SAMEBAND = LXF['sameband']
 LX_TRIAGE   = LXF['triage_total']
@@ -2945,17 +2949,17 @@ where one has a room the other does not. What the second one sold for, minus the
 
 <section>
   <div class="sechead"><h2 class="disp">What each feature is worth</h2></div>
-  <p class="expl">The median across every development where the feature could be isolated, with
-  the range beneath it. <b>Quantum is the figure to use</b>; the percentage is there because it
+  <p class="expl">The <b>trimmed average</b> across every development where the feature could be
+  isolated &mdash; one vote per development, not one per reading &mdash; with the range beneath
+  it. <b>Quantum is the figure to use</b>; the percentage is there because it
   travels between price points better than dollars do. A feature is named for the room that
   drives it &mdash; a yard joins the name because the yard is what moves the figure, while a
   shelter, a store or a utility room is ancillary and is named on the individual reading instead.</p>
   {LAYOUT_FSUM}
   <p class="expl">These are <b>central tendencies with real spread</b>, not price tags. A bedroom
-  crossing is tight &mdash; the middle half of Treasure&rsquo;s 3-to-4 bedroom pairs sits inside
-  &plusmn;9% of its median. A single feature is looser: the middle half of Riverfront&rsquo;s
-  bathroom pairs spans $105,000 to $211,000 around a median of $172,000. The feature is real and
-  it is priced; the precision is not to the dollar.</p>
+  crossing is tight. A single feature is looser: the middle half of Riverfront&rsquo;s
+  {LX_SPREAD_N} bathroom pairs spans {LX_SPREAD_Q1} to {LX_SPREAD_Q3} around a figure of
+  {LX_SPREAD_MID}. The feature is real and it is priced; the precision is not to the dollar.</p>
 </section>
 
 <section>
@@ -2963,7 +2967,7 @@ where one has a room the other does not. What the second one sold for, minus the
   <p class="expl">Three of the figures above, shown the long way. Every row is a real caveat: the
   unit, the floor, the date and the price. <b>Where two units match on floor and facing, nothing
   is adjusted at all</b> &mdash; the difference between the two sale prices is the figure, and the
-  published number is the median of every such pair. Where they do not match, the base sale is
+  published number is the trimmed average of every such pair. Where they do not match, the base sale is
   moved to the other unit&rsquo;s floor and facing first, using rates measured on
   <i>different</i> pairs; that second track exists to check the first, and the two agree.</p>
   {LAYOUT_WEX}
@@ -3026,7 +3030,7 @@ where one has a room the other does not. What the second one sold for, minus the
   room is named in the detail but does not make a separate row: Riverfront prints STORE where
   Treasure prints HS and it is the same reinforced household shelter, mandatory since 1998, on a
   2023 development whose sheets never print HS at all. Ruling 3, the plan beats the label.
-  Each row here is one measured contrast, so a thin reading cannot hide inside a median.</p>
+  Each row here is one measured contrast, so a thin reading cannot hide inside a pooled figure.</p>
   <p class="expl"><b>These rows are now built from the class-linked library, and that removed a
   large double count.</b> Shawn spotted it from the page: &ldquo;the fact that the % are no
   different from WC / yard / Home Shelter, shouldnt we combine these two together?&rdquo; They were

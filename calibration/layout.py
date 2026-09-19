@@ -455,9 +455,10 @@ def tendency_table():
            '<div class="scroll"><table class="lt"><thead><tr><th>estimator</th>'
            '<th class="num">contrasts agreeing within 10%</th>'
            '<th class="num">median gap</th><th class="num">average gap</th></tr></thead><tbody>']
-    LABEL = {'med': 'median <span class="lsub">what is published</span>',
+    LABEL = {'med': 'median <span class="lsub">what was published until 2026-09-20</span>',
              'mean': 'plain average',
-             'trim': 'trimmed average <span class="lsub">10% off each tail</span>'}
+             'trim': 'trimmed average <span class="lsub">10% off each tail &middot; '
+                     'now published</span>'}
     best = min(t, key=lambda k: t[k]['mean_abs'])
     for k in ('med', 'mean', 'trim'):
         cls = ' class="lok"' if k == best else ''
@@ -471,9 +472,18 @@ def tendency_table():
                f'pairs the median <i>is</i> one sale, so it inherits that sale&rsquo;s renovation '
                f'and that seller&rsquo;s hurry. The <b>trimmed average</b> &mdash; the mean after '
                f'the top and bottom tenth are dropped &mdash; keeps the median&rsquo;s resistance '
-               f'to a freak sale while using the rest of the evidence, and it agrees best. '
-               f'<b>The published figures remain medians</b> and are not restated here; this is '
-               f'the case for moving them, and it is Shawn&rsquo;s call.</p>')
+               f'to a freak sale while using the rest of the evidence, and it agrees best on '
+               f'both measures. <b>Every figure on this page is now the trimmed average</b>; the '
+               f'median is kept in the table below so the move is visible. Across the whole '
+               f'study the switch lifted agreement between the two tracks from 27 contrasts '
+               f'inside 10% to <b>30 of 33</b>, and the median gap from 2.4% to 2.3%.</p>'
+               f'<p class="expl">One honest caveat about the arithmetic: 10% of nine '
+               f'observations rounds to zero, so <b>below ten matched pairs nothing is actually '
+               f'trimmed and this is the plain average</b>. Forcing one off each end was '
+               f'measured and is worse (15 of 19, against 16) &mdash; dropping 2 of 5 '
+               f'observations discards 40% of the evidence to guard against an outlier a '
+               f'5-pair contrast cannot identify. A thin contrast is thin, and the answer to '
+               f'that is the pair count printed beside every figure, not a cleverer average.</p>')
     out.append('<div class="scroll"><table class="lt"><thead><tr><th>contrast</th>'
                '<th class="num">matched pairs</th><th class="num">median</th>'
                '<th class="num">average</th><th class="num">trimmed</th>'
@@ -609,29 +619,38 @@ def foyer_block():
            '</tr></thead><tbody>']
     for k in (('C6', 'C9P'), ('C6', 'C10P'), ('C9P', 'C10P')):
         x = L[k]
-        cls = 'lok' if x['exact_ratio'] and x['exact_ratio'] >= 1.15 else (
-              'lbad' if x['exact_ratio'] and x['exact_ratio'] < 0.85 else 'lwarn')
+        # colour on the ADJUSTED ratio: it is the one with the pairs behind it on every leg.
+        rr = x['adj_ratio'] or x['exact_ratio']
+        cls = 'lok' if rr and rr >= 1.15 else ('lbad' if rr and rr < 0.85 else 'lwarn')
         out.append(_row([
             f'<td><b>{x["a"]}</b> &rarr; <b>{x["b"]}</b>'
             f'<span class="lsub">{html.escape(x["why"])}</span></td>',
             f'<td class="num">+{x["dsqft"]}</td>',
             f'<td class="num">{x["exact_n"]}</td>',
-            f'<td class="num lbig">{_money(x["exact"])}</td>',
-            f'<td class="num">${x["exact_psf"]:,}</td>',
-            f'<td class="num"><span class="{cls}">{x["exact_ratio"]:.2f}&times;</span></td>']))
+            f'<td class="num lbig">{_money(x["exact"])}'
+            f'<span class="lsub">{_money(x["adj"])} on {x["adj_n"]:,} adjusted</span></td>',
+            f'<td class="num">${x["adj_psf"]:,}'
+            f'<span class="lsub">${x["exact_psf"]:,} matched</span></td>',
+            f'<td class="num"><span class="{cls}">{x["adj_ratio"]:.2f}&times;</span>'
+            f'<span class="lsub">{x["exact_ratio"]:.2f}&times; on the {x["exact_n"]} '
+            f'matched pairs</span></td>']))
     out.append('</tbody></table></div>')
     t = FOYER.get('triangle', {}).get('adj')
     foy = L[('C9P', 'C10P')]
     pkg = L[('C6', 'C9P')]
-    out.append(f'<p class="expl"><b>It prices, and it prices cheap.</b> The foyer is worth about '
-               f'<b>{_money(foy["exact"])}</b> &mdash; real money, and enough that pooling C9P '
-               f'with C10P is not free. But per square foot it runs '
-               f'<b>{foy["exact_ratio"]:.2f}&times;</b> the development&rsquo;s own rate, while '
-               f'the WC / shelter / yard package it sits beside runs '
-               f'<b>{pkg["exact_ratio"]:.2f}&times;</b>. <b>The foyer behaves like circulation, '
-               f'not like a feature:</b> buyers pay for it at a discount to ordinary floor area, '
-               f'where a real room commands a premium to it. That is the same signal the '
-               f'circulation guard was built on.</p>')
+    out.append(f'<p class="expl"><b>It prices, and it prices like circulation.</b> Read the '
+               f'foyer row on the ADJUSTED track, not the matched one: six matched pairs is '
+               f'below the point where the trimmed average trims anything, so that cell is the '
+               f'plain average of six sales and moves with any one of them. The '
+               f'{foy["adj_n"]:,} adjusted pairs put the foyer at <b>{_money(foy["adj"])}</b>, '
+               f'<b>{foy["adj_ratio"]:.2f}&times;</b> the development&rsquo;s own rate, against '
+               f'<b>{pkg["adj_ratio"]:.2f}&times;</b> for the WC / shelter / yard package beside '
+               f'it on {pkg["adj_n"]:,} pairs. <b>Buyers pay for a foyer at a discount to '
+               f'ordinary floor area, where a real room commands a premium to it.</b> That is '
+               f'the same signal the circulation guard was built on. The six matched pairs read '
+               f'{_money(foy["exact"])} and {foy["exact_ratio"]:.2f}&times; &mdash; same '
+               f'direction against the package, but far too thin to carry the point on its '
+               f'own, and it is shown above rather than hidden.</p>')
     if t:
         out.append(f'<p class="expl"><b>The three readings are consistent.</b> Walking '
                    f'C6&nbsp;&rarr;&nbsp;C9P&nbsp;&rarr;&nbsp;C10P gives '
@@ -779,7 +798,7 @@ def worked_examples():
             f'<div class="whead"><div><h3 class="disp">{html.escape(w["why"])}</h3>'
             f'<p class="wsub">{html.escape(w["name"].title())} &middot; '
             f'{html.escape(w["contrast"])}</p></div>'
-            f'<div class="wfig">{_money(w["exact_med"])}<span>median of {w["exact_n"]} matched pairs</span></div></div>'
+            f'<div class="wfig">{_money(w["exact_med"])}<span>trimmed average of {w["exact_n"]} matched pairs</span></div></div>'
             f'<table class="wt"><thead><tr><th colspan="2">the smaller layout</th><th></th>'
             f'<th colspan="2">the larger layout</th><th class="num">difference</th></tr></thead>'
             f'<tbody>{rows}</tbody></table>'
@@ -888,6 +907,18 @@ def facts():
         else:
             f['best'] = (f"{x['base']} &rarr; {x['feat']} at {_h(c['name'])} carries "
                          f"{x['pairs']} matched pairs at {_money(x['med'])}")
+    # THE SPREAD SENTENCE, computed. It carried "$105,000 to $211,000 around a median of
+    # $172,000" as literals and all three moved when the estimator changed on 2026-09-20.
+    for t in (TEND.get('rows') or []):
+        if t['contrast'].startswith('Riverfront 2BR1B'):
+            # t['med'] is the MEDIAN -- tendency.json deliberately keeps all three estimators.
+            # The PUBLISHED figure is the trimmed average.
+            f['spread_q1'], f['spread_q3'], f['spread_mid'] = t['q1'], t['q3'], t['trim']
+            f['spread_n'] = t['n']
+    for t in (TEND.get('rows') or []):
+        if 'Treasure' in t['contrast'] and '2BR2B -> 3BR2B' in t['contrast']:
+            f['tight_pct'] = round(max(abs(t['q1'] - t['trim']), abs(t['q3'] - t['trim']))
+                                   / t['trim'] * 100)
     # the two area-only pairs worth naming
     for r in tri:
         if r['state'] != 'AREA-ONLY': continue

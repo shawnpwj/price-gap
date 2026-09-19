@@ -25,7 +25,7 @@ rule throws away, which share no transaction with it. See layout-study/src/adjus
 
 Reads the layout-study outputs. Nothing here is computed; this is a window onto that repo.
 """
-import json, os
+import json, os, html
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 STUDY = os.path.abspath(os.path.join(HERE, '..', '..', 'layout-study'))
@@ -42,6 +42,8 @@ XPOOL  = _load('out/crossings-pooled.json', [])
 PARC   = _load('out/parc-esta-contrasts.json', [])
 PGATE  = _load('out/parc-esta-gate.json', [])
 FSUM   = _load('out/feature-summary.json', [])
+FLIB   = _load('out/feature-library.json', [])          # every feature reading, both routes
+TRIAGE = _load('out/same-band-triage.json', [])         # what each candidate pair turned out to be
 ROOMS  = _load('data/annotations/room-areas.json', {}) or {}
 LAY    = (_load('data/annotations/treasure-at-tampines.json', {}) or {}).get('layouts', {})
 
@@ -266,6 +268,160 @@ def feature_summary_table():
             '<th class="num">by region</th><th class="num">by bedrooms</th>'
             '<th class="num">$ per unit sqft</th><th class="num">quantum</th><th class="num">steadiest</th>'
             '</tr></thead><tbody>' + ''.join(rows) + '</tbody></table></div>')
+
+DEVNAME = {'parc-esta': 'Parc Esta', 'riverfront-residences': 'Riverfront', 'treasure-at-tampines': 'Treasure',
+           'a-treasure-trove': 'A Treasure Trove', 'affinity-at-serangoon': 'Affinity', 'symphony-suites': 'Symphony',
+           'high-park-residences': 'High Park', 'stirling-residences': 'Stirling', 'riversails': 'Riversails',
+           'jadescape': 'JadeScape', 'penrose': 'Penrose', 'sims-urban-oasis': 'Sims Urban Oasis',
+           'the-tre-ver': 'The Tre Ver'}
+
+
+def _canon(feat):
+    parts = sorted(x.strip() for x in feat.split(',') if x.strip().startswith('+'))
+    return ', '.join(p[1:] for p in parts) if parts else feat
+
+
+def library_table():
+    """EVERY feature reading, grouped by what the step actually ADDS.
+
+    Shawn, 2026-09-19, having caught the WC error himself: the page had been showing one row per
+    feature NAME, and a name is not a product. A class label carries (beds, baths, WC, shelter,
+    study) and is silent about a yard, a utility room or a store -- so "WC" stood for five
+    different packages worth 5.7% to 23.5%. This table groups by the package and shows every
+    reading behind it, so a thin one cannot hide inside a median."""
+    if not FLIB: return '<p class="expl">feature library not built.</p>'
+    by = {}
+    for r in FLIB: by.setdefault(_canon(r['feature']), []).append(r)
+    order = sorted(by, key=lambda k: -sum(x['pairs'] for x in by[k]))
+    out = ['<table class="lt"><thead><tr>'
+           '<th>what the step adds</th><th>development</th><th>class contrast</th>'
+           '<th class="num">step</th><th class="num">exact pairs</th>'
+           '<th class="num">quantum</th><th class="num">% of price</th>'
+           '<th class="num">two-track test</th></tr></thead><tbody>']
+    for feat in order:
+        rows = sorted(by[feat], key=lambda x: -x['pairs'])
+        passing = [x for x in rows if x['test'] is not None and abs(x['test']) <= 10]
+        for i, r in enumerate(rows):
+            t = r['test']
+            cls = 'lok' if (t is not None and abs(t) <= 5) else ('lwarn' if (t is not None and abs(t) <= 10) else 'lbad')
+            test = f'<span class="{cls}">{t:+.1f}%</span>' if t is not None else '&mdash;'
+            head = (f'<b>{html.escape(feat)}</b><span class="lsub ltx">{len(rows)} reading'
+                    f'{"" if len(rows)==1 else "s"} &middot; {sum(x["pairs"] for x in rows)} exact pairs'
+                    f'{f" &middot; {len(passing)} pass the test" if rows else ""}</span>') if i == 0 else ''
+            step = f"+{r['step']}" if r.get('step') else '<span class="lthin">class&#8209;linked</span>'
+            out.append(_row([
+                f'<td>{head}</td>',
+                f'<td>{html.escape(DEVNAME.get(r["dev"], r["dev"]))}</td>',
+                f'<td class="lthin">{html.escape(r["contrast"])}</td>',
+                f'<td class="num">{step}</td>',
+                f'<td class="num">{r["pairs"]:,}<span class="lsub">{r["tx"]:,} tx</span></td>',
+                f'<td class="num lbig">{_money(r["med"])}</td>',
+                f'<td class="num">{r["pct"]:.1f}%</td>',
+                f'<td class="num">{test}</td>'], cls='lb-area' if i else '')) 
+    out.append('</tbody></table>')
+    return "".join(out)
+
+
+def triage_table():
+    """What the 40 same-bedroom-band candidates actually turned out to be.
+
+    The point of showing this is that TEN of them were never figures: the same product class on
+    both sides, i.e. a price for square feet. Those are exactly the rows a size-driven screen
+    would have published as feature premiums."""
+    if not TRIAGE: return ''
+    order = ['FEATURE', 'AREA-ONLY', 'MIXED', 'UNCERTAIN', 'READ', 'CLOSED']
+    what = {'FEATURE': 'a real feature contrast &mdash; priced above',
+            'AREA-ONLY': 'the SAME product class on both sides &mdash; a price for square feet, dropped by ruling 5',
+            'MIXED': 'one strata area carries two classes &mdash; superseded by the development&rsquo;s tx&nbsp;&rarr;&nbsp;layout link',
+            'UNCERTAIN': 'the plans do not separate cleanly &mdash; held out rather than guessed',
+            'READ': 'sheet not yet read',
+            'CLOSED': 'development retired from the study'}
+    n = {k: [r for r in TRIAGE if r['state'] == k] for k in order}
+    out = ['<table class="lt"><thead><tr><th>outcome</th><th class="num">pairs</th>'
+           '<th class="num">sale pairs behind them</th><th>what it means</th></tr></thead><tbody>']
+    for k in order:
+        v = n.get(k) or []
+        if not v: continue
+        out.append(_row([f'<td><b>{k.title()}</b></td>',
+                         f'<td class="num lbig">{len(v)}</td>',
+                         f'<td class="num">{sum(x["pairs"] for x in v):,}</td>',
+                         f'<td class="lthin">{what[k]}</td>']))
+    out.append('</tbody></table>')
+    return "".join(out)
+
+
+def facts():
+    """Every number the layout prose quotes, COMPUTED.
+
+    build-page.py's standing rule: "EVERY FIGURE ON THIS PAGE IS COMPUTED HERE. Nothing is
+    hardcoded in the prose -- an earlier version carried p-values and coefficients as literals and
+    they went stale the moment the pair screen changed." The 2026-09-19 rewrite quoted a dozen
+    figures inline and broke that within a day. They are derived here instead.
+
+    The exceptions, and they are deliberate: the figures describing what was WRONG (the withdrawn
+    11.6% / $173,484, its two component pairs, and the 160 sqft cap) are historical facts about a
+    past state of this page. They do not move when the data does, and recomputing them from
+    current files would quietly rewrite the record of the error."""
+    import statistics
+    f = {}
+    scr = _load('out/size-screen.json', []) or []
+    f['screen_now'] = len(scr)
+    same = [r for r in scr if r.get('verdict') == 'same-band']
+    f['sameband'] = len(same)
+    tri = TRIAGE or []
+    f['triage_total'] = len(tri)
+    f['area_only'] = len([r for r in tri if r['state'] == 'AREA-ONLY'])
+    f['feature'] = len([r for r in tri if r['state'] == 'FEATURE'])
+    # the WC family: how well does step size explain the premium
+    wc = [r for r in (FLIB or []) if '+WC' in r['feature'] and r.get('step')]
+    wcall = [r for r in (FLIB or []) if '+WC' in r['feature']]
+    steps = _load('out/wc-library.json', []) or []
+    xy = [(r['step'], r['pct']) for r in steps if r.get('step')]
+    if len(xy) > 2:
+        xs = [a for a, _ in xy]; ys = [b for _, b in xy]
+        mx, my = sum(xs)/len(xs), sum(ys)/len(ys)
+        cov = sum((a-mx)*(b-my) for a, b in xy)
+        vx = sum((a-mx)**2 for a in xs); vy = sum((b-my)**2 for b in ys)
+        r = cov/(vx*vy)**.5 if vx and vy else 0
+        f['wc_r'] = round(r, 3); f['wc_r2'] = round(r*r*100)
+        f['wc_n'] = len(xy)
+    wc_alone = [r for r in (FLIB or []) if r['feature'].strip() == '+WC']
+    if wc_alone:
+        f['wc_alone_pct'] = round(statistics.median(r['pct'] for r in wc_alone), 1)
+    # bathroom spread
+    bath = [r for r in (FLIB or []) if r['feature'].strip() == '+1 bathroom']
+    bp = [r for r in bath if r['test'] is not None and abs(r['test']) <= 10]
+    if bath:
+        big = [r for r in bp if r['dev'] in ('riverfront-residences', 'parc-esta')]
+        small = [r for r in bp if r['dev'] == 'high-park-residences']
+        f['bath_n'] = len(bath)
+        f['bath_pass_pairs'] = sum(r['pairs'] for r in bp)
+        if big:
+            f['bath_big_pairs'] = sum(r['pairs'] for r in big)
+            f['bath_big_lo'] = min(r['pct'] for r in big); f['bath_big_hi'] = max(r['pct'] for r in big)
+        if small:
+            f['bath_small_lo'] = min(r['pct'] for r in small); f['bath_small_hi'] = max(r['pct'] for r in small)
+    # the study, at Parc Esta, split by bedroom count
+    for r in (PARC or []):
+        c = r.get('contrast', '')
+        e = r.get('exact')
+        if not e or e.get('thin'): continue
+        if c == '2BR2B -> 2BR2B+S': f['study2'] = e; f['study2_test'] = r.get('test_pct')
+        if c == '3BR2B -> 3BR2B+S': f['study3'] = e; f['study3_test'] = r.get('test_pct')
+    # what the page still pools the study at, and what it still publishes for the bathroom
+    for o in (FSUM or []):
+        if o['feature'] == 'study' and o.get('feature_alone'):
+            f['study_pooled'] = o['feature_alone']['pct'][1]
+        if o['feature'] == 'extra bathroom':
+            if o.get('feature_alone'): f['bath_pub_alone'] = o['feature_alone']['pct'][1]
+            if o.get('feature_plus_area'): f['bath_pub_area'] = o['feature_plus_area']['pct'][1]
+    # the two area-only pairs worth naming
+    for r in tri:
+        if r['state'] != 'AREA-ONLY': continue
+        if r['dev'] == 'affinity-at-serangoon' and r['a'] == 850: f['ao_aff'] = r
+        if r['dev'] == 'symphony-suites' and r['a'] == 893: f['ao_sym'] = r
+    return f
+
 
 def xdev_table():
     """Shawn, 2026-09-18: "Can you now move on to the rest of the developments."

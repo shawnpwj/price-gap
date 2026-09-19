@@ -2317,6 +2317,35 @@ LAYOUT_PARC  = LAYOUT.parc_table()
 LAYOUT_PARCF = LAYOUT.parc_features_table()
 LAYOUT_ROOMS = LAYOUT.rooms_table()
 LAYOUT_FSUM  = LAYOUT.feature_summary_table()
+LAYOUT_LIB   = LAYOUT.library_table()
+LAYOUT_TRI   = LAYOUT.triage_table()
+# EVERY figure the layout prose quotes, computed -- see LAYOUT.facts() for why the few historical
+# ones (the withdrawn 11.6% and its two component pairs, the 160 sqft cap) stay as literals.
+LXF = LAYOUT.facts()
+LX_SCREEN   = f"{LXF['screen_now']:,}"
+LX_SAMEBAND = LXF['sameband']
+LX_TRIAGE   = LXF['triage_total']
+LX_AREAONLY = LXF['area_only']
+LX_WCN      = LXF.get('wc_n', 0)
+LX_WCR      = f"{LXF.get('wc_r', 0):.3f}"
+LX_WCR2     = LXF.get('wc_r2', 0)
+LX_WCALONE  = LXF.get('wc_alone_pct', 0)
+LX_BATHN    = LXF.get('bath_n', 0)
+LX_BATHPP   = LXF.get('bath_pass_pairs', 0)
+LX_BATHBIGP = LXF.get('bath_big_pairs', 0)
+LX_BATHBIG  = f"{LXF.get('bath_big_lo',0):.1f}&ndash;{LXF.get('bath_big_hi',0):.1f}%"
+LX_BATHSML  = f"{LXF.get('bath_small_lo',0):.1f}&ndash;{LXF.get('bath_small_hi',0):.1f}%"
+_s2, _s3    = LXF.get('study2', {}), LXF.get('study3', {})
+LX_STUDY2   = f"{_s2.get('pct',0):.1f}%"; LX_STUDY2P = _s2.get('pairs', 0)
+LX_STUDY3   = f"{_s3.get('pct',0):.1f}%"; LX_STUDY3P = _s3.get('pairs', 0)
+LX_STUDY2T  = f"{LXF.get('study2_test',0):+.1f}%"; LX_STUDY3T = f"{LXF.get('study3_test',0):+.1f}%"
+LX_STUDYP   = LXF.get('study_pooled', 0)
+_aa, _as    = LXF.get('ao_aff', {}), LXF.get('ao_sym', {})
+LX_AOAFF    = f"${_aa.get('med',0):,} on {_aa.get('pairs',0)} pairs"
+LX_AOSYM    = f"${_as.get('med',0):,} on {_as.get('pairs',0)} pairs"
+_N = {13:'Thirteen',12:'Twelve',11:'Eleven',10:'Ten',14:'Fourteen',15:'Fifteen',9:'Nine'}
+LX_AOWORD   = _N.get(LXF['area_only'], str(LXF['area_only']))
+LX_BATHPUB  = f"{LXF.get('bath_pub_alone',0):.1f}%/{LXF.get('bath_pub_area',0):.1f}%"
 BODY = f"""
 <div class="panel" data-p="summary">
 <h1 class="disp">Where the constants now stand</h1>
@@ -2925,6 +2954,67 @@ development has been read yet.</b></p>
   without a feature difference at all. They stay recorded with their reasons in
   <code>out/library-layout-pairs.csv</code>. The line in bold under each row is the
   <b>product class</b> the figure belongs to, which is how it will pool with other developments.</p>
+  <div class="scroll">{LAYOUT_LIB}</div>
+  <p class="expl"><b>Every reading, grouped by what the step actually adds.</b> A feature NAME is
+  not a product. The class label carries bedrooms, bathrooms, WC, shelter and study, and says
+  nothing about a yard, a utility room or a store &mdash; so &ldquo;WC&rdquo; stood for five
+  different packages worth <b>{LX_WCALONE}% to 23.5%</b>. Each row here is one measured contrast, so a thin
+  reading cannot hide inside a median. <b>Class&#8209;linked</b> rows come from a development with a
+  transaction&nbsp;&rarr;&nbsp;layout link, where the two sides are different product classes
+  because the drawings say so; those do not face the 60% share gate, which exists to test whether
+  a <i>size</i> step is a feature step and is answered by construction here. Rows with a step in
+  sqft are matched on strata area and still face the gate and the circulation guard.
+  The <b>two-track test</b> is the adjusted track against the exact one: inside
+  <span class="lok">&plusmn;5%</span> is agreement, <span class="lwarn">&plusmn;10%</span> is
+  tolerable, <span class="lbad">beyond</span> fails and the reading is recorded, not quoted.</p>
+</section>
+
+<section>
+  <div class="sechead"><h2 class="disp">What the candidate pairs turned out to be</h2></div>
+  <p class="expl">Forty pairs of strata-area clusters sat in the same bedroom band with enough
+  matched sales to be worth reading. Resolving each one to a <b>product class</b> off the plans
+  is what separates a feature from a price for square feet.</p>
+  {LAYOUT_TRI}
+  <p class="expl"><b>{LX_AOWORD} of the {LX_TRIAGE} were never figures.</b> Same product class on
+  both sides &mdash; Affinity 850&nbsp;&rarr;&nbsp;904 is <code>3BR2B</code> either way and reads
+  {LX_AOAFF}; Symphony 893&nbsp;&rarr;&nbsp;915 is
+  <code>3BR2B+WC+U+Y</code> either way and reads {LX_AOSYM}. Those two bracket what area alone
+  buys, and they are exactly the rows a screen that matched on SIZE would have published as
+  feature premiums. This is ruling 5 doing its job, and it is the reason the class, not the
+  square foot, is the unit.</p>
+</section>
+
+<section>
+  <div class="sechead"><h2 class="disp">How the pairs were chosen, and what that missed</h2></div>
+  <p class="expl"><b>Shawn found an error in this page by hand&#8209;pricing one pair.</b> At
+  Affinity at Serangoon, 904 sqft and 1,076 sqft are the same three&#8209;bedroom plan apart from a
+  yard, a utility room and a WC, and the gap is about <b>$465,000</b> &mdash; against a published
+  &ldquo;WC + utility + yard&rdquo; of <b>11.6% / $173,484</b>. The candidate screen had never
+  proposed that pair, because it capped a step at <b>160 sqft</b> and this one is +172. The cap was
+  standing in for &ldquo;do not pair across products&rdquo;, which is the product class&rsquo;s job,
+  not a number&rsquo;s. Dropped, the screen went from <b>85 candidate pairs to {LX_SCREEN}</b>.</p>
+  <p class="expl">The cap turned out to be the smaller half of it. Of the {LX_SAMEBAND} same&#8209;band
+  candidates, only 12 were in the library <i>at that point</i>: eight had been hidden by the cap,
+  and <b>29 were visible the whole time and had simply never been read</b>. A library assembled that way is not a
+  selection of the best evidence &mdash; it is whichever pairs happened to get a plan read.
+  <b>A screen threshold is a silent exclusion:</b> what is never proposed is never measured and
+  never missed.</p>
+  <p class="expl">The old 11.6% was the median of two pairs: Symphony Suites at $113,000, whose
+  step is 46% corridor, and Parc Esta at $233,967, which had <b>no exact pairs at all</b> and rode
+  the adjusted track. Across the {LX_WCN} independent WC readings there are now, <b>step size explains
+  {LX_WCR2}% of the variance</b> in the premium (r&nbsp;=&nbsp;{LX_WCR}). <b>The WC itself is
+  worth {LX_WCALONE}%</b>; the rest is the yard and the wet&#8209;service room.</p>
+  <p class="expl"><b>Two things this has not yet fixed, stated so they are not mistaken for
+  settled.</b> The <b>extra bathroom</b> has {LX_BATHN} readings: {LX_BATHBIG} at Riverfront and Parc Esta,
+  which carry {LX_BATHBIGP} of the {LX_BATHPP} passing pairs, and {LX_BATHSML} at High Park, the
+  cheapest base in the set;
+  the published {LX_BATHPUB} sits inside that range and is not overturned, but it should be quoted
+  per region rather than pooled. The <b>study</b> is the same conflation, unresolved: at Parc Esta
+  alone it is <b>{LX_STUDY2} on a two&#8209;bedroom</b> ({LX_STUDY2P} exact pairs, test
+  {LX_STUDY2T}) and <b>{LX_STUDY3} on a three&#8209;bedroom</b> ({LX_STUDY3P} pairs, test
+  {LX_STUDY3T}), while this page still pools them at {LX_STUDYP}%. One
+  passes and one fails badly, so it is not yet a finding &mdash; but the study figure should not be
+  leaned on until it is split by bedroom count.</p>
   <div class="scroll">{LAYOUT_PAIRS}</div>
   <p class="expl"><b>The WC is quoted by package, not as one number, and that is a correction.</b>
   Until 2026-09-19 this page carried a single &ldquo;WC + utility + yard&rdquo; row at

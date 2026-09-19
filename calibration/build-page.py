@@ -814,6 +814,7 @@ white-space:nowrap;letter-spacing:-.012em}
 .ans .w{font-size:12px;letter-spacing:.15em;text-transform:uppercase;color:var(--slate-400);
 margin-top:10px}
 .ans .g{font:600 18px/1.15 Optima,Candara,sans-serif;color:var(--slate-300);margin-top:8px}
+.vline{font-size:12px;color:var(--slate-500);margin-top:16px;letter-spacing:.01em}
 .vbase{display:flex;gap:34px;flex-wrap:wrap;margin-top:16px;padding-top:14px;
 border-top:1px solid rgba(36,48,80,.85)}
 .vbase .g{font:600 18px/1.15 Optima,Candara,sans-serif;color:var(--slate-300)}
@@ -850,15 +851,15 @@ table.qt thead th{color:var(--slate-600);font-weight:400;white-space:nowrap}
    to see the figure is the gap between two real sales. Same block serves both, so it shows the
    caveats first and the arithmetic second, never a summary. */
 .wexs{display:grid;gap:18px;margin-top:18px}
-.wex{border:1px solid var(--ink);border-radius:11px;background:var(--navy-850);padding:20px 22px}
+.wex{border:1px solid var(--ink);border-radius:12px;background:var(--navy-850);padding:20px 22px}
 .whead{display:flex;gap:28px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
-.whead h3{font-size:19px;color:var(--slate-100);font-weight:600;letter-spacing:-.005em}
+.whead h3{font-size:18px;color:var(--slate-100);font-weight:600;letter-spacing:-.005em}
 .wsub{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--slate-500);margin-top:6px}
 .wfig{font:600 30px/1 Optima,Candara,sans-serif;color:var(--gold);white-space:nowrap;text-align:right}
 .wfig span{display:block;font:400 11px/1.3 -apple-system,Segoe UI,sans-serif;letter-spacing:.05em;
 text-transform:uppercase;color:var(--slate-500);margin-top:7px;text-align:right}
 table.wt{width:100%;border-collapse:collapse;font-size:13px;margin-top:20px}
-table.wt th{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--slate-600);
+table.wt th{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--slate-600);
 font-weight:400;text-align:left;padding-bottom:9px;border-bottom:1px solid var(--ink)}
 table.wt th.num,table.wt td.num{text-align:right;font-variant-numeric:tabular-nums}
 table.wt td{padding:10px 14px 10px 0;vertical-align:top;color:var(--slate-300)}
@@ -880,7 +881,7 @@ td.woff{color:var(--slate-500);font-size:12px}
 .wadj li{font-size:12.5px;color:var(--slate-300);font-variant-numeric:tabular-nums;
 padding-left:14px;border-left:1px solid var(--ink)}
 .wadj li b{color:var(--slate-100)}
-.wk{display:inline-block;min-width:52px;font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+.wk{display:inline-block;min-width:52px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;
 color:var(--slate-600)}
 .wres{margin-top:11px;color:var(--slate-200)}
 .wres b{color:var(--gold-soft)}
@@ -925,7 +926,13 @@ td.lbig{font-weight:600;font-size:15px;color:var(--slate-100)}
 td.fsum{max-width:230px;white-space:normal}
 td.fsum span.lsub{white-space:normal}
 span.lsplit{display:block;white-space:nowrap;font-size:12.5px}
-span.lsub{display:block;font-size:10.5px;letter-spacing:.04em;color:var(--slate-500);
+/* 11px IS THE FLOOR AND IT IS THIS PROJECT'S OWN, NOT A GENERIC ONE. DESIGN.md records that
+   "an 11px floor [was] written into --t-label after 67 labels were found below it". This rule
+   was set at 10.5px and `.lsub` renders 742 times in the Layout panel, so it reintroduced the
+   exact defect the system had already found and fixed, at ten times the scale: 751 elements
+   below the floor, and 99.5% of the whole page's detector output coming from one panel.
+   Nothing here goes under 11px again. (Shawn, 2026-09-20: "fix the type ramp".) */
+span.lsub{display:block;font-size:11px;letter-spacing:.04em;color:var(--slate-500);
   font-weight:400;margin-top:3px;text-transform:uppercase}
 /* Shawn, 2026-09-19: TRANSACTIONS ASSESSED leads; the sale-pair and layout-pair counts sit
    under it in a quieter, sentence-case line so the row reads evidence-first. */
@@ -950,7 +957,8 @@ span.lnote{display:inline;margin-left:12px;letter-spacing:.03em;text-transform:n
 td.lhit,tr.lhit td.lbig{color:var(--gold)}
 span.lok{color:var(--go);font-weight:600}
 span.lwarn{color:var(--warn);font-weight:600}
-span.lbad{color:var(--warn);opacity:.7;font-weight:600}
+span.lbad{color:var(--warn);font-weight:700}
+.lwarn{opacity:.78}
 td.lthin{color:var(--slate-600)}
 table.lroom{font-size:12px}
 table.lroom th,table.lroom td{padding:7px 0 7px 14px}
@@ -2969,8 +2977,11 @@ where one has a room the other does not. What the second one sold for, minus the
 
 <section>
   <div class="sechead"><h2 class="disp">How we did it</h2></div>
-  <p class="expl">Three of the figures above, shown the long way. Every row is a real caveat: the
-  unit, the floor, the date and the price. <b>Where two units match on floor and facing, nothing
+  <p class="expl">Three contrasts shown the long way, at <b>one development each</b> &mdash; so
+  these are dollar figures, not the pooled percentages above, and they will not match them. That
+  is the point: the percentage travels between developments, the quantum is what a buyer at
+  <i>this</i> development actually paid. Every row is a real caveat: the unit, the floor, the
+  date and the price. <b>Where two units match on floor and facing, nothing
   is adjusted at all</b> &mdash; the difference between the two sale prices is the figure, and the
   published number is the trimmed average of every such pair. Where they do not match, the base sale is
   moved to the other unit&rsquo;s floor and facing first, using rates measured on

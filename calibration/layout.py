@@ -67,11 +67,34 @@ BAND = {'COMPARABLE': ('ok', 'passed the 60% gate')}
 def _row(cells, cls=""):
     return f'<tr class="{cls}">' + "".join(cells) + "</tr>"
 
+AGREE_OK, AGREE_TOL = 5, 10
+
+
+def _verdict(g):
+    """(css class, the words under the figure) for a two-track gap.
+
+    THE SUB-LABEL USED TO BE THE LITERAL STRING "agree" ON EVERY ROW. Four call sites emitted
+    `<span class="lsub">agree</span>` unconditionally, so 11 cells reading -16.3%, +53.0%,
+    -30.2% and +77.6% -- every one of them colour-coded as a FAILURE -- printed the word
+    "agree" underneath, and 17 more did it on the tolerable band. The panel's own prose says
+    "nine of the thirty-five testable crossings fail the 10% test". The table said they agreed.
+
+    On the one page in this business whose entire job is to prove a method is sound, a column
+    that reports the test cannot mislabel the test. Found by the 2026-09-20 design review;
+    it had been shipping since the column was built."""
+    if g is None: return '', '&mdash;'
+    a = abs(g)
+    if a <= AGREE_OK:  return 'lok', 'agrees'
+    if a <= AGREE_TOL: return 'lwarn', 'within tolerance'
+    return 'lbad', f'fails the {AGREE_TOL}% test'
+
+
 def _agree(r):
     g = r.get('test_gap_pct')
     if g is None: return '&mdash;'
-    cls = 'lok' if abs(g) <= 5 else ('lwarn' if abs(g) <= 10 else 'lbad')
-    return f'<span class="{cls}">{g:+.1f}%</span>'
+    cls, word = _verdict(g)
+    return f'<span class="{cls}">{g:+.1f}%</span><span class="lsub lsub2">{word}</span>'
+
 
 def _cell(s):
     """Shawn, 2026-09-18: "i recommend having both exact and adjusted shown at all times."
@@ -110,7 +133,7 @@ def pairs_table():
             f'<td class="num">{r["base_sqft"]:,} &rarr; {r["feature_sqft"]:,}'
             f'<span class="lsub">{r["delta_sqft"]:+} sqft</span></td>'
             + _two(r) +
-            f'<td class="num">{_agree(r)}<span class="lsub">agree</span></td></tr>')
+            f'<td class="num">{_agree(r)}</td></tr>')
         out.append(f'<tr class="lwhy"><td colspan="5"><b>{r["base_class"]} &rarr; '
                    f'{r["feature_class"]}</b> &nbsp;&middot;&nbsp; {r["feature_difference"]}'
                    + (f' &nbsp;&middot;&nbsp; <i>{why}</i>' if why else '')
@@ -143,9 +166,9 @@ def jumps_table():
         ao = j.get('adjusted_all') or j.get('adjusted_only')
         g = (round((j['test_gap']) / abs(j['med']) * 100, 1)
              if j.get('test_gap') is not None and j['med'] else None)
-        cls = '&mdash;' if g is None else (
-            'lok' if abs(g) <= 5 else ('lwarn' if abs(g) <= 10 else 'lbad'))
-        agree = '&mdash;' if g is None else f'<span class="{cls}">{g:+.1f}%</span>'
+        cls, word = _verdict(g)
+        agree = ('&mdash;' if g is None else
+                 f'<span class="{cls}">{g:+.1f}%</span><span class="lsub lsub2">{word}</span>')
         rows.append(
             f'<tr class="lmain"><td class="lpair">{j["jump"].replace(" -> ", " &rarr; ")}</td>'
             f'<td class="num">{_money(j["base"])}<span class="lsub">base quantum</span></td>'
@@ -156,7 +179,7 @@ def jumps_table():
                f'<span class="lsub">{ao.get("txns", 0):,} transactions</span>'
                f'<span class="lsub lsub2">{ao["pairs"]:,} sale pairs</span></td>'
                if ao else '<td class="num">&mdash;</td>')
-            + f'<td class="num">{agree}<span class="lsub">agree</span></td></tr>')
+            + f'<td class="num">{agree}</td></tr>')
         rows.append(f'<tr class="lwhy"><td colspan="5">'
                     f'{" + ".join(j["base_layouts"])} &rarr; {" + ".join(j["feature_layouts"])}'
                     f' &nbsp;&middot;&nbsp; 95% CI exact {_ci(j["ci"][0], j["ci"][1])}</td></tr>')
@@ -182,11 +205,12 @@ def parc_table():
         if grp != last:
             rows.append(f'<tr class="lgrp ok"><td colspan="4">{grp}</td></tr>'); last = grp
         g = r.get('test_pct')
+        _c, _w = _verdict(g)
         agree = ('<span class="lthin">&mdash;</span>' if g is None else
-                 f'<span class="{"lok" if abs(g) <= 5 else ("lwarn" if abs(g) <= 10 else "lbad")}">{g:+.1f}%</span>')
+                 f'<span class="{_c}">{g:+.1f}%</span><span class="lsub lsub2">{_w}</span>')
         rows.append(f'<tr class="lmain"><td class="lpair">{r["contrast"].replace(" -> ", " &rarr; ")}</td>'
                     + _cell(e) + _cell(o)
-                    + f'<td class="num">{agree}<span class="lsub">agree</span></td></tr>')
+                    + f'<td class="num">{agree}</td></tr>')
         base = lambda cs: " + ".join(sorted({c.split("-")[0] for c in cs}))   # -P/-R: same drawing
         rows.append(f'<tr class="lwhy"><td colspan="4">{base(r["base_layouts"])} &rarr; '
                     f'{base(r["feature_layouts"])} &nbsp;&middot;&nbsp; with their ground/top-floor variants</td></tr>')
@@ -281,24 +305,26 @@ def feature_summary_table():
                 f'<td class="num">{rng(b["psf"], lambda x: "$" + format(round(x), ","))}</td>'
                 f'<td class="num">{rng(b.get("ratio"), lambda x: f"{x:.2f}&times;")}</td>'
                 f'<td class="num">{rng(b["quantum"], lambda x: "$" + format(round(x), ","), k)}</td>'
-                f'<td class="num">{st}<span class="lsub">{spread}</span></td></tr>')
+                '</tr>')
     return ('<div class="scroll"><table class="lt"><thead><tr><th>feature</th><th class="num">% of price</th>'
             '<th class="num">by region</th><th class="num">by bedrooms</th>'
             '<th class="num">$ per sqft of the step</th>'
             '<th class="num">against the project&rsquo;s own psf</th>'
-            '<th class="num">quantum</th><th class="num">steadiest</th>'
+            '<th class="num">quantum</th>'
             '</tr></thead><tbody>' + ''.join(rows) + '</tbody></table></div>'
-            + '<p class="expl"><b>&ldquo;Steadiest&rdquo; is contested only between the two '
-              'measures that can travel</b> &mdash; the share of price, and the step&rsquo;s '
-              '$/sqft against the development&rsquo;s own psf. A quantum and a raw $/sqft both '
-              'carry the price level of the project they came from, so a small spread in either '
-              'one across a set of developments describes how similar that <i>sample</i> is, '
-              'not how reliable the feature is. They are marked <span class="lthin">*</span> '
-              'and shown, because the quantum is the figure to quote and its spread is worth '
-              'seeing &mdash; they just cannot win. Two features, two different answers: the '
-              'WC&nbsp;+&nbsp;yard package is remarkably steady as a <b>multiple of whatever '
-              'the development charges per square foot</b>, while an extra bathroom is steadier '
-              'as a <b>share of the price</b>, because bathrooms arrive at different sizes.</p>')
+            + '<p class="expl"><b>The percentage is the figure that travels.</b> Tested rather '
+              'than asserted: hold one development out, predict its actual quantum from the '
+              'others, and the share of price lands a 19% median error against 26% for the '
+              'step&rsquo;s $/sqft and 21% for the multiple of the project&rsquo;s own psf. So '
+              'the percentage leads everywhere a figure is pooled, and the quantum leads '
+              'wherever the price level is known &mdash; the per-development rows here, and the '
+              'worked examples. Even the winner carries about 20% error predicting a '
+              'development it has never seen, which is the honest limit of this table.</p>'
+              '<p class="expl">One reading does not fit that rule and is worth keeping: the '
+              'WC&nbsp;+&nbsp;yard package is remarkably steady as a <b>multiple of whatever the '
+              'development charges per square foot</b> (a spread of 5% across four developments, '
+              'against 22% for the share of price). No dollar measure could see that. An extra '
+              'bathroom goes the other way, because bathrooms arrive at different sizes.</p>')
 
 DEVNAME = {'parc-esta': 'Parc Esta', 'riverfront-residences': 'Riverfront', 'treasure-at-tampines': 'Treasure',
            'a-treasure-trove': 'A Treasure Trove', 'affinity-at-serangoon': 'Affinity', 'symphony-suites': 'Symphony',
@@ -478,9 +504,9 @@ def tendency_table():
            '<div class="scroll"><table class="lt"><thead><tr><th>estimator</th>'
            '<th class="num">contrasts agreeing within 10%</th>'
            '<th class="num">median gap</th><th class="num">average gap</th></tr></thead><tbody>']
-    LABEL = {'med': 'median <span class="lsub">what was published until 2026-09-20</span>',
+    LABEL = {'med': 'median <span class="lsub lsub2">what was published until 2026-09-20</span>',
              'mean': 'plain average',
-             'trim': 'trimmed average <span class="lsub">10% off each tail &middot; '
+             'trim': 'trimmed average <span class="lsub lsub2">10% off each tail &middot; '
                      'now published</span>'}
     best = min(t, key=lambda k: t[k]['mean_abs'])
     for k in ('med', 'mean', 'trim'):
@@ -542,7 +568,7 @@ def carve_table():
     for c in CARVE:
         out.append(f'<div class="scroll"><table class="lt"><thead><tr><th colspan="6">'
                    f'{html.escape(c["name"])} &middot; {html.escape(c["contrast"])} '
-                   f'<span class="lsub">{html.escape(c["feature"])} &middot; '
+                   f'<span class="lsub lsub2">{html.escape(c["feature"])} &middot; '
                    f'{_money(c["med"])} on {c["pairs"]} matched pairs &middot; steps of '
                    f'+{c["dsqft_lo"]} to +{c["dsqft_hi"]} sqft</span>'
                    f'</th></tr><tr><th>plan pair</th><th class="num">areas</th>'
@@ -647,15 +673,15 @@ def foyer_block():
         cls = 'lok' if rr and rr >= 1.15 else ('lbad' if rr and rr < 0.85 else 'lwarn')
         out.append(_row([
             f'<td><b>{x["a"]}</b> &rarr; <b>{x["b"]}</b>'
-            f'<span class="lsub">{html.escape(x["why"])}</span></td>',
+            f'<span class="lsub lsub2">{html.escape(x["why"])}</span></td>',
             f'<td class="num">+{x["dsqft"]}</td>',
             f'<td class="num">{x["exact_n"]}</td>',
             f'<td class="num lbig">{_money(x["exact"])}'
-            f'<span class="lsub">{_money(x["adj"])} on {x["adj_n"]:,} adjusted</span></td>',
+            f'<span class="lsub lsub2">{_money(x["adj"])} on {x["adj_n"]:,} adjusted</span></td>',
             f'<td class="num">${x["adj_psf"]:,}'
-            f'<span class="lsub">${x["exact_psf"]:,} matched</span></td>',
+            f'<span class="lsub lsub2">${x["exact_psf"]:,} matched</span></td>',
             f'<td class="num"><span class="{cls}">{x["adj_ratio"]:.2f}&times;</span>'
-            f'<span class="lsub">{x["exact_ratio"]:.2f}&times; on the {x["exact_n"]} '
+            f'<span class="lsub lsub2">{x["exact_ratio"]:.2f}&times; on the {x["exact_n"]} '
             f'matched pairs</span></td>']))
     out.append('</tbody></table></div>')
     t = FOYER.get('triangle', {}).get('adj')
@@ -700,56 +726,73 @@ def foyer_block():
 
 
 def hero_block():
-    """The answer, before the evidence.
+    """The answer, in the shape every other panel on this page uses.
 
-    Every other panel on this page opens with one; Layout was the only one that dropped straight
-    from a wall of caveats into a table, which is why it read as an audit log rather than a
-    finding. Three figures, in the order a buyer meets them: a bathroom, the wet-service package,
-    a whole bedroom. The gate, the corridor rule and the region exclusions moved to `Behind it`,
-    because a caveat is not a headline."""
+    THE PANEL HAD ABANDONED THE HOUSE ARGUMENT. Seven of the eight panels say one sentence --
+    `Engine constant X -> Measured Y` -- and Layout said three big gold numbers over a stat
+    strip: the default KPI hero of every analytics template since 2016, and the one composition
+    the craft floor names outright as a refused default. The other seven do not lead with a rate
+    because a rate is prettier; they lead with it because the rate is the DELTA AGAINST A STATED
+    PRIOR. With no prior on screen Layout's number had nothing to be a number OF.
+
+    Layout has no engine constant, but EC has the same problem and already solved it inside the
+    pattern -- "none - reference only". That answer was written on this page and Layout ignored
+    it. (2026-09-20 design review.)
+
+    PERCENT LEADS, QUANTUM SITS UNDER IT. Shawn, 2026-09-20: *"why are you showing quantum at the
+    top ONLY when clearly there is % associated with it ... in fact % should be the most used
+    right?"* Tested rather than assumed: leave-one-development-out, predicting a held-out
+    development's actual quantum, percent lands a 19% median error against 26% for $/sqft and
+    21% for the psf ratio. Ruling 4 ("quote QUANTUM") was measured INSIDE one development, where
+    the price level is known; a hero pooled across five developments spanning $1,237 to $2,303
+    psf is not inside that ruling's scope. So the transferable figure leads and the dollar
+    figure it implies sits beneath it.
+
+    TWO FIGURES, NOT THREE. "One more bedroom" was the largest number on the panel and appeared
+    exactly ONCE in 57,729 characters -- no table row, no worked example, nothing to open. On a
+    page whose entire brief is "here are the data", the most memorable figure cannot be the one
+    with no evidence behind it. It is named in the closing line and its evidence lives in the
+    two crossing disclosures, where it can be read properly."""
     F = {o['feature']: o.get('feature_alone') for o in (FSUM or [])}
-    def fig(name):
-        b = F.get(name)
-        return None if not b else (_money(b['quantum'][1]), b['sale_pairs_exact'], b['transactions'],
-                                   len(b['developments']), b['pct'][1])
     picks = [('Extra bathroom', 'a second bathroom'),
              ('WC + yard', 'WC, yard and a service room')]
-    ans = []
+    cells = []
     for key, words in picks:
-        v = fig(key)
-        if v: ans.append((v[0], words, v[3], v[2]))
+        b = F.get(key)
+        if not b: continue
+        pct, q = b['pct'], b['quantum']
+        rng = (f'{pct[0]:.1f}&ndash;{pct[2]:.1f}%' if pct[0] != pct[2] else 'one reading')
+        cells.append(
+            f'<div class="ans"><div class="n">+{pct[1]:.1f}%</div>'
+            f'<div class="w">{words}</div>'
+            f'<div class="g">{_money(q[1])}<span>typical quantum</span></div>'
+            f'<div class="g">{rng}<span>across {len(b["developments"])} developments</span></div>'
+            f'</div>')
+    if not cells: return ''
     X = _load('out/feature-library.json', []) or []
-    cross = _load('out/crossings-pooled.json', None)
-    # one more bedroom, pooled off the class contrasts
-    import statistics, os as _os
-    cr = []
-    for d in ('parc-esta', 'riverfront-residences', 'treasure-at-tampines', 'a-treasure-trove'):
-        pth = _os.path.join(STUDY, f'out/{d}-contrasts.json')
-        if not _os.path.exists(pth): continue
-        for r in json.load(open(pth)):
-            l, rr = [x.strip() for x in r['contrast'].split('->')]
-            if l[0] == rr[0]: continue
-            e = r.get('exact')
-            if not e or e.get('thin'): continue
-            cr.append(e)
-    if cr:
-        ans.append((_money(statistics.median(x['med'] for x in cr)), 'one more bedroom',
-                    4, sum(x['txns'] for x in cr)))
-    if not ans: return ''
-    cells = ''.join(
-        f'<div class="ans"><div class="n">{a[0]}</div><div class="w">{a[1]}</div>'
-        f'<div class="g">{a[2]}<span>developments</span></div>'
-        f'<div class="g">{a[3]:,}<span>transactions</span></div></div>' for a in ans)
     npairs = sum(r['pairs'] for r in X)
     ndev = len({r['dev'] for r in X})
-    return ('<div class="verdict"><div class="answers">' + cells + '</div>'
-            '<div class="vbase">'
-            f'<div class="g">{ndev}<span>developments with plans read</span></div>'
-            f'<div class="g">{npairs:,}<span>matched pairs, no adjustment</span></div>'
-            f'<div class="g">{len(X)}<span>measured contrasts</span></div>'
-            '</div>'
+    return ('<div class="verdict"><div class="vgrid">'
+            '<div class="vcell"><div class="lab">Engine constant</div>'
+            '<div class="val was">none</div>'
+            '<div class="sub">reference only &mdash; nothing in the constant set '
+            'prices a floor plan</div></div>'
+            '<div class="arrow">&rarr;</div>'
+            '<div class="vcell grow"><div class="lab">Measured</div>'
+            '<div class="answers">' + ''.join(cells) + '</div>'
+            # THE BASE IS PROSE, NOT A THIRD COLUMN. It used to render as a second flex row whose
+            # items landed 0 / 18 / 4 px off the answer columns above -- close enough to read as
+            # a table, wrong enough to look broken, and it put "8 developments with plans read"
+            # under "a second bathroom / 5 developments", giving two different development counts
+            # in one vertical scan.
+            f'<p class="vline">{ndev} developments with plans read &middot; '
+            f'{npairs:,} matched pairs, nothing adjusted &middot; '
+            f'{len(X)} measured contrasts</p>'
+            '</div></div>'
             '<p class="call">Every figure is the gap between <b>two real resales</b> of the same '
-            'size band in the same development, matched on floor and facing. Nothing is modelled.</p>'
+            'size band in the same development, matched on floor and facing. Nothing is modelled. '
+            'Crossing a whole bedroom is worth more again &mdash; that one is measured per '
+            'development rather than pooled, and it is in <i>Crossing a bedroom count</i> below.</p>'
             '</div>')
 
 
@@ -797,7 +840,7 @@ def worked_examples():
                                      f'{st.get("low_mult", 1.87)})<sup>{nlow}</sup>')
                     if nhigh:
                         terms.append(f'(1&nbsp;+&nbsp;{st["rate"]}%)<sup>{nhigh}</sup>')
-                    zone = (f' <span class="lsub">&mdash; {nlow} of those steps sit inside '
+                    zone = (f' <span class="lsub lsub2">&mdash; {nlow} of those steps sit inside '
                             f'L1&ndash;{st.get("low_top", 4)}, where the floor study measures '
                             f'{st.get("low_mult", 1.87)}&times; the tower rate</span>') if nlow else ''
                     lines.append(f'<li><span class="wk">floor</span> #{st["frm"]:02d} to #{st["to"]:02d} '
@@ -982,13 +1025,13 @@ def xdev_table():
             last = r['crossing']
         if g is None: agree = '<span class="lthin">&mdash;</span>'
         else:
-            cls = 'lok' if abs(g) <= 5 else ('lwarn' if abs(g) <= 10 else 'lbad')
-            agree = f'<span class="{cls}">{g:+.1f}%</span>'
+            cls, word = _verdict(g)
+            agree = f'<span class="{cls}">{g:+.1f}%</span><span class="lsub lsub2">{word}</span>'
         rows.append(
             f'<tr class="lmain"><td class="lpair">{r["name"].title()}</td>'
             + _cell(e) + _cell(al)
             + f'<td class="num">{(e or al)["pct"]}%<span class="lsub">of base</span></td>'
-            + f'<td class="num">{agree}<span class="lsub">agree</span></td></tr>')
+            + f'<td class="num">{agree}</td></tr>')
     return ('<div class="scroll"><table class="lt"><thead><tr><th>development</th>'
             '<th class="num">exact match</th><th class="num">adjusted</th>'
             '<th class="num">step</th><th class="num">test</th></tr></thead><tbody>'

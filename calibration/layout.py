@@ -388,6 +388,15 @@ def facts():
     wc_alone = [r for r in (FLIB or []) if r['feature'].strip() == '+WC']
     if wc_alone:
         f['wc_alone_pct'] = round(statistics.median(r['pct'] for r in wc_alone), 1)
+    # the three rungs, as feature-summary now carries them
+    for o in (FSUM or []):
+        n = o['feature']
+        if not n.startswith('WC') or not o.get('feature_alone'): continue
+        b = o['feature_alone']
+        key = ('rung_alone' if n == 'WC alone' else
+               'rung_svc' if 'yard' not in n else 'rung_yard')
+        f[key] = dict(pct=b['pct'][1], med=b['quantum'][1], pairs=b['sale_pairs_exact'],
+                      tx=b['transactions'], n=b['pairs'])
     # bathroom spread
     bath = [r for r in (FLIB or []) if r['feature'].strip() == '+1 bathroom']
     bp = [r for r in bath if r['test'] is not None and abs(r['test']) <= 10]

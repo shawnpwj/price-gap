@@ -2346,9 +2346,12 @@ LX_AOSYM    = f"${_as.get('med',0):,} on {_as.get('pairs',0)} pairs"
 _N = {13:'Thirteen',12:'Twelve',11:'Eleven',10:'Ten',14:'Fourteen',15:'Fifteen',9:'Nine'}
 LX_AOWORD   = _N.get(LXF['area_only'], str(LXF['area_only']))
 LX_BATHPUB  = f"{LXF.get('bath_pub_alone',0):.1f}%/{LXF.get('bath_pub_area',0):.1f}%"
-_r1, _r2, _r3 = LXF.get('rung_alone', {}), LXF.get('rung_svc', {}), LXF.get('rung_yard', {})
-LX_R1 = f"{_r1.get('pct',0):.1f}%"; LX_R2 = f"{_r2.get('pct',0):.1f}%"; LX_R3 = f"{_r3.get('pct',0):.1f}%"
-LX_R3P = f"{_r3.get('pairs',0):,}"; LX_R3N = _r3.get('n', 0)
+_r2, _r3, _bt = LXF.get('rung_svc', {}), LXF.get('rung_yard', {}), LXF.get('bath_row', {})
+_p = lambda d: f"{(d.get('pct') or [0,0,0])[1]:.1f}%"
+LX_R2, LX_R3 = _p(_r2), _p(_r3)
+LX_R2P = f"{_r2.get('sale_pairs_exact',0):,}"; LX_R3P = f"{_r3.get('sale_pairs_exact',0):,}"
+LX_R3N = _r3.get('pairs', 0)
+LX_BATH, LX_BATHP, LX_BATHN = _p(_bt), f"{_bt.get('sale_pairs_exact',0):,}", _bt.get('pairs', 0)
 BODY = f"""
 <div class="panel" data-p="summary">
 <h1 class="disp">Where the constants now stand</h1>
@@ -2960,15 +2963,24 @@ development has been read yet.</b></p>
   <div class="scroll">{LAYOUT_LIB}</div>
   <p class="expl"><b>Every reading, grouped by what the step actually adds.</b> A feature NAME is
   not a product. The class label carries bedrooms, bathrooms, WC, shelter and study, and says
-  nothing about a yard or a utility room &mdash; so one &ldquo;WC&rdquo; row was standing in for a
-  whole ladder. <b>The WC family has three rungs and each roughly doubles:</b> the WC on its own
-  is <b>{LX_R1}</b>, a WC with a service room but no yard is <b>{LX_R2}</b>, and a WC with a yard
-  <i>and</i> a service room is <b>{LX_R3}</b> on {LX_R3P} exact pairs across {LX_R3N} readings.
-  <b>The yard is the discriminator, not the WC.</b> What sits in the third room is named in the
-  detail but does not make a separate rung: Riverfront prints STORE where Treasure prints HS and
-  it is the same reinforced household shelter &mdash; mandatory since 1998, on a 2023 development
-  whose sheets never print HS at all. Ruling 3, the plan beats the label. Each row here is one
-  measured contrast, so a thin reading cannot hide inside a median. <b>Class&#8209;linked</b> rows come from a development with a
+  nothing about a yard or a utility room. <b>The yard is the discriminator, not the WC:</b> a WC
+  without one is <b>{LX_R2}</b> on {LX_R2P} exact pairs, and a WC with a yard is <b>{LX_R3}</b> on
+  {LX_R3P} exact pairs across {LX_R3N} readings &mdash; roughly double. What sits in the third
+  room is named in the detail but does not make a separate row: Riverfront prints STORE where
+  Treasure prints HS and it is the same reinforced household shelter, mandatory since 1998, on a
+  2023 development whose sheets never print HS at all. Ruling 3, the plan beats the label.
+  Each row here is one measured contrast, so a thin reading cannot hide inside a median.</p>
+  <p class="expl"><b>These rows are now built from the class-linked library, and that removed a
+  large double count.</b> Shawn spotted it from the page: &ldquo;the fact that the % are no
+  different from WC / yard / Home Shelter, shouldnt we combine these two together?&rdquo; They were
+  not two products &mdash; they were the same pairs. &ldquo;Shelter + yard + WC + enclosed
+  kitchen&rdquo; was five Treasure size pairs (C4/C6&nbsp;&rarr;&nbsp;C8P/C9P/C10P) and the class
+  contrast <code>3BR2B&nbsp;&rarr;&nbsp;3BR2B+WC+HS</code> pools exactly those layouts. Audited
+  across the table, <b>15 of the 22 rows previously published were the same pairs as a class
+  contrast</b>: the page was still being built from the strata-area route while the
+  transaction&nbsp;&rarr;&nbsp;layout link supersedes it at Parc Esta, Riverfront, Treasure and
+  A Treasure Trove. <b>Two identical percentages are a duplicate detector</b>, and it was caught
+  by eye before it was caught by code. <b>Class&#8209;linked</b> rows come from a development with a
   transaction&nbsp;&rarr;&nbsp;layout link, where the two sides are different product classes
   because the drawings say so; those do not face the 60% share gate, which exists to test whether
   a <i>size</i> step is a feature step and is answered by construction here. Rows with a step in

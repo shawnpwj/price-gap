@@ -222,6 +222,9 @@ def feature_summary_table():
     SHORT = {'quantum': 'qtm', 'psf': 'psf', 'pct': '%'}
     def k(x): return f"${x/1000:.0f}k" if x >= 10000 else f"${round(x):,}"
     def rng(v, f, g=None):
+        # A class-linked row has no step in sqft, so it has no $/sqft either -- that is a real
+        # absence, not a missing value, and it shows as a dash rather than breaking the table.
+        if not v: return '<span class="lthin">&mdash;</span>'
         g = g or f
         return f(v[1]) + (f'<span class="lsub">{g(v[0])}&ndash;{g(v[2])}</span>' if v[0] != v[2]
                           else '<span class="lsub">one layout pair</span>')
@@ -235,12 +238,12 @@ def feature_summary_table():
         name = NAMES.get(o["feature"], o["feature"])
         for which, b in (('alone', o.get('feature_alone')), ('area', o.get('feature_plus_area'))):
             if not b: continue
-            c = b['cv']
-            if b['steadiest'] is None: st = '<span class="lthin">one layout pair</span>'
+            c = {k: v for k, v in (b['cv'] or {}).items() if v is not None}
+            if b['steadiest'] is None or not c: st = '<span class="lthin">one layout pair</span>'
             elif max(c.values()) - min(c.values()) <= 2: st = 'no difference'
             else: st = f'<b>{MEAS[b["steadiest"]]}</b>'
             spread = ' &middot; '.join(f'{SHORT[kk]} {c[kk]}' for kk in ('pct', 'psf', 'quantum')
-                                       if c[kk] is not None)
+                                       if c.get(kk) is not None)
             devs = ', '.join(d.replace('-', ' ').title() for d in b['developments'])
             sq = b.get('step_sqft')
             if which == 'alone':
@@ -276,9 +279,34 @@ DEVNAME = {'parc-esta': 'Parc Esta', 'riverfront-residences': 'Riverfront', 'tre
            'the-tre-ver': 'The Tre Ver'}
 
 
+_PRIMARY = {'bathroom': 'Extra bathroom', 'bedroom': 'One more bedroom', 'study': 'Study', 'WC': 'WC'}
+_ANCILLARY = ('shelter', 'store', 'utility')
+
+
+def _parse(feat):
+    parts = [p.strip().lstrip('+') for p in feat.split(',') if p.strip().startswith('+')]
+    prim, anc, yard = [], [], False
+    for p in parts:
+        if p == 'yard': yard = True
+        elif p in _ANCILLARY: anc.append(p)
+        elif 'bathroom' in p: prim.append('bathroom')
+        elif 'bedroom' in p: prim.append('bedroom')
+        elif p in ('study', 'WC'): prim.append(p)
+        else: anc.append(p)
+    return prim, sorted(set(anc)), yard
+
+
 def _canon(feat):
-    parts = sorted(x.strip() for x in feat.split(',') if x.strip().startswith('+'))
-    return ', '.join(p[1:] for p in parts) if parts else feat
+    """The SAME grouping the summary rows use (src/feature_rows.name_of), so the two tables agree.
+
+    The primary room names the group; a yard joins the name because the yard is what moves the
+    figure; a shelter, a store or a utility room is ancillary and shows on the reading instead."""
+    prim, anc, yard = _parse(feat)
+    if not prim:
+        base = 'WC' if 'WC' in feat else (' + '.join(anc) or feat)
+        return (base + (' + yard' if yard else '')).strip()
+    head = ' + '.join(_PRIMARY.get(p, p) for p in dict.fromkeys(prim))
+    return head + (' + yard' if yard else '')
 
 
 def library_table():
@@ -312,7 +340,9 @@ def library_table():
             out.append(_row([
                 f'<td>{head}</td>',
                 f'<td>{html.escape(DEVNAME.get(r["dev"], r["dev"]))}</td>',
-                f'<td class="lthin">{html.escape(r["contrast"])}</td>',
+                f'<td class="lthin">{html.escape(r["contrast"])}'
+                + (f'<span class="lsub">with {html.escape(" + ".join(_parse(r["feature"])[1]))}</span>'
+                   if _parse(r['feature'])[1] else '') + '</td>',
                 f'<td class="num">{step}</td>',
                 f'<td class="num">{r["pairs"]:,}<span class="lsub">{r["tx"]:,} tx</span></td>',
                 f'<td class="num lbig">{_money(r["med"])}</td>',
@@ -388,15 +418,13 @@ def facts():
     wc_alone = [r for r in (FLIB or []) if r['feature'].strip() == '+WC']
     if wc_alone:
         f['wc_alone_pct'] = round(statistics.median(r['pct'] for r in wc_alone), 1)
-    # the three rungs, as feature-summary now carries them
+    # the WC rows as feature-summary now carries them, and the bathroom
     for o in (FSUM or []):
-        n = o['feature']
-        if not n.startswith('WC') or not o.get('feature_alone'): continue
-        b = o['feature_alone']
-        key = ('rung_alone' if n == 'WC alone' else
-               'rung_svc' if 'yard' not in n else 'rung_yard')
-        f[key] = dict(pct=b['pct'][1], med=b['quantum'][1], pairs=b['sale_pairs_exact'],
-                      tx=b['transactions'], n=b['pairs'])
+        n = o['feature']; b = o.get('feature_alone')
+        if not b: continue
+        if n == 'WC':          f['rung_svc'] = b
+        if n == 'WC + yard':   f['rung_yard'] = b
+        if n == 'Extra bathroom': f['bath_row'] = b
     # bathroom spread
     bath = [r for r in (FLIB or []) if r['feature'].strip() == '+1 bathroom']
     bp = [r for r in bath if r['test'] is not None and abs(r['test']) <= 10]

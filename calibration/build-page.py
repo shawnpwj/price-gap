@@ -814,6 +814,34 @@ white-space:nowrap;letter-spacing:-.012em}
 .ans .w{font-size:12px;letter-spacing:.15em;text-transform:uppercase;color:var(--slate-400);
 margin-top:10px}
 .ans .g{font:600 18px/1.15 Optima,Candara,sans-serif;color:var(--slate-300);margin-top:8px}
+/* GROUPED DISCLOSURES. A summary is a decision, not a door: the question, the answer it
+   gives, and how much is behind it, so a reader can choose without opening thirteen rows. */
+.dgrp{margin-top:30px}
+.dgrp:first-of-type{margin-top:18px}
+.dgrp>h3{font:600 15px/1.3 Optima,Candara,sans-serif;color:var(--slate-200);margin:0 0 3px;
+  letter-spacing:.005em}
+.dgrp>p{font-size:12.5px;color:var(--slate-500);margin:0 0 10px;max-width:74ch}
+.dgrp details{border-top:1px solid var(--ink)}
+.dgrp details:last-of-type{border-bottom:1px solid var(--ink)}
+.dgrp summary{display:grid;grid-template-columns:minmax(13rem,20rem) 1fr auto;gap:10px 20px;
+  align-items:baseline;padding:13px 2px}
+.dq{color:var(--slate-200);font-weight:600}
+.da{color:var(--slate-500);font-size:12.5px}
+.dw{color:var(--slate-600);font-size:11px;letter-spacing:.09em;text-transform:uppercase;
+  white-space:nowrap;font-variant-numeric:tabular-nums}
+details[open] .dq{color:var(--gold-soft)}
+@media (max-width:720px){
+  .dgrp summary{grid-template-columns:1fr;gap:3px}
+  .dw{font-size:11px}
+}
+.offmap{display:flex;gap:14px;flex-wrap:wrap;align-items:baseline;font-size:12.5px;
+  color:var(--slate-500);border-left:2px solid var(--gold);padding:2px 0 2px 13px;margin:0 0 22px}
+.offmap b{color:var(--slate-200);font-weight:600}
+.offmap a,a.xref{color:var(--gold-soft);text-decoration:none;
+  border-bottom:1px solid rgba(201,169,106,.4)}
+.offmap a:focus-visible,a.xref:focus-visible,#layoutKey:focus-visible{outline:2px solid var(--gold);
+  outline-offset:3px;border-radius:3px}
+.offmap a:hover,a.xref:hover{border-bottom-color:var(--gold)}
 .vline{font-size:12px;color:var(--slate-500);margin-top:16px;letter-spacing:.01em}
 .vbase{display:flex;gap:34px;flex-wrap:wrap;margin-top:16px;padding-top:14px;
 border-top:1px solid rgba(36,48,80,.85)}
@@ -1272,7 +1300,14 @@ JS = """
   btns.forEach(function(b){
     b.addEventListener('click',function(){show(b.getAttribute('data-go'),true);});
   });
-  window.addEventListener('hashchange',function(){show(location.hash.slice(1),false);});
+  window.addEventListener('hashchange',function(){
+    var id=location.hash.slice(1);
+    /* A LINK TO A DISCLOSURE OPENS IT. Without this, following "Crossing a bedroom count"
+       scrolls to a closed row and the reader has to work out that they must click it. */
+    var d=id&&document.getElementById(id);
+    if(d&&d.tagName==='DETAILS'){ d.open=true; d.scrollIntoView({block:'start'}); return; }
+    show(id,false);
+  });
   show((location.hash||'#summary').slice(1),false);
 
   /* THE LAYOUT PANEL IS HIDDEN INSIDE A HIDDEN PAGE. Shawn, 2026-09-18: the Layout study is not
@@ -1282,11 +1317,19 @@ JS = """
      treats the second tap as zoom, which touch-action:manipulation suppresses. A single tap does
      nothing. Once opened the panel behaves like any other — #layout stays linkable. */
   var key=document.getElementById('layoutKey'), lastTap=0;
+  function knock(){
+    var now=Date.now();
+    if(now-lastTap<450){ lastTap=0; show('layout',true); }
+    else lastTap=now;
+  }
   if(key){
-    key.addEventListener('pointerup',function(){
-      var now=Date.now();
-      if(now-lastTap<450){ lastTap=0; show('layout',true); }
-      else lastTap=now;
+    key.addEventListener('pointerup',knock);
+    /* THE SAME DOOR, FROM A KEYBOARD. It was a <span> with a pointerup listener and nothing
+       else, so the Layout panel had NO keyboard path at all -- not hidden from a keyboard user,
+       simply unreachable. Enter or Space twice inside the same 450ms keeps the gate exactly as
+       hard to find and exactly as hard to hit by accident. */
+    key.addEventListener('keydown',function(e){
+      if(e.key==='Enter'||e.key===' '||e.key==='Spacebar'){ e.preventDefault(); knock(); }
     });
   }
 })();
@@ -2383,12 +2426,14 @@ LAYOUT_ROOMS = LAYOUT.rooms_table()
 LAYOUT_FSUM  = LAYOUT.feature_summary_table()
 LAYOUT_LIB   = LAYOUT.library_table()
 LAYOUT_TRI   = LAYOUT.triage_table()
-LAYOUT_WEX   = LAYOUT.worked_examples()
+LAYOUT_WEX   = LAYOUT.worked_examples(only=1)   # one on the face
+LAYOUT_WEX2  = LAYOUT.worked_examples(skip=1)   # the other two, behind a door
 LAYOUT_HERO  = LAYOUT.hero_block()
 LAYOUT_AGREE = LAYOUT.agreement_table()
 LAYOUT_TEND  = LAYOUT.tendency_table()      # median or average -- Shawn, 2026-09-20
 LAYOUT_CARVE = LAYOUT.carve_table()         # what one published figure pools, plan pair by plan pair
-LAYOUT_FZONE = LAYOUT.floor_zone_table()    # the floor ladder's two zones, and the 1.87x
+LAYOUT_FZONE = LAYOUT.floor_zone_table()
+LAYOUT_MEAS  = LAYOUT.measure_note()    # which measure travels -- moved off the face    # the floor ladder's two zones, and the 1.87x
 LAYOUT_FOYER = LAYOUT.foyer_block()         # does an entrance foyer price?
 # EVERY figure the layout prose quotes, computed -- see LAYOUT.facts() for why the few historical
 # ones (the withdrawn 11.6% and its two component pairs, the 160 sqft cap) stay as literals.
@@ -2958,34 +3003,29 @@ at resale.</p>
 <p class="lede">Two units in the same development, the same size band and the same bedroom count,
 where one has a room the other does not. What the second one sold for, minus the first.</p>
 
+<p class="offmap"><b>Layout study</b> &mdash; a measured finding, not an engine constant, which
+  is why it has no tab above. <a href="#summary">Back to the constants</a></p>
+
 {LAYOUT_HERO}
 
 <section>
   <div class="sechead"><h2 class="disp">What each feature is worth</h2></div>
-  <p class="expl">The <b>trimmed average</b> across every development where the feature could be
-  isolated &mdash; one vote per development, not one per reading &mdash; with the range beneath
-  it. <b>Quantum is the figure to use</b>; the percentage is there because it
-  travels between price points better than dollars do. A feature is named for the room that
-  drives it &mdash; a yard joins the name because the yard is what moves the figure, while a
-  shelter, a store or a utility room is ancillary and is named on the individual reading instead.</p>
+  <p class="expl">One vote per development, not one per reading. A feature is named for the room
+  that drives it &mdash; a yard joins the name, a shelter or a store is ancillary and is named on
+  the individual reading.</p>
   {LAYOUT_FSUM}
-  <p class="expl">These are <b>central tendencies with real spread</b>, not price tags. A bedroom
-  crossing is tight. A single feature is looser: the middle half of Riverfront&rsquo;s
-  {LX_SPREAD_N} bathroom pairs spans {LX_SPREAD_Q1} to {LX_SPREAD_Q3} around a figure of
-  {LX_SPREAD_MID}. The feature is real and it is priced; the precision is not to the dollar.</p>
+  <p class="expl"><b>Central tendencies with real spread</b>, not price tags &mdash; the middle
+  half of Riverfront&rsquo;s {LX_SPREAD_N} bathroom pairs spans {LX_SPREAD_Q1} to
+  {LX_SPREAD_Q3} around {LX_SPREAD_MID}. The feature is priced; the precision is not to the dollar.</p>
 </section>
 
 <section>
   <div class="sechead"><h2 class="disp">How we did it</h2></div>
-  <p class="expl">Three contrasts shown the long way, at <b>one development each</b> &mdash; so
-  these are dollar figures, not the pooled percentages above, and they will not match them. That
-  is the point: the percentage travels between developments, the quantum is what a buyer at
-  <i>this</i> development actually paid. Every row is a real caveat: the unit, the floor, the
-  date and the price. <b>Where two units match on floor and facing, nothing
-  is adjusted at all</b> &mdash; the difference between the two sale prices is the figure, and the
-  published number is the trimmed average of every such pair. Where they do not match, the base sale is
-  moved to the other unit&rsquo;s floor and facing first, using rates measured on
-  <i>different</i> pairs; that second track exists to check the first, and the two agree.</p>
+  <p class="expl">Three contrasts at <b>one development each</b>, so these are dollars, not the
+  pooled percentages above. Every row is a real sale: the unit, the floor, the date, the price.
+  <b>Where two units match on floor and facing nothing is adjusted</b> &mdash; the difference
+  between the two prices is the figure. The three closest to it are shown; the spread of all of
+  them is under each table.</p>
   {LAYOUT_WEX}
 </section>
 
@@ -3009,6 +3049,10 @@ where one has a room the other does not. What the second one sold for, minus the
   {LAYOUT_FZONE}
   </details>
 
+  <details><summary>Percent, or dollars per square foot?</summary>
+  {LAYOUT_MEAS}
+  </details>
+
   <details><summary>Does the adjustment hold up? Every contrast, both tracks</summary>
   <p class="expl">Adjusting is not modelling, and the difference is why the first version of this
   study was withdrawn: that one fitted a residual to the same pairs it was measuring. Here both
@@ -3027,6 +3071,12 @@ where one has a room the other does not. What the second one sold for, minus the
     <div class="scroll">{LAYOUT_AGREE}</div>
   </details>
 
+  <details><summary>Two more figures, shown the long way</summary>
+  <p class="expl">The same treatment as the worked example on the face, for the WC package and
+  for a whole extra bedroom.</p>
+  {LAYOUT_WEX2}
+  </details>
+
   <details><summary>Every reading behind every feature</summary>
   <p class="expl">Every pair here has <b>passed the gate</b>: the differing features are absent on
   one side and present on the other, at least <b>60% of the area step is the added rooms</b>, measured
@@ -3035,7 +3085,7 @@ where one has a room the other does not. What the second one sold for, minus the
   hallway. Pairs that failed &mdash; same feature both sides at a different size, or
   an area step too big for the rooms added &mdash; are <b>not shown</b>, and neither is any pair
   without a feature difference at all. They stay recorded with their reasons in
-  <code>out/library-layout-pairs.csv</code>. The line in bold under each row is the
+  the study&rsquo;s own records. The line in bold under each row is the
   <b>product class</b> the figure belongs to, which is how it will pool with other developments.</p>
   <div class="scroll">{LAYOUT_LIB}</div>
   <p class="expl"><b>Every reading, grouped by what the step actually adds.</b> A feature NAME is
@@ -3048,9 +3098,9 @@ where one has a room the other does not. What the second one sold for, minus the
   2023 development whose sheets never print HS at all. Ruling 3, the plan beats the label.
   Each row here is one measured contrast, so a thin reading cannot hide inside a pooled figure.</p>
   <p class="expl"><b>These rows are now built from the class-linked library, and that removed a
-  large double count.</b> Shawn spotted it from the page: &ldquo;the fact that the % are no
-  different from WC / yard / Home Shelter, shouldnt we combine these two together?&rdquo; They were
-  not two products &mdash; they were the same pairs. &ldquo;Shelter + yard + WC + enclosed
+  large double count.</b> It was spotted by eye, off this page: if two rows show the same
+  percentage for what is supposed to be two different products, they are probably the same pairs.
+  They were. &ldquo;Shelter + yard + WC + enclosed
   kitchen&rdquo; was five Treasure size pairs (C4/C6&nbsp;&rarr;&nbsp;C8P/C9P/C10P) and the class
   contrast <code>3BR2B&nbsp;&rarr;&nbsp;3BR2B+WC+HS</code> pools exactly those layouts. Audited
   across the table, <b>15 of the 22 rows previously published were the same pairs as a class
@@ -3068,7 +3118,7 @@ where one has a room the other does not. What the second one sold for, minus the
   </details>
 
   <details><summary>How the pairs were chosen, and what that missed</summary>
-  <p class="expl"><b>Shawn found an error in this page by hand&#8209;pricing one pair.</b> At
+  <p class="expl"><b>A hand&#8209;priced pair found an error in this page.</b> At
   Affinity at Serangoon, 904 sqft and 1,076 sqft are the same three&#8209;bedroom plan apart from a
   yard, a utility room and a WC, and the gap is about <b>$465,000</b> &mdash; against a published
   &ldquo;WC + utility + yard&rdquo; of <b>11.6% / $173,484</b>. The candidate screen had never
@@ -3102,7 +3152,7 @@ where one has a room the other does not. What the second one sold for, minus the
   Until 2026-09-19 this page carried a single &ldquo;WC + utility + yard&rdquo; row at
   <b>11.6% / $173,484</b>. It was the median of two pairs &mdash; Symphony Suites at $113,000, whose
   step is 46% corridor, and Parc Esta at $233,967, which had <b>no exact pairs at all</b> and was
-  carried on the adjusted track. Shawn found the error by hand-pricing one pair at Affinity at
+  carried on the adjusted track. The error surfaced from one hand-priced pair at Affinity at
   Serangoon, where 904 sqft and 1,076 sqft are the same three-bedroom plan apart from a yard, a
   utility room and a WC, and the gap is about $465,000. The candidate screen had never proposed
   that pair, because it capped a step at 160 sqft and this one is +172. With the cap dropped there
@@ -3166,7 +3216,7 @@ where one has a room the other does not. What the second one sold for, minus the
   {LAYOUT_PARC}
   <p class="expl"><b>Feature pairs, rooms measured.</b> 18 plans measured room by room. A pair
   passes when the added feature rooms are at least <b>60%</b> of the extra square feet &mdash; lowered
-  from 80% on 2026-09-19, after Shawn judged Riversails&rsquo; study pairs (63&ndash;67%) to be the same
+  from 80% on 2026-09-19, after Riversails&rsquo; study pairs (63&ndash;67%) were judged the same
   product plus a study. Six Parc Esta pairs pass. The study pairs are adjusted-track only.</p>
   {LAYOUT_PARCF}
   </details>
@@ -3204,6 +3254,98 @@ where one has a room the other does not. What the second one sold for, minus the
 
 """
 
+
+# ============================================================ THE LAYOUT DISCLOSURES, GROUPED
+# The 2026-09-20 review: "13 undifferentiated disclosures. Weights run 722 to 7,981 characters
+# and 0 to 96 table rows behind identical 13px rows. Nothing signals which one answers a
+# question." 83% of the panel's text sat behind them, and a reader had no way to choose.
+#
+# Three named sets, each summary carrying the ANSWER and a WEIGHT CUE, so the row is a decision
+# rather than a door. Done as a post-pass over the assembled panel rather than by hand-editing a
+# 250-line f-string: the cues are then COUNTED from the real content and cannot drift when a
+# table gains rows.
+DISC_GROUPS = [
+    ("How a figure is made",
+     "The rule, the two tracks, and the arithmetic. Read this if you want to check the method.",
+     ["How a pair is built", "Does the adjustment hold up", "Median or average",
+      "Percent, or dollars per square foot", "The floor ladder is not one rate"]),
+    ("What was measured",
+     "Every reading, every layout pair and every development behind the figures above.",
+     ["Two more figures, shown the long way", "Every reading behind every feature",
+      "What a single figure is pooling",
+      "Crossing a bedroom count", "Every development, crossing", "Parc Esta, read in full",
+      "Measured room areas"]),
+    ("What we got wrong, and fixed",
+     "Errors found in this page and what they cost. Kept on the record rather than quietly corrected.",
+     ["How the pairs were chosen", "What the candidate pairs turned out to be",
+      "Does an entrance foyer price"]),
+]
+DISC_ANSWERS = {
+    "How a pair is built": "Same floor, same facing, both sales inside six months, same sale type.",
+    "Does the adjustment hold up": "30 of 33 contrasts agree within 10%; the three that miss are the thinnest.",
+    "Median or average": "The trimmed average, because the median lost the study's own test.",
+    "The floor ladder is not one rate": "The first four floors cost about 1.87x the rate above L5.",
+    "Percent, or dollars per square foot": "Percent. Tested by holding a development out and predicting it.",
+    "Two more figures, shown the long way": "The WC package and a whole extra bedroom, sale by sale.",
+    "Every reading behind every feature": "Each measured contrast on its own, with the gate it passed.",
+    "What a single figure is pooling": "A published figure opens into its layout pairs and their area steps.",
+    "Crossing a bedroom count": "What a whole extra bedroom is worth, development by development.",
+    "Every development, crossing": "The same crossing everywhere it could be measured.",
+    "Parc Esta, read in full": "One development end to end, as a worked check on the others.",
+    "Measured room areas": "Rooms measured off the plan sheets, and how accurate that is.",
+    "How the pairs were chosen": "A screen threshold hid real pairs. What it cost and how it was found.",
+    "What the candidate pairs turned out to be": "Every candidate and why it did or did not become a figure.",
+    "Does an entrance foyer price": "Yes, and below ordinary area - it behaves like circulation.",
+}
+
+
+def regroup_layout_disclosures(body):
+    """Split the Layout panel's flat disclosure list into three labelled sets."""
+    import re as _re
+    key = '<h2 class="disp">Behind it</h2>'
+    i = body.rfind(key)
+    if i < 0: return body
+    sec_start = body.rfind('<section>', 0, i)
+    sec_end = body.find('</section>', i)
+    if sec_start < 0 or sec_end < 0: return body
+    sec = body[sec_start:sec_end]
+    blocks = _re.findall(r'<details>\s*<summary>(.*?)</summary>(.*?)</details>', sec, _re.S)
+    if len(blocks) < 8: return body                      # not the panel we expect; leave alone
+
+    def cue(inner):
+        rows = inner.count('<tr')
+        tabs = inner.count('<table')
+        if rows: return f"{rows:,} rows" + (f" &middot; {tabs} tables" if tabs > 1 else "")
+        return "a note"
+
+    used, out = set(), []
+    for title, blurb, keys in DISC_GROUPS:
+        items = []
+        for k in keys:
+            for n, (summ, inner) in enumerate(blocks):
+                if n in used or k.lower() not in summ.lower(): continue
+                used.add(n)
+                ans = next((v for kk, v in DISC_ANSWERS.items() if kk.lower() in summ.lower()), '')
+                did = 'd-' + _re.sub(r'[^a-z0-9]+', '-',
+                                     _re.sub('<[^>]+>', '', summ).lower()).strip('-')[:40]
+                items.append(
+                    f'<details id="{did}"><summary><span class="dq">{summ}</span>'
+                    f'<span class="da">{ans}</span>'
+                    f'<span class="dw">{cue(inner)}</span></summary>{inner}</details>')
+                break
+        if items:
+            out.append(f'<div class="dgrp"><h3>{title}</h3><p>{blurb}</p>{"".join(items)}</div>')
+    # anything unmatched keeps its place rather than vanishing
+    for n, (summ, inner) in enumerate(blocks):
+        if n in used: continue
+        out.append(f'<details><summary><span class="dq">{summ}</span>'
+                   f'<span class="dw">{cue(inner)}</span></summary>{inner}</details>')
+    head = sec[:sec.find('<details>')]
+    return body[:sec_start] + head + ''.join(out) + body[sec_end:]
+
+
+BODY = regroup_layout_disclosures(BODY)
+
 HTML = f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -3215,7 +3357,8 @@ HTML = f"""<!doctype html>
   <div class="hin">
     <div class="brand"><div class="mark">K</div>
       <div><p>KYA REAL ESTATE</p><p>Private Client Advisory</p></div></div>
-    <span class="chip" id="layoutKey" style="touch-action:manipulation" title=""><b></b> Internal &mdash; Constant Calibration</span>
+    <span class="chip" id="layoutKey" style="touch-action:manipulation" tabindex="0" role="button"
+      aria-label="Internal — Constant Calibration"><b></b> Internal &mdash; Constant Calibration</span>
     <span class="chip asof">Figures as of {cut.VINTAGE}</span>
   </div>
   <nav class="terms" aria-label="The constants">

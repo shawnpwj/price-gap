@@ -11,7 +11,7 @@ bedroom-tier jumps and the measured room areas.
 Shawn, 2026-09-18, three cuts, all of them "I dont need this":
   * "remove ALL area only" -- no pair without a feature difference is shown.
   * "for all not comparable and needs room measurement, remove them" -- only pairs that pass
-    the 60% gate (80% until 2026-09-19) reach this page. The rejected ones stay in out/library-layout-pairs.csv with
+    the 60% gate (80% until 2026-09-19) reach this page. The rejected ones stay in the study's own records with
     their reasons; the gate is auditable there, it is just not on his screen.
   * "i dont need the specfiic sizing ... what matters is 3BR Prem to 4BR compact" -- bedroom
     crossings are labelled by PRODUCT CLASS, with no strata areas, because the class is what
@@ -311,20 +311,7 @@ def feature_summary_table():
             '<th class="num">$ per sqft of the step</th>'
             '<th class="num">against the project&rsquo;s own psf</th>'
             '<th class="num">quantum</th>'
-            '</tr></thead><tbody>' + ''.join(rows) + '</tbody></table></div>'
-            + '<p class="expl"><b>The percentage is the figure that travels.</b> Tested rather '
-              'than asserted: hold one development out, predict its actual quantum from the '
-              'others, and the share of price lands a 19% median error against 26% for the '
-              'step&rsquo;s $/sqft and 21% for the multiple of the project&rsquo;s own psf. So '
-              'the percentage leads everywhere a figure is pooled, and the quantum leads '
-              'wherever the price level is known &mdash; the per-development rows here, and the '
-              'worked examples. Even the winner carries about 20% error predicting a '
-              'development it has never seen, which is the honest limit of this table.</p>'
-              '<p class="expl">One reading does not fit that rule and is worth keeping: the '
-              'WC&nbsp;+&nbsp;yard package is remarkably steady as a <b>multiple of whatever the '
-              'development charges per square foot</b> (a spread of 5% across four developments, '
-              'against 22% for the share of price). No dollar measure could see that. An extra '
-              'bathroom goes the other way, because bathrooms arrive at different sizes.</p>')
+            '</tr></thead><tbody>' + ''.join(rows) + '</tbody></table></div>')
 
 DEVNAME = {'parc-esta': 'Parc Esta', 'riverfront-residences': 'Riverfront', 'treasure-at-tampines': 'Treasure',
            'a-treasure-trove': 'A Treasure Trove', 'affinity-at-serangoon': 'Affinity', 'symphony-suites': 'Symphony',
@@ -598,7 +585,8 @@ def floor_zone_table():
     if not FZONE: return ''
     out = ['<p class="expl">The adjusted track moves a sale to another floor before differencing, '
            'and until 2026-09-20 it did that with <b>one flat rate</b> compounded from wherever '
-           'the sale sat. The resale floor study says that is wrong twice over. First, the ladder '
+           'the sale sat. The <a class="xref" href="launch/index.html#floor">resale floor '
+           'study</a> says that is wrong twice over. First, the ladder '
            'is not flat: the <b>first four floors cost about 1.87&times;</b> the rate the same '
            'building sustains above L5 (150 projects, one vote each). Second &mdash; and this is '
            'the larger error &mdash; the rate being compounded was fitted on <b>every</b> '
@@ -658,8 +646,8 @@ def foyer_block():
            f'<code>3BR2B&nbsp;&rarr;&nbsp;3BR2B+WC+HS</code> figure carry the identical room '
            f'list &mdash; C9P at {L[("C6","C9P")]["b_sqft"]:,} sqft and C10P at '
            f'{L[("C6","C10P")]["b_sqft"]:,} sqft. The {L[("C9P","C10P")]["dsqft"]} sqft between '
-           f'them is an <b>entrance foyer</b> &mdash; Shawn&rsquo;s read of the two sheets: C10P puts a '
-           f'hallway between the front door and the living-dining, C9P opens straight into it. '
+           f'them is an <b>entrance foyer</b>, read off the two sheets: C10P puts a hallway between the '
+           f'front door and the living-dining, C9P opens straight into it. '
            f'Because the class label is silent about it, the two pool. So: does it price?</p>',
            '<div class="scroll"><table class="lt"><thead><tr><th>plan pair</th><th class="num">step</th>'
            '<th class="num">matched pairs</th><th class="num">quantum</th>'
@@ -710,7 +698,7 @@ def foyer_block():
                    f'would not close.</p>')
     P = FOYER.get('pooled') or {}
     move = (P.get('exact') - pkg['exact']) if P.get('exact') else None
-    out.append(f'<p class="expl"><b>What follows from it.</b> Shawn is right that '
+    out.append(f'<p class="expl"><b>What follows from it.</b> '
                f'<b>C6&nbsp;&rarr;&nbsp;C9P is the better comparison</b>: it is the cleaner '
                f'feature step and it carries {pkg["exact_n"]} matched pairs against '
                f'{L[("C6","C10P")]["exact_n"]}. '
@@ -792,7 +780,9 @@ def hero_block():
             '<p class="call">Every figure is the gap between <b>two real resales</b> of the same '
             'size band in the same development, matched on floor and facing. Nothing is modelled. '
             'Crossing a whole bedroom is worth more again &mdash; that one is measured per '
-            'development rather than pooled, and it is in <i>Crossing a bedroom count</i> below.</p>'
+            'development rather than pooled, and it is in '
+            '<a class="xref" href="#d-crossing-a-bedroom-count">Crossing a bedroom count</a> '
+            'below.</p>'
             '</div>')
 
 
@@ -801,7 +791,13 @@ def _cv(c):
             '$' + format(c['price'], ','))
 
 
-def worked_examples():
+def worked_examples(only=None, skip=0):
+    """`only` caps how many render; `skip` starts further down the list.
+
+    ONE ON THE FACE, TWO BEHIND A DOOR (2026-09-20). All three were on the face and they are
+    the strongest block on the panel -- which is exactly why the first one should not have to
+    share the reader's attention with two more. One example proves the method; the other two
+    are evidence, and evidence belongs with the evidence."""
     """Three figures shown the long way: the actual caveats, then one adjustment in full.
 
     Shawn, 2026-09-19: *"I need some layout pairs for me to eyeball and manually assess if the
@@ -809,8 +805,9 @@ def worked_examples():
     what persuades is not another table, it is seeing that the figure IS the difference between
     two real sales and that nothing was done to it."""
     if not WEX: return ''
+    sel = WEX[skip:skip + only] if only else WEX[skip:]
     out = []
-    for w in WEX:
+    for w in sel:
         rows = ''.join(
             '<tr>' +
             f'<td class="wc">{_cv(e["a"])[0]}<span class="lsub">{_cv(e["a"])[1]}</span></td>'
@@ -875,13 +872,12 @@ def worked_examples():
             f'<th colspan="2">the larger layout</th><th class="num">difference</th>'
             f'<th class="num">off the figure</th></tr></thead>'
             f'<tbody>{rows}</tbody></table>'
-            f'<p class="wnote">Same floor, same facing, both sales within six months. '
-            f'<b>Nothing is adjusted &mdash; the difference is the figure.</b> The three of '
-            f'{w["exact_n"]} closest to it are shown, so what you are reading is the method '
-            f'rather than its noise. <b>The noise is real and it is this:</b> across all '
-            f'{w["exact_n"]} pairs the difference runs 'f'{_money(w["exact_lo"])} to {_money(w["exact_hi"])}, and the middle half sits '
-            f'between {_money(w["exact_q1"])} and {_money(w["exact_q3"])}. '
-            f'One pair prices one pair; {w["exact_n"]} of them price the feature.</p>'
+            # THE SHARED HALF OF THIS NOTE NOW SITS ONCE, ABOVE ALL THREE EXAMPLES. It was
+            # 77 words repeated verbatim three times -- 231 of the face's words saying the
+            # same thing, which is how a careful caveat turns into wallpaper.
+            f'<p class="wnote">Across all {w["exact_n"]} pairs the difference runs '
+            f'{_money(w["exact_lo"])} to {_money(w["exact_hi"])}; the middle half sits between '
+            f'{_money(w["exact_q1"])} and {_money(w["exact_q3"])}.</p>'
             f'{adj}'
             f'<div class="wfoot"><span>{w["exact_n"]} matched pairs <b>{_money(w["exact_med"])}</b></span>'
             f'<span>{w["adj_n"]:,} adjusted pairs <b>{_money(w["adj_med"])}</b></span>'
@@ -1065,3 +1061,23 @@ def counts():
     return dict(layouts=len(LAY), measured=len(L), pairs=len(PAIRS), publishable=len(pub),
                 rejected=len([r for r in PAIRS
                               if r['comparability'].startswith('NOT_COMPARABLE')]))
+
+
+def measure_note():
+    """Which of the three measures travels between developments, and the test that decided it.
+
+    Moved OFF the face on 2026-09-20: 159 words of method justification were sitting between
+    the reader and the next figure. It is a good argument and it belongs behind a door."""
+    return ('<p class="expl"><b>The percentage is the figure that travels.</b> Tested rather '
+              'than asserted: hold one development out, predict its actual quantum from the '
+              'others, and the share of price lands a 19% median error against 26% for the '
+              'step&rsquo;s $/sqft and 21% for the multiple of the project&rsquo;s own psf. So '
+              'the percentage leads everywhere a figure is pooled, and the quantum leads '
+              'wherever the price level is known &mdash; the per-development rows here, and the '
+              'worked examples. Even the winner carries about 20% error predicting a '
+              'development it has never seen, which is the honest limit of this table.</p>'
+              '<p class="expl">One reading does not fit that rule and is worth keeping: the '
+              'WC&nbsp;+&nbsp;yard package is remarkably steady as a <b>multiple of whatever the '
+              'development charges per square foot</b> (a spread of 5% across four developments, '
+              'against 22% for the share of price). No dollar measure could see that. An extra '
+              'bathroom goes the other way, because bathrooms arrive at different sizes.</p>')

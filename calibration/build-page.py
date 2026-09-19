@@ -814,6 +814,22 @@ white-space:nowrap;letter-spacing:-.012em}
 .ans .w{font-size:12px;letter-spacing:.15em;text-transform:uppercase;color:var(--slate-400);
 margin-top:10px}
 .ans .g{font:600 18px/1.15 Optima,Candara,sans-serif;color:var(--slate-300);margin-top:8px}
+/* Layout: every feature in the hero (Shawn, 2026-09-20) -- a grid, not one long flex row */
+.answers.many{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:26px 28px;
+  align-items:start}
+.answers.many .n{font-size:clamp(34px,3.6vw,44px)}
+.answers.many .w{letter-spacing:.1em;min-height:2.6em}
+.ans .m{font-size:12px;color:var(--slate-500);margin-top:4px}
+.vgrid.vtop{align-items:flex-start}
+@media (max-width:640px){.answers.many{grid-template-columns:1fr 1fr;gap:22px 16px}
+  .answers.many .n{font-size:30px}.answers.many .w{letter-spacing:.06em}}
+.vgrid.vtop .arrow{padding:30px 0 0}
+details.devs{display:inline}
+details.devs summary{display:inline;cursor:pointer;padding:0;color:var(--gold-soft);
+  border-bottom:1px solid rgba(201,169,106,.4)}
+details.devs summary::before{display:none}
+details.devs[open] summary{border-bottom-color:var(--gold)}
+details.devs>span{display:block;margin-top:4px;color:var(--slate-400);line-height:1.45}
 /* GROUPED DISCLOSURES. A summary is a decision, not a door: the question, the answer it
    gives, and how much is behind it, so a reader can choose without opening thirteen rows. */
 .dgrp{margin-top:30px}
@@ -3000,38 +3016,28 @@ at resale.</p>
 
 <div class="panel" data-p="layout" hidden>
 <h1 class="disp">What the resale market pays for a layout</h1>
-<p class="lede">Two units in the same development, the same size band and the same bedroom count,
-where one has a room the other does not. What the second one sold for, minus the first.</p>
+<p class="lede">Two units, same development, one extra room. The price gap is what the room is worth.</p>
 
-<p class="offmap"><b>Layout study</b> &mdash; a measured finding, not an engine constant, which
-  is why it has no tab above. <a href="#summary">Back to the constants</a></p>
+<p class="offmap"><b>Layout study</b> &mdash; not an engine constant.
+  <a href="#summary">Back to the constants</a></p>
 
 {LAYOUT_HERO}
 
 <section>
-  <div class="sechead"><h2 class="disp">What each feature is worth</h2></div>
-  <p class="expl">One vote per development, not one per reading. A feature is named for the room
-  that drives it &mdash; a yard joins the name, a shelter or a store is ancillary and is named on
-  the individual reading.</p>
-  {LAYOUT_FSUM}
-  <p class="expl"><b>Central tendencies with real spread</b>, not price tags &mdash; the middle
-  half of Riverfront&rsquo;s {LX_SPREAD_N} bathroom pairs spans {LX_SPREAD_Q1} to
-  {LX_SPREAD_Q3} around {LX_SPREAD_MID}. The feature is priced; the precision is not to the dollar.</p>
-</section>
-
-<section>
-  <div class="sechead"><h2 class="disp">How we did it</h2></div>
-  <p class="expl">Three contrasts at <b>one development each</b>, so these are dollars, not the
-  pooled percentages above. Every row is a real sale: the unit, the floor, the date, the price.
-  <b>Where two units match on floor and facing nothing is adjusted</b> &mdash; the difference
-  between the two prices is the figure. The three closest to it are shown; the spread of all of
-  them is under each table.</p>
+  <div class="sechead"><h2 class="disp">One example</h2></div>
+  <p class="expl">Real sales, same floor and facing. Nothing adjusted.</p>
   {LAYOUT_WEX}
 </section>
 
 <section>
-  <div class="sechead"><h2 class="disp">Behind it</h2>
-  <p>Everything the figures rest on. Nothing here is needed to read them.</p></div>
+  <div class="sechead"><h2 class="disp">Behind it</h2></div>
+
+  <details><summary>By region and bedroom count</summary>
+  {LAYOUT_FSUM}
+  <p class="expl">One vote per development. The middle half of Riverfront&rsquo;s
+  {LX_SPREAD_N} bathroom pairs spans {LX_SPREAD_Q1} to {LX_SPREAD_Q3} &mdash; a typical figure,
+  not a price tag.</p>
+  </details>
 
   <details><summary>Median or average &mdash; which one, and why</summary>
   {LAYOUT_TEND}
@@ -3266,23 +3272,24 @@ where one has a room the other does not. What the second one sold for, minus the
 # table gains rows.
 DISC_GROUPS = [
     ("How a figure is made",
-     "The rule, the two tracks, and the arithmetic. Read this if you want to check the method.",
+     "",
      ["How a pair is built", "Does the adjustment hold up", "Median or average",
       "Percent, or dollars per square foot", "The floor ladder is not one rate"]),
     ("What was measured",
-     "Every reading, every layout pair and every development behind the figures above.",
-     ["Two more figures, shown the long way", "Every reading behind every feature",
+     "",
+     ["By region and bedroom count", "Two more figures, shown the long way", "Every reading behind every feature",
       "What a single figure is pooling",
       "Crossing a bedroom count", "Every development, crossing", "Parc Esta, read in full",
       "Measured room areas"]),
     ("What we got wrong, and fixed",
-     "Errors found in this page and what they cost. Kept on the record rather than quietly corrected.",
+     "",
      ["How the pairs were chosen", "What the candidate pairs turned out to be",
       "Does an entrance foyer price"]),
 ]
 DISC_ANSWERS = {
+    "By region and bedroom count": "Every feature split by region and bedrooms.",
     "How a pair is built": "Same floor, same facing, both sales inside six months, same sale type.",
-    "Does the adjustment hold up": "30 of 33 contrasts agree within 10%; the three that miss are the thinnest.",
+    "Does the adjustment hold up": "{} of {} contrasts agree within 10%.".format(*LAYOUT.agreement_counts()),
     "Median or average": "The trimmed average, because the median lost the study's own test.",
     "The floor ladder is not one rate": "The first four floors cost about 1.87x the rate above L5.",
     "Percent, or dollars per square foot": "Percent. Tested by holding a development out and predicting it.",
@@ -3334,7 +3341,8 @@ def regroup_layout_disclosures(body):
                     f'<span class="dw">{cue(inner)}</span></summary>{inner}</details>')
                 break
         if items:
-            out.append(f'<div class="dgrp"><h3>{title}</h3><p>{blurb}</p>{"".join(items)}</div>')
+            out.append(f'<div class="dgrp"><h3>{title}</h3>' + (f'<p>{blurb}</p>' if blurb else '')
+                       + f'{"".join(items)}</div>')
     # anything unmatched keeps its place rather than vanishing
     for n, (summ, inner) in enumerate(blocks):
         if n in used: continue

@@ -3024,234 +3024,31 @@ at resale.</p>
 {LAYOUT_HERO}
 
 <section>
+  <div class="sechead"><h2 class="disp">The measurement</h2></div>
+  {LAYOUT_FSUM}
+</section>
+
+<section>
   <div class="sechead"><h2 class="disp">One example</h2></div>
-  <p class="expl">Real sales, same floor and facing. Nothing adjusted.</p>
   {LAYOUT_WEX}
 </section>
 
 <section>
   <div class="sechead"><h2 class="disp">Behind it</h2></div>
 
-  <details><summary>By region and bedroom count</summary>
-  {LAYOUT_FSUM}
-  <p class="expl">One vote per development. The middle half of Riverfront&rsquo;s
-  {LX_SPREAD_N} bathroom pairs spans {LX_SPREAD_Q1} to {LX_SPREAD_Q3} &mdash; a typical figure,
-  not a price tag.</p>
-  </details>
-
-  <details><summary>Median or average &mdash; which one, and why</summary>
-  {LAYOUT_TEND}
-  </details>
-
-  <details><summary>What a single figure is pooling, plan by plan</summary>
-  {LAYOUT_CARVE}
-  </details>
-
-  <details><summary>Does an entrance foyer price?</summary>
-  {LAYOUT_FOYER}
-  </details>
-
-  <details><summary>The floor ladder is not one rate</summary>
-  {LAYOUT_FZONE}
-  </details>
-
-  <details><summary>Percent, or dollars per square foot?</summary>
-  {LAYOUT_MEAS}
-  </details>
-
-  <details><summary>Does the adjustment hold up? Every contrast, both tracks</summary>
-  <p class="expl">Adjusting is not modelling, and the difference is why the first version of this
-  study was withdrawn: that one fitted a residual to the same pairs it was measuring. Here both
-  adjusters are measured <b>somewhere else, on other pairs</b> &mdash; the floor step from
-  <b>same-stack repeat sales</b> ({FLOOR_STEP}%/floor, {FLOOR_N} sale pairs), the facing premiums from the
-  stack study&rsquo;s resale pairs, direct only, never chained.</p>
-  <p class="expl">The <b>test</b> column compares the exact figure against <b>only the pairs the
-  exact rule throws away</b> &mdash; different floor, different facing, or both. The two sets share
-  no transaction, so if adjusting works the discarded pairs should reproduce the exact answer.
-  On the best-sampled contrast they do: <b>{LX_BEST}</b>.</p>
-  <p class="expl">One guard came straight out of this test. Treasure&rsquo;s facing premiums were
-  measured on <b>3BR and 4BR only</b>. Applied to 2BR units they pulled every 2BR contrast down by
-  11&ndash;35%; refusing to extrapolate them cut that to 3&ndash;8%. <b>A facing move is now
-  refused for any bedroom class the facing premium was not measured on.</b> The floor step is
-  measured on every stack, so it carries everywhere.</p>
-    <div class="scroll">{LAYOUT_AGREE}</div>
-  </details>
-
-  <details><summary>Two more figures, shown the long way</summary>
-  <p class="expl">The same treatment as the worked example on the face, for the WC package and
-  for a whole extra bedroom.</p>
-  {LAYOUT_WEX2}
-  </details>
-
-  <details><summary>Every reading behind every feature</summary>
-  <p class="expl">Every pair here has <b>passed the gate</b>: the differing features are absent on
-  one side and present on the other, at least <b>60% of the area step is the added rooms</b>, measured
-  off the plans, and <b>no more than 40% of the step went into corridor</b> &mdash; the circulation
-  guard, added 2026-09-19. It removed Symphony Suites B1 &rarr; C1, whose +107 sqft put +49 into
-  hallway. Pairs that failed &mdash; same feature both sides at a different size, or
-  an area step too big for the rooms added &mdash; are <b>not shown</b>, and neither is any pair
-  without a feature difference at all. They stay recorded with their reasons in
-  the study&rsquo;s own records. The line in bold under each row is the
-  <b>product class</b> the figure belongs to, which is how it will pool with other developments.</p>
-  <div class="scroll">{LAYOUT_LIB}</div>
-  <p class="expl"><b>Every reading, grouped by what the step actually adds.</b> A feature NAME is
-  not a product. The class label carries bedrooms, bathrooms, WC, shelter and study, and says
-  nothing about a yard or a utility room. <b>The yard is the discriminator, not the WC:</b> a WC
-  without one is <b>{LX_R2}</b> on {LX_R2P} exact pairs, and a WC with a yard is <b>{LX_R3}</b> on
-  {LX_R3P} exact pairs across {LX_R3N} readings &mdash; roughly double. What sits in the third
-  room is named in the detail but does not make a separate row: Riverfront prints STORE where
-  Treasure prints HS and it is the same reinforced household shelter, mandatory since 1998, on a
-  2023 development whose sheets never print HS at all. Ruling 3, the plan beats the label.
-  Each row here is one measured contrast, so a thin reading cannot hide inside a pooled figure.</p>
-  <p class="expl"><b>These rows are now built from the class-linked library, and that removed a
-  large double count.</b> It was spotted by eye, off this page: if two rows show the same
-  percentage for what is supposed to be two different products, they are probably the same pairs.
-  They were. &ldquo;Shelter + yard + WC + enclosed
-  kitchen&rdquo; was five Treasure size pairs (C4/C6&nbsp;&rarr;&nbsp;C8P/C9P/C10P) and the class
-  contrast <code>3BR2B&nbsp;&rarr;&nbsp;3BR2B+WC+HS</code> pools exactly those layouts. Audited
-  across the table, <b>15 of the 22 rows previously published were the same pairs as a class
-  contrast</b>: the page was still being built from the strata-area route while the
-  transaction&nbsp;&rarr;&nbsp;layout link supersedes it at Parc Esta, Riverfront, Treasure and
-  A Treasure Trove. <b>Two identical percentages are a duplicate detector</b>, and it was caught
-  by eye before it was caught by code. <b>Class&#8209;linked</b> rows come from a development with a
-  transaction&nbsp;&rarr;&nbsp;layout link, where the two sides are different product classes
-  because the drawings say so; those do not face the 60% share gate, which exists to test whether
-  a <i>size</i> step is a feature step and is answered by construction here. Rows with a step in
-  sqft are matched on strata area and still face the gate and the circulation guard.
-  The <b>two-track test</b> is the adjusted track against the exact one: inside
-  <span class="lok">&plusmn;5%</span> is agreement, <span class="lwarn">&plusmn;10%</span> is
-  tolerable, <span class="lbad">beyond</span> fails and the reading is recorded, not quoted.</p>
-  </details>
-
-  <details><summary>How the pairs were chosen, and what that missed</summary>
-  <p class="expl"><b>A hand&#8209;priced pair found an error in this page.</b> At
-  Affinity at Serangoon, 904 sqft and 1,076 sqft are the same three&#8209;bedroom plan apart from a
-  yard, a utility room and a WC, and the gap is about <b>$465,000</b> &mdash; against a published
-  &ldquo;WC + utility + yard&rdquo; of <b>11.6% / $173,484</b>. The candidate screen had never
-  proposed that pair, because it capped a step at <b>160 sqft</b> and this one is +172. The cap was
-  standing in for &ldquo;do not pair across products&rdquo;, which is the product class&rsquo;s job,
-  not a number&rsquo;s. Dropped, the screen went from <b>85 candidate pairs to {LX_SCREEN}</b>.</p>
-  <p class="expl">The cap turned out to be the smaller half of it. Of the {LX_SAMEBAND} same&#8209;band
-  candidates, only 12 were in the library <i>at that point</i>: eight had been hidden by the cap,
-  and <b>29 were visible the whole time and had simply never been read</b>. A library assembled that way is not a
-  selection of the best evidence &mdash; it is whichever pairs happened to get a plan read.
-  <b>A screen threshold is a silent exclusion:</b> what is never proposed is never measured and
-  never missed.</p>
-  <p class="expl">The old 11.6% was the median of two pairs: Symphony Suites at $113,000, whose
-  step is 46% corridor, and Parc Esta at $233,967, which had <b>no exact pairs at all</b> and rode
-  the adjusted track. Across the {LX_WCN} independent WC readings there are now, <b>step size explains
-  {LX_WCR2}% of the variance</b> in the premium (r&nbsp;=&nbsp;{LX_WCR}). <b>The WC itself is
-  worth {LX_WCALONE}%</b>; the rest is the yard and the wet&#8209;service room.</p>
-  <p class="expl"><b>Two things this has not yet fixed, stated so they are not mistaken for
-  settled.</b> The <b>extra bathroom</b> has {LX_BATHN} readings: {LX_BATHBIG} at Riverfront and Parc Esta,
-  which carry {LX_BATHBIGP} of the {LX_BATHPP} passing pairs, and {LX_BATHSML} at High Park, the
-  cheapest base in the set;
-  the published {LX_BATHPUB} sits inside that range and is not overturned, but it should be quoted
-  per region rather than pooled. The <b>study</b> is the same conflation, unresolved: at Parc Esta
-  alone it is <b>{LX_STUDY2} on a two&#8209;bedroom</b> ({LX_STUDY2P} exact pairs, test
-  {LX_STUDY2T}) and <b>{LX_STUDY3} on a three&#8209;bedroom</b> ({LX_STUDY3P} pairs, test
-  {LX_STUDY3T}), while this page still pools them at {LX_STUDYP}%. One
-  passes and one fails badly, so it is not yet a finding &mdash; but the study figure should not be
-  leaned on until it is split by bedroom count.</p>
-  <div class="scroll">{LAYOUT_PAIRS}</div>
-  <p class="expl"><b>The WC is quoted by package, not as one number, and that is a correction.</b>
-  Until 2026-09-19 this page carried a single &ldquo;WC + utility + yard&rdquo; row at
-  <b>11.6% / $173,484</b>. It was the median of two pairs &mdash; Symphony Suites at $113,000, whose
-  step is 46% corridor, and Parc Esta at $233,967, which had <b>no exact pairs at all</b> and was
-  carried on the adjusted track. The error surfaced from one hand-priced pair at Affinity at
-  Serangoon, where 904 sqft and 1,076 sqft are the same three-bedroom plan apart from a yard, a
-  utility room and a WC, and the gap is about $465,000. The candidate screen had never proposed
-  that pair, because it capped a step at 160 sqft and this one is +172. With the cap dropped there
-  are twelve readings instead of two, and they do not describe one product: <b>a WC on its own is
-  worth 5.7%</b>, while a WC arriving with a yard and a wet-service room runs <b>18% to 24%</b>.
-  The WC is the cheap part. Each row below is therefore a package, not a tick-box, and the rows
-  drawn from a linked development are matched on <b>product class</b> rather than on strata area.</p>
-  </details>
-
-  <details><summary>What the candidate pairs turned out to be</summary>
-  <p class="expl">Forty pairs of strata-area clusters sat in the same bedroom band with enough
-  matched sales to be worth reading. Resolving each one to a <b>product class</b> off the plans
-  is what separates a feature from a price for square feet.</p>
-  <div class="scroll">{LAYOUT_TRI}</div>
-  <p class="expl"><b>{LX_AOWORD} of the {LX_TRIAGE} were never figures.</b> Same product class on
-  both sides &mdash; Affinity 850&nbsp;&rarr;&nbsp;904 is <code>3BR2B</code> either way and reads
-  {LX_AOAFF}; Symphony 893&nbsp;&rarr;&nbsp;915 is
-  <code>3BR2B+WC+U+Y</code> either way and reads {LX_AOSYM}. Those two bracket what area alone
-  buys, and they are exactly the rows a screen that matched on SIZE would have published as
-  feature premiums. This is ruling 5 doing its job, and it is the reason the class, not the
-  square foot, is the unit.</p>
-  </details>
-
-  <details><summary>Crossing a bedroom count</summary>
-  <p class="expl">Every class of one bedroom count against every class of the next, so each row
-  says <b>which</b> smaller flat it starts from. <b>No strata areas</b> &mdash; the class is the unit,
-  because that is what pools across developments. The class is <b>what the plan draws</b>:
-  bedrooms, bathrooms, and a WC (+WC), household shelter (+HS) or study (+S) where there is one
-  &mdash; 3BR2B+WC+HS is what Treasure sells as &ldquo;3 Bedroom Premium&rdquo;, 3BR2B its &ldquo;3 Bedroom&rdquo;. Developers&rsquo;
-  own tier names do not travel; some print none. The small line under each row is which
-  layouts went in.</p>
-  <div class="scroll">{LAYOUT_JUMPS}</div>
-  </details>
-
-  <details><summary>Every development, crossing a bedroom count</summary>
-  <p class="expl">Twenty developments, every one with a facing read, both tracks. This needs
-  <b>no floor plan</b>: a bedroom count is already solved per project from the unit-mix crawls,
-  so it runs today across everything. <b>A feature premium is not</b> &mdash; which layout has a
-  household shelter is in no transaction record, so that stays development-by-development through
-  the plans &mdash; Treasure and Parc Esta so far.</p>
-  <p class="expl"><b>These are bedroom COUNT to bedroom COUNT, not class to class</b>, and they
-  are a coarser question than the Treasure table above. Bathrooms, WC and study come off the
-  plans, which only Treasure and Parc Esta have had read. Pooling all 2BR against all 3BR also mixes a small 2BR
-  into a large 3BR, which is why Treasure reads $550,000 here and $406,000 as 2BR2B &rarr;
-  3BR2B.</p>
-  <p class="expl"><b>Quantum does not travel between developments.</b> Ruling 4 was measured
-  inside one project holding the feature package; across projects the 2BR &rarr; 3BR step runs
-  from $117,000 to $980,000. Percent is the steadier of the two (CV 33&ndash;37% against
-  40&ndash;48%) but a third is still not a national figure. <b>Read these per development.</b>
-  Nine of the thirty-five testable crossings fail the 10% test &mdash; there, only the exact
-  figure may be used.</p>
-  {LAYOUT_XDEV}
-  </details>
-
-  <details><summary>Parc Esta, read in full</summary>
-  <p class="expl">All 70 layouts from 2BR up read off the plan sheets. Same rule, same classes.
-  <b>No household shelter on any Parc Esta plan</b>, 2BR to 5BR, so +HS never appears here.
-  Top-floor units carry 66&ndash;215 sqft of <b>void</b> (air over the living room) in their strata
-  area, and ground-floor units a PES; neither is ever paired with its own standard unit.
-  Where exact pairs are thin the adjusted track carries the row.</p>
-  {LAYOUT_PARC}
-  <p class="expl"><b>Feature pairs, rooms measured.</b> 18 plans measured room by room. A pair
-  passes when the added feature rooms are at least <b>60%</b> of the extra square feet &mdash; lowered
-  from 80% on 2026-09-19, after Riversails&rsquo; study pairs (63&ndash;67%) were judged the same
-  product plus a study. Six Parc Esta pairs pass. The study pairs are adjusted-track only.</p>
-  {LAYOUT_PARCF}
-  </details>
-
-  <details><summary>Measured room areas</summary>
-  <p class="expl">Rooms read off the plan sheets as rectangles, then <b>self-calibrated</b>: each
-  layout's room sum is set equal to its published strata area, which fixes sqft-per-pixel without
-  needing the drawing scale. <b>About &plusmn;10% on a large room and worse on a small one</b>;
-  circulation is absorbed into the adjacent room, so the kitchen figures for C4 and C7 are
-  overstated. Good enough to say whether a room is materially bigger. Not good enough to quote.</p>
-  {LAYOUT_ROOMS}
-  </details>
-
   <details><summary>How a pair is built, and what is held constant</summary>
   <div class="cards" style="margin-top:6px">
     <div class="card"><h3>Held constant</h3><ul>
-      <li><b>same floor</b>, exactly &mdash; not a band, not a modelled step</li>
-      <li><b>same facing</b>, on the stack-study facingType</li>
-      <li><b>six months</b>, twelve at the outside</li>
-      <li><b>resale only</b> &mdash; the developer price list is not evidence of value</li></ul></div>
+      <li><b>same development</b>, same bedroom count</li>
+      <li><b>same floor</b> and <b>same facing</b></li>
+      <li>sold within <b>six months</b> of each other</li>
+      <li><b>resale only</b></li></ul></div>
     <div class="card"><h3>How a layout is identified</h3><ul>
-      <li>the <b>stack schedule printed on each plan sheet</b>, including mirror stacks</li>
-      <li>stack <b>and</b> floor range &mdash; a stack changes layout at the top floor</li>
-      <li>89.1% of the development's caveats link this way</li></ul></div>
+      <li>the <b>stack schedule</b> printed on each floor plan</li>
+      <li>stack <b>and</b> floor range &mdash; a stack can change layout up the tower</li></ul></div>
     <div class="card"><h3>Not controlled</h3><ul>
-      <li><b>renovation and condition</b> &mdash; not in REALIS</li>
-      <li>seller urgency, tenancy, mortgagee sales</li>
-      <li>room proportions the annotation does not measure &mdash; two layouts at the
-          same 678 sqft still differ by about $22,000</li></ul></div>
+      <li><b>renovation and condition</b></li>
+      <li>seller urgency, tenancy, mortgagee sales</li></ul></div>
   </div>
   </details>
 
@@ -3261,98 +3058,6 @@ at resale.</p>
 """
 
 
-# ============================================================ THE LAYOUT DISCLOSURES, GROUPED
-# The 2026-09-20 review: "13 undifferentiated disclosures. Weights run 722 to 7,981 characters
-# and 0 to 96 table rows behind identical 13px rows. Nothing signals which one answers a
-# question." 83% of the panel's text sat behind them, and a reader had no way to choose.
-#
-# Three named sets, each summary carrying the ANSWER and a WEIGHT CUE, so the row is a decision
-# rather than a door. Done as a post-pass over the assembled panel rather than by hand-editing a
-# 250-line f-string: the cues are then COUNTED from the real content and cannot drift when a
-# table gains rows.
-DISC_GROUPS = [
-    ("How a figure is made",
-     "",
-     ["How a pair is built", "Does the adjustment hold up", "Median or average",
-      "Percent, or dollars per square foot", "The floor ladder is not one rate"]),
-    ("What was measured",
-     "",
-     ["By region and bedroom count", "Two more figures, shown the long way", "Every reading behind every feature",
-      "What a single figure is pooling",
-      "Crossing a bedroom count", "Every development, crossing", "Parc Esta, read in full",
-      "Measured room areas"]),
-    ("What we got wrong, and fixed",
-     "",
-     ["How the pairs were chosen", "What the candidate pairs turned out to be",
-      "Does an entrance foyer price"]),
-]
-DISC_ANSWERS = {
-    "By region and bedroom count": "Every feature split by region and bedrooms.",
-    "How a pair is built": "Same floor, same facing, both sales inside six months, same sale type.",
-    "Does the adjustment hold up": "{} of {} contrasts agree within 10%.".format(*LAYOUT.agreement_counts()),
-    "Median or average": "The trimmed average, because the median lost the study's own test.",
-    "The floor ladder is not one rate": "The first four floors cost about 1.87x the rate above L5.",
-    "Percent, or dollars per square foot": "Percent. Tested by holding a development out and predicting it.",
-    "Two more figures, shown the long way": "The WC package and a whole extra bedroom, sale by sale.",
-    "Every reading behind every feature": "Each measured contrast on its own, with the gate it passed.",
-    "What a single figure is pooling": "A published figure opens into its layout pairs and their area steps.",
-    "Crossing a bedroom count": "What a whole extra bedroom is worth, development by development.",
-    "Every development, crossing": "The same crossing everywhere it could be measured.",
-    "Parc Esta, read in full": "One development end to end, as a worked check on the others.",
-    "Measured room areas": "Rooms measured off the plan sheets, and how accurate that is.",
-    "How the pairs were chosen": "A screen threshold hid real pairs. What it cost and how it was found.",
-    "What the candidate pairs turned out to be": "Every candidate and why it did or did not become a figure.",
-    "Does an entrance foyer price": "Yes, and below ordinary area - it behaves like circulation.",
-}
-
-
-def regroup_layout_disclosures(body):
-    """Split the Layout panel's flat disclosure list into three labelled sets."""
-    import re as _re
-    key = '<h2 class="disp">Behind it</h2>'
-    i = body.rfind(key)
-    if i < 0: return body
-    sec_start = body.rfind('<section>', 0, i)
-    sec_end = body.find('</section>', i)
-    if sec_start < 0 or sec_end < 0: return body
-    sec = body[sec_start:sec_end]
-    blocks = _re.findall(r'<details>\s*<summary>(.*?)</summary>(.*?)</details>', sec, _re.S)
-    if len(blocks) < 8: return body                      # not the panel we expect; leave alone
-
-    def cue(inner):
-        rows = inner.count('<tr')
-        tabs = inner.count('<table')
-        if rows: return f"{rows:,} rows" + (f" &middot; {tabs} tables" if tabs > 1 else "")
-        return "a note"
-
-    used, out = set(), []
-    for title, blurb, keys in DISC_GROUPS:
-        items = []
-        for k in keys:
-            for n, (summ, inner) in enumerate(blocks):
-                if n in used or k.lower() not in summ.lower(): continue
-                used.add(n)
-                ans = next((v for kk, v in DISC_ANSWERS.items() if kk.lower() in summ.lower()), '')
-                did = 'd-' + _re.sub(r'[^a-z0-9]+', '-',
-                                     _re.sub('<[^>]+>', '', summ).lower()).strip('-')[:40]
-                items.append(
-                    f'<details id="{did}"><summary><span class="dq">{summ}</span>'
-                    f'<span class="da">{ans}</span>'
-                    f'<span class="dw">{cue(inner)}</span></summary>{inner}</details>')
-                break
-        if items:
-            out.append(f'<div class="dgrp"><h3>{title}</h3>' + (f'<p>{blurb}</p>' if blurb else '')
-                       + f'{"".join(items)}</div>')
-    # anything unmatched keeps its place rather than vanishing
-    for n, (summ, inner) in enumerate(blocks):
-        if n in used: continue
-        out.append(f'<details><summary><span class="dq">{summ}</span>'
-                   f'<span class="dw">{cue(inner)}</span></summary>{inner}</details>')
-    head = sec[:sec.find('<details>')]
-    return body[:sec_start] + head + ''.join(out) + body[sec_end:]
-
-
-BODY = regroup_layout_disclosures(BODY)
 
 HTML = f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8">

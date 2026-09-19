@@ -236,71 +236,33 @@ def parc_features_table():
             '<th class="num">gate</th></tr></thead><tbody>' + ''.join(rows) + '</tbody></table></div>')
 
 def feature_summary_table():
-    """Shawn, 2026-09-19: *"dont kill the pairs, but i want aggregation of 'just bathroom that fits
-    the gate', bathroom that does not fit the gates and hence its xxx sqft extra for bathroom +
-    others."*
-
-    So every feature gets TWO rows, not one. The first is the feature on its own -- the pairs where
-    the added rooms are most of the area step. The second is the same feature where the step brought
-    other space with it, and it is named by the SIZE of that step, never by a list of the rooms."""
-    if not FSUM: return '<p class="expl">no feature summary built.</p>'
-    NAMES = {'study': 'Study', 'extra bathroom': 'Extra bathroom', 'WC + utility (+ yard)': 'WC + utility + yard',
-             'shelter + yard + WC + enclosed kitchen': 'Shelter + yard + WC + enclosed kitchen',
-             'study -> bedroom': 'Study &rarr; bedroom', 'one more bedroom (same package)': 'One more bedroom, same package'}
-    # Only the DIMENSIONLESS measures can win "steadiest" -- a quantum or a raw $/sqft carries
-    # the price level of the development it came from, so its spread across developments
-    # describes the sample, not the feature (Shawn, 2026-09-20). Both are still shown.
-    MEAS = {'quantum': 'quantum', 'psf': '$/sqft', 'pct': '% of price',
-            'ratio': 'multiple of the project&rsquo;s own psf'}
-    SHORT = {'quantum': 'qtm', 'psf': 'psf', 'pct': '%', 'ratio': 'x psf'}
-    def k(x): return f"${x/1000:.0f}k" if x >= 10000 else f"${round(x):,}"
-    def rng(v, f, g=None):
-        # A class-linked row has no step in sqft, so it has no $/sqft either -- that is a real
-        # absence, not a missing value, and it shows as a dash rather than breaking the table.
-        if not v: return '<span class="lthin">&mdash;</span>'
-        g = g or f
-        return f(v[1]) + (f'<span class="lsub">{g(v[0])}&ndash;{g(v[2])}</span>' if v[0] != v[2]
-                          else '<span class="lsub">one development</span>')
+    """The measurement, in the house table every other panel uses (MRT, lease): one row per
+    feature, the figure big, everything else quiet. Shawn, 2026-09-20: "the summary of the data,
+    similar to how we have it for lease difference, mrt distance"."""
+    if not FSUM: return ''
+    F = {o['feature']: o.get('feature_alone') for o in FSUM}
     def split(g, suf):
-        if not g: return '&mdash;'
-        return ''.join(f'<span class="lsplit">{kk}{suf} <b>{v["median"]:.1f}%</b> '
-                       f'<span class="lthin">({v.get("txns", v["n"]):,} tx)</span></span>'
-                       for kk, v in g.items())
-    rows = []
-    for o in FSUM:
-        name = dict(HERO).get(o["feature"]) or NAMES.get(o["feature"], o["feature"])
-        for which, b in (('alone', o.get('feature_alone')), ('area', o.get('feature_plus_area'))):
-            if not b: continue
-            c = {k: v for k, v in (b['cv'] or {}).items() if v is not None}
-            contest = b.get('contest') or ['pct', 'ratio']
-            run = {k: v for k, v in c.items() if k in contest}
-            if b['steadiest'] is None or not run:
-                st = ('<span class="lthin">one development</span>' if (b.get('developments_n') or 0) < 2
-                      else '<span class="lthin">only one measure available</span>')
-            elif max(run.values()) - min(run.values()) <= 2: st = 'no difference'
-            else: st = f'<b>{MEAS[b["steadiest"]]}</b>'
-            spread = ' &middot; '.join(
-                f'{SHORT[kk]} {c[kk]}' + ('' if kk in contest else '<span class="lthin">*</span>')
-                for kk in ('pct', 'ratio', 'psf', 'quantum') if c.get(kk) is not None)
-            devs = ', '.join(DEVNAME.get(d, d.replace('-', ' ').title()) for d in b['developments'])
-            nd = len(b['developments'])
-            rows.append(
-                f'<tr class="lmain lb-alone"><td class="lpair fsum">{name}'
-                f'<span class="lsub lsub2">{b.get("transactions", 0):,} transactions &middot; '
-                f'{nd} development{"s" if nd != 1 else ""}: {devs}</span></td>'
-                f'<td class="num lbig">{rng(b["pct"], lambda x: f"{x:.1f}%")}</td>'
-                f'<td class="num">{split(b.get("by_region", {}), "")}</td>'
-                f'<td class="num">{split(b.get("by_beds", {}), "BR")}</td>'
-                f'<td class="num">{rng(b["psf"], lambda x: "$" + format(round(x), ","))}</td>'
-                f'<td class="num">{rng(b.get("ratio"), lambda x: f"{x:.2f}&times;")}</td>'
-                f'<td class="num">{rng(b["quantum"], lambda x: "$" + format(round(x), ","), k)}</td>'
-                '</tr>')
-    return ('<div class="scroll"><table class="lt"><thead><tr><th>feature</th><th class="num">% of price</th>'
-            '<th class="num">by region</th><th class="num">by bedrooms</th>'
-            '<th class="num">$ per sqft of the step</th>'
-            '<th class="num">against the project&rsquo;s own psf</th>'
-            '<th class="num">quantum</th>'
-            '</tr></thead><tbody>' + ''.join(rows) + '</tbody></table></div>')
+        return '<br>'.join(f'{k}{suf} {v["median"]:.1f}%' for k, v in (g or {}).items()) or '&mdash;'
+    r = ['<div class="scroll"><table class="fig look"><thead><tr><th>Feature</th>'
+         '<th class="num">measured</th><th class="num">typical $</th>'
+         '<th class="num">could really be</th><th class="num">by region</th>'
+         '<th class="num">by bedrooms</th><th class="num">developments</th>'
+         '<th class="num">transactions</th></tr></thead><tbody>']
+    for key, name in HERO:
+        b = F.get(key)
+        if not b: continue
+        p = b['pct']
+        rng = f'{p[0]:.1f}% to {p[2]:.1f}%' if p[0] != p[2] else 'one development'
+        r.append(f'<tr><th>{name}</th>'
+                 f'<td class="num big">+{p[1]:.1f}%</td>'
+                 f'<td class="num">{_money(b["quantum"][1])}</td>'
+                 f'<td class="num quiet">{rng}</td>'
+                 f'<td class="num quiet">{split(b.get("by_region"), "")}</td>'
+                 f'<td class="num quiet">{split(b.get("by_beds"), "BR")}</td>'
+                 f'<td class="num quiet">{len(b["developments"])}</td>'
+                 f'<td class="num quiet">{b.get("transactions", 0):,}</td></tr>')
+    r.append('</tbody></table></div>')
+    return ''.join(r)
 
 DEVNAME = {'parc-esta': 'Parc Esta', 'riverfront-residences': 'Riverfront', 'treasure-at-tampines': 'Treasure',
            'a-treasure-trove': 'A Treasure Trove', 'affinity-at-serangoon': 'Affinity', 'symphony-suites': 'Symphony',

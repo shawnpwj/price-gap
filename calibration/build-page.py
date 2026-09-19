@@ -846,6 +846,57 @@ tr.qd>td{padding:0;background:var(--navy-900)}
 table.qt{border-collapse:collapse;font-size:12.5px}
 table.qt th,table.qt td{padding:5px 14px 5px 0;text-align:left;border-bottom:1px solid rgba(36,48,80,.45)}
 table.qt thead th{color:var(--slate-600);font-weight:400;white-space:nowrap}
+/* WORKED EXAMPLES. Shawn, 2026-09-19: he needs to audit the method by hand, and a client needs
+   to see the figure is the gap between two real sales. Same block serves both, so it shows the
+   caveats first and the arithmetic second, never a summary. */
+.wexs{display:grid;gap:18px;margin-top:18px}
+.wex{border:1px solid var(--ink);border-radius:11px;background:var(--navy-850);padding:20px 22px}
+.whead{display:flex;gap:28px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
+.whead h3{font-size:19px;color:var(--slate-100);font-weight:600;letter-spacing:-.005em}
+.wsub{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--slate-500);margin-top:6px}
+.wfig{font:600 30px/1 Optima,Candara,sans-serif;color:var(--gold);white-space:nowrap;text-align:right}
+.wfig span{display:block;font:400 11px/1.3 -apple-system,Segoe UI,sans-serif;letter-spacing:.05em;
+text-transform:uppercase;color:var(--slate-500);margin-top:7px;text-align:right}
+table.wt{width:100%;border-collapse:collapse;font-size:13px;margin-top:20px}
+table.wt th{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--slate-600);
+font-weight:400;text-align:left;padding-bottom:9px;border-bottom:1px solid var(--ink)}
+table.wt th.num,table.wt td.num{text-align:right;font-variant-numeric:tabular-nums}
+table.wt td{padding:10px 14px 10px 0;vertical-align:top;color:var(--slate-300)}
+table.wt td:last-child{padding-right:0}
+table.wt tbody tr+tr td{border-top:1px solid rgba(36,48,80,.55)}
+td.wc{white-space:nowrap;color:var(--slate-200)}
+td.warr{color:var(--slate-600);padding:10px 14px}
+td.wdiff{color:var(--gold-soft);font-weight:600}
+.wnote{font-size:12.5px;color:var(--slate-400);margin-top:13px;max-width:78ch}
+.wnote b{color:var(--slate-100);font-weight:600}
+.wadj{margin-top:18px;padding-top:16px;border-top:1px solid var(--ink)}
+.wadj p{font-size:12.5px;color:var(--slate-400);max-width:80ch}
+.wadj .wcav{margin-top:10px;color:var(--slate-300);font-variant-numeric:tabular-nums}
+.wadj .wcav b{color:var(--slate-100)}
+.wadj ol{margin:11px 0 0;padding-left:0;list-style:none;display:grid;gap:7px}
+.wadj li{font-size:12.5px;color:var(--slate-300);font-variant-numeric:tabular-nums;
+padding-left:14px;border-left:1px solid var(--ink)}
+.wadj li b{color:var(--slate-100)}
+.wk{display:inline-block;min-width:52px;font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+color:var(--slate-600)}
+.wres{margin-top:11px;color:var(--slate-200)}
+.wres b{color:var(--gold-soft)}
+.wfoot{display:flex;gap:26px;flex-wrap:wrap;margin-top:18px;padding-top:14px;
+border-top:1px solid var(--ink);font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;
+color:var(--slate-500)}
+.wfoot b{color:var(--slate-200);font-weight:600;font-variant-numeric:tabular-nums}
+@media (max-width:720px){
+  .whead{flex-direction:column;gap:14px}
+  .wfig,.wfig span{text-align:left}
+  table.wt thead{display:none}
+  table.wt td.warr{display:none}
+  table.wt,table.wt tbody,table.wt tr,table.wt td{display:block;width:100%}
+  table.wt td{padding:2px 0}
+  table.wt tbody tr{padding:12px 0;border-top:1px solid rgba(36,48,80,.55)}
+  table.wt tbody tr+tr td{border-top:0}
+  table.wt td.num{text-align:left}
+  td.wdiff{margin-top:6px;font-size:15px}
+}
 .spread{width:100%;height:auto;display:block;margin:12px 0 4px;
 border:1px solid var(--ink);border-radius:11px;background:var(--navy-900);padding:4px}
 /* tables */
@@ -2319,6 +2370,9 @@ LAYOUT_ROOMS = LAYOUT.rooms_table()
 LAYOUT_FSUM  = LAYOUT.feature_summary_table()
 LAYOUT_LIB   = LAYOUT.library_table()
 LAYOUT_TRI   = LAYOUT.triage_table()
+LAYOUT_WEX   = LAYOUT.worked_examples()
+LAYOUT_HERO  = LAYOUT.hero_block()
+LAYOUT_AGREE = LAYOUT.agreement_table()
 # EVERY figure the layout prose quotes, computed -- see LAYOUT.facts() for why the few historical
 # ones (the withdrawn 11.6% and its two component pairs, the 160 sqft cap) stay as literals.
 LXF = LAYOUT.facts()
@@ -2879,58 +2933,42 @@ at resale.</p>
 
 <div class="panel" data-p="layout" hidden>
 <h1 class="disp">What the resale market pays for a layout</h1>
-<p class="lede">Six developments with plans measured room by room &mdash; Treasure at Tampines,
-Parc Esta, High Park Residences, Riversails, Symphony Suites and Sims Urban Oasis &mdash; plus A
-Treasure Trove for the study &rarr; bedroom step. <b>Resale and sub-sale</b>, within <b>six months</b>,
-and never one paired against the other &mdash; a sub-sale is an uncompleted unit and a resale a completed
-one. A pair counts when the features that differ make up at least <b>60%</b> of the extra square feet
-<b>and no more than 40% of the step went into corridor</b>. <b>OCR and RCR only &mdash; no CCR
-development has been read yet.</b></p>
+<p class="lede">Two units in the same development, the same size band and the same bedroom count,
+where one has a room the other does not. What the second one sold for, minus the first.</p>
+
+{LAYOUT_HERO}
 
 <section>
   <div class="sechead"><h2 class="disp">What each feature is worth</h2></div>
-  <p class="expl">Every feature in all three measures: <b>% of the unit&rsquo;s price</b>, <b>$ per
-  square foot of the whole unit</b>, and <b>quantum</b>. Large figure is the median; the small line
-  is the range. <b>Every feature can appear twice.</b> The first row is <b>the feature on its own</b>
-  &mdash; pairs where the added rooms are most of the extra square feet and the corridor is not.
-  The second, marked in gold with the size of the step, is <b>the same feature where the step
-  brought other space with it</b>: at JadeScape an extra bathroom arrives with +118 sqft of which
-  the bathroom is 47, the kitchen 32 and the corridor 52. Both are real prices; they answer
-  different questions, and neither is adjusted into the other. <b>Transactions assessed</b> is the
-  evidence: the count of <b>distinct resale caveats</b> that went into the feature, across both tracks &mdash; exact (same floor, same facing)
-  and adjusted. It is a count of sales, not of comparisons: each sale is matched against every
-  qualifying sale on the other side, which is why the <b>sale pairs</b> underneath run far higher,
-  and why the two track counts overlap rather than add. <b>Layout pairs</b> are the named plan
-  pairs the sales are grouped under (High Park 2D1 &rarr; 2S1 is one). The figure is the exact median
-  where its track has 5+ sale pairs, otherwise the adjusted one. <b>By region</b> and <b>by
-  bedrooms</b> split the % of price, with the transactions behind each split in brackets.
-  <b>Steadiest</b> is the measure that varies least across the layout pairs (coefficient of
-  variation), with all three spreads underneath.</p>
+  <p class="expl">The median across every development where the feature could be isolated, with
+  the range beneath it. <b>Quantum is the figure to use</b>; the percentage is there because it
+  travels between price points better than dollars do. A feature is named for the room that
+  drives it &mdash; a yard joins the name because the yard is what moves the figure, while a
+  shelter, a store or a utility room is ancillary and is named on the individual reading instead.</p>
   {LAYOUT_FSUM}
-  <p class="expl"><b>The pattern so far.</b> Across developments, <b>% of price</b> varies least
-  &mdash; study (43% against 56&ndash;62%) and study &rarr; bedroom (25% against 36&ndash;42%). It
-  carries each development&rsquo;s price level with it: Parc Esta sells at about $2,300 psf and its
-  3BR study reads $141&ndash;241 per unit sqft, against about $100 at the $1,100&ndash;1,300 psf
-  developments, yet 6.0&ndash;10.6% of price like the rest. <b>Within one development, quantum</b>
-  varies least (Treasure&rsquo;s service package, five layout pairs: 14% against 17&ndash;18%). The extra
-  bathroom does not separate them (26&ndash;27% each). <b>Working answer: quote a feature as % of price</b>
-  &mdash; a study about 9%.</p>
-  <p class="expl"><b>The two rows are the answer to &ldquo;why does a bathroom out-earn a study?&rdquo;</b>
-  An extra bathroom on its own is <b>14.0% of price</b>; the same bathroom arriving with a bigger
-  step is <b>15.5%</b>. The gap is the space, and it is shown rather than removed &mdash; nothing here
-  is adjusted for area. Read the <b>step size</b> on the second row before comparing it with
-  anything: a feature that arrives with +118 sqft is not the same purchase as one that arrives
-  with +32.</p>
-  <p class="expl"><b>Two cautions.</b> Parc Esta&rsquo;s 2BR study (BP5 &rarr; BD3) reads 20%: a third
-  of its extra space is kitchen and living, which the price also pays for. Without it the study is
-  5.8&ndash;10.6%. And <b>at the same floor area Treasure&rsquo;s study nook is worth nothing</b>
-  (B5P &rarr; B7S $0, B6P &rarr; B7S &minus;$10,000, on 3&ndash;5 sale pairs): part of a study premium may be
-  the extra space that holds it. A same-size study pair with a proper enclosed study would settle it.
-  Parc Esta figures are adjusted-track only.</p>
+  <p class="expl">These are <b>central tendencies with real spread</b>, not price tags. A bedroom
+  crossing is tight &mdash; the middle half of Treasure&rsquo;s 3-to-4 bedroom pairs sits inside
+  &plusmn;9% of its median. A single feature is looser: the middle half of Riverfront&rsquo;s
+  bathroom pairs spans $105,000 to $211,000 around a median of $172,000. The feature is real and
+  it is priced; the precision is not to the dollar.</p>
 </section>
 
 <section>
-  <div class="sechead"><h2 class="disp">Does adjusting work? The test says mostly yes</h2></div>
+  <div class="sechead"><h2 class="disp">How we did it</h2></div>
+  <p class="expl">Three of the figures above, shown the long way. Every row is a real caveat: the
+  unit, the floor, the date and the price. <b>Where two units match on floor and facing, nothing
+  is adjusted at all</b> &mdash; the difference between the two sale prices is the figure, and the
+  published number is the median of every such pair. Where they do not match, the base sale is
+  moved to the other unit&rsquo;s floor and facing first, using rates measured on
+  <i>different</i> pairs; that second track exists to check the first, and the two agree.</p>
+  {LAYOUT_WEX}
+</section>
+
+<section>
+  <div class="sechead"><h2 class="disp">Behind it</h2>
+  <p>Everything the figures rest on. Nothing here is needed to read them.</p></div>
+
+  <details><summary>Does the adjustment hold up? Every contrast, both tracks</summary>
   <p class="expl">Adjusting is not modelling, and the difference is why the first version of this
   study was withdrawn: that one fitted a residual to the same pairs it was measuring. Here both
   adjusters are measured <b>somewhere else, on other pairs</b> &mdash; the floor step from
@@ -2947,10 +2985,10 @@ development has been read yet.</b></p>
   11&ndash;35%; refusing to extrapolate them cut that to 3&ndash;8%. <b>A facing move is now
   refused for any bedroom class the facing premium was not measured on.</b> The floor step is
   measured on every stack, so it carries everywhere.</p>
-</section>
+    <div class="scroll">{LAYOUT_AGREE}</div>
+  </details>
 
-<section>
-  <div class="sechead"><h2 class="disp">What a feature is worth</h2></div>
+  <details><summary>Every reading behind every feature</summary>
   <p class="expl">Every pair here has <b>passed the gate</b>: the differing features are absent on
   one side and present on the other, at least <b>60% of the area step is the added rooms</b>, measured
   off the plans, and <b>no more than 40% of the step went into corridor</b> &mdash; the circulation
@@ -2988,25 +3026,9 @@ development has been read yet.</b></p>
   The <b>two-track test</b> is the adjusted track against the exact one: inside
   <span class="lok">&plusmn;5%</span> is agreement, <span class="lwarn">&plusmn;10%</span> is
   tolerable, <span class="lbad">beyond</span> fails and the reading is recorded, not quoted.</p>
-</section>
+  </details>
 
-<section>
-  <div class="sechead"><h2 class="disp">What the candidate pairs turned out to be</h2></div>
-  <p class="expl">Forty pairs of strata-area clusters sat in the same bedroom band with enough
-  matched sales to be worth reading. Resolving each one to a <b>product class</b> off the plans
-  is what separates a feature from a price for square feet.</p>
-  {LAYOUT_TRI}
-  <p class="expl"><b>{LX_AOWORD} of the {LX_TRIAGE} were never figures.</b> Same product class on
-  both sides &mdash; Affinity 850&nbsp;&rarr;&nbsp;904 is <code>3BR2B</code> either way and reads
-  {LX_AOAFF}; Symphony 893&nbsp;&rarr;&nbsp;915 is
-  <code>3BR2B+WC+U+Y</code> either way and reads {LX_AOSYM}. Those two bracket what area alone
-  buys, and they are exactly the rows a screen that matched on SIZE would have published as
-  feature premiums. This is ruling 5 doing its job, and it is the reason the class, not the
-  square foot, is the unit.</p>
-</section>
-
-<section>
-  <div class="sechead"><h2 class="disp">How the pairs were chosen, and what that missed</h2></div>
+  <details><summary>How the pairs were chosen, and what that missed</summary>
   <p class="expl"><b>Shawn found an error in this page by hand&#8209;pricing one pair.</b> At
   Affinity at Serangoon, 904 sqft and 1,076 sqft are the same three&#8209;bedroom plan apart from a
   yard, a utility room and a WC, and the gap is about <b>$465,000</b> &mdash; against a published
@@ -3049,10 +3071,23 @@ development has been read yet.</b></p>
   worth 5.7%</b>, while a WC arriving with a yard and a wet-service room runs <b>18% to 24%</b>.
   The WC is the cheap part. Each row below is therefore a package, not a tick-box, and the rows
   drawn from a linked development are matched on <b>product class</b> rather than on strata area.</p>
-</section>
+  </details>
 
-<section>
-  <div class="sechead"><h2 class="disp">Crossing a bedroom count</h2></div>
+  <details><summary>What the candidate pairs turned out to be</summary>
+  <p class="expl">Forty pairs of strata-area clusters sat in the same bedroom band with enough
+  matched sales to be worth reading. Resolving each one to a <b>product class</b> off the plans
+  is what separates a feature from a price for square feet.</p>
+  {LAYOUT_TRI}
+  <p class="expl"><b>{LX_AOWORD} of the {LX_TRIAGE} were never figures.</b> Same product class on
+  both sides &mdash; Affinity 850&nbsp;&rarr;&nbsp;904 is <code>3BR2B</code> either way and reads
+  {LX_AOAFF}; Symphony 893&nbsp;&rarr;&nbsp;915 is
+  <code>3BR2B+WC+U+Y</code> either way and reads {LX_AOSYM}. Those two bracket what area alone
+  buys, and they are exactly the rows a screen that matched on SIZE would have published as
+  feature premiums. This is ruling 5 doing its job, and it is the reason the class, not the
+  square foot, is the unit.</p>
+  </details>
+
+  <details><summary>Crossing a bedroom count</summary>
   <p class="expl">Every class of one bedroom count against every class of the next, so each row
   says <b>which</b> smaller flat it starts from. <b>No strata areas</b> &mdash; the class is the unit,
   because that is what pools across developments. The class is <b>what the plan draws</b>:
@@ -3061,25 +3096,9 @@ development has been read yet.</b></p>
   own tier names do not travel; some print none. The small line under each row is which
   layouts went in.</p>
   <div class="scroll">{LAYOUT_JUMPS}</div>
-</section>
+  </details>
 
-<section>
-  <div class="sechead"><h2 class="disp">Parc Esta &mdash; the second development read</h2></div>
-  <p class="expl">All 70 layouts from 2BR up read off the plan sheets. Same rule, same classes.
-  <b>No household shelter on any Parc Esta plan</b>, 2BR to 5BR, so +HS never appears here.
-  Top-floor units carry 66&ndash;215 sqft of <b>void</b> (air over the living room) in their strata
-  area, and ground-floor units a PES; neither is ever paired with its own standard unit.
-  Where exact pairs are thin the adjusted track carries the row.</p>
-  {LAYOUT_PARC}
-  <p class="expl"><b>Feature pairs, rooms measured.</b> 18 plans measured room by room. A pair
-  passes when the added feature rooms are at least <b>60%</b> of the extra square feet &mdash; lowered
-  from 80% on 2026-09-19, after Shawn judged Riversails&rsquo; study pairs (63&ndash;67%) to be the same
-  product plus a study. Six Parc Esta pairs pass. The study pairs are adjusted-track only.</p>
-  {LAYOUT_PARCF}
-</section>
-
-<section>
-  <div class="sechead"><h2 class="disp">Every development &mdash; crossing a bedroom count</h2></div>
+  <details><summary>Every development, crossing a bedroom count</summary>
   <p class="expl">Twenty developments, every one with a facing read, both tracks. This needs
   <b>no floor plan</b>: a bedroom count is already solved per project from the unit-mix crawls,
   so it runs today across everything. <b>A feature premium is not</b> &mdash; which layout has a
@@ -3097,20 +3116,32 @@ development has been read yet.</b></p>
   Nine of the thirty-five testable crossings fail the 10% test &mdash; there, only the exact
   figure may be used.</p>
   {LAYOUT_XDEV}
-</section>
+  </details>
 
-<section>
-  <div class="sechead"><h2 class="disp">Measured room areas</h2></div>
+  <details><summary>Parc Esta, read in full</summary>
+  <p class="expl">All 70 layouts from 2BR up read off the plan sheets. Same rule, same classes.
+  <b>No household shelter on any Parc Esta plan</b>, 2BR to 5BR, so +HS never appears here.
+  Top-floor units carry 66&ndash;215 sqft of <b>void</b> (air over the living room) in their strata
+  area, and ground-floor units a PES; neither is ever paired with its own standard unit.
+  Where exact pairs are thin the adjusted track carries the row.</p>
+  {LAYOUT_PARC}
+  <p class="expl"><b>Feature pairs, rooms measured.</b> 18 plans measured room by room. A pair
+  passes when the added feature rooms are at least <b>60%</b> of the extra square feet &mdash; lowered
+  from 80% on 2026-09-19, after Shawn judged Riversails&rsquo; study pairs (63&ndash;67%) to be the same
+  product plus a study. Six Parc Esta pairs pass. The study pairs are adjusted-track only.</p>
+  {LAYOUT_PARCF}
+  </details>
+
+  <details><summary>Measured room areas</summary>
   <p class="expl">Rooms read off the plan sheets as rectangles, then <b>self-calibrated</b>: each
   layout's room sum is set equal to its published strata area, which fixes sqft-per-pixel without
   needing the drawing scale. <b>About &plusmn;10% on a large room and worse on a small one</b>;
   circulation is absorbed into the adjacent room, so the kitchen figures for C4 and C7 are
   overstated. Good enough to say whether a room is materially bigger. Not good enough to quote.</p>
   {LAYOUT_ROOMS}
-</section>
+  </details>
 
-<section>
-  <div class="sechead"><h2 class="disp">Behind it</h2></div>
+  <details><summary>How a pair is built, and what is held constant</summary>
   <div class="cards" style="margin-top:6px">
     <div class="card"><h3>Held constant</h3><ul>
       <li><b>same floor</b>, exactly &mdash; not a band, not a modelled step</li>
@@ -3127,6 +3158,8 @@ development has been read yet.</b></p>
       <li>room proportions the annotation does not measure &mdash; two layouts at the
           same 678 sqft still differ by about $22,000</li></ul></div>
   </div>
+  </details>
+
 </section>
 </div>
 

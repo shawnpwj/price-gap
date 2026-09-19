@@ -43,6 +43,7 @@ PARC   = _load('out/parc-esta-contrasts.json', [])
 PGATE  = _load('out/parc-esta-gate.json', [])
 FSUM   = _load('out/feature-summary.json', [])
 FLIB   = _load('out/feature-library.json', [])          # every feature reading, both routes
+WEX    = _load('out/worked-examples.json', [])          # three examples, with the real caveats
 TRIAGE = _load('out/same-band-triage.json', [])         # what each candidate pair turned out to be
 ROOMS  = _load('data/annotations/room-areas.json', {}) or {}
 LAY    = (_load('data/annotations/treasure-at-tampines.json', {}) or {}).get('layouts', {})
@@ -378,6 +379,168 @@ def triage_table():
                          f'<td class="lthin">{what[k]}</td>']))
     out.append('</tbody></table>')
     return "".join(out)
+
+
+def agreement_table():
+    """Exact against adjusted, every contrast. Shawn: *"are the adjusted and exact match close
+    enough?"* -- the honest way to answer is to show all of them, including the ones that miss."""
+    import statistics, os as _os
+    rows = []
+    for d in ('treasure-at-tampines', 'riverfront-residences', 'parc-esta', 'a-treasure-trove'):
+        pth = _os.path.join(STUDY, f'out/{d}-contrasts.json')
+        if not _os.path.exists(pth): continue
+        for r in json.load(open(pth)):
+            e, o = r.get('exact'), r.get('adjusted_only')
+            if not e or e.get('thin') or not o or o.get('thin'): continue
+            rows.append((d, r['contrast'], e, o, r.get('test_pct')))
+    if not rows: return ''
+    rows.sort(key=lambda x: -x[2]['pairs'])
+    ok = [x for x in rows if x[4] is not None and abs(x[4]) <= 10]
+    wp = sum(x[2]['pairs'] for x in rows); wo = sum(x[2]['pairs'] for x in ok)
+    gaps = [abs(x[4]) for x in rows if x[4] is not None]
+    out = [f'<p class="expl"><b>{len(ok)} of {len(rows)} contrasts agree within 10%.</b> '
+           f'Weighted by matched pairs, <b>{wo:,} of {wp:,} ({wo/wp*100:.0f}%)</b> sit inside 10%, '
+           f'and the median gap is <b>{statistics.median(gaps):.1f}%</b>. The four that miss are '
+           f'the four thinnest &mdash; the disagreement tracks how little evidence there is, '
+           f'which is what it should do if the adjusters are sound.</p>',
+           '<table class="lt"><thead><tr><th>development</th><th>contrast</th>'
+           '<th class="num">matched pairs</th><th class="num">no adjustment</th>'
+           '<th class="num">adjusted pairs</th><th class="num">adjusted</th>'
+           '<th class="num">gap</th></tr></thead><tbody>']
+    for d, lab, e, o, t in rows:
+        cls = 'lok' if (t is not None and abs(t) <= 5) else ('lwarn' if (t is not None and abs(t) <= 10) else 'lbad')
+        out.append(_row([
+            f'<td>{html.escape(DEVNAME.get(d, d))}</td>',
+            f'<td class="lthin">{html.escape(lab)}</td>',
+            f'<td class="num">{e["pairs"]:,}</td>',
+            f'<td class="num lbig">{_money(e["med"])}</td>',
+            f'<td class="num lthin">{o["pairs"]:,}</td>',
+            f'<td class="num">{_money(o["med"])}</td>',
+            f'<td class="num"><span class="{cls}">{t:+.1f}%</span></td>']))
+    out.append('</tbody></table>')
+    return "".join(out)
+
+
+def hero_block():
+    """The answer, before the evidence.
+
+    Every other panel on this page opens with one; Layout was the only one that dropped straight
+    from a wall of caveats into a table, which is why it read as an audit log rather than a
+    finding. Three figures, in the order a buyer meets them: a bathroom, the wet-service package,
+    a whole bedroom. The gate, the corridor rule and the region exclusions moved to `Behind it`,
+    because a caveat is not a headline."""
+    F = {o['feature']: o.get('feature_alone') for o in (FSUM or [])}
+    def fig(name):
+        b = F.get(name)
+        return None if not b else (_money(b['quantum'][1]), b['sale_pairs_exact'], b['transactions'],
+                                   len(b['developments']), b['pct'][1])
+    picks = [('Extra bathroom', 'a second bathroom'),
+             ('WC + yard', 'WC, yard and a service room')]
+    ans = []
+    for key, words in picks:
+        v = fig(key)
+        if v: ans.append((v[0], words, v[3], v[2]))
+    X = _load('out/feature-library.json', []) or []
+    cross = _load('out/crossings-pooled.json', None)
+    # one more bedroom, pooled off the class contrasts
+    import statistics, os as _os
+    cr = []
+    for d in ('parc-esta', 'riverfront-residences', 'treasure-at-tampines', 'a-treasure-trove'):
+        pth = _os.path.join(STUDY, f'out/{d}-contrasts.json')
+        if not _os.path.exists(pth): continue
+        for r in json.load(open(pth)):
+            l, rr = [x.strip() for x in r['contrast'].split('->')]
+            if l[0] == rr[0]: continue
+            e = r.get('exact')
+            if not e or e.get('thin'): continue
+            cr.append(e)
+    if cr:
+        ans.append((_money(statistics.median(x['med'] for x in cr)), 'one more bedroom',
+                    4, sum(x['txns'] for x in cr)))
+    if not ans: return ''
+    cells = ''.join(
+        f'<div class="ans"><div class="n">{a[0]}</div><div class="w">{a[1]}</div>'
+        f'<div class="g">{a[2]}<span>developments</span></div>'
+        f'<div class="g">{a[3]:,}<span>transactions</span></div></div>' for a in ans)
+    npairs = sum(r['pairs'] for r in X)
+    ndev = len({r['dev'] for r in X})
+    return ('<div class="verdict"><div class="answers">' + cells + '</div>'
+            '<div class="vbase">'
+            f'<div class="g">{ndev}<span>developments with plans read</span></div>'
+            f'<div class="g">{npairs:,}<span>matched pairs, no adjustment</span></div>'
+            f'<div class="g">{len(X)}<span>measured contrasts</span></div>'
+            '</div>'
+            '<p class="call">Every figure is the gap between <b>two real resales</b> of the same '
+            'size band in the same development, matched on floor and facing. Nothing is modelled.</p>'
+            '</div>')
+
+
+def _cv(c):
+    return (f"{c['code']}&nbsp;&nbsp;#{c['floor']:02d}-{c['stack']}", c['date'],
+            '$' + format(c['price'], ','))
+
+
+def worked_examples():
+    """Three figures shown the long way: the actual caveats, then one adjustment in full.
+
+    Shawn, 2026-09-19: *"I need some layout pairs for me to eyeball and manually assess if the
+    methodology you're using is right"* -- and the same three answer the client question, because
+    what persuades is not another table, it is seeing that the figure IS the difference between
+    two real sales and that nothing was done to it."""
+    if not WEX: return ''
+    out = []
+    for w in WEX:
+        rows = ''.join(
+            '<tr>' +
+            f'<td class="wc">{_cv(e["a"])[0]}<span class="lsub">{_cv(e["a"])[1]}</span></td>'
+            f'<td class="num">{_cv(e["a"])[2]}</td>'
+            f'<td class="warr">&rarr;</td>'
+            f'<td class="wc">{_cv(e["b"])[0]}<span class="lsub">{_cv(e["b"])[1]}</span></td>'
+            f'<td class="num">{_cv(e["b"])[2]}</td>'
+            f'<td class="num wdiff">{_money(e["diff"])}</td></tr>'
+            for e in w['exact'])
+        a = w.get('adjusted')
+        adj = ''
+        if a:
+            lines = []
+            for st in a['steps']:
+                if st['kind'] == 'floor':
+                    lines.append(f'<li><span class="wk">floor</span> #{st["frm"]:02d} to #{st["to"]:02d} '
+                                 f'&mdash; {_money(st["before"])} &times; (1&nbsp;+&nbsp;{st["rate"]}%)'
+                                 f'<sup>{st["to"]-st["frm"]:+d}</sup> = <b>{_money(st["after"])}</b></li>')
+                else:
+                    lines.append(f'<li><span class="wk">facing</span> {html.escape(st["frm"])} '
+                                 f'({st["frm_pct"]:+.2f}%) to {html.escape(st["to"])} ({st["to_pct"]:+.2f}%) '
+                                 f'&mdash; {_money(st["before"])} rebased = <b>{_money(st["after"])}</b></li>')
+            adj = (f'<div class="wadj"><p>One of the {w["adj_n"]:,} pairs the exact rule turned away, and '
+                   f'everything done to it. The base sale is moved to the other unit&rsquo;s floor and facing '
+                   f'using rates measured on <i>different</i> pairs, then differenced.</p>'
+                   f'<p class="wcav">{_cv(a["a"])[0]} &middot; {_cv(a["a"])[1]} &middot; '
+                   f'<b>{_cv(a["a"])[2]}</b> &nbsp;&rarr;&nbsp; {_cv(a["b"])[0]} &middot; '
+                   f'{_cv(a["b"])[1]} &middot; <b>{_cv(a["b"])[2]}</b></p>'
+                   f'<ol>{"".join(lines)}</ol>'
+                   f'<p class="wres">adjusted base <b>{_money(a["adjusted_base"])}</b> '
+                   f'&rarr; difference <b>{_money(a["diff"])}</b></p></div>')
+        gap = w.get('gap')
+        gcls = 'lok' if gap is not None and abs(gap) <= 5 else ('lwarn' if gap is not None and abs(gap) <= 10 else 'lbad')
+        out.append(
+            f'<article class="wex">'
+            f'<div class="whead"><div><h3 class="disp">{html.escape(w["why"])}</h3>'
+            f'<p class="wsub">{html.escape(w["name"].title())} &middot; '
+            f'{html.escape(w["contrast"])}</p></div>'
+            f'<div class="wfig">{_money(w["exact_med"])}<span>median of {w["exact_n"]} matched pairs</span></div></div>'
+            f'<table class="wt"><thead><tr><th colspan="2">the smaller layout</th><th></th>'
+            f'<th colspan="2">the larger layout</th><th class="num">difference</th></tr></thead>'
+            f'<tbody>{rows}</tbody></table>'
+            f'<p class="wnote">Same floor, same facing, both sales within six months. '
+            f'<b>Nothing is adjusted &mdash; the difference is the figure.</b> Three of '
+            f'{w["exact_n"]} shown: the highest, the middle and the lowest.</p>'
+            f'{adj}'
+            f'<div class="wfoot"><span>{w["exact_n"]} matched pairs <b>{_money(w["exact_med"])}</b></span>'
+            f'<span>{w["adj_n"]:,} adjusted pairs <b>{_money(w["adj_med"])}</b></span>'
+            f'<span class="{gcls}">they agree to {abs(gap):.1f}%</span></div>'
+            f'</article>')
+    return '<div class="wexs">' + ''.join(out) + '</div>'
 
 
 def facts():

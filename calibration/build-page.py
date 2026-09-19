@@ -2373,9 +2373,14 @@ LAYOUT_TRI   = LAYOUT.triage_table()
 LAYOUT_WEX   = LAYOUT.worked_examples()
 LAYOUT_HERO  = LAYOUT.hero_block()
 LAYOUT_AGREE = LAYOUT.agreement_table()
+LAYOUT_TEND  = LAYOUT.tendency_table()      # median or average -- Shawn, 2026-09-20
+LAYOUT_CARVE = LAYOUT.carve_table()         # what one published figure pools, plan pair by plan pair
+LAYOUT_FZONE = LAYOUT.floor_zone_table()    # the floor ladder's two zones, and the 1.87x
+LAYOUT_FOYER = LAYOUT.foyer_block()         # does an entrance foyer price?
 # EVERY figure the layout prose quotes, computed -- see LAYOUT.facts() for why the few historical
 # ones (the withdrawn 11.6% and its two component pairs, the 160 sqft cap) stay as literals.
 LXF = LAYOUT.facts()
+LX_BEST     = LXF.get('best', '')
 LX_SCREEN   = f"{LXF['screen_now']:,}"
 LX_SAMEBAND = LXF['sameband']
 LX_TRIAGE   = LXF['triage_total']
@@ -2968,6 +2973,22 @@ where one has a room the other does not. What the second one sold for, minus the
   <div class="sechead"><h2 class="disp">Behind it</h2>
   <p>Everything the figures rest on. Nothing here is needed to read them.</p></div>
 
+  <details><summary>Median or average &mdash; which one, and why</summary>
+  {LAYOUT_TEND}
+  </details>
+
+  <details><summary>What a single figure is pooling, plan by plan</summary>
+  {LAYOUT_CARVE}
+  </details>
+
+  <details><summary>Does an entrance foyer price?</summary>
+  {LAYOUT_FOYER}
+  </details>
+
+  <details><summary>The floor ladder is not one rate</summary>
+  {LAYOUT_FZONE}
+  </details>
+
   <details><summary>Does the adjustment hold up? Every contrast, both tracks</summary>
   <p class="expl">Adjusting is not modelling, and the difference is why the first version of this
   study was withdrawn: that one fitted a residual to the same pairs it was measuring. Here both
@@ -2977,9 +2998,7 @@ where one has a room the other does not. What the second one sold for, minus the
   <p class="expl">The <b>test</b> column compares the exact figure against <b>only the pairs the
   exact rule throws away</b> &mdash; different floor, different facing, or both. The two sets share
   no transaction, so if adjusting works the discarded pairs should reproduce the exact answer.
-  On the best-sampled contrast they do: <b>C6 &rarr; C9P reads $237,500 on 34 exact sale pairs and
-  $238,835 on 937 adjusted ones &mdash; a gap of $1,335, or 0.6%.</b> That is 48 transactions on the
-  exact track and 104 on the adjusted one.</p>
+  On the best-sampled contrast they do: <b>{LX_BEST}</b>.</p>
   <p class="expl">One guard came straight out of this test. Treasure&rsquo;s facing premiums were
   measured on <b>3BR and 4BR only</b>. Applied to 2BR units they pulled every 2BR contrast down by
   11&ndash;35%; refusing to extrapolate them cut that to 3&ndash;8%. <b>A facing move is now
@@ -3077,7 +3096,7 @@ where one has a room the other does not. What the second one sold for, minus the
   <p class="expl">Forty pairs of strata-area clusters sat in the same bedroom band with enough
   matched sales to be worth reading. Resolving each one to a <b>product class</b> off the plans
   is what separates a feature from a price for square feet.</p>
-  {LAYOUT_TRI}
+  <div class="scroll">{LAYOUT_TRI}</div>
   <p class="expl"><b>{LX_AOWORD} of the {LX_TRIAGE} were never figures.</b> Same product class on
   both sides &mdash; Affinity 850&nbsp;&rarr;&nbsp;904 is <code>3BR2B</code> either way and reads
   {LX_AOAFF}; Symphony 893&nbsp;&rarr;&nbsp;915 is

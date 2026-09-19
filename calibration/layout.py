@@ -47,6 +47,10 @@ WEX    = _load('out/worked-examples.json', [])          # three examples, with t
 TRIAGE = _load('out/same-band-triage.json', [])         # what each candidate pair turned out to be
 ROOMS  = _load('data/annotations/room-areas.json', {}) or {}
 LAY    = (_load('data/annotations/treasure-at-tampines.json', {}) or {}).get('layouts', {})
+TEND   = _load('out/tendency.json', {}) or {}           # median vs mean, and the track test on each
+CARVE  = _load('out/carve-out.json', []) or []          # what one published figure pools
+FZONE  = _load('out/floor-zones.json', {}) or {}        # the floor ladder, split into its two zones
+FOYER  = _load('out/foyer.json', {}) or {}              # C6 / C9P / C10P -- does the foyer price?
 
 def _money(v, sign=False):
     if v is None: return '&mdash;'
@@ -400,9 +404,13 @@ def agreement_table():
     gaps = [abs(x[4]) for x in rows if x[4] is not None]
     out = [f'<p class="expl"><b>{len(ok)} of {len(rows)} contrasts agree within 10%.</b> '
            f'Weighted by matched pairs, <b>{wo:,} of {wp:,} ({wo/wp*100:.0f}%)</b> sit inside 10%, '
-           f'and the median gap is <b>{statistics.median(gaps):.1f}%</b>. The four that miss are '
-           f'the four thinnest &mdash; the disagreement tracks how little evidence there is, '
-           f'which is what it should do if the adjusters are sound.</p>',
+           f'and the median gap is <b>{statistics.median(gaps):.1f}%</b>. '
+           + (f'The {len(rows)-len(ok)} that miss are among the thinnest in the study '
+              f'(the largest carries {max((x[2]["pairs"] for x in rows if x[4] is not None and abs(x[4]) > 10), default=0)} '
+              f'matched pairs against a median of {statistics.median(x[2]["pairs"] for x in rows):.0f} '
+              f'across all {len(rows)}) &mdash; the disagreement tracks how little evidence there '
+              f'is, which is what it should do if the adjusters are sound.'
+              if len(ok) < len(rows) else 'Every contrast agrees.') + '</p>',
            '<table class="lt"><thead><tr><th>development</th><th>contrast</th>'
            '<th class="num">matched pairs</th><th class="num">no adjustment</th>'
            '<th class="num">adjusted pairs</th><th class="num">adjusted</th>'
@@ -418,6 +426,234 @@ def agreement_table():
             f'<td class="num">{_money(o["med"])}</td>',
             f'<td class="num"><span class="{cls}">{t:+.1f}%</span></td>']))
     out.append('</tbody></table>')
+    return "".join(out)
+
+
+def tendency_table():
+    """MEDIAN OR AVERAGE. Shawn, 2026-09-20: *"How are the averages? does median actually make
+    sense? or average is better."*
+
+    He asked because the three Riverfront pairs printed above run $290,000, $172,000 and
+    $55,000 and the published figure is the middle one -- which looks, fairly, like a number
+    being dragged down by its own worst case. The answer is the whole distribution, and the
+    tie-break is the only external check the study has: which estimator makes the pairs the
+    exact rule DISCARDED reproduce the pairs it kept."""
+    if not TEND: return ''
+    S, R = TEND['summary'], TEND['rows']
+    t = S['test']
+    out = [f'<p class="expl"><b>The two barely differ, and neither is systematically higher.</b> '
+           f'Across {S["n"]} contrasts the average sits above the median on {S["higher"]} and '
+           f'below it on {S["lower"]}, and the typical gap between them is '
+           f'<b>{S["median_abs_skew"]}%</b>. Only <b>{S["moves_over_10"]}</b> move by more than '
+           f'10% if the average is used instead, and all three are thin readings where a single '
+           f'sale moves the answer. So the choice is not worth much &mdash; but it is worth '
+           f'making on evidence rather than habit.</p>',
+           f'<p class="expl"><b>The test that decides it.</b> Every contrast is measured twice on '
+           f'transaction sets that share no sale: the matched pairs, and the pairs the matching '
+           f'rule threw away. A better estimator should make those two agree more often. It does '
+           f'not favour the plain median:</p>',
+           '<div class="scroll"><table class="lt"><thead><tr><th>estimator</th>'
+           '<th class="num">contrasts agreeing within 10%</th>'
+           '<th class="num">median gap</th><th class="num">average gap</th></tr></thead><tbody>']
+    LABEL = {'med': 'median <span class="lsub">what is published</span>',
+             'mean': 'plain average',
+             'trim': 'trimmed average <span class="lsub">10% off each tail</span>'}
+    best = min(t, key=lambda k: t[k]['mean_abs'])
+    for k in ('med', 'mean', 'trim'):
+        cls = ' class="lok"' if k == best else ''
+        out.append(_row([f'<td{cls}>{LABEL[k]}</td>',
+                         f'<td class="num">{t[k]["within10"]} of {S["test_n"]}</td>',
+                         f'<td class="num">{t[k]["median_abs"]}%</td>',
+                         f'<td class="num lbig">{t[k]["mean_abs"]}%</td>']))
+    out.append('</tbody></table></div>')
+    out.append(f'<p class="expl">The median is the weakest of the three on this test, and the '
+               f'reason is mechanical rather than deep: on a contrast with five or nine matched '
+               f'pairs the median <i>is</i> one sale, so it inherits that sale&rsquo;s renovation '
+               f'and that seller&rsquo;s hurry. The <b>trimmed average</b> &mdash; the mean after '
+               f'the top and bottom tenth are dropped &mdash; keeps the median&rsquo;s resistance '
+               f'to a freak sale while using the rest of the evidence, and it agrees best. '
+               f'<b>The published figures remain medians</b> and are not restated here; this is '
+               f'the case for moving them, and it is Shawn&rsquo;s call.</p>')
+    out.append('<div class="scroll"><table class="lt"><thead><tr><th>contrast</th>'
+               '<th class="num">matched pairs</th><th class="num">median</th>'
+               '<th class="num">average</th><th class="num">trimmed</th>'
+               '<th class="num">middle half of the pairs</th></tr></thead><tbody>')
+    for r in R:
+        out.append(_row([
+            f'<td class="lthin">{html.escape(r["contrast"])}</td>',
+            f'<td class="num">{r["n"]}</td>',
+            f'<td class="num lbig">{_money(r["med"])}</td>',
+            f'<td class="num">{_money(r["mean"])}</td>',
+            f'<td class="num">{_money(r["trim"])}</td>',
+            f'<td class="num lthin">{_money(r["q1"])} &ndash; {_money(r["q3"])}</td>']))
+    out.append('</tbody></table></div>')
+    return "".join(out)
+
+
+def carve_table():
+    """WHAT ONE FIGURE POOLS. Shawn, 2026-09-20: *"Give me the actual layout type for me to go
+    and view and give my opinion / comments if the 'carve out' of the layout adjustments are
+    missing anything."*
+
+    A published figure is a class contrast, and a class contrast is a POOL of layout pairs.
+    Never adjusting for area is deliberate -- a bathroom is a bathroom -- but it means one
+    figure can span very different area steps, and that is a judgement a reader is entitled
+    to see rather than inherit."""
+    if not CARVE: return ''
+    out = ['<p class="expl">Each published figure is a contrast between two <b>product '
+           'classes</b>, and each class holds several drawings. So a single number is the median '
+           'of every layout pair inside it &mdash; and those pairs do not all carry the same '
+           'area step. <b>That pooling is deliberate</b> (the study never adjusts for area: an '
+           'added bathroom is an added bathroom), but it is a judgement, so here is what every '
+           'figure is made of. The two codes in each row are the two floor plans to open.</p>']
+    for c in CARVE:
+        out.append(f'<div class="scroll"><table class="lt"><thead><tr><th colspan="6">'
+                   f'{html.escape(c["name"])} &middot; {html.escape(c["contrast"])} '
+                   f'<span class="lsub">{html.escape(c["feature"])} &middot; '
+                   f'{_money(c["med"])} on {c["pairs"]} matched pairs &middot; steps of '
+                   f'+{c["dsqft_lo"]} to +{c["dsqft_hi"]} sqft</span>'
+                   f'</th></tr><tr><th>plan pair</th><th class="num">areas</th>'
+                   f'<th class="num">step</th><th class="num">pairs</th>'
+                   f'<th class="num">median</th>'
+                   f'<th class="num">middle half</th></tr></thead><tbody>')
+        for x in c['cells']:
+            thin = ' lthin' if x['pairs'] < 3 else ''
+            out.append(_row([
+                f'<td><b>{html.escape(x["base"])}</b> &rarr; <b>{html.escape(x["feat"])}</b></td>',
+                f'<td class="num lthin">{x["base_sqft"]:,} &rarr; {x["feat_sqft"]:,} sqft</td>',
+                f'<td class="num">+{x["dsqft"]}</td>',
+                f'<td class="num{thin}">{x["pairs"]}</td>',
+                f'<td class="num lbig">{_money(x["med"])}</td>',
+                f'<td class="num lthin">{_money(x["q1"])} &ndash; {_money(x["q3"])}</td>']))
+        out.append('</tbody></table></div>')
+    return "".join(out)
+
+
+def floor_zone_table():
+    """THE FLOOR LADDER IS NOT ONE RATE. Shawn, 2026-09-20: *"from floor 01 to -> 05, isnt there
+    supposed to be a 1.87x multiplier based on the floor analysis?! why dont i see that."*
+
+    He was right: this study compounded one flat rate from the ground up, while the resale floor
+    study it is supposed to borrow from found the first four floors cost about 1.87x the rate the
+    same building charges above L5."""
+    if not FZONE: return ''
+    out = ['<p class="expl">The adjusted track moves a sale to another floor before differencing, '
+           'and until 2026-09-20 it did that with <b>one flat rate</b> compounded from wherever '
+           'the sale sat. The resale floor study says that is wrong twice over. First, the ladder '
+           'is not flat: the <b>first four floors cost about 1.87&times;</b> the rate the same '
+           'building sustains above L5 (150 projects, one vote each). Second &mdash; and this is '
+           'the larger error &mdash; the rate being compounded was fitted on <b>every</b> '
+           'same-stack pair in the development, low floors included, so it was already a blend '
+           'of the two zones. Both are now fixed: the base rate is refitted on L5-and-above '
+           'pairs, and the multiplier is applied below.</p>',
+           '<div class="scroll"><table class="lt"><thead><tr><th>development</th>'
+           '<th class="num">rate used before<span class="lsub">all pairs pooled</span></th>'
+           '<th class="num">rate used now<span class="lsub">L5+ pairs only</span></th>'
+           '<th class="num">sale pairs</th>'
+           '<th class="num">how much the old rate was inflated</th></tr></thead><tbody>']
+    for name, z in sorted(FZONE.items(), key=lambda kv: -(kv[1].get('pooled_over_upper') or 0)):
+        r = z.get('pooled_over_upper')
+        out.append(_row([
+            f'<td>{html.escape(name.title())}</td>',
+            f'<td class="num lthin">{z["pooled"]}%/floor</td>',
+            f'<td class="num lbig">{z["upper"]}%/floor</td>',
+            f'<td class="num">{z["upper_pairs"]:,}</td>',
+            f'<td class="num">{f"{r:.2f}&times;" if r else "&mdash;"}</td>']))
+    out.append('</tbody></table></div>')
+    owns = [(n, z) for n, z in FZONE.items() if z.get('own_mult') is not None]
+    if owns:
+        out.append(f'<p class="expl"><b>Each development&rsquo;s own low-floor ratio was measured '
+                   f'and then deliberately not used.</b> {len(owns)} of {len(FZONE)} have enough '
+                   f'pairs inside L1&ndash;4 to produce one, and they come out at '
+                   + ', '.join(f'<b>{z["own_mult"]:.2f}&times;</b> ({html.escape(n.title())}, '
+                               f'{z["low_pairs"]} pairs)' for n, z in
+                               sorted(owns, key=lambda kv: -kv[1]['own_mult']))
+                   + f'. Those are not coefficients, they are coin tosses: the individual pairs '
+                   f'behind them run from &minus;4.5% to +16.4% <i>per floor</i>. The island '
+                   f'figure exists precisely because one building cannot carry this estimate, so '
+                   f'1.87&times; is what is applied everywhere and the local reads are kept only '
+                   f'as an audit trail.</p>')
+    out.append('<p class="expl"><b>What it changes: very little, and that is worth saying '
+               'plainly.</b> 1.87&times; multiplies the <i>rate</i>, not the price. On the '
+               'Riverfront example above, moving a #01 sale up to #05 lifts the base by '
+               '<b>$16,948</b> where the old flat ladder lifted it by <b>$10,922</b> &mdash; '
+               'about $6,000 on a $172,000 figure, and only on pairs that reach down into those '
+               'floors. The matched-pair figures do not move at all, because both sides of a '
+               'matched pair are on the same floor and nothing is adjusted.</p>')
+    return "".join(out)
+
+
+def foyer_block():
+    """DOES AN ENTRANCE FOYER PRICE? Shawn, 2026-09-20, reading the Treasure example:
+
+    *"if you used C9P vs C10P, C9P would be the better comparison than C10P ... C9P and C10P only
+    differs by the foyer, one being blocked before seeing the living dining vs immediately seeing
+    it at the entrance."*
+
+    It is the right question to ask of any pooled figure, and the answer here is yes-but: the
+    foyer is priced, and it is priced BELOW ordinary area, which is the opposite of a feature."""
+    if not FOYER or not FOYER.get('legs'): return ''
+    L = {(x['a'], x['b']): x for x in FOYER['legs']}
+    psf = FOYER['dev_psf']
+    out = [f'<p class="expl">Two of the three plans inside Treasure&rsquo;s '
+           f'<code>3BR2B&nbsp;&rarr;&nbsp;3BR2B+WC+HS</code> figure carry the identical room '
+           f'list &mdash; C9P at {L[("C6","C9P")]["b_sqft"]:,} sqft and C10P at '
+           f'{L[("C6","C10P")]["b_sqft"]:,} sqft. The {L[("C9P","C10P")]["dsqft"]} sqft between '
+           f'them is an <b>entrance foyer</b> &mdash; Shawn&rsquo;s read of the two sheets: C10P puts a '
+           f'hallway between the front door and the living-dining, C9P opens straight into it. '
+           f'Because the class label is silent about it, the two pool. So: does it price?</p>',
+           '<div class="scroll"><table class="lt"><thead><tr><th>plan pair</th><th class="num">step</th>'
+           '<th class="num">matched pairs</th><th class="num">quantum</th>'
+           '<th class="num">per sqft of the step</th>'
+           f'<th class="num">against the development&rsquo;s own ${psf:,} psf</th>'
+           '</tr></thead><tbody>']
+    for k in (('C6', 'C9P'), ('C6', 'C10P'), ('C9P', 'C10P')):
+        x = L[k]
+        cls = 'lok' if x['exact_ratio'] and x['exact_ratio'] >= 1.15 else (
+              'lbad' if x['exact_ratio'] and x['exact_ratio'] < 0.85 else 'lwarn')
+        out.append(_row([
+            f'<td><b>{x["a"]}</b> &rarr; <b>{x["b"]}</b>'
+            f'<span class="lsub">{html.escape(x["why"])}</span></td>',
+            f'<td class="num">+{x["dsqft"]}</td>',
+            f'<td class="num">{x["exact_n"]}</td>',
+            f'<td class="num lbig">{_money(x["exact"])}</td>',
+            f'<td class="num">${x["exact_psf"]:,}</td>',
+            f'<td class="num"><span class="{cls}">{x["exact_ratio"]:.2f}&times;</span></td>']))
+    out.append('</tbody></table></div>')
+    t = FOYER.get('triangle', {}).get('adj')
+    foy = L[('C9P', 'C10P')]
+    pkg = L[('C6', 'C9P')]
+    out.append(f'<p class="expl"><b>It prices, and it prices cheap.</b> The foyer is worth about '
+               f'<b>{_money(foy["exact"])}</b> &mdash; real money, and enough that pooling C9P '
+               f'with C10P is not free. But per square foot it runs '
+               f'<b>{foy["exact_ratio"]:.2f}&times;</b> the development&rsquo;s own rate, while '
+               f'the WC / shelter / yard package it sits beside runs '
+               f'<b>{pkg["exact_ratio"]:.2f}&times;</b>. <b>The foyer behaves like circulation, '
+               f'not like a feature:</b> buyers pay for it at a discount to ordinary floor area, '
+               f'where a real room commands a premium to it. That is the same signal the '
+               f'circulation guard was built on.</p>')
+    if t:
+        out.append(f'<p class="expl"><b>The three readings are consistent.</b> Walking '
+                   f'C6&nbsp;&rarr;&nbsp;C9P&nbsp;&rarr;&nbsp;C10P gives '
+                   f'<b>{_money(t["sum"])}</b>; measuring C6&nbsp;&rarr;&nbsp;C10P directly gives '
+                   f'<b>{_money(t["direct"])}</b>. They close to <b>{abs(t["gap"]):.1f}%</b> on '
+                   f'the adjusted track, which is the only one with enough pairs in all three '
+                   f'legs to carry the test. A pooled figure that was hiding an inconsistency '
+                   f'would not close.</p>')
+    P = FOYER.get('pooled') or {}
+    move = (P.get('exact') - pkg['exact']) if P.get('exact') else None
+    out.append(f'<p class="expl"><b>What follows from it.</b> Shawn is right that '
+               f'<b>C6&nbsp;&rarr;&nbsp;C9P is the better comparison</b>: it is the cleaner '
+               f'feature step and it carries {pkg["exact_n"]} matched pairs against '
+               f'{L[("C6","C10P")]["exact_n"]}. '
+               + (f'Pooling the two reads {_money(P["exact"])} on {P["exact_n"]} pairs against '
+                  f'{_money(pkg["exact"])} on C9P alone, so the published figure moves only '
+                  f'{_money(abs(move))} &mdash; C9P dominates on count. ' if move is not None else '')
+               + f'But the reason to separate them is not the size of that move, it is that they '
+               f'are two products, and at a development where the foyer plan was the common one '
+               f'the same pooling would bite. <b>An entrance foyer is now a recorded plan '
+               f'feature</b>, read off the sheet alongside the yard and the utility room rather '
+               f'than left to a class label that cannot see it.</p>')
     return "".join(out)
 
 
@@ -505,9 +741,24 @@ def worked_examples():
             lines = []
             for st in a['steps']:
                 if st['kind'] == 'floor':
+                    # THE LADDER IS NOT FLAT. The first floors carry the resale floor study's
+                    # low-zone multiplier, so the arithmetic printed here has to be the
+                    # arithmetic that was done -- one term per zone, not one exponent.
+                    nlow, nhigh = st.get('low_steps', 0), st.get('high_steps', None)
+                    if nhigh is None: nhigh = abs(st['to'] - st['frm']) - nlow
+                    terms = []
+                    if nlow:
+                        terms.append(f'(1&nbsp;+&nbsp;{st["rate"]}%&nbsp;&times;&nbsp;'
+                                     f'{st.get("low_mult", 1.87)})<sup>{nlow}</sup>')
+                    if nhigh:
+                        terms.append(f'(1&nbsp;+&nbsp;{st["rate"]}%)<sup>{nhigh}</sup>')
+                    zone = (f' <span class="lsub">&mdash; {nlow} of those steps sit inside '
+                            f'L1&ndash;{st.get("low_top", 4)}, where the floor study measures '
+                            f'{st.get("low_mult", 1.87)}&times; the tower rate</span>') if nlow else ''
                     lines.append(f'<li><span class="wk">floor</span> #{st["frm"]:02d} to #{st["to"]:02d} '
-                                 f'&mdash; {_money(st["before"])} &times; (1&nbsp;+&nbsp;{st["rate"]}%)'
-                                 f'<sup>{st["to"]-st["frm"]:+d}</sup> = <b>{_money(st["after"])}</b></li>')
+                                 f'&mdash; {_money(st["before"])} &times; '
+                                 f'{" &times; ".join(terms) or "1"} = <b>{_money(st["after"])}</b>'
+                                 f'{zone}</li>')
                 else:
                     lines.append(f'<li><span class="wk">facing</span> {html.escape(st["frm"])} '
                                  f'({st["frm_pct"]:+.2f}%) to {html.escape(st["to"])} ({st["to_pct"]:+.2f}%) '
@@ -541,6 +792,10 @@ def worked_examples():
             f'<span class="{gcls}">they agree to {abs(gap):.1f}%</span></div>'
             f'</article>')
     return '<div class="wexs">' + ''.join(out) + '</div>'
+
+
+def _h(t):
+    return html.escape(str(t))
 
 
 def facts():
@@ -615,6 +870,24 @@ def facts():
         if o['feature'] == 'extra bathroom':
             if o.get('feature_alone'): f['bath_pub_alone'] = o['feature_alone']['pct'][1]
             if o.get('feature_plus_area'): f['bath_pub_area'] = o['feature_plus_area']['pct'][1]
+    # THE BEST-SAMPLED SINGLE PLAN PAIR in the study, and how the two tracks did on it. This
+    # used to be a literal ("C6 -> C9P reads $237,500 on 34 exact pairs") and it went stale the
+    # first time the pair screen moved. It is the deepest cell in the carve-out.
+    cells = [(c, x) for c in (CARVE or []) for x in c['cells']]
+    if cells and FOYER.get('legs'):
+        leg = {(x['a'], x['b']): x for x in FOYER['legs']}
+        top = max(cells, key=lambda cx: cx[1]['pairs'])
+        c, x = top
+        lg = leg.get((x['base'], x['feat']))
+        if lg and lg.get('adj'):
+            gap = (lg['adj'] - lg['exact']) / lg['exact'] * 100
+            f['best'] = (f"{x['base']} &rarr; {x['feat']} at {_h(c['name'])} reads "
+                         f"{_money(lg['exact'])} on {lg['exact_n']} matched pairs and "
+                         f"{_money(lg['adj'])} on {lg['adj_n']:,} adjusted ones "
+                         f"&mdash; a gap of {abs(gap):.1f}%")
+        else:
+            f['best'] = (f"{x['base']} &rarr; {x['feat']} at {_h(c['name'])} carries "
+                         f"{x['pairs']} matched pairs at {_money(x['med'])}")
     # the two area-only pairs worth naming
     for r in tri:
         if r['state'] != 'AREA-ONLY': continue

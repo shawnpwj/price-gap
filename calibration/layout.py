@@ -390,7 +390,10 @@ def agreement_counts():
 def agreement_rows():
     import os as _os
     rows = []
-    for d in ('treasure-at-tampines', 'riverfront-residences', 'parc-esta', 'a-treasure-trove'):
+    import glob as _g
+    for d in sorted(_os.path.basename(x)[:-len('-contrasts.json')]
+                    for x in _g.glob(_os.path.join(STUDY, 'out/*-contrasts.json'))):
+        if not _os.path.exists(_os.path.join(STUDY, f'data/annotations/{d}-tx-layout.json')): continue
         pth = _os.path.join(STUDY, f'out/{d}-contrasts.json')
         if not _os.path.exists(pth): continue
         for r in json.load(open(pth)):

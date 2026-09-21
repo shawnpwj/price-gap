@@ -49,6 +49,28 @@ for o in FEAT:
     FEATURES[o['feature']]=dict(pct=round(_mid(b['pct']),2), quantum=round(_mid(b['quantum'])),
                                 devs=b.get('developments_n'), pairs=b.get('sale_pairs_exact'))
 
+# ---------------------------------------------------------------- inter-development constants
+# The Price Gap calibration study's measured constants, read from the same JSONs the engine
+# reads (price-gap/scripts/engine.ts loadMeasured). The page ports engine.adjust() to JS.
+CAL = os.path.join(ROOT, 'price-gap', 'calibration')
+def _cal(f): return json.load(open(os.path.join(CAL, f)))
+def _calibration():
+    lease=_cal('lease-pairs.json')['pw']; age=_cal('age-pairs.json')['24']['pw']
+    ten=_cal('tenure-pairs.json'); mrt=_cal('mrt-pairs.json'); integ=_cal('integrated-pairs.json')
+    grad=sorted([dict(minLeft=g['min_left'], pct=g['pct'], label=g['label'])
+                 for g in ten['slices']['gradient']
+                 if not g.get('thin') and isinstance(g.get('pct'),(int,float)) and isinstance(g.get('min_left'),(int,float))],
+                key=lambda g:-g['minLeft'])
+    cut=next((c for c in integ['cuts'] if c.get('headline')), integ['cuts'][-1])
+    return dict(
+        lease=dict(bound=lease['bound'], pre=lease['pre'], post=lease['post']),
+        ageFH=dict(bound=age['bound'], pre=age['pre'], post=age['post']),
+        tenure=dict(headline=ten['headline']['percent']['p'], grad=grad),
+        mrt=dict(nearM=mrt['near_m'], farM=mrt['far_m'], bands={b['key']: round(b['adj']) for b in mrt['bands']}),
+        integrated=round(cut['pct']/100, 4),
+        harmonisation=0.07, harmonisationFrom=2023,   # engine.ts: not measured, same in both sets
+        screens=_PGA_RAW['screens'])
+
 # ---------------------------------------------------------------- product classes (layout study)
 import glob as _glob
 def _load_classes():
@@ -79,13 +101,13 @@ def facing_premiums(devid):
     """facingType -> resale-market % vs the project baseline, averaged across bands."""
     p=os.path.join(FRES_DIR, devid+'.json')
     if not os.path.exists(p): return None, None
-    fr=json.load(open(p)); base=fr.get('baseline'); acc=collections.defaultdict(list)
-    for band, rows in (fr.get('bands') or {}).items():
-        for r in rows:
-            v = r.get('marketDirect'); 
-            if v is None: v = r.get('market')
-            if v is not None: acc[r['facing']].append(v)
-    prem={f: round(statistics.mean(vs),2) for f,vs in acc.items()}
+    fr=json.load(open(p)); base=fr.get('baseline')
+    # Band `all`, market DIRECT only — the rule in CLAUDE.md ("band `all`, market direct only").
+    # The earlier build averaged every band and fell back to the chained market figure.
+    prem={}
+    for r in ((fr.get('bands') or {}).get('all') or []):
+        v = r.get('marketDirect')
+        if v is not None: prem[r['facing']] = round(v, 2)
     if base is not None: prem[base]=0.0
     return base, prem
 
@@ -94,7 +116,21 @@ def stack_facing(devid):
     p=os.path.join(FAC_DIR, devid+'.json')
     if not os.path.exists(p): return {}
     st=(json.load(open(p)).get('stacks') or {})
-    return {str(int(k)): v['facingType'] for k,v in st.items() if isinstance(v,dict) and 'facingType' in v}
+    out={}
+    for k,v in st.items():
+        if not (isinstance(v,dict) and 'facingType' in v): continue
+        try: kk=str(int(k))
+        except (ValueError, TypeError): kk=str(k)
+        out[kk]=v['facingType']
+    return out
+
+def facing_names(devid):
+    """facingType -> the name as it DISPLAYS on the stack analysis page."""
+    p=os.path.join(FAC_DIR, devid+'.json')
+    if not os.path.exists(p): return {}
+    st=(json.load(open(p)).get('stacks') or {})
+    return {v['facingType']: v.get('facingDisplay') or v['facingType']
+            for v in st.values() if isinstance(v,dict) and 'facingType' in v}
 
 # ---------------------------------------------------------------- DSI (data.json), by name
 DATA = json.load(open(os.path.join(ROOT,'kya-maps-calculator','data.json')))['developments']
@@ -104,11 +140,22 @@ for k,v in DATA.items():
     DSI_BY_NAME[norm(nm)] = v
 
 # ---------------------------------------------------------------- nearby (price-gap-all), by name + latlng
-PGA = json.load(open(os.path.join(ROOT,'price-gap','out','price-gap-all.json')))['developments']
+_PGA_RAW = json.load(open(os.path.join(ROOT,'price-gap','out','price-gap-all.json')))
+PGA = _PGA_RAW['developments']
 PGA_LIST=[]
 for k,v in (PGA.items() if isinstance(PGA,dict) else enumerate(PGA)):
     if v.get('lat') and v.get('lng'):
         PGA_LIST.append(v)
+
+PGA_BY_NAME = {norm(v['n']): v for v in PGA_LIST if v.get('n')}
+def dev_attrs(name):
+    """The inter-development attributes, as the Price Gap engine sees them."""
+    v = PGA_BY_NAME.get(norm(name)) if name else None
+    if not v: return None
+    m = v.get('mrt') or {}
+    return dict(t=v.get('t'), ls=v.get('ls'), yrs=v.get('yrs'), top=v.get('top'),
+                topEst=bool(v.get('topEst')), u=v.get('u'), int=bool(v.get('int')),
+                mrtS=m.get('s'), mrtM=m.get('m'), mrtMin=m.get('min'), r=v.get('r'))
 
 def haversine(a,b,c,d):
     R=6371000; p=math.radians
@@ -146,7 +193,7 @@ def main():
                           tenure=ttype, tenureYears=tyrs, leaseFrom=lcom, top=top, units=units,
                           mrt=mrt, mrtM=mrtd, lat=lat, lng=lng,
                           nRecent=len(recent), hasFacing=bool(fprem), floorSource=frate['source'],
-                          hasDsi=bool(dsi)))
+                          hasDsi=bool(dsi), pg=dev_attrs(name)))
         if not recent: continue
         # nearby comparable devs (<=2km, same region), by proximity
         nearby=[]
@@ -160,7 +207,7 @@ def main():
                                    region=v.get('r'), tenure=v.get('t'), leaseFrom=v.get('ls'),
                                    top=v.get('top'), units=v.get('u'), psf=allpsf.get('psf'),
                                    mrtMin=(v.get('mrt') or {}).get('min')))
-            nearby.sort(key=lambda x:x['dist']); nearby=nearby[:12]
+            nearby.sort(key=lambda x:x['dist']); nearby=nearby[:30]
         # transactions, compact: [floor, stack, sqft, price, ymd, saleType(0=resale,1=subsale), facingType|null]
         def stkey(st):
             try: return str(int(st))
@@ -172,6 +219,8 @@ def main():
         shard=dict(id=devid, name=name, region=region, district=dist, tenure=ttype, tenureYears=tyrs,
                    leaseFrom=lcom, top=top, units=units, mrt=mrt, mrtM=mrtd,
                    floorRate=frate, baselineFacing=base_f, facingPremiums=fprem,
+                   facingNames=facing_names(devid) or None, stackFacing=sf or None,
+                   pg=dev_attrs(name),
                    dsi=(dict(macro=dsi.get('macro'), area=dsi.get('area'),
                              bedrooms=dsi.get('bedrooms'), defaultBedroom=dsi.get('defaultBedroom'),
                              unitSizes=dsi.get('unitSizes')) if dsi else None),
@@ -181,7 +230,7 @@ def main():
     idx=dict(generatedAt=TODAY.isoformat(),
              constants=dict(floorIslandUpper=ISLAND_UPPER, lowMult=LOW_MULT, lowTop=LOW_TOP,
                             growthAnnualPct=3.0, growthMinMonths=6, maxCompMonths=18,
-                            features=FEATURES),
+                            features=FEATURES, inter=_calibration()),
              developments=sorted(index, key=lambda x:(x['name'] or '')))
     json.dump(idx, open(os.path.join(OUT,'index.json'),'w'), separators=(',',':'))
     json.dump({k:v for k,v in CLASSINDEX.items()}, open(os.path.join(OUT,'class-index.json'),'w'), separators=(',',':'))

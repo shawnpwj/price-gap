@@ -49,6 +49,31 @@ for o in FEAT:
     FEATURES[o['feature']]=dict(pct=round(_mid(b['pct']),2), quantum=round(_mid(b['quantum'])),
                                 devs=b.get('developments_n'), pairs=b.get('sale_pairs_exact'))
 
+# ---------------------------------------------------------------- product classes (layout study)
+import glob as _glob
+def _load_classes():
+    """dev slug -> [{'class':..,'sqft':..,'code':..}]  and  classKey -> [{'dev','name','sqft'}]"""
+    perdev={}; index=collections.defaultdict(list)
+    for f in _glob.glob(os.path.join(ROOT,'layout-study','data','annotations','*.json')):
+        b=os.path.basename(f)
+        if any(x in b for x in ('tx-layout','-rooms','feature','screen','layouts')): continue
+        try: d=json.load(open(f))
+        except Exception: continue
+        devid=d.get('development_id') or b[:-5]; L=d.get('layouts')
+        if not L: continue
+        seen={}
+        for code,v in L.items():
+            cls=v.get('class'); sq=v.get('sqft')
+            if not cls: continue
+            key=(cls, round(sq) if sq else None)
+            if key in seen: continue
+            seen[key]=1
+            perdev.setdefault(devid,[]).append(dict(cls=cls, sqft=round(sq) if sq else None, code=code))
+        for r in perdev.get(devid,[]):
+            index[r['cls']].append(dict(dev=devid, sqft=r['sqft']))
+    return perdev, index
+PERCLASS, CLASSINDEX = _load_classes()
+
 # ---------------------------------------------------------------- facing premiums per dev
 def facing_premiums(devid):
     """facingType -> resale-market % vs the project baseline, averaged across bands."""
@@ -96,6 +121,9 @@ def main():
     devs={r[0]:r for r in db.execute(
         "select development_id,canonical_name,lat,lng,district,region,segment,tenure_type,"
         "tenure_years,lease_commencement,top_year,unit_count,mrt_station,mrt_distance_m from developments")}
+    NAME2ID={}
+    for _id,_r in devs.items():
+        if _r[1]: NAME2ID[norm(_r[1])]=_id
     cutoff = None  # computed per-row via days_ago
     index=[]
     n_shard=0
@@ -128,9 +156,10 @@ def main():
                 d=haversine(lat,lng,v['lat'],v['lng'])
                 if d>2000: continue
                 allpsf=(v.get('beds') or {}).get('All') or {}
-                nearby.append(dict(name=v['n'], dist=round(d), region=v.get('r'), tenure=v.get('t'),
-                                   leaseFrom=v.get('ls'), top=v.get('top'), units=v.get('u'),
-                                   psf=allpsf.get('psf'), mrtMin=(v.get('mrt') or {}).get('min')))
+                nearby.append(dict(name=v['n'], id=NAME2ID.get(norm(v['n'])), dist=round(d),
+                                   region=v.get('r'), tenure=v.get('t'), leaseFrom=v.get('ls'),
+                                   top=v.get('top'), units=v.get('u'), psf=allpsf.get('psf'),
+                                   mrtMin=(v.get('mrt') or {}).get('min')))
             nearby.sort(key=lambda x:x['dist']); nearby=nearby[:12]
         # transactions, compact: [floor, stack, sqft, price, ymd, saleType(0=resale,1=subsale), facingType|null]
         def stkey(st):
@@ -146,7 +175,7 @@ def main():
                    dsi=(dict(macro=dsi.get('macro'), area=dsi.get('area'),
                              bedrooms=dsi.get('bedrooms'), defaultBedroom=dsi.get('defaultBedroom'),
                              unitSizes=dsi.get('unitSizes')) if dsi else None),
-                   nearby=nearby, tx=tx)
+                   layoutClasses=PERCLASS.get(devid), nearby=nearby, tx=tx)
         json.dump(shard, open(os.path.join(DEVDIR, devid+'.json'),'w'), separators=(',',':'))
         n_shard+=1
     idx=dict(generatedAt=TODAY.isoformat(),
@@ -155,6 +184,7 @@ def main():
                             features=FEATURES),
              developments=sorted(index, key=lambda x:(x['name'] or '')))
     json.dump(idx, open(os.path.join(OUT,'index.json'),'w'), separators=(',',':'))
+    json.dump({k:v for k,v in CLASSINDEX.items()}, open(os.path.join(OUT,'class-index.json'),'w'), separators=(',',':'))
     print(f"wrote {n_shard} dev shards + index ({len(index)} developments)")
     print(f"island floor upper {ISLAND_UPPER}%/floor; features: {list(FEATURES)}")
 

@@ -256,7 +256,9 @@ def main():
         n_shard+=1
     idx=dict(generatedAt=TODAY.isoformat(),
              constants=dict(floorIslandUpper=ISLAND_UPPER, lowMult=LOW_MULT, lowTop=LOW_TOP,
-                            growthAnnualPct=3.0, growthMinMonths=6, maxCompMonths=18,
+                            # growthTaperFrom / growthMinMonths: no time adjustment under 3 months, the rate tapering in
+                            # to the full figure at 6 months (Shawn, 2026-09-23 — replaces the 6-month cliff)
+                            growthAnnualPct=3.0, growthTaperFrom=3, growthMinMonths=6, maxCompMonths=18,
                             features=FEATURES, inter=_calibration(), facingIsland=island_facing()),
              developments=sorted(index, key=lambda x:(x['name'] or '')))
     json.dump(idx, open(os.path.join(OUT,'index.json'),'w'), separators=(',',':'))

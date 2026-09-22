@@ -132,6 +132,33 @@ def facing_names(devid):
     return {v['facingType']: v.get('facingDisplay') or v['facingType']
             for v in st.values() if isinstance(v,dict) and 'facingType' in v}
 
+# ---------------------------------------------------------------- island facing table
+# For a development the facing study has not read, the agent is ASKED for the facing (Shawn,
+# 2026-09-22: "if you dont have facing you SHOULD ask for it from the agent"). The answer is
+# priced with this table: each facingType's median across the studied developments, band `all`,
+# market DIRECT only, all measured against the same baseline (quiet|blocked-own = 0). Measured
+# elsewhere on other pairs, never fitted to the pairs being priced. Fewer than 2 developments =
+# no island figure (listed so the agent can still answer, but not priced).
+ISLAND_BASE = 'quiet|blocked-own'
+def island_facing():
+    acc=collections.defaultdict(list); names={}
+    for f in glob.glob(os.path.join(FRES_DIR,'*.json')):
+        fr=json.load(open(f))
+        if fr.get('baseline')!=ISLAND_BASE: continue
+        for r in ((fr.get('bands') or {}).get('all') or []):
+            if r.get('marketDirect') is not None and r['facing']!=ISLAND_BASE:
+                acc[r['facing']].append(r['marketDirect'])
+    for f in glob.glob(os.path.join(FAC_DIR,'*.json')):
+        try: st=json.load(open(f)).get('stacks') or {}
+        except Exception: continue
+        for v in st.values():
+            if isinstance(v,dict) and v.get('facingType') and v.get('facingDisplay'):
+                names.setdefault(v['facingType'], v['facingDisplay'])
+    out={ISLAND_BASE: dict(pct=0.0, devs=None, name=names.get(ISLAND_BASE,'Blocked by your own development'), baseline=True)}
+    for k,vs in acc.items():
+        out[k]=dict(pct=round(statistics.median(vs),2) if len(vs)>=2 else None, devs=len(vs), name=names.get(k,k))
+    return out
+
 # ---------------------------------------------------------------- DSI (data.json), by name
 DATA = json.load(open(os.path.join(ROOT,'kya-maps-calculator','data.json')))['developments']
 DSI_BY_NAME={}
@@ -230,7 +257,7 @@ def main():
     idx=dict(generatedAt=TODAY.isoformat(),
              constants=dict(floorIslandUpper=ISLAND_UPPER, lowMult=LOW_MULT, lowTop=LOW_TOP,
                             growthAnnualPct=3.0, growthMinMonths=6, maxCompMonths=18,
-                            features=FEATURES, inter=_calibration()),
+                            features=FEATURES, inter=_calibration(), facingIsland=island_facing()),
              developments=sorted(index, key=lambda x:(x['name'] or '')))
     json.dump(idx, open(os.path.join(OUT,'index.json'),'w'), separators=(',',':'))
     json.dump({k:v for k,v in CLASSINDEX.items()}, open(os.path.join(OUT,'class-index.json'),'w'), separators=(',',':'))

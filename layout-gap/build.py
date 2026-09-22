@@ -36,6 +36,15 @@ def norm(s): return "".join(c for c in (s or "").lower() if c.isalnum())
 
 # ---------------------------------------------------------------- constants
 FZONE = json.load(open(os.path.join(ROOT,'layout-study','out','floor-zones.json')))
+# The floor step HAS a published range and the page was saying it did not (Shawn, 2026-09-23: "why
+# dont we have confidence range? we do have it"). It is the resale floor benchmark's own curve --
+# read at the unit's square footage, fair_low..fair_high is the middle half (p25-p75) of what
+# comparable projects sustained per floor. The same curve prints the "L5+ fair 0.192-0.489% per
+# floor" line on the floor benchmark panel.
+_RFB = json.load(open(os.path.join(ROOT,'launch-picker','config','resale-floor-benchmark.json')))
+FLOOR_CURVE = [dict(sqft=r['sqft'], rate=r['rate'], fairLo=r['fair_low'], fairHi=r['fair_high'],
+                    lo=r['undervalued_below'], hi=r['overvalued_above'], supported=r['supported'])
+               for r in _RFB['curve']]
 _UPPERS = [v['upper'] for v in FZONE.values() if v.get('upper')]
 ISLAND_UPPER = round(statistics.median(_UPPERS), 3)
 ISLAND_UPPER_DEVS = len(_UPPERS)
@@ -159,8 +168,12 @@ def facing_names(devid):
 # other side on 2026-09-23, asking why a -1.23% premium was printing as -1.2%. A page that re-computes
 # a study's headline figure is a page that can disagree with it, so it reads it instead.
 #
-# The screen is unchanged: fewer than 2 developments = listed so the agent can still answer, but not
-# priced. lo/hi are the study's own range (the union of the developments' bootstrap intervals).
+# NO SCREEN OF OUR OWN (Shawn, 2026-09-23: "all single development except bin should be included").
+# The study has already binned what should be binned -- quiet|blocked-neighbour publishes 8 of its 9
+# sources, quiet|open-greenery 2 of 3 -- so a second screen here only threw away figures the study
+# stands behind. Everything it publishes is priced, single-development entries included; the page
+# shows the development count and the pair count so the agent can see how thin one is.
+# lo/hi are the study's own range (the union of the developments' bootstrap intervals).
 ISLAND_BASE = 'quiet|blocked-own'
 MARKET_FACING = os.path.join(ROOT,'launch-picker','stack-study','data','facing-market.json')
 def island_facing():
@@ -176,11 +189,11 @@ def island_facing():
     mkt=(json.load(open(MARKET_FACING)).get('facings') or {})
     for k,v in mkt.items():
         if k==ISLAND_BASE: continue
-        devs=v.get('developments')
-        priced = v.get('market') is not None and (devs or 0) >= 2
-        out[k]=dict(pct=round(v['market'],2) if priced else None, devs=devs, pairs=v.get('pairs'),
-                    lo=round(v['low'],2) if priced and v.get('low') is not None else None,
-                    hi=round(v['high'],2) if priced and v.get('high') is not None else None,
+        priced = v.get('market') is not None
+        out[k]=dict(pct=round(v['market'],2) if priced else None, devs=v.get('developments'),
+                    pairs=v.get('pairs'),
+                    lo=round(v['low'],2) if v.get('low') is not None else None,
+                    hi=round(v['high'],2) if v.get('high') is not None else None,
                     name=v.get('label') or names.get(k,k))
     return out
 
@@ -292,7 +305,8 @@ def main():
                             # growthTaperFrom / growthMinMonths: no time adjustment under 3 months, the rate tapering in
                             # to the full figure at 6 months (Shawn, 2026-09-23 — replaces the 6-month cliff)
                             growthAnnualPct=3.0, growthTaperFrom=3, growthMinMonths=6, maxCompMonths=18,
-                            features=FEATURES, inter=_calibration(), facingIsland=island_facing()),
+                            features=FEATURES, inter=_calibration(), facingIsland=island_facing(),
+                            floorCurve=FLOOR_CURVE),
              developments=sorted(index, key=lambda x:(x['name'] or '')))
     json.dump(idx, open(os.path.join(OUT,'index.json'),'w'), separators=(',',':'))
     json.dump({k:v for k,v in CLASSINDEX.items()}, open(os.path.join(OUT,'class-index.json'),'w'), separators=(',',':'))

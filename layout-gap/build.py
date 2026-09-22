@@ -36,7 +36,9 @@ def norm(s): return "".join(c for c in (s or "").lower() if c.isalnum())
 
 # ---------------------------------------------------------------- constants
 FZONE = json.load(open(os.path.join(ROOT,'layout-study','out','floor-zones.json')))
-ISLAND_UPPER = round(statistics.median([v['upper'] for v in FZONE.values() if v.get('upper')]), 3)
+_UPPERS = [v['upper'] for v in FZONE.values() if v.get('upper')]
+ISLAND_UPPER = round(statistics.median(_UPPERS), 3)
+ISLAND_UPPER_DEVS = len(_UPPERS)
 LOW_MULT = 1.87; LOW_TOP = 4
 FEAT = json.load(open(os.path.join(ROOT,'layout-study','out','feature-summary.json')))
 FEATURES = {}
@@ -98,18 +100,31 @@ PERCLASS, CLASSINDEX = _load_classes()
 
 # ---------------------------------------------------------------- facing premiums per dev
 def facing_premiums(devid):
-    """facingType -> resale-market % vs the project baseline, averaged across bands."""
+    """facingType -> resale-market % vs the project baseline, with the evidence behind it.
+
+    Shawn, 2026-09-23: "aren't you supposed to give a range for the floor and adjustment? you can
+    then put at the description 'based on xxx number of transactions'." The study already measures
+    a low and a high and counts the pairs; the shard was throwing both away and shipping the point
+    alone, so the page had no way to say how firm a figure was. Now it carries pct / pairs / lo / hi.
+    """
     p=os.path.join(FRES_DIR, devid+'.json')
-    if not os.path.exists(p): return None, None
+    if not os.path.exists(p): return None, None, None
     fr=json.load(open(p)); base=fr.get('baseline')
     # Band `all`, market DIRECT only — the rule in CLAUDE.md ("band `all`, market direct only").
     # The earlier build averaged every band and fell back to the chained market figure.
-    prem={}
+    prem={}; stats={}
     for r in ((fr.get('bands') or {}).get('all') or []):
         v = r.get('marketDirect')
-        if v is not None: prem[r['facing']] = round(v, 2)
-    if base is not None: prem[base]=0.0
-    return base, prem
+        if v is None: continue
+        prem[r['facing']] = round(v, 2)
+        lo, hi = r.get('marketLo'), r.get('marketHi')
+        stats[r['facing']] = dict(pct=round(v,2), pairs=r.get('marketDirectPairs'),
+                                  lo=None if lo is None else round(lo,2),
+                                  hi=None if hi is None else round(hi,2))
+    if base is not None:
+        prem[base]=0.0
+        stats[base]=dict(pct=0.0, pairs=None, lo=None, hi=None, baseline=True)
+    return base, prem, stats
 
 # stack -> facingType, from the facings file (for linking a caveat's stack to a facing)
 def stack_facing(devid):
@@ -134,29 +149,39 @@ def facing_names(devid):
 
 # ---------------------------------------------------------------- island facing table
 # For a development the facing study has not read, the agent is ASKED for the facing (Shawn,
-# 2026-09-22: "if you dont have facing you SHOULD ask for it from the agent"). The answer is
-# priced with this table: each facingType's median across the studied developments, band `all`,
-# market DIRECT only, all measured against the same baseline (quiet|blocked-own = 0). Measured
-# elsewhere on other pairs, never fitted to the pairs being priced. Fewer than 2 developments =
-# no island figure (listed so the agent can still answer, but not priced).
+# 2026-09-22: "if you dont have facing you SHOULD ask for it from the agent"). The answer is priced
+# with the facing study's OWN published market table, stack-study/data/facing-market.json — the same
+# file and the same figures the Stack Analysis page prints.
+#
+# It used to be re-derived here as a plain median of each development's band-`all` figure, and it had
+# DRIFTED: this table said road + blocked by another development was -2.52% where the study publishes
+# -1.56%, and expressway (buffered) -5.20% against the study's -2.60%. Shawn caught the gap from the
+# other side on 2026-09-23, asking why a -1.23% premium was printing as -1.2%. A page that re-computes
+# a study's headline figure is a page that can disagree with it, so it reads it instead.
+#
+# The screen is unchanged: fewer than 2 developments = listed so the agent can still answer, but not
+# priced. lo/hi are the study's own range (the union of the developments' bootstrap intervals).
 ISLAND_BASE = 'quiet|blocked-own'
+MARKET_FACING = os.path.join(ROOT,'launch-picker','stack-study','data','facing-market.json')
 def island_facing():
-    acc=collections.defaultdict(list); names={}
-    for f in glob.glob(os.path.join(FRES_DIR,'*.json')):
-        fr=json.load(open(f))
-        if fr.get('baseline')!=ISLAND_BASE: continue
-        for r in ((fr.get('bands') or {}).get('all') or []):
-            if r.get('marketDirect') is not None and r['facing']!=ISLAND_BASE:
-                acc[r['facing']].append(r['marketDirect'])
+    names={}
     for f in glob.glob(os.path.join(FAC_DIR,'*.json')):
         try: st=json.load(open(f)).get('stacks') or {}
         except Exception: continue
         for v in st.values():
             if isinstance(v,dict) and v.get('facingType') and v.get('facingDisplay'):
                 names.setdefault(v['facingType'], v['facingDisplay'])
-    out={ISLAND_BASE: dict(pct=0.0, devs=None, name=names.get(ISLAND_BASE,'Blocked by your own development'), baseline=True)}
-    for k,vs in acc.items():
-        out[k]=dict(pct=round(statistics.median(vs),2) if len(vs)>=2 else None, devs=len(vs), name=names.get(k,k))
+    out={ISLAND_BASE: dict(pct=0.0, devs=None, pairs=None, lo=None, hi=None,
+                           name=names.get(ISLAND_BASE,'Blocked by your own development'), baseline=True)}
+    mkt=(json.load(open(MARKET_FACING)).get('facings') or {})
+    for k,v in mkt.items():
+        if k==ISLAND_BASE: continue
+        devs=v.get('developments')
+        priced = v.get('market') is not None and (devs or 0) >= 2
+        out[k]=dict(pct=round(v['market'],2) if priced else None, devs=devs, pairs=v.get('pairs'),
+                    lo=round(v['low'],2) if priced and v.get('low') is not None else None,
+                    hi=round(v['high'],2) if priced and v.get('high') is not None else None,
+                    name=v.get('label') or names.get(k,k))
     return out
 
 # ---------------------------------------------------------------- DSI (data.json), by name
@@ -206,14 +231,22 @@ def main():
             "select floor,stack,sqft,price,caveat_date,sale_type from transactions "
             "where development_id=? and sale_type in ('resale','sub_sale') and exclusion_flags='[]'",(devid,)))
         recent=[r for r in rows if days_ago(r[4])<=CUTOFF_DAYS]
-        base_f, fprem = facing_premiums(devid)
+        base_f, fprem, fstats = facing_premiums(devid)
         sf = stack_facing(devid)
         # floor rate
         up = FZONE.get(name.upper()) if name else None
         if up and up.get('upper'):
-            frate=dict(upper=up['upper'], lowMult=LOW_MULT, lowTop=LOW_TOP, source='own', pairs=up.get('upper_pairs'))
+            # pooled = the same development refitted over ALL floors; the published rate is the
+            # L5+ fit with the low-floor multiplier on top. Both are measured here, so the page can
+            # show the spread between them rather than quoting one figure with no evidence.
+            frate=dict(upper=up['upper'], lowMult=LOW_MULT, lowTop=LOW_TOP, source='own',
+                       pairs=up.get('upper_pairs'), pooled=up.get('pooled'),
+                       pooledPairs=up.get('pooled_pairs'), ownMult=up.get('own_mult'),
+                       lowPairs=up.get('low_pairs'), multSource=up.get('mult_source'))
         else:
-            frate=dict(upper=ISLAND_UPPER, lowMult=LOW_MULT, lowTop=LOW_TOP, source='island', pairs=None)
+            frate=dict(upper=ISLAND_UPPER, lowMult=LOW_MULT, lowTop=LOW_TOP, source='island',
+                       pairs=None, devs=ISLAND_UPPER_DEVS, pooled=None, pooledPairs=None,
+                       ownMult=None, lowPairs=None, multSource='island')
         dsi = DSI_BY_NAME.get(norm(name)) if name else None
         # index row (always)
         index.append(dict(id=devid, name=name, region=region, district=dist, segment=seg,
@@ -245,7 +278,7 @@ def main():
             tx.append([fl, k, round(sq), int(pr), ymd_int(cd), 0 if sty=='resale' else 1, sf.get(k)])
         shard=dict(id=devid, name=name, region=region, district=dist, tenure=ttype, tenureYears=tyrs,
                    leaseFrom=lcom, top=top, units=units, mrt=mrt, mrtM=mrtd,
-                   floorRate=frate, baselineFacing=base_f, facingPremiums=fprem,
+                   floorRate=frate, baselineFacing=base_f, facingPremiums=fprem, facingStats=fstats,
                    facingNames=facing_names(devid) or None, stackFacing=sf or None,
                    pg=dev_attrs(name),
                    dsi=(dict(macro=dsi.get('macro'), area=dsi.get('area'),

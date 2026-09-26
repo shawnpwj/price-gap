@@ -421,15 +421,19 @@ async function main() {
     generatedAt: payload.generatedAt, window: payload.window, method: payload.method,
     screens: payload.screens, constants: payload.constants, retired: payload.retired,
     counts: payload.counts,
-    // name -> [slug, district, region, {bed: [judgement gap%, measured gap%]}]. Small
-    // enough to load with the panel, so a verdict shows before the shard arrives.
+    // name -> [slug, district, region, {bed: gap%}, {bed: verdict}]. Small enough to load
+    // with the panel, so a verdict shows before the shard arrives. The verdict is carried
+    // as-is, not re-derived from the rounded gap%: a gap that rounds to exactly 3 sits on
+    // the band edge, and "not assessable" has no gap to read at all. The Shortlist's Price
+    // Gap estimate filter reads it for every development at once.
     dev: {} as Record<string, any>,
   };
   for (const d of developments) {
     const slug = slugOf(d.n);
     const heads: Record<string, number[]> = {};
-    for (const [bed, b] of Object.entries<any>(d.beds)) heads[bed] = b.pg.pct;
-    index.dev[d.n] = [slug, d.d, d.r, heads];
+    const verdicts: Record<string, string> = {};
+    for (const [bed, b] of Object.entries<any>(d.beds)) { heads[bed] = b.pg.pct; verdicts[bed] = b.pg.v; }
+    index.dev[d.n] = [slug, d.d, d.r, heads, verdicts];
     await fs.writeFile(path.join(siteDir, `${slug}.json`), JSON.stringify(d));
   }
   await fs.writeFile(path.join(siteDir, "index.json"), JSON.stringify(index));

@@ -695,7 +695,10 @@ def foyer_block():
 # counts transactions and developments -- with the developments behind one click, not listed.
 HERO = [('one more bedroom (same package)', 'Extra bedroom'),
         ('study -> bedroom', 'Study made a bedroom'),
-        ('Extra bathroom', 'Extra bathroom'),
+        # Shawn, 2026-09-28: the bathroom is two rows -- every 2BR reading is 2BR1B -> 2BR2B, and a
+        # third bathroom on a 4BR is worth about half as much (6.7% against 14.8%).
+        ('Extra bathroom', 'Extra bathroom, 2BR'),
+        ('Extra bathroom (4BR)', 'Extra bathroom, 4BR'),
         ('Study', 'Study'),
         ('Study + yard', 'Study + yard'),
         ('WC', 'Extra WC'),

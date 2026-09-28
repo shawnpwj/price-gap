@@ -702,6 +702,9 @@ HERO = [('one more bedroom (same package)', 'Extra bedroom'),
         ('Study', 'Study'),
         ('Study + yard', 'Study + yard'),
         ('WC', 'Extra WC'),
+        # Shawn, 2026-09-28: "i want shelter to be published as well" -- the shelter alone, where
+        # it is the only thing that differs (every other shelter comes bundled with a WC and yard)
+        ('Household shelter', 'Household shelter'),
         ('WC + yard', 'WC + yard + service room')]
 
 

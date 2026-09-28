@@ -48,7 +48,10 @@ FLOOR_CURVE = [dict(sqft=r['sqft'], rate=r['rate'], fairLo=r['fair_low'], fairHi
 _UPPERS = [v['upper'] for v in FZONE.values() if v.get('upper')]
 ISLAND_UPPER = round(statistics.median(_UPPERS), 3)
 ISLAND_UPPER_DEVS = len(_UPPERS)
-LOW_MULT = 1.87; LOW_TOP = 4
+# THE LOW-FLOOR ZONE IS READ FROM THE FLOOR STUDY, never typed (2026-09-28: it was 1.87 here
+# while the study, cleaned of developer sell-downs, said 1.91). LOW_TOP is the last floor a
+# low-zone step starts FROM: L1-4, so the step into L5 is the last one multiplied.
+LOW_MULT = _RFB['_lowFloor']['multiplier']; LOW_TOP = _RFB['_lowFloor']['lowZoneTop']
 FEAT = json.load(open(os.path.join(ROOT,'layout-study','out','feature-summary.json')))
 FEATURES = {}
 def _mid(v):

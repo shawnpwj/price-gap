@@ -25,7 +25,15 @@ rule throws away, which share no transaction with it. See layout-study/src/adjus
 
 Reads the layout-study outputs. Nothing here is computed; this is a window onto that repo.
 """
-import json, os, html
+import json, os, html, statistics
+
+# THE LOW-FLOOR ZONE, READ FROM THE FLOOR STUDY (2026-09-28). This page used to type 1.87 and
+# "the first four floors" into its prose while the study -- cleaned of developer sell-downs --
+# moved to 1.91, and the zone was read one floor short everywhere: the study measures steps that
+# START on L1-4, so the step into L5 is multiplied too. Shawn: "show L1-5".
+_RFB_LOW = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..',
+                       'launch-picker', 'config', 'resale-floor-benchmark.json')))['_lowFloor']
+LOW_MULT, LOW_TOP, LOW_N = _RFB_LOW['multiplier'], _RFB_LOW['lowZoneTop'], _RFB_LOW['nProjects']
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 STUDY = os.path.abspath(os.path.join(HERE, '..', '..', 'layout-study'))
@@ -563,8 +571,8 @@ def floor_zone_table():
            'and until 2026-09-20 it did that with <b>one flat rate</b> compounded from wherever '
            'the sale sat. The <a class="xref" href="launch/index.html#floor">resale floor '
            'study</a> says that is wrong twice over. First, the ladder '
-           'is not flat: the <b>first four floors cost about 1.87&times;</b> the rate the same '
-           'building sustains above L5 (150 projects, one vote each). Second &mdash; and this is '
+           f'is not flat: <b>every step up to L{LOW_TOP + 1} costs about {LOW_MULT:.2f}&times;</b> the rate the same '
+           f'building sustains from L{LOW_TOP + 1} up ({LOW_N} projects, one vote each). Second &mdash; and this is '
            'the larger error &mdash; the rate being compounded was fitted on <b>every</b> '
            'same-stack pair in the development, low floors included, so it was already a blend '
            'of the two zones. Both are now fixed: the base rate is refitted on L5-and-above '
@@ -587,21 +595,27 @@ def floor_zone_table():
     if owns:
         out.append(f'<p class="expl"><b>Each development&rsquo;s own low-floor ratio was measured '
                    f'and then deliberately not used.</b> {len(owns)} of {len(FZONE)} have enough '
-                   f'pairs inside L1&ndash;4 to produce one, and they come out at '
+                   f'pairs inside L1&ndash;{LOW_TOP + 1} to produce one, and they come out at '
                    + ', '.join(f'<b>{z["own_mult"]:.2f}&times;</b> ({html.escape(n.title())}, '
                                f'{z["low_pairs"]} pairs)' for n, z in
                                sorted(owns, key=lambda kv: -kv[1]['own_mult']))
                    + f'. Those are not coefficients, they are coin tosses: the individual pairs '
                    f'behind them run from &minus;4.5% to +16.4% <i>per floor</i>. The island '
                    f'figure exists precisely because one building cannot carry this estimate, so '
-                   f'1.87&times; is what is applied everywhere and the local reads are kept only '
+                   f'{LOW_MULT:.2f}&times; is what is applied everywhere and the local reads are kept only '
                    f'as an audit trail.</p>')
+    # A ROUND, COMPUTED ILLUSTRATION. The prose used to quote a Riverfront #01 -> #05 lift typed in
+    # by hand, which went stale the moment the worked example changed.
+    _ups = [z['upper'] for z in FZONE.values() if z.get('upper')]
+    _r = statistics.median(_ups) / 100 if _ups else 0.003
+    _flat = 1_000_000 * ((1 + _r) ** 4 - 1)
+    _zone = 1_000_000 * ((1 + _r * LOW_MULT) ** 4 - 1)
     out.append('<p class="expl"><b>What it changes: very little, and that is worth saying '
-               'plainly.</b> 1.87&times; multiplies the <i>rate</i>, not the price. On the '
-               'Riverfront example above, moving a #01 sale up to #05 lifts the base by '
-               '<b>$16,948</b> where the old flat ladder lifted it by <b>$10,922</b> &mdash; '
-               'about $6,000 on a $172,000 figure, and only on pairs that reach down into those '
-               'floors. The matched-pair figures do not move at all, because both sides of a '
+               f'plainly.</b> {LOW_MULT:.2f}&times; multiplies the <i>rate</i>, not the price. '
+               f'Moving a $1,000,000 sale from #01 to #05 at the market-wide {_r*100:.3f}% a '
+               f'floor lifts it by <b>{_money(_zone)}</b> where a flat ladder would lift it by '
+               f'<b>{_money(_flat)}</b> &mdash; and only pairs that reach down into those floors '
+               'feel it. The matched-pair figures do not move at all, because both sides of a '
                'matched pair are on the same floor and nothing is adjusted.</p>')
     return "".join(out)
 
@@ -796,11 +810,11 @@ def worked_examples(only=None, skip=0):
                     terms = []
                     if nlow:
                         terms.append(f'(1&nbsp;+&nbsp;{st["rate"]}%&nbsp;&times;&nbsp;'
-                                     f'{st.get("low_mult", 1.87)})<sup>{nlow}</sup>')
+                                     f'{st.get("low_mult", LOW_MULT)})<sup>{nlow}</sup>')
                     if nhigh:
                         terms.append(f'(1&nbsp;+&nbsp;{st["rate"]}%)<sup>{nhigh}</sup>')
                     zone = (f' <span class="lsub lsub2">&mdash; low floors at '
-                            f'{st.get("low_mult", 1.87)}&times;</span>') if nlow else ''
+                            f'{st.get("low_mult", LOW_MULT)}&times;</span>') if nlow else ''
                     lines.append(f'<li><span class="wk">floor</span> #{st["frm"]:02d} to #{st["to"]:02d} '
                                  f'&mdash; {_money(st["before"])} &times; '
                                  f'{" &times; ".join(terms) or "1"} = <b>{_money(st["after"])}</b>'

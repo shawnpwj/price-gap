@@ -375,12 +375,13 @@ export function midSize(facts: any, bed: string): { sqft: number; source: "trans
 export interface Data {
   dsi: any[]; byName: Map<string, any>;
   psfHist: Record<string, any>; base: Record<string, any>; mix: Record<string, any>;
+  units: Record<string, { units: number; source: string | null }>;
   stations: any[]; overrides: Record<string, any>; details: Record<string, any>;
   gls: Map<string, any>; glsArr: any[]; cutoff: string; cutoffs: Record<number, string>;
 }
 
 export async function loadData(): Promise<Data> {
-  const [dsiRaw, psfRaw, baseRaw, mixRaw, mrtRaw, detailRaw, glsRaw, overrideRaw] = await Promise.all([
+  const [dsiRaw, psfRaw, baseRaw, mixRaw, mrtRaw, detailRaw, glsRaw, overrideRaw, unitsRaw] = await Promise.all([
     fs.readFile(D("dsi-index.json"), "utf8"),
     fs.readFile(D("psf-history.json"), "utf8"),
     fs.readFile(D("pricegap-base.json"), "utf8"),
@@ -392,6 +393,12 @@ export async function loadData(): Promise<Data> {
     // projectedPsf — the launch-pricing fallback when a project has not sold a unit yet.
     fs.readFile(D("gls-forward.json"), "utf8"),
     fs.readFile(D("pricegap-overrides.json"), "utf8").catch(() => "{}"),
+    // THE UNIT COUNT OF RECORD, written by property-analyzer's maps:build (shared/units-of-record.js).
+    // Read FIRST so a comparable's size and the <200-unit screen quote the same total the MAPS
+    // page does. unit-mix-db's totalUnits is a RealSmart schedule sum and undercounts — it had
+    // D'Leedon at 1,553 (1,715 built) and Wing Fong Court at 88 (218), and 88 is below the screen,
+    // so a real 218-unit comparable was being rejected as too small. (2026-09-29)
+    fs.readFile(D("units-of-record.json"), "utf8").catch(() => '{"units":{}}'),
   ]);
   const dsi = JSON.parse(dsiRaw).projects as any[];
   const mrtAll = JSON.parse(mrtRaw);
@@ -405,6 +412,7 @@ export async function loadData(): Promise<Data> {
     psfHist: JSON.parse(psfRaw).projects,
     base: JSON.parse(baseRaw).projects,
     mix: JSON.parse(mixRaw).developments,
+    units: JSON.parse(unitsRaw).units || {},
     // MRT ONLY — an LRT halt is not rail access for this purpose. Shawn, 2026-09-10: "i want
     // you to look at MRT only dont consider LRT an MRT at all."
     //
@@ -517,7 +525,7 @@ export function factsFor(data: Data, name: string, node: any, bed: string, widen
     top, name, lat: node.lat, lng: node.lng,
     district: node.district, region: node.region,
     tenure,
-    units: ov.units ?? data.mix[name]?.totalUnits ?? det?.totalUnits ?? null,
+    units: ov.units ?? data.units[String(name).toUpperCase().trim()]?.units ?? data.mix[name]?.totalUnits ?? det?.totalUnits ?? null,
     // Transacted medians first (measured, and complete for anything that has traded),
     // crawled unit-mix ranges as the fallback.
     sizes: b.sizes || null,

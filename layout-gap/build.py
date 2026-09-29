@@ -297,8 +297,10 @@ def main():
                    floorRate=frate, baselineFacing=base_f, facingPremiums=fprem, facingStats=fstats,
                    facingNames=facing_names(devid) or None, stackFacing=sf or None,
                    pg=dev_attrs(name),
-                   dsi=(dict(macro=dsi.get('macro'), area=dsi.get('area'),
-                             bedrooms=dsi.get('bedrooms'), defaultBedroom=dsi.get('defaultBedroom'),
+                   # Only what layout-price-gap.html reads. The full MAPS macro/area records rode along
+                   # here — 18 MB of the 27 MB of shards — were never read by the page, and went stale
+                   # against data.json between builds (2026-09-29).
+                   dsi=(dict(bedrooms=dsi.get('bedrooms'), defaultBedroom=dsi.get('defaultBedroom'),
                              unitSizes=dsi.get('unitSizes')) if dsi else None),
                    layoutClasses=PERCLASS.get(devid), nearby=nearby, tx=tx)
         json.dump(shard, open(os.path.join(DEVDIR, devid+'.json'),'w'), separators=(',',':'))

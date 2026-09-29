@@ -403,7 +403,14 @@ export async function loadData(): Promise<Data> {
   const dsi = JSON.parse(dsiRaw).projects as any[];
   const mrtAll = JSON.parse(mrtRaw);
   const glsRaw2 = JSON.parse(glsRaw);
-  const glsArr = (Array.isArray(glsRaw2) ? glsRaw2 : glsRaw2.sites || []) as any[];
+  const unitsOfRecord = JSON.parse(unitsRaw).units || {};
+  // A GLS row carries the sheet's TENDER yield; the unit count of record wins wherever it knows
+  // the development. Thomson Reserve's panel said 1,240 (the sheet) while the MAPS card and the
+  // Launch Day Strategy tab said the developer's 1,268 (2026-09-29).
+  const glsArr = ((Array.isArray(glsRaw2) ? glsRaw2 : glsRaw2.sites || []) as any[]).map((g) => {
+    const rec = unitsOfRecord[String(g.devName || g.displayName || "").toUpperCase().trim()]?.units;
+    return rec > 0 ? { ...g, units: rec } : g;
+  });
   const cutoffs: Record<number, string> = {};
   for (const m of [...new Set([...SUBJECT_WINDOW_LADDER, ...WORKUP_WINDOW_LADDER])]) cutoffs[m] = monthsAgoFrom(m);
   return {
@@ -412,7 +419,7 @@ export async function loadData(): Promise<Data> {
     psfHist: JSON.parse(psfRaw).projects,
     base: JSON.parse(baseRaw).projects,
     mix: JSON.parse(mixRaw).developments,
-    units: JSON.parse(unitsRaw).units || {},
+    units: unitsOfRecord,
     // MRT ONLY — an LRT halt is not rail access for this purpose. Shawn, 2026-09-10: "i want
     // you to look at MRT only dont consider LRT an MRT at all."
     //

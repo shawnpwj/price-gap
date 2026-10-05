@@ -3042,7 +3042,8 @@ at resale.</p>
       <li><b>same development</b>, same bedroom count</li>
       <li><b>same floor</b> and <b>same facing</b></li>
       <li>sold within <b>six months</b> of each other</li>
-      <li><b>resale only</b></li></ul></div>
+      <li>an <b>entrance foyer</b> on both or neither</li>
+      <li><b>resale or sub-sale</b>, never one of each, never a new sale</li></ul></div>
     <div class="card"><h3>How a layout is identified</h3><ul>
       <li>the <b>stack schedule</b> printed on each floor plan</li>
       <li>stack <b>and</b> floor range &mdash; a stack can change layout up the tower</li></ul></div>

@@ -261,7 +261,9 @@ def feature_summary_table():
         if not b: continue
         p = b['pct']
         rng = f'{p[0]:.1f}% to {p[2]:.1f}%' if p[0] != p[2] else 'one development'
-        r.append(f'<tr><th>{name}</th>'
+        note = ' &middot; '.join(x for x in (PROV if b.get('provisional') else '',
+                                             NO_STACK.get(key, '')) if x)
+        r.append(f'<tr><th>{name}' + (f'<span class="lsub">{note}</span>' if note else '') + '</th>'
                  f'<td class="num big">+{p[1]:.1f}%</td>'
                  f'<td class="num">{_money(b["quantum"][1])}</td>'
                  f'<td class="num quiet">{rng}</td>'
@@ -707,19 +709,36 @@ def foyer_block():
 # banner at the top showing the second bathroom etc, I think i would like everything to be there,
 # like Extra Bedroom, Extra Study, etc. ALl should be above."* And: never "layout pairs" -- a client
 # counts transactions and developments -- with the developments behind one click, not listed.
-HERO = [('one more bedroom (same package)', 'Extra bedroom'),
+HERO = [
+        # Shawn, 2026-10-05: split Study, Shelter, Extra bedroom and Extra WC by bedroom count,
+        # as the bathroom was on 2026-09-28. feature_rows writes them as '<feature> · <n>BR'.
+        ('one more bedroom (same package) · 2BR', 'Extra bedroom, 2BR &rarr; 3BR'),
+        ('one more bedroom (same package) · 3BR', 'Extra bedroom, 3BR &rarr; 4BR'),
         ('study -> bedroom', 'Study made a bedroom'),
         # Shawn, 2026-09-28: the bathroom is two rows -- every 2BR reading is 2BR1B -> 2BR2B, and a
-        # third bathroom on a 4BR is worth about half as much (6.7% against 14.8%).
+        # third bathroom on a 4BR is a different room at a different price.
         ('Extra bathroom', 'Extra bathroom, 2BR'),
         ('Extra bathroom (4BR)', 'Extra bathroom, 4BR'),
-        ('Study', 'Study'),
+        ('Study · 2BR', 'Study, 2BR'),
+        ('Study · 3BR', 'Study, 3BR'),
         ('Study + yard', 'Study + yard'),
-        ('WC', 'Extra WC'),
+        ('WC · 3BR', 'Extra WC, 3BR'),
+        ('WC · 4BR', 'Extra WC, 4BR'),
         # Shawn, 2026-09-28: "i want shelter to be published as well" -- the shelter alone, where
         # it is the only thing that differs (every other shelter comes bundled with a WC and yard)
-        ('Household shelter', 'Household shelter'),
+        ('Household shelter · 2BR', 'Household shelter, 2BR'),
+        ('Household shelter · 3BR', 'Household shelter, 3BR'),
         ('WC + yard', 'WC + yard + service room')]
+
+# A row whose readings are all adjusted pairs has never faced the exact-vs-adjusted test.
+# Shawn, 2026-10-05: mark it provisional beside the figure.
+PROV = '<span class="lwarn">provisional</span>'
+
+# The WC + yard + service room package already carries a household shelter at most of its
+# developments, so the shelter row must never be added on top of it.
+NO_STACK = {'WC + yard': 'shelter already in it',
+            'Household shelter · 2BR': 'never on top of WC + yard',
+            'Household shelter · 3BR': 'never on top of WC + yard'}
 
 
 def dev_list(devs):
@@ -744,7 +763,8 @@ def hero_block():
             f'<div class="w">{words}</div>'
             f'<div class="g">{_money(b["quantum"][1])}</div>'
             f'<div class="m">{b.get("transactions", 0):,} transactions</div>'
-            f'<div class="m">{dev_list(b["developments"])}</div></div>')
+            f'<div class="m">{dev_list(b["developments"])}</div>'
+            + (f'<div class="m">{PROV}</div>' if b.get('provisional') else '') + '</div>')
     if not cells: return ''
     tx = sum((F.get(k) or {}).get('transactions', 0) for k, _ in HERO)
     devs = sorted({d for k, _ in HERO for d in ((F.get(k) or {}).get('developments') or [])})
@@ -758,7 +778,10 @@ def hero_block():
             f'<p class="vline">{tx:,} transactions &middot; {len(devs)} developments</p>'
             '</div></div>'
             '<p class="call">Two real resales in the same development, <b>same floor and '
-            'facing</b>. The price gap is the room. Nothing is modelled.</p>'
+            'facing</b>. The price gap is the room. Nothing is modelled. Rows marked '
+            '<span class="lwarn">provisional</span> have no same-floor, same-facing pair yet: '
+            'their sales are moved to one floor and facing with measured figures, and nothing '
+            'has tested them.</p>'
             '</div>')
 
 

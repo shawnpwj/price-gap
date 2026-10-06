@@ -278,7 +278,10 @@ async function main() {
     data.overrides[target] = {
       ...(data.overrides[target] || {}),
       tenure: { raw: `99 yrs lease commencing from ${y}`, type: "LH", years: 99, leaseStart: y },
-      units: data.overrides[target]?.units ?? site.units ?? undefined,
+      // The GLS sheet holds a tender estimate (One Chuan Grove: 1,055); the
+      // hand-verified unit count of record (1,056) must win here too. This is
+      // written into an override, which factsFor reads before data.units.
+      units: data.overrides[target]?.units ?? data.units[target]?.units ?? site.units ?? undefined,
       _tenureFromGls: true, _awardEstimated: !String(site.awardDate || "").match(/\b20\d{2}\b/),
     };
     process.stderr.write(`  ~ ${target}: no tenure of its own, taking lease start ${y} from the GLS award date\n`);
@@ -309,7 +312,7 @@ async function main() {
       ...(data.overrides[gname] || {}),
       tenure: ovTenure
         ?? { raw: `99 yrs lease commencing from ${awardYear}`, type: "LH", years: 99, leaseStart: awardYear },
-      units: site.units ?? null,
+      units: data.overrides[gname]?.units ?? data.units[gname]?.units ?? site.units ?? null,
       top: data.overrides[gname]?.top,
       _glsOnly: true,
       _awardEstimated: !ovTenure && !String(site.awardDate || "").match(/\b20\d{2}\b/),

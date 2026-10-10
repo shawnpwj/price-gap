@@ -38,7 +38,9 @@ DEVDIR = os.path.join(OUT, 'dev')
 FAC_DIR = os.path.join(ROOT, 'launch-picker', 'stack-study', 'facings')
 FRES_DIR = os.path.join(ROOT, 'launch-picker', 'stack-study', 'results')
 
-TODAY = datetime.date(2026, 10, 10)   # full rebuild with the Sep-Oct REALIS top-up + EC pull (Shawn, 2026-10-10: "Rebuild everything")
+# as-at date = the day of the build (weekly REALIS refresh, 2026-10-10); pin a past cut with LAYOUT_GAP_ASAT=YYYY-MM-DD
+TODAY = (datetime.date.fromisoformat(os.environ['LAYOUT_GAP_ASAT']) if os.environ.get('LAYOUT_GAP_ASAT')
+         else datetime.date.today())
 CUTOFF_DAYS = 550          # 1.5 years — older comps are never considered (Shawn 2026-09-21)
 
 def ymd_int(s): return int(s[:4]) * 10000 + int(s[5:7]) * 100 + int(s[8:10])

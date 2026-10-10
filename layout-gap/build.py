@@ -19,6 +19,20 @@ import json, os, sqlite3, glob, math, statistics, collections, datetime
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 DB   = os.path.join(ROOT, 'layout-study', 'data', 'layout-study.db')
+EC_DB = os.path.join(ROOT, 'layout-study', 'data', 'layout-study-ec.db')   # executive condominiums, kept apart
+
+def connect():
+    """The condo database with the EC one attached, read through two temp views so every query below
+    sees both. ECs live in their own file so no layout-study script ever reads them (2026-10-10)."""
+    db=sqlite3.connect(DB)
+    if os.path.exists(EC_DB):
+        db.execute("attach database ? as ec",(EC_DB,))
+        db.execute("create temp view all_dev as select * from main.developments union all select * from ec.developments")
+        db.execute("create temp view all_tx as select * from main.transactions union all select * from ec.transactions")
+    else:
+        db.execute("create temp view all_dev as select * from main.developments")
+        db.execute("create temp view all_tx as select * from main.transactions")
+    return db
 OUT  = os.path.join(ROOT, 'kya-maps-calculator', 'layout-gap')
 DEVDIR = os.path.join(OUT, 'dev')
 FAC_DIR = os.path.join(ROOT, 'launch-picker', 'stack-study', 'facings')
@@ -216,6 +230,52 @@ for k,v in (PGA.items() if isinstance(PGA,dict) else enumerate(PGA)):
         PGA_LIST.append(v)
 
 PGA_BY_NAME = {norm(v['n']): v for v in PGA_LIST if v.get('n')}
+
+# ---------------------------------------------------------------- planning area (URA MP2025 subzone rings)
+# Shawn, 2026-10-10: "my assessment is for example treasure at tampines, we could look at distance from
+# Tampines West MRT (Tapestry, Santorini stretch), or actually distance from Tampines MRT (CityLife,
+# Trilliant) ... Why are you using all the way to tanah merah". A 2 km circle from Tampines Lane reached
+# south into Bedok and stopped short of Tampines West. So the neighbours are drawn from the SAME PLANNING
+# AREA at any distance, and other areas only within 2 km and only to fill ("planning area is fine").
+_PA = json.load(open(os.path.join(ROOT,'property-analyzer','data','planning-areas.json')))['parts']
+def _pip(x,y,ring):
+    c=False; j=len(ring)-1
+    for i in range(len(ring)):
+        xi,yi=ring[i][0],ring[i][1]; xj,yj=ring[j][0],ring[j][1]
+        if (yi>y)!=(yj>y) and x<(xj-xi)*(y-yi)/(yj-yi)+xi: c=not c
+        j=i
+    return c
+def planning_area(lat,lng):
+    if lat is None or lng is None: return None
+    for part in _PA:
+        b=part['bbox']
+        if not (b[0]<=lng<=b[2] and b[1]<=lat<=b[3]): continue
+        r=part['rings']
+        if r and _pip(lng,lat,r[0]) and not any(_pip(lng,lat,h) for h in r[1:]): return part['area']
+    return None
+for _v in PGA_LIST: _v['_pa']=planning_area(_v['lat'],_v['lng'])
+NEAR_OTHER_M = 2000      # another planning area counts only inside this, and only to fill
+NEAR_KEEP = 40
+
+def nearby_for(name, lat, lng, name2id):
+    """Candidate neighbours, same planning area first (any distance), then other areas within 2 km.
+    Each carries `area` and `sameArea` so the page can fill from the other areas only when it must."""
+    if not (lat and lng): return [], None
+    pa = planning_area(lat,lng)
+    same, other = [], []
+    for v in PGA_LIST:
+        if v.get('n') and norm(v['n'])==norm(name): continue
+        d=haversine(lat,lng,v['lat'],v['lng'])
+        sa = pa is not None and v['_pa']==pa
+        if not sa and d>NEAR_OTHER_M: continue
+        allpsf=(v.get('beds') or {}).get('All') or {}
+        (same if sa else other).append(dict(name=v['n'], id=name2id.get(norm(v['n'])), dist=round(d),
+                           region=v.get('r'), tenure=v.get('t'), leaseFrom=v.get('ls'),
+                           top=v.get('top'), units=v.get('u'), psf=allpsf.get('psf'),
+                           mrtMin=(v.get('mrt') or {}).get('min'), mrtS=(v.get('mrt') or {}).get('s'),
+                           area=v['_pa'], sameArea=sa, lat=round(v['lat'],5), lng=round(v['lng'],5)))
+    same.sort(key=lambda x:x['dist']); other.sort(key=lambda x:x['dist'])
+    return (same+other)[:NEAR_KEEP], pa
 def dev_attrs(name):
     """The inter-development attributes, as the Price Gap engine sees them."""
     v = PGA_BY_NAME.get(norm(name)) if name else None
@@ -230,12 +290,14 @@ def haversine(a,b,c,d):
     return 2*R*math.asin(math.sqrt(math.sin(p(c-a)/2)**2+math.cos(p(a))*math.cos(p(c))*math.sin(p(d-b)/2)**2))
 
 # ---------------------------------------------------------------- build
-def main():
+def main(only=None):
+    """only = a set of development ids: write just those shards and merge their rows into the index
+    already on disk, leaving its constants and every other shard as published."""
     os.makedirs(DEVDIR, exist_ok=True)
-    db=sqlite3.connect(DB)
+    db=connect()
     devs={r[0]:r for r in db.execute(
         "select development_id,canonical_name,lat,lng,district,region,segment,tenure_type,"
-        "tenure_years,lease_commencement,top_year,unit_count,mrt_station,mrt_distance_m from developments")}
+        "tenure_years,lease_commencement,top_year,unit_count,mrt_station,mrt_distance_m from all_dev")}
     NAME2ID={}
     for _id,_r in devs.items():
         if _r[1]: NAME2ID[norm(_r[1])]=_id
@@ -243,8 +305,9 @@ def main():
     index=[]
     n_shard=0
     for devid,(_,name,lat,lng,dist,region,seg,ttype,tyrs,lcom,top,units,mrt,mrtd) in devs.items():
+        if only is not None and devid not in only: continue
         rows=list(db.execute(
-            "select floor,stack,sqft,price,caveat_date,sale_type,block from transactions "
+            "select floor,stack,sqft,price,caveat_date,sale_type,block from all_tx "
             "where development_id=? and sale_type in ('resale','sub_sale') and exclusion_flags='[]'",(devid,)))
         recent=[r for r in rows if days_ago(r[4])<=CUTOFF_DAYS]
         base_f, fprem, fstats = facing_premiums(devid)
@@ -271,19 +334,11 @@ def main():
                           nRecent=len(recent), hasFacing=bool(fprem), floorSource=frate['source'],
                           hasDsi=bool(dsi), pg=dev_attrs(name)))
         if not recent: continue
-        # nearby comparable devs (<=2km, same region), by proximity
-        nearby=[]
-        if lat and lng:
-            for v in PGA_LIST:
-                if v.get('n') and norm(v['n'])==norm(name): continue
-                d=haversine(lat,lng,v['lat'],v['lng'])
-                if d>2000: continue
-                allpsf=(v.get('beds') or {}).get('All') or {}
-                nearby.append(dict(name=v['n'], id=NAME2ID.get(norm(v['n'])), dist=round(d),
-                                   region=v.get('r'), tenure=v.get('t'), leaseFrom=v.get('ls'),
-                                   top=v.get('top'), units=v.get('u'), psf=allpsf.get('psf'),
-                                   mrtMin=(v.get('mrt') or {}).get('min')))
-            nearby.sort(key=lambda x:x['dist']); nearby=nearby[:30]
+        # nearby comparable devs: same planning area first at any distance, then other areas <=2 km
+        if not (lat and lng):
+            pv=PGA_BY_NAME.get(norm(name)) if name else None
+            if pv: lat,lng=pv['lat'],pv['lng']
+        nearby, parea = nearby_for(name, lat, lng, NAME2ID)
         # transactions, compact: [floor, stack, sqft, price, ymd, saleType(0=resale,1=subsale), facingType|null, block]
         def stkey(st):
             try: return str(int(st))
@@ -302,7 +357,7 @@ def main():
         # every block each stack has ever sold in, any sale type, so a stack with no recent resale
         # still resolves to its block
         sb=collections.defaultdict(set)
-        for st,bl in db.execute("select stack,block from transactions where development_id=? and stack is not null and block is not null",(devid,)):
+        for st,bl in db.execute("select stack,block from all_tx where development_id=? and stack is not null and block is not null",(devid,)):
             b=blk(bl)
             if b: sb[stkey(st)].add(b)
         stack_blocks={k:sorted(v, key=lambda x:(len(x),x)) for k,v in sb.items()}
@@ -316,9 +371,16 @@ def main():
                    # against data.json between builds (2026-09-29).
                    dsi=(dict(bedrooms=dsi.get('bedrooms'), defaultBedroom=dsi.get('defaultBedroom'),
                              unitSizes=dsi.get('unitSizes')) if dsi else None),
-                   layoutClasses=PERCLASS.get(devid), nearby=nearby, stackBlocks=stack_blocks or None, tx=tx)
+                   layoutClasses=PERCLASS.get(devid), nearby=nearby, planningArea=parea, lat=lat, lng=lng, stackBlocks=stack_blocks or None, tx=tx)
         json.dump(shard, open(os.path.join(DEVDIR, devid+'.json'),'w'), separators=(',',':'))
         n_shard+=1
+    if only is not None:
+        p=os.path.join(OUT,'index.json'); idx=json.load(open(p))
+        ids={r['id'] for r in index}
+        idx['developments']=sorted([d for d in idx['developments'] if d['id'] not in ids]+index, key=lambda x:(x['name'] or ''))
+        json.dump(idx, open(p,'w'), separators=(',',':'))
+        print(f"wrote {n_shard} dev shards; merged {len(index)} rows into the existing index (constants untouched)")
+        return
     idx=dict(generatedAt=TODAY.isoformat(),
              constants=dict(floorIslandUpper=ISLAND_UPPER, lowMult=LOW_MULT, lowTop=LOW_TOP,
                             # growthTaperFrom / growthMinMonths: no time adjustment under 3 months, the rate tapering in
@@ -332,5 +394,28 @@ def main():
     print(f"wrote {n_shard} dev shards + index ({len(index)} developments)")
     print(f"island floor upper {ISLAND_UPPER}%/floor; features: {list(FEATURES)}")
 
+def nearby_only():
+    """Rewrite only `nearby` / `planningArea` / `lat` / `lng` in the shards already on disk, leaving every
+    figure as published. For a selection change that must not ride along with a full rebuild."""
+    db=connect()
+    name2id={norm(r[1]):r[0] for r in db.execute("select development_id,canonical_name from all_dev") if r[1]}
+    geo={r[0]:(r[1],r[2]) for r in db.execute("select development_id,lat,lng from all_dev")}
+    n=0
+    for f in sorted(glob.glob(os.path.join(DEVDIR,'*.json'))):
+        sh=json.load(open(f)); lat,lng=geo.get(sh['id'],(None,None))
+        if not (lat and lng):
+            pv=PGA_BY_NAME.get(norm(sh.get('name')))
+            if pv: lat,lng=pv['lat'],pv['lng']
+        sh['nearby'], sh['planningArea'] = nearby_for(sh.get('name'), lat, lng, name2id)
+        sh['lat'], sh['lng'] = lat, lng
+        json.dump(sh, open(f,'w'), separators=(',',':')); n+=1
+    print(f"nearby rewritten in {n} shards")
+
 if __name__=='__main__':
-    main()
+    import sys
+    if '--nearby-only' in sys.argv: nearby_only()
+    elif '--ec-only' in sys.argv:
+        # the EC developments alone, then every shard's neighbour list so they can be found
+        ids={r[0] for r in sqlite3.connect(EC_DB).execute("select development_id from developments")}
+        main(only=ids); nearby_only()
+    else: main()

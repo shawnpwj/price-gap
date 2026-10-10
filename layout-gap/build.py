@@ -244,7 +244,7 @@ def main():
     n_shard=0
     for devid,(_,name,lat,lng,dist,region,seg,ttype,tyrs,lcom,top,units,mrt,mrtd) in devs.items():
         rows=list(db.execute(
-            "select floor,stack,sqft,price,caveat_date,sale_type from transactions "
+            "select floor,stack,sqft,price,caveat_date,sale_type,block from transactions "
             "where development_id=? and sale_type in ('resale','sub_sale') and exclusion_flags='[]'",(devid,)))
         recent=[r for r in rows if days_ago(r[4])<=CUTOFF_DAYS]
         base_f, fprem, fstats = facing_premiums(devid)
@@ -284,14 +284,28 @@ def main():
                                    top=v.get('top'), units=v.get('u'), psf=allpsf.get('psf'),
                                    mrtMin=(v.get('mrt') or {}).get('min')))
             nearby.sort(key=lambda x:x['dist']); nearby=nearby[:30]
-        # transactions, compact: [floor, stack, sqft, price, ymd, saleType(0=resale,1=subsale), facingType|null]
+        # transactions, compact: [floor, stack, sqft, price, ymd, saleType(0=resale,1=subsale), facingType|null, block]
         def stkey(st):
             try: return str(int(st))
             except (ValueError, TypeError): return str(st)
+        # the block is the house number of the REALIS address ("55 TAMPINES LANE" -> "55"). A unit
+        # number (#11-15) carries floor and stack only; the page derives the block from the stack,
+        # and asks for it only where this development reuses a stack number across blocks
+        # (Shawn, 2026-10-10: "with the unit number you would be able to get the block number right?")
+        def blk(a):
+            a=(a or '').strip()
+            return a.split()[0] if a else None
         tx=[]
-        for fl,st,sq,pr,cd,sty in recent:
+        for fl,st,sq,pr,cd,sty,bl in recent:
             k=stkey(st)
-            tx.append([fl, k, round(sq), int(pr), ymd_int(cd), 0 if sty=='resale' else 1, sf.get(k)])
+            tx.append([fl, k, round(sq), int(pr), ymd_int(cd), 0 if sty=='resale' else 1, sf.get(k), blk(bl)])
+        # every block each stack has ever sold in, any sale type, so a stack with no recent resale
+        # still resolves to its block
+        sb=collections.defaultdict(set)
+        for st,bl in db.execute("select stack,block from transactions where development_id=? and stack is not null and block is not null",(devid,)):
+            b=blk(bl)
+            if b: sb[stkey(st)].add(b)
+        stack_blocks={k:sorted(v, key=lambda x:(len(x),x)) for k,v in sb.items()}
         shard=dict(id=devid, name=name, region=region, district=dist, tenure=ttype, tenureYears=tyrs,
                    leaseFrom=lcom, top=top, units=units, mrt=mrt, mrtM=mrtd,
                    floorRate=frate, baselineFacing=base_f, facingPremiums=fprem, facingStats=fstats,
@@ -302,7 +316,7 @@ def main():
                    # against data.json between builds (2026-09-29).
                    dsi=(dict(bedrooms=dsi.get('bedrooms'), defaultBedroom=dsi.get('defaultBedroom'),
                              unitSizes=dsi.get('unitSizes')) if dsi else None),
-                   layoutClasses=PERCLASS.get(devid), nearby=nearby, tx=tx)
+                   layoutClasses=PERCLASS.get(devid), nearby=nearby, stackBlocks=stack_blocks or None, tx=tx)
         json.dump(shard, open(os.path.join(DEVDIR, devid+'.json'),'w'), separators=(',',':'))
         n_shard+=1
     idx=dict(generatedAt=TODAY.isoformat(),

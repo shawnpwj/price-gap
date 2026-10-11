@@ -63,10 +63,15 @@ RATIO_CLIP   = (-0.25, 2.5)   # a ratio outside this is the base comparator fail
 def dt(y): y = int(y); return date(y // 10000, (y // 100) % 100, y % 100)
 
 def load(fn):
+    # PINNED TO cut.CUT_END like the other five scripts (2026-10-11: the weekly REALIS top-up ran the window
+    # to 2026-10 and moved the published void ratio 0.491 -> 0.487 -- "a crawl never moves a figure").
+    import cut as CUT
+    end = int(CUT.CUT_END.replace('-', '')) * 100 + 31
     d = json.load(open(os.path.join(SRC, fn)))
     P, B = d['projects'], d['blocks']
-    return [dict(proj=P[r[0]], blk=B[r[5]], price=r[1], sqft=r[2], psf=r[3], d=dt(r[4]),
-                 fl=r[6], stk=r[7], ten=r[8], dist=r[10], reg=r[11]) for r in d['rows']], d['window']
+    rows = [dict(proj=P[r[0]], blk=B[r[5]], price=r[1], sqft=r[2], psf=r[3], d=dt(r[4]),
+                 fl=r[6], stk=r[7], ten=r[8], dist=r[10], reg=r[11]) for r in d['rows'] if int(r[4]) <= end]
+    return rows, f"{d['window'].split(' to ')[0]} to {CUT.CUT_END}" 
 
 def stacks_of(rows):
     S = defaultdict(list)

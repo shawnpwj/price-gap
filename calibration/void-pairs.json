@@ -12,7 +12,7 @@
    0.55
   ],
   "engine_constant": 1.0,
-  "generated": "2026-09-28"
+  "generated": "2026-10-11"
  },
  "newsale": {
   "headline": {
@@ -48,10 +48,10 @@
    "headline_drop": -11.8
   },
   "placebo": {
-   "pairs": 3513,
-   "devs": 285,
+   "pairs": 3515,
+   "devs": 284,
    "residual_pct": 1.13,
-   "lo": 1.06,
+   "lo": 1.07,
    "hi": 1.2
   },
   "sensitivity": [
@@ -527,7 +527,7 @@
     "base_psf": 2701,
     "void_psf": 557,
     "ratio": 0.203,
-    "spread": 0.337,
+    "spread": 0.347,
     "year": 2025.0
    },
    {
@@ -1213,7 +1213,7 @@
     "base_psf": 3008,
     "void_psf": 1288,
     "ratio": 0.427,
-    "spread": 0.52,
+    "spread": 0.422,
     "year": 2026
    },
    {
@@ -4070,15 +4070,15 @@
     "ph_sqft": 1485,
     "extra": 280,
     "extra_pct": 0.232,
-    "n_base": 8,
-    "base_price": 3351290,
+    "n_base": 12,
+    "base_price": 3388853,
     "ph_price": 3450700,
-    "base_psf": 2780,
+    "base_psf": 2811,
     "ph_psf": 2323,
     "date": "2026-02-13",
-    "void_psf": 355,
-    "ratio": 0.1278,
-    "headline_drop": -0.1643
+    "void_psf": 221,
+    "ratio": 0.0786,
+    "headline_drop": -0.1736
    },
    {
     "proj": "CHUAN PARK",
@@ -30228,15 +30228,15 @@
     "ph_sqft": 2260,
     "extra": 355,
     "extra_pct": 0.186,
-    "n_base": 10,
-    "base_price": 5304118,
+    "n_base": 14,
+    "base_price": 5389278,
     "ph_price": 6150000,
-    "base_psf": 2784,
+    "base_psf": 2829,
     "ph_psf": 2721,
     "date": "2026-04-10",
-    "void_psf": 2381,
-    "ratio": 0.8554,
-    "headline_drop": -0.0227
+    "void_psf": 2142,
+    "ratio": 0.7571,
+    "headline_drop": -0.0382
    },
    {
     "proj": "THE CONTINUUM",
@@ -30316,15 +30316,15 @@
     "ph_sqft": 2034,
     "extra": 344,
     "extra_pct": 0.204,
-    "n_base": 11,
-    "base_price": 5079600,
+    "n_base": 12,
+    "base_price": 5074900,
     "ph_price": 5500000,
-    "base_psf": 3006,
+    "base_psf": 3003,
     "ph_psf": 2703,
     "date": "2026-06-05",
-    "void_psf": 1220,
-    "ratio": 0.4061,
-    "headline_drop": -0.1006
+    "void_psf": 1234,
+    "ratio": 0.411,
+    "headline_drop": -0.0997
    },
    {
     "proj": "THE CONTINUUM",
@@ -38757,63 +38757,63 @@
  "resale": {
   "headline": {
    "label": "all",
-   "pairs": 123,
+   "pairs": 124,
    "devs": 63,
-   "ratio": 0.476,
+   "ratio": 0.473,
    "lo": 0.372,
-   "hi": 0.579,
-   "p25": 0.199,
-   "p75": 0.741,
-   "discount": 52.4,
-   "void_psf": 803,
-   "base_psf": 1823,
-   "extra": 226,
-   "extra_pct": 0.276,
-   "headline_drop": -9.7
+   "hi": 0.574,
+   "p25": 0.207,
+   "p75": 0.74,
+   "discount": 52.7,
+   "void_psf": 812,
+   "base_psf": 1825,
+   "extra": 224,
+   "extra_pct": 0.27,
+   "headline_drop": -9.6
   },
   "corrected": {
    "label": "placebo-corrected",
-   "pairs": 123,
+   "pairs": 124,
    "devs": 63,
-   "ratio": 0.491,
-   "lo": 0.379,
-   "hi": 0.591,
-   "p25": 0.221,
+   "ratio": 0.487,
+   "lo": 0.384,
+   "hi": 0.588,
+   "p25": 0.227,
    "p75": 0.753,
-   "discount": 50.9,
-   "void_psf": 825,
-   "base_psf": 1823,
-   "extra": 226,
-   "extra_pct": 0.276,
-   "headline_drop": -9.7
+   "discount": 51.3,
+   "void_psf": 830,
+   "base_psf": 1825,
+   "extra": 224,
+   "extra_pct": 0.27,
+   "headline_drop": -9.6
   },
   "placebo": {
-   "pairs": 882,
+   "pairs": 881,
    "devs": 333,
-   "residual_pct": -0.26,
-   "lo": -0.55,
-   "hi": 0.01
+   "residual_pct": -0.27,
+   "lo": -0.58,
+   "hi": 0.0
   },
   "sensitivity": [
    {
     "floor_step": 0.003,
-    "pairs": 124,
-    "ratio": 0.499
+    "pairs": 125,
+    "ratio": 0.491
    },
    {
     "floor_step": 0.004,
-    "pairs": 123,
-    "ratio": 0.476
+    "pairs": 124,
+    "ratio": 0.473
    },
    {
     "floor_step": 0.005,
-    "pairs": 122,
-    "ratio": 0.449
+    "pairs": 123,
+    "ratio": 0.44
    },
    {
     "floor_step": 0.006,
-    "pairs": 117,
-    "ratio": 0.456
+    "pairs": 118,
+    "ratio": 0.451
    }
   ],
   "cuts": [
@@ -38836,19 +38836,19 @@
    },
    {
     "label": "17-25%",
-    "pairs": 28,
-    "devs": 17,
-    "ratio": 0.391,
-    "lo": 0.204,
-    "hi": 0.548,
-    "p25": 0.14,
-    "p75": 0.671,
-    "discount": 60.9,
-    "void_psf": 660,
-    "base_psf": 1712,
-    "extra": 183,
+    "pairs": 29,
+    "devs": 18,
+    "ratio": 0.409,
+    "lo": 0.23,
+    "hi": 0.542,
+    "p25": 0.144,
+    "p75": 0.637,
+    "discount": 59.1,
+    "void_psf": 670,
+    "base_psf": 1717,
+    "extra": 172,
     "extra_pct": 0.194,
-    "headline_drop": -9.4,
+    "headline_drop": -9.3,
     "cut": "extra area"
    },
    {
@@ -38887,19 +38887,19 @@
    },
    {
     "label": "Central Region",
-    "pairs": 65,
+    "pairs": 66,
     "devs": 36,
-    "ratio": 0.482,
-    "lo": 0.409,
-    "hi": 0.691,
-    "p25": 0.236,
-    "p75": 0.809,
-    "discount": 51.8,
-    "void_psf": 941,
-    "base_psf": 2113,
-    "extra": 269,
-    "extra_pct": 0.312,
-    "headline_drop": -8.7,
+    "ratio": 0.476,
+    "lo": 0.407,
+    "hi": 0.685,
+    "p25": 0.238,
+    "p75": 0.808,
+    "discount": 52.4,
+    "void_psf": 954,
+    "base_psf": 2114,
+    "extra": 266,
+    "extra_pct": 0.307,
+    "headline_drop": -8.9,
     "cut": "region"
    },
    {
@@ -38989,34 +38989,34 @@
    },
    {
     "label": "$2,000-2,600",
-    "pairs": 34,
+    "pairs": 35,
     "devs": 18,
-    "ratio": 0.407,
+    "ratio": 0.446,
     "lo": 0.234,
-    "hi": 0.597,
-    "p25": 0.105,
-    "p75": 0.715,
-    "discount": 59.3,
-    "void_psf": 881,
-    "base_psf": 2203,
+    "hi": 0.661,
+    "p25": 0.107,
+    "p75": 0.712,
+    "discount": 55.4,
+    "void_psf": 936,
+    "base_psf": 2252,
     "extra": 226,
-    "extra_pct": 0.307,
-    "headline_drop": -11.2,
+    "extra_pct": 0.302,
+    "headline_drop": -11.1,
     "cut": "price tier"
    },
    {
     "label": "Leasehold",
-    "pairs": 98,
+    "pairs": 99,
     "devs": 45,
     "ratio": 0.372,
     "lo": 0.274,
     "hi": 0.524,
-    "p25": 0.15,
-    "p75": 0.713,
+    "p25": 0.152,
+    "p75": 0.712,
     "discount": 62.8,
-    "void_psf": 682,
-    "base_psf": 1749,
-    "extra": 210,
+    "void_psf": 694,
+    "base_psf": 1750,
+    "extra": 205,
     "extra_pct": 0.242,
     "headline_drop": -10.2,
     "cut": "tenure"
@@ -39055,20 +39055,6 @@
     "year": 2023
    },
    {
-    "proj": "PARC ESTA",
-    "dist": "14",
-    "reg": "Central Region",
-    "pairs": 6,
-    "base_sqft": 743,
-    "ph_sqft": 861,
-    "extra": 108,
-    "base_psf": 2378,
-    "void_psf": 294,
-    "ratio": 0.118,
-    "spread": 0.462,
-    "year": 2025.0
-   },
-   {
     "proj": "WHISTLER GRAND",
     "dist": "05",
     "reg": "West Region",
@@ -39081,6 +39067,20 @@
     "ratio": 0.126,
     "spread": 0.685,
     "year": 2024
+   },
+   {
+    "proj": "PARC ESTA",
+    "dist": "14",
+    "reg": "Central Region",
+    "pairs": 7,
+    "base_sqft": 743,
+    "ph_sqft": 861,
+    "extra": 118,
+    "base_psf": 2389,
+    "void_psf": 345,
+    "ratio": 0.136,
+    "spread": 0.645,
+    "year": 2025
    },
    {
     "proj": "PARC RIVIERA",
@@ -40599,6 +40599,28 @@
     "void_psf": -367,
     "ratio": -0.155,
     "headline_drop": -0.1123
+   },
+   {
+    "proj": "PARC ESTA",
+    "blk": "910 SIMS AVENUE",
+    "stk": "49",
+    "dist": "14",
+    "reg": "Central Region",
+    "ten": "LH",
+    "floor": 18,
+    "base_sqft": 710,
+    "ph_sqft": 861,
+    "extra": 151,
+    "extra_pct": 0.212,
+    "n_base": 3,
+    "base_price": 1709928,
+    "ph_price": 1880000,
+    "base_psf": 2407,
+    "ph_psf": 2183,
+    "date": "2026-02-13",
+    "void_psf": 1129,
+    "ratio": 0.4689,
+    "headline_drop": -0.0929
    },
    {
     "proj": "PARC ESTA",

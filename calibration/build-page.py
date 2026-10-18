@@ -3085,7 +3085,7 @@ at resale.</p>
   <div class="sechead"><h2 class="disp">The measurement</h2>
   <p>Every 4-bedroom-and-up pair that can be measured. Resale only, both sales within six months.</p></div>
   {PLIFT.answer_table()}
-  <p class="expl"><b>PSF gap in $</b> is the PSF gap times the lift unit&rsquo;s area. <b>Size alone</b>:
+  <p class="expl"><b>Price gap</b> is the plain difference between the two homes, extra space included. <b>Size alone</b>:
   {PLIFT.size_line()}. It is never applied. Nothing is adjusted for area.</p>
 </section>
 

@@ -96,7 +96,7 @@ def answer_table():
     what size alone would give, and the exact (same floor, same facing) figure beside it."""
     h = ['<div class="scroll"><table class="fig look"><thead><tr><th>Pair (same development)</th>'
          '<th>What the lift unit adds</th><th class="num">PSF gap<br>floor-adjusted</th>'
-         '<th class="num">in $</th><th class="num">price gap</th><th class="num">size alone<br>would give</th>'
+         '<th class="num">price gap</th><th class="num">size alone<br>would give</th>'
          '<th class="num">same floor<br>and facing</th><th class="num">pairs<br>(lift sales)</th>'
          '<th class="num">transactions</th></tr></thead><tbody>']
     for x in SHOWN:
@@ -108,7 +108,6 @@ def answer_table():
                  f'<th>{x["label"]}<span class="lsub">{seg}</span>{warn}</th>'
                  f'<td>{html.escape(ADDS.get(x["key"], ""))}<span class="lsub">{size}</span></td>'
                  f'<td class="num big">{_pct(a["psf_pct"]) if a else "&mdash;"}</td>'
-                 f'<td class="num">{_money(a["psf_dollars"]) if a else "&mdash;"}</td>'
                  f'<td class="num quiet">{_money(a["price_gap"]) if a else "&mdash;"}</td>'
                  f'<td class="num quiet">{_pct((a or e)["size_could_explain_pct"])}</td>'
                  f'<td class="num quiet">{(_pct(e["psf_pct"]) + " on " + str(e["pairs"])) if e else "none"}</td>'
@@ -186,8 +185,7 @@ def votes():
     out = []
     for d, xs in by.items():
         out.append(dict(dev=d, seg=xs[0]['r'].get('segment') or '',
-                        pct=sum(x['adj']['psf_pct'] for x in xs) / len(xs),
-                        usd=sum(x['adj']['psf_dollars'] for x in xs) / len(xs)))
+                        pct=sum(x['adj']['psf_pct'] for x in xs) / len(xs)))
     return out
 
 def summary():
@@ -197,7 +195,7 @@ def summary():
     exact_ok = any(x['exact'] and x['exact']['pairs'] >= MIN_PAIRS for x in SHOWN)
     seg = {}
     for x in v: seg.setdefault(x['seg'], []).append(x['pct'])
-    return dict(pct=sum(x['pct'] for x in v) / len(v), usd=sum(x['usd'] for x in v) / len(v),
+    return dict(pct=sum(x['pct'] for x in v) / len(v),
                 lo=min(x['pct'] for x in v), hi=max(x['pct'] for x in v), devs=sorted(NAME.get(x['dev'], x['dev']) for x in v),
                 seg={k: sum(w) / len(w) for k, w in seg.items()}, tx=c['tx'], provisional=not exact_ok)
 
@@ -207,7 +205,6 @@ def tile():
     if not m: return ''
     return ('<div class="ans"><div class="n">' + _pct(m['pct']) + '</div>'
             '<div class="w">' + LABEL + ' &middot; PSF</div>'
-            '<div class="g">' + _money(round(m['usd'], -3)) + '</div>'
             f'<div class="m">{m["tx"]} transactions</div>'
             '<div class="m"><details class="devs"><summary>' + f'{len(m["devs"])} developments'
             + '</summary><span>' + ', '.join(m['devs']) + '</span></details></div>'
@@ -224,7 +221,7 @@ def table_row():
            '<span class="lsub">PSF, not % of price &middot; <a href="#plift">every pair</a></span>')
     return ('<tr><th>' + LABEL + sub + '</th>'
             f'<td class="num big">{_pct(m["pct"])}</td>'
-            f'<td class="num">{_money(round(m["usd"], -3))}</td>'
+            '<td class="num"></td>'   # typical $: no PSF-gap-in-$ (Shawn, 2026-10-18: "doesnt seem to make sense")
             f'<td class="num quiet">{_pct(m["lo"])} to {_pct(m["hi"])}</td>'
             f'<td class="num quiet">{reg}</td>'
             f'<td class="num quiet">4BR+ {_pct(m["pct"])}</td>'

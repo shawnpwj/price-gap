@@ -12,7 +12,7 @@
    0.55
   ],
   "engine_constant": 1.0,
-  "generated": "2026-10-11"
+  "generated": "2026-10-18"
  },
  "newsale": {
   "headline": {
@@ -38778,7 +38778,7 @@
    "ratio": 0.487,
    "lo": 0.384,
    "hi": 0.588,
-   "p25": 0.227,
+   "p25": 0.226,
    "p75": 0.753,
    "discount": 51.3,
    "void_psf": 830,
@@ -38788,7 +38788,7 @@
    "headline_drop": -9.6
   },
   "placebo": {
-   "pairs": 881,
+   "pairs": 880,
    "devs": 333,
    "residual_pct": -0.27,
    "lo": -0.58,

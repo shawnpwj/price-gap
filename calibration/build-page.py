@@ -23,6 +23,7 @@ moment the pair screen changed. If you add a claim, compute it.
   python3 lease-pairs.py && python3 build-page.py
 """
 import layout as LAYOUT   # Internal > Constant Calibration > Layout
+import privatelift as PLIFT   # ... > Private lift, 4BR+ (Shawn, 2026-10-18)
 import json, math, os, html, random, statistics as st, datetime, sys
 
 # A page is only true for the data it was cut from. This REFUSES TO BUILD when any calibration
@@ -2430,6 +2431,7 @@ def check_panels(body):
     return len(marks)
 
 LC = LAYOUT.counts()
+PLC = PLIFT.counts()
 import json as _json
 _norm = _json.load(open('../../layout-study/out/normalisation.json'))['floor']['TREASURE AT TAMPINES']
 FLOOR_STEP, FLOOR_N = _norm['pct_per_floor'], f"{_norm['pairs']:,}"
@@ -3019,7 +3021,7 @@ at resale.</p>
 <p class="lede">Two units, same development, one extra room. The price gap is what the room is worth.</p>
 
 <p class="offmap"><b>Layout study</b> &mdash; not an engine constant.
-  <a href="#summary">Back to the constants</a></p>
+  <a href="#summary">Back to the constants</a> &middot; <a href="#plift">Private lift, 4BR+</a></p>
 
 {LAYOUT_HERO}
 
@@ -3053,6 +3055,62 @@ at resale.</p>
   </div>
   </details>
 
+</section>
+</div>
+
+<div class="panel" data-p="plift" hidden>
+<h1 class="disp">What the resale market pays for a private lift</h1>
+<p class="lede">A 4-bedroom with a private lift against the no-lift 4-bedroom in the same development. PSF against PSF, after floor.</p>
+
+<p class="offmap"><b>Private lift study</b> &mdash; 4BR+ only, not an engine constant.
+  <a href="#layout">Back to the layout study</a> &middot; <a href="#summary">The constants</a></p>
+
+{hero('none', 'reference only &mdash; nothing in the engine reads this',
+      PLIFT.hero_answers(),
+      'The lift unit resells at <b>the same PSF</b> as the no-lift 4-bedroom beside it. It is 16&ndash;31% bigger, '
+      'and a bigger unit normally sells 2&ndash;4% lower PSF, so the buyer pays the going rate for the extra space '
+      'and nothing extra for the lift.',
+      base=[(PLC['tx'], 'transactions'), (PLC['devs'], 'developments'), (PLC['lift_sales'], 'lift-unit resales')])}
+
+<section>
+  <div class="sechead"><h2 class="disp">The measurement</h2>
+  <p>Every 4-bedroom-and-up pair that can be measured. Resale only, both sales within six months.</p></div>
+  {PLIFT.answer_table()}
+  <p class="expl"><b>PSF gap in $</b> is the PSF gap times the lift unit&rsquo;s area. <b>Size alone</b>:
+  {PLIFT.size_line()}. It is never applied. Nothing is adjusted for area.</p>
+</section>
+
+<section>
+  <div class="sechead"><h2 class="disp">Not measurable</h2></div>
+  {PLIFT.notmeasured_list()}
+  <p class="expl">All 3,776 floor plans in the layout study were read for a private lift. At Echelon, Queens Peak,
+  Florence (5BR), Principal Garden and Avenue South the lift comes with every unit of that size class, so there is
+  nothing to compare. No 5-bedroom pair exists.</p>
+</section>
+
+<section>
+  <div class="sechead"><h2 class="disp">Every pair, closest to its figure first</h2></div>
+  {PLIFT.pair_tables()}
+</section>
+
+<section>
+  <div class="sechead"><h2 class="disp">Behind it</h2></div>
+  <details><summary>How a pair is built, and what is held constant</summary>
+  <div class="cards" style="margin-top:6px">
+    <div class="card"><h3>Held constant</h3><ul>
+      <li><b>same development</b>, 4 bedrooms or more on both sides</li>
+      <li>sold within <b>six months</b> of each other, <b>resale</b> both sides</li>
+      <li>the no-lift sale moved to the lift unit&rsquo;s <b>floor</b> with the development&rsquo;s own floor step</li>
+      <li>and to its <b>facing</b> where the stack facing study has a figure</li></ul></div>
+    <div class="card"><h3>How a lift unit is identified</h3><ul>
+      <li>PRIVATE LIFT drawn on the developer&rsquo;s floor plan, read by eye</li>
+      <li>the plan&rsquo;s own stack schedule links each sale to its layout</li></ul></div>
+    <div class="card"><h3>Not controlled</h3><ul>
+      <li>the <b>other rooms</b> that come with the lift (lobby, powder room, third bathroom)</li>
+      <li><b>size</b> &mdash; shown beside each figure, never removed</li>
+      <li>renovation and condition</li></ul></div>
+  </div>
+  </details>
 </section>
 </div>
 

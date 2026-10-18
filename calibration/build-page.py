@@ -2442,11 +2442,20 @@ LAYOUT_PARC  = LAYOUT.parc_table()
 LAYOUT_PARCF = LAYOUT.parc_features_table()
 LAYOUT_ROOMS = LAYOUT.rooms_table()
 LAYOUT_FSUM  = LAYOUT.feature_summary_table()
+if PLIFT.table_row():
+    assert '</tbody></table>' in LAYOUT_FSUM, 'layout measurement table moved'
+    LAYOUT_FSUM = LAYOUT_FSUM.replace('</tbody></table>', PLIFT.table_row() + '</tbody></table>', 1)
 LAYOUT_LIB   = LAYOUT.library_table()
 LAYOUT_TRI   = LAYOUT.triage_table()
 LAYOUT_WEX   = LAYOUT.worked_examples(only=1)   # one on the face
 LAYOUT_WEX2  = LAYOUT.worked_examples(skip=1)   # the other two, behind a door
 LAYOUT_HERO  = LAYOUT.hero_block()
+# PRIVATE LIFT, 4BR+ sits among the feature tiles and rows (Shawn, 2026-10-18); its own #plift panel
+# stays as the detail behind it.
+_PLT, _PLR = PLIFT.tile(), PLIFT.table_row()
+if _PLT:
+    assert '</div><p class="vline">' in LAYOUT_HERO, 'layout hero markup moved'
+    LAYOUT_HERO = LAYOUT_HERO.replace('</div><p class="vline">', _PLT + '</div><p class="vline">', 1)
 LAYOUT_AGREE = LAYOUT.agreement_table()
 LAYOUT_TEND  = LAYOUT.tendency_table()      # median or average -- Shawn, 2026-09-20
 LAYOUT_CARVE = LAYOUT.carve_table()         # what one published figure pools, plan pair by plan pair

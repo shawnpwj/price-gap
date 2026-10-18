@@ -168,3 +168,65 @@ def size_line():
     return (f"PSF ~ size<sup>{s.get('elasticity')}</sup> inside one development: "
             f"{s.get('pairs', 0)} same-class no-lift pairs across {s.get('developments', 0)} developments, "
             "every bedroom count &mdash; 4BR+ alone has one such pair")
+
+
+
+# ── ONE TILE AMONG THE LAYOUT FEATURES (Shawn, 2026-10-18: "it should be at the same areas as
+# these. dont need to separate it as a special 'private lift'" ... "just put it as Private Lift, 4BR+")
+# One vote per development, as feature_rows.one_vote does for every other feature: a development's
+# readings are averaged first, then the developments. The figure is PSF, not % of price -- that is
+# the question he asked -- and the tile says so.
+LABEL = 'Private Lift, 4BR+'
+
+def votes():
+    by = {}
+    for x in SHOWN:
+        if not x['adj']: continue
+        by.setdefault(x['r']['development'], []).append(x)
+    out = []
+    for d, xs in by.items():
+        out.append(dict(dev=d, seg=xs[0]['r'].get('segment') or '',
+                        pct=sum(x['adj']['psf_pct'] for x in xs) / len(xs),
+                        usd=sum(x['adj']['psf_dollars'] for x in xs) / len(xs)))
+    return out
+
+def summary():
+    v = votes()
+    if not v: return None
+    c = counts()
+    exact_ok = any(x['exact'] and x['exact']['pairs'] >= MIN_PAIRS for x in SHOWN)
+    seg = {}
+    for x in v: seg.setdefault(x['seg'], []).append(x['pct'])
+    return dict(pct=sum(x['pct'] for x in v) / len(v), usd=sum(x['usd'] for x in v) / len(v),
+                lo=min(x['pct'] for x in v), hi=max(x['pct'] for x in v), devs=sorted(NAME.get(x['dev'], x['dev']) for x in v),
+                seg={k: sum(w) / len(w) for k, w in seg.items()}, tx=c['tx'], provisional=not exact_ok)
+
+def tile():
+    """A tile in the layout panel's hero grid, same markup as the feature tiles beside it."""
+    m = summary()
+    if not m: return ''
+    return ('<div class="ans"><div class="n">' + _pct(m['pct']) + '</div>'
+            '<div class="w">' + LABEL + ' &middot; PSF</div>'
+            '<div class="g">' + _money(round(m['usd'], -3)) + '</div>'
+            f'<div class="m">{m["tx"]} transactions</div>'
+            '<div class="m"><details class="devs"><summary>' + f'{len(m["devs"])} developments'
+            + '</summary><span>' + ', '.join(m['devs']) + '</span></details></div>'
+            + ('<div class="m"><span class="lwarn">provisional</span></div>' if m['provisional'] else '')
+            + '<div class="m"><a href="#plift">every pair</a></div></div>')
+
+def table_row():
+    """A row in the layout panel's measurement table, same columns as the feature rows."""
+    m = summary()
+    if not m: return ''
+    reg = '<br>'.join(f'{k} {_pct(v, sign=False) if v < 0 else _pct(v)}' for k, v in sorted(m['seg'].items(), key=lambda kv: kv[1], reverse=True))
+    sub = ('<span class="lsub"><span class="lwarn">provisional</span> &middot; PSF, not % of price &middot; '
+           '<a href="#plift">every pair</a></span>' if m['provisional'] else
+           '<span class="lsub">PSF, not % of price &middot; <a href="#plift">every pair</a></span>')
+    return ('<tr><th>' + LABEL + sub + '</th>'
+            f'<td class="num big">{_pct(m["pct"])}</td>'
+            f'<td class="num">{_money(round(m["usd"], -3))}</td>'
+            f'<td class="num quiet">{_pct(m["lo"])} to {_pct(m["hi"])}</td>'
+            f'<td class="num quiet">{reg}</td>'
+            f'<td class="num quiet">4BR+ {_pct(m["pct"])}</td>'
+            f'<td class="num quiet">{len(m["devs"])}</td>'
+            f'<td class="num quiet">{m["tx"]}</td></tr>')

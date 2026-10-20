@@ -396,6 +396,28 @@ def main(only=None):
     print(f"wrote {n_shard} dev shards + index ({len(index)} developments)")
     print(f"island floor upper {ISLAND_UPPER}%/floor; features: {list(FEATURES)}")
 
+# Shawn, 2026-10-20: "DO NOT, i repeat DO NOT use Dual Key to compare UNLESS the unit to be valued is a dual
+# key." Which sizes are dual key comes from RealSmart's unit mix, the one source that names the type: per
+# development, the size range of every type whose label says dual key ("3BR Dual Key", "2BR DK", "3BR (Dual
+# Key)"…) and of every other type, so the page can tell a size that IS a dual-key unit from one that only
+# might be. Written to its own file, so it can be refreshed without rebuilding a single figure.
+import re as _re
+DK_RE = _re.compile(r'dual[\s-]?key|\bDK\b', _re.I)
+def dual_key_sizes():
+    rs = json.load(open(os.path.join(ROOT, 'property-analyzer', 'data', 'project-unitmix-realsmart.json')))['projects']
+    idx = json.load(open(os.path.join(OUT, 'index.json')))
+    name2id = {norm(d['name']): d['id'] for d in idx['developments'] if d.get('name')}
+    out = {}
+    for name, v in rs.items():
+        dev = name2id.get(norm(v.get('displayName') or name))
+        types = [t for t in v.get('types', []) if t.get('minSqft') and t.get('maxSqft')]
+        if not dev or not any(DK_RE.search(t['label']) for t in types): continue
+        rng = lambda t: [int(t['minSqft']), int(t['maxSqft']), int(t.get('br') or 0)]
+        out[dev] = {'dk': [rng(t) for t in types if DK_RE.search(t['label'])],
+                    'other': [rng(t) for t in types if not DK_RE.search(t['label'])]}
+    json.dump({'source': 'RealSmart unit mix', 'devs': out}, open(os.path.join(OUT, 'dualkey.json'), 'w'), separators=(',', ':'))
+    print(f"dual-key sizes for {len(out)} developments")
+
 def nearby_only():
     """Rewrite only `nearby` / `planningArea` / `lat` / `lng` in the shards already on disk, leaving every
     figure as published. For a selection change that must not ride along with a full rebuild."""
@@ -416,8 +438,9 @@ def nearby_only():
 if __name__=='__main__':
     import sys
     if '--nearby-only' in sys.argv: nearby_only()
+    elif '--dual-key-only' in sys.argv: dual_key_sizes()
     elif '--ec-only' in sys.argv:
         # the EC developments alone, then every shard's neighbour list so they can be found
         ids={r[0] for r in sqlite3.connect(EC_DB).execute("select development_id from developments")}
         main(only=ids); nearby_only()
-    else: main()
+    else: main(); dual_key_sizes()

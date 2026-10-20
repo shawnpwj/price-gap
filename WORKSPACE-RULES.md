@@ -212,6 +212,10 @@ recommendation, and the reason — in that order, in as few words as possible.
 
 ### How to do the work
 
+- **Never compare a dual key unless the unit valued is one.** Dual key against dual key only,
+  everything else against everything else, in every comparable set. Which sizes are dual key:
+  `kya-maps-calculator/layout-gap/dualkey.json` (RealSmart unit mix); a size that only *may* be dual
+  key stays out too.
 - **Matched pairs, never averages.** A premium comes from matched transaction pairs, never from
   differencing two band medians.
 - **Never infer observed data.** Read every case against its source — a site plan, floor plan or

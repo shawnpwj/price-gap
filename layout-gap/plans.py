@@ -56,6 +56,17 @@ def find_sheet(files, code, drawing):
     return None
 
 
+def schedule(v):
+    """[[stack, lo, hi], ...] from either form a note uses: `sched` rows (the gather sheets), or the early
+    studies' `stacks` list with a `floors` range "02-12" (Treasure at Tampines, Parc Esta)."""
+    if v.get('sched'): return v['sched']
+    st, fl = v.get('stacks'), v.get('floors')
+    if not st or not fl: return []
+    m = re.match(r'\s*(\d+)\s*-\s*(\d+)', str(fl))
+    if not m: return []
+    return [[s, int(m.group(1)), int(m.group(2))] for s in st]
+
+
 def export(only=None):
     out = json.load(open(OUT_JSON)) if (only and os.path.exists(OUT_JSON)) else {}
     missing = []
@@ -63,12 +74,12 @@ def export(only=None):
         dev = os.path.basename(f)[:-5]
         if dev.endswith('-tx-layout') or (only and dev not in only): continue
         L = (json.load(open(f)).get('layouts') or {})
-        if not isinstance(L, dict) or not any(isinstance(v, dict) and v.get('sched') for v in L.values()): continue
+        if not isinstance(L, dict) or not any(isinstance(v, dict) and schedule(v) for v in L.values()): continue
         sd = sheet_dir(dev); files = sorted(os.listdir(sd)) if sd else []
         layouts, sched, n = {}, [], 0
         os.makedirs(os.path.join(OUT_IMG, dev), exist_ok=True)
         for code, v in L.items():
-            if not isinstance(v, dict) or not v.get('sched'): continue
+            if not isinstance(v, dict) or not schedule(v): continue
             n += 1
             name = code.split('\t')[0].strip()
             src = find_sheet(files, code, v.get('drawing'))
@@ -87,9 +98,9 @@ def export(only=None):
                 'wc': 1 if v.get('wc') else 0, 'study': 1 if v.get('study') else 0,
                 'cls': v.get('class'), 'type': v.get('marketed_type'),
                 # rooms read by eye off the drawing, or still the OCR draft
-                'eye': bool(v.get('class_read') or v.get('class_ruling')),
+                'eye': bool(v.get('class_read') or v.get('class_ruling') or v.get('rooms_read')),
                 'img': img}
-            for s in v['sched']:
+            for s in schedule(v):
                 try: sched.append([stack_key(s[0]), int(s[1]), int(s[2]), name])
                 except (ValueError, TypeError, IndexError): pass
         if layouts: out[dev] = {'layouts': layouts, 'sched': sched}

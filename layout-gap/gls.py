@@ -94,10 +94,36 @@ medians = {reg: {c: round(statistics.median(x['mid'] for x in v)) for c, v in cs
 for reg in cats:
     for c in cats[reg]: cats[reg][c].sort(key=lambda x: x['mid'])
 
+# The same launches by ROOM PACKAGE, off the plans read by eye (layout-study/data/annotations):
+# "4BR2B+WC", "4BR3B+WC+S". Shawn, 2026-10-22: match the future unit to this unit's room package,
+# not just its bedroom count. Only eye-read layouts count (class_read set); a double-volume strata-void
+# print is left out, its area carries the void. A launch's size for a package is the median of its
+# layouts of that package; the region figure is the median across launches.
+ANN = os.path.join(ROOT, 'layout-study', 'data', 'annotations')
+ann = {norm(os.path.splitext(f)[0].replace('-', ' ')): os.path.join(ANN, f) for f in os.listdir(ANN) if f.endswith('.json')}
+pkg_key = lambda v: f"{v['beds']}BR{v['baths']}B" + ('+WC' if v.get('wc') else '') + ('+S' if v.get('study') else '')
+pkgs = {}
+for reg, cs in cats.items():
+    for launch in {x['launch'] for v in cs.values() for x in v}:
+        p = ann.get(norm(launch))
+        if not p: continue
+        by = {}
+        for v in json.load(open(p))['layouts'].values():
+            if not v.get('class_read') or (v.get('beds') or 0) < 2 or v.get('strata_void') or not v.get('sqft'): continue
+            if v.get('baths') is None: continue
+            by.setdefault(pkg_key(v), []).append(v['sqft'])
+        for k, sq in by.items():
+            pkgs.setdefault(reg, {}).setdefault(k, []).append(dict(launch=launch, lo=round(min(sq)), hi=round(max(sq)),
+                                                                     mid=round(statistics.median(sq)), n=len(sq)))
+pkg_medians = {reg: {k: round(statistics.median(x['mid'] for x in v)) for k, v in ks.items()} for reg, ks in pkgs.items()}
+for reg in pkgs:
+    for k in pkgs[reg]: pkgs[reg][k].sort(key=lambda x: x['mid'])
+
 out = dict(generatedAt=datetime.date.today().isoformat(),
            note='Projected launch psf is the GLS sheet\'s low / mid / high (breakeven +10% / +20% / +30%); '
-                'sizes are recent private launches\' PropNex categories, post-harmonisation.',
-           sites=sites, sizes=cats, medians=medians)
+                'sizes are recent private launches\' PropNex categories, post-harmonisation; packages are the '
+                'same launches\' eye-read plans by room package.',
+           sites=sites, sizes=cats, medians=medians, packages=pkgs, packageMedians=pkg_medians)
 json.dump(out, open(os.path.join(SITE, 'layout-gap', 'gls.json'), 'w'), separators=(',', ':'))
 print(f"gls: {len(sites)} future sites; launch sizes for {', '.join(f'{r} {len(c)} categories' for r, c in cats.items())}")
 print('medians', {r: {c: m for c, m in v.items() if c in ('2-BEDROOM', '3-BEDROOM', '4-BEDROOM')} for r, v in medians.items()})

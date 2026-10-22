@@ -87,7 +87,12 @@ def _cal(f): return json.load(open(os.path.join(CAL, f)))
 def _calibration():
     lease=_cal('lease-pairs.json')['pw']; age=_cal('age-pairs.json')['24']['pw']
     ten=_cal('tenure-pairs.json'); mrt=_cal('mrt-pairs.json'); integ=_cal('integrated-pairs.json')
-    grad=sorted([dict(minLeft=g['min_left'], pct=g['pct'], label=g['label'])
+    # Shawn, 2026-10-22: "we shouldnt cliff, we should do a gradual adjustment through intra-polation". Each
+    # band's premium is pinned at the average lease left of the pairs it was measured on (tenure-pairs.py's
+    # MIXED rows, re-read 2026-10-22: 90+ at 91.0, 75-89 at 84.3, 60-74 at 68.5) and the page draws a straight
+    # line between them, holding the end figures flat beyond. tenure-pairs.json does not carry these yet.
+    AT={90: 91.0, 75: 84.3, 60: 68.5}
+    grad=sorted([dict(minLeft=g['min_left'], pct=g['pct'], label=g['label'], at=AT.get(g['min_left']))
                  for g in ten['slices']['gradient']
                  if not g.get('thin') and isinstance(g.get('pct'),(int,float)) and isinstance(g.get('min_left'),(int,float))],
                 key=lambda g:-g['minLeft'])

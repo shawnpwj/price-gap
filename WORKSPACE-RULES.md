@@ -178,6 +178,21 @@ is in one table in METHOD.md so no agent re-invents one. **A deviation is record
 `data/annotations/<project>.json` under `method_deviations`, with the reason — an unrecorded
 deviation makes the figure unusable.**
 
+### One place for each workstream's state — Claude and Codex alike
+
+**Shawn, 2026-10-22: *"consolidate and clean up the messages / memory such that we dont have
+different agents writing different notes."*** Claude (memory) and Codex (`AGENTS.md`, no memory)
+both work here, so a workstream's state lives in its repo, in the file the repo names, and nowhere
+else. Memory holds a pointer and Shawn's rulings, never a progress log. Before you write a
+"where we are" note, find the workstream's status file and update THAT. If it has a status
+command, run it instead of trusting any note.
+
+* **Floor-plan capture (PropNex):** `layout-study/docs/PLAN-CRAWL.md`; state is
+  `python3 layout-study/tools/gather/crawl_status.py`.
+
+`AGENTS.md` is a copy of this file for Codex. After editing this file, copy it over:
+`cp CLAUDE.md AGENTS.md`.
+
 ### Cloud sessions get a copy of these rules
 
 A Claude cloud session clones one GitHub repo and never sees this folder or the memory, so each

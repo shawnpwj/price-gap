@@ -74,10 +74,19 @@ def _mid(v):
     if isinstance(v,dict): return v.get('point')
     if isinstance(v,list): return v[len(v)//2]  # [lo, point, hi]
     return v
+def _q(v,p):
+    v=sorted(x for x in v if isinstance(x,(int,float)))
+    if not v: return None
+    k=(len(v)-1)*p; f=int(k); c=min(f+1,len(v)-1); return v[f]+(v[c]-v[f])*(k-f)
 for o in FEAT:
-    b=o['feature_alone']
+    b=o['feature_alone']; rows=b.get('rows') or []
+    # Shawn, 2026-10-22: the agent edits a room step inside its 25-75% range — the middle half of the
+    # developments the feature was measured in (one figure per development row, quantum and percent)
+    Q=[r.get('quantum') for r in rows]; P=[r.get('pct') for r in rows]
     FEATURES[o['feature']]=dict(pct=round(_mid(b['pct']),2), quantum=round(_mid(b['quantum'])),
-                                devs=b.get('developments_n'), pairs=b.get('sale_pairs_exact'))
+                                devs=b.get('developments_n'), pairs=b.get('sale_pairs_exact'),
+                                q25=_q(Q,.25) and round(_q(Q,.25)), q75=_q(Q,.75) and round(_q(Q,.75)),
+                                p25=_q(P,.25) and round(_q(P,.25),2), p75=_q(P,.75) and round(_q(P,.75),2))
 
 # ---------------------------------------------------------------- inter-development constants
 # The Price Gap calibration study's measured constants, read from the same JSONs the engine

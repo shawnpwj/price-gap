@@ -385,9 +385,10 @@ def main(only=None):
         return
     idx=dict(generatedAt=TODAY.isoformat(),
              constants=dict(floorIslandUpper=ISLAND_UPPER, lowMult=LOW_MULT, lowTop=LOW_TOP,
-                            # growthTaperFrom: no time adjustment under 3 months, the FULL rate past it (Shawn, 2026-10-20 —
-                            # replaces the 3-to-6-month taper). growthMinMonths is no longer read by the page.
-                            growthAnnualPct=3.0, growthTaperFrom=3, growthMinMonths=6, maxCompMonths=18,
+                            # growthTaperFrom: no time adjustment at a month or less; past it the FULL rate on the age
+                            # rounded to the nearest month (Shawn, 2026-10-22 — was 3 months from 2026-10-20). The page
+                            # carries this rule itself (GROWTH_MIN_MO); growthMinMonths and this value are not read by it.
+                            growthAnnualPct=3.0, growthTaperFrom=1, growthMinMonths=6, maxCompMonths=18,
                             features=FEATURES, inter=_calibration(), facingIsland=island_facing(),
                             floorCurve=FLOOR_CURVE),
              developments=sorted(index, key=lambda x:(x['name'] or '')))

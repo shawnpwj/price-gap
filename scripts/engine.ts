@@ -223,6 +223,11 @@ export const JUDGEMENT: Constants = {
 // copied 25/44 in as literals and they went stale the moment the fit was re-run.
 export const loadConstants = () => loadMeasured();
 
+// Where each tenure band was measured: the average lease left of its pairs (tenure-pairs.py's
+// MIXED rows, re-read 2026-10-22), keyed by the band's floor. tenure-pairs.json does not carry
+// it yet; layout-gap/build.py holds the same three numbers.
+const TENURE_AT: Record<number, number> = { 90: 91.0, 75: 84.3, 60: 68.5 };
+
 export async function loadMeasured(): Promise<Constants> {
   const C = (f: string) => path.join(ROOT, "calibration", f);
   const [lease, mrt, tenure, integ, age] = await Promise.all(
@@ -289,12 +294,27 @@ export async function loadMeasured(): Promise<Constants> {
     ageAdjFH: (f, t) => piecewise(f, t, ageBound, ageBands.pre, ageBands.post),
     ageRateFHLabel: `$${Math.round(ageBands.pre)} / $${Math.round(ageBands.post)} psf per year, `
       + `each year of the gap priced at its own band (${ageBound} boundary)`,
+    // Shawn, 2026-10-22: "we shouldnt cliff, we should do a gradual adjustment through
+    // intra-polation." The bands stepped 18.2% -> 9.7% between 89 and 90 years left. Each band's
+    // figure now sits at the average lease left of the pairs it was measured on (TENURE_AT) and
+    // the premium runs in a straight line between them, flat beyond the first and last — the
+    // same clamp as before, never extrapolated. The Layout Price Gap page does the same.
     tenurePremium: (leaseLeft) => {
       if (leaseLeft == null) return headline;
-      for (const g of grad) if (leaseLeft >= g.minLeft) return g.pct;
-      return grad[grad.length - 1].pct;
+      const G = grad.filter((g) => TENURE_AT[g.minLeft] != null).map((g) => ({ at: TENURE_AT[g.minLeft], pct: g.pct }));
+      if (G.length < 2) {
+        for (const g of grad) if (leaseLeft >= g.minLeft) return g.pct;
+        return grad[grad.length - 1].pct;
+      }
+      if (leaseLeft >= G[0].at) return G[0].pct;
+      if (leaseLeft <= G[G.length - 1].at) return G[G.length - 1].pct;
+      for (let i = 0; i < G.length - 1; i++) {
+        const a = G[i], b = G[i + 1];
+        if (leaseLeft <= a.at && leaseLeft >= b.at) return a.pct + (b.pct - a.pct) * (a.at - leaseLeft) / (a.at - b.at);
+      }
+      return headline;
     },
-    tenureLabel: `+${(headline * 100).toFixed(1)}%, widening from +${(grad[0].pct * 100).toFixed(0)}% (${grad[0].label}) to +${(grad[grad.length - 1].pct * 100).toFixed(0)}% (${grad[grad.length - 1].label}) as the lease shortens`,
+    tenureLabel: `+${(grad[0].pct * 100).toFixed(0)}% at ${TENURE_AT[grad[0].minLeft] ?? grad[0].minLeft} years left, rising in a straight line to +${(grad[grad.length - 1].pct * 100).toFixed(0)}% at ${TENURE_AT[grad[grad.length - 1].minLeft] ?? grad[grad.length - 1].minLeft} as the lease shortens`,
     mrtBandOf: (m) => (m < nearM ? "near" : m <= farM ? "mid" : "far"),
     mrtBandCutLabel: `straight-line metres — under ${nearM} / ${nearM}–${farM} / over ${farM}`,
     mrtBandPsf,

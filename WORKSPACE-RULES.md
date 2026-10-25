@@ -3,7 +3,7 @@
 
 # Workspace rules
 
-This repo is one of six in Shawn's Property Analyzer workspace. Local sessions load these rules
+This repo is one of the git repos in Shawn's Property Analyzer workspace. Local sessions load these rules
 from the workspace folder; cloud sessions clone this repo alone, so they are copied in here.
 
 **Paths below are relative to the workspace folder**, which holds every repo side by side. In a

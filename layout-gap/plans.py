@@ -15,8 +15,8 @@ Output kya-maps-calculator/layout-gap/plans.json   {dev:{layouts:{code:{...rooms
        (Shawn, 2026-10-25: live and offline both carry pictures and rooms; deploy-maps.mjs sends this
        folder to both projects, and git ignores it)
 
-Run:  python3 price-gap/layout-gap/plans.py            every development with a schedule
-      python3 price-gap/layout-gap/plans.py <dev> ...   just these (after a crawl batch)
+Run:  python3 price-gap/layout-gap/plans.py            every development already on the page (refresh)
+      python3 price-gap/layout-gap/plans.py <dev> ...   these (adds a development once its rooms are read by eye)
 """
 import json, os, glob, sys, subprocess, re
 
@@ -85,7 +85,9 @@ def export(only=None):
             src = find_sheet(files, code, v.get('drawing'))
             img = None
             if src:
-                img = f'layout-plans/{dev}/{n}.jpg'
+                # named after the sheet, never by position: a layout added mid-list used to shift every
+                # number after it and leave the old picture under the new number (2026-10-25)
+                img = f'layout-plans/{dev}/{re.sub(r"[^a-z0-9]+", "-", os.path.splitext(src)[0].lower()).strip("-") or n}.jpg'
                 dst = os.path.join(SITE, img)
                 if not os.path.exists(dst) or os.path.getmtime(dst) < os.path.getmtime(os.path.join(sd, src)):
                     subprocess.run(['sips', '-Z', '1600', '-s', 'format', 'jpeg', '-s', 'formatOptions', '80',
@@ -104,6 +106,9 @@ def export(only=None):
                 try: sched.append([stack_key(s[0]), int(s[1]), int(s[2]), name])
                 except (ValueError, TypeError, IndexError): pass
         if layouts: out[dev] = {'layouts': layouts, 'sched': sched}
+        keep = {os.path.basename(l['img']) for l in layouts.values() if l['img']}
+        for f in os.listdir(os.path.join(OUT_IMG, dev)):
+            if f not in keep: os.remove(os.path.join(OUT_IMG, dev, f))   # a picture no layout points at any more
     json.dump(out, open(OUT_JSON, 'w'), separators=(',', ':'))
     print(f"plans: {len(out)} developments, {sum(len(d['layouts']) for d in out.values())} layouts, "
           f"{sum(1 for d in out.values() for l in d['layouts'].values() if l['img'])} drawings; "
@@ -112,4 +117,14 @@ def export(only=None):
 
 
 if __name__ == '__main__':
-    export(set(sys.argv[1:]) or None)
+    # a bare run refreshes only the developments already on the page: a development goes on by name, after
+    # its eye-read, never because a machine draft happens to carry a schedule ("never publish an OCR draft")
+    # one writer at a time: Claude and Codex both add developments, and plans.json is read, changed, rewritten
+    import fcntl
+    with open(OUT_JSON + '.lock', 'w') as lk:
+        fcntl.flock(lk, fcntl.LOCK_EX)
+        on_page = set(json.load(open(OUT_JSON))) if os.path.exists(OUT_JSON) else set()
+        export(set(sys.argv[1:]) or on_page)
+    # Shawn, 2026-10-25: "we need to make sure we dont make such costly mistake" -- every rebuild prints how
+    # many units find no plan or the wrong one; the list is layout-study/out/plan-gaps/gaps.json
+    subprocess.run([sys.executable, os.path.join(ROOT, 'layout-study', 'tools', 'gather', 'plan_gaps.py')])

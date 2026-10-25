@@ -416,8 +416,10 @@ def main(only=None):
 # development, the size range of every type whose label says dual key ("3BR Dual Key", "2BR DK", "3BR (Dual
 # Key)"…) and of every other type, so the page can tell a size that IS a dual-key unit from one that only
 # might be. Written to its own file, so it can be refreshed without rebuilding a single figure.
+# "TRIO" and "Multi-Generation" are dual keys too (2026-10-25, Shawn on Twin Fountains: TRIO units draw a
+# studio with its own foyer, bath and kitchen). RealSmart labels some "TRIO (Dual Key)", some plain "TRIO".
 import re as _re
-DK_RE = _re.compile(r'dual[\s-]?key|\bDK\b', _re.I)
+DK_RE = _re.compile(r'dual[\s-]?key|\bDK\b|\bTRIO\b|multi[\s-]?gen', _re.I)
 def dual_key_sizes():
     rs = json.load(open(os.path.join(ROOT, 'property-analyzer', 'data', 'project-unitmix-realsmart.json')))['projects']
     idx = json.load(open(os.path.join(OUT, 'index.json')))

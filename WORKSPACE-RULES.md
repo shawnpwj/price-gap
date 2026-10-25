@@ -189,6 +189,9 @@ command, run it instead of trusting any note.
 
 * **Floor-plan capture (PropNex):** `layout-study/docs/PLAN-CRAWL.md`; state is
   `python3 layout-study/tools/gather/crawl_status.py`.
+* **Plan gaps (units with no plan or the wrong plan on the Layout Price Gap page):**
+  `layout-study/docs/PLAN-GAPS.md`; state is `python3 layout-study/tools/gather/plan_gaps.py`.
+  Each development is assigned to Claude or Codex there; touch only your own.
 
 `AGENTS.md` is a copy of this file for Codex. After editing this file, copy it over:
 `cp CLAUDE.md AGENTS.md`.

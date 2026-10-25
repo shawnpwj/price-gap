@@ -43,7 +43,7 @@ def stack_key(st):
     return str(int(st)) if st.isdigit() else st.upper()
 
 
-def find_sheet(files, code, drawing):
+def find_sheet(files, code, drawing, others=()):
     stem = lambda f: os.path.splitext(f)[0]
     for want in (code, drawing):
         if not want: continue
@@ -53,6 +53,15 @@ def find_sheet(files, code, drawing):
         if not want: continue
         for f in files:
             if stem(f).split('\t')[0] == want: return f
+    # one sheet per stack: "(3Y)b-STACK#22", "(3Y)b1-#01-22" -- same layout, take the first (2026-10-25:
+    # these never matched, so Penrose 1055 sqft and 15 other layouts showed no drawing). A sheet that starts
+    # with another scheduled layout's name is that layout's: Watertown "Cc1-a(b)" is Cc1-a, never Cc1.
+    for want in (code.split('\t')[0].strip(), drawing):
+        if not want: continue
+        longer = [o for o in others if o != want and o.startswith(want)]
+        for f in files:
+            s = stem(f)
+            if s.startswith(want + '-') and not any(s.startswith(o) for o in longer): return f
     return None
 
 
@@ -82,7 +91,8 @@ def export(only=None):
             if not isinstance(v, dict) or not schedule(v): continue
             n += 1
             name = code.split('\t')[0].strip()
-            src = find_sheet(files, code, v.get('drawing'))
+            src = find_sheet(files, code, v.get('drawing'),
+                             [k.split('\t')[0].strip() for k, w in L.items() if isinstance(w, dict) and schedule(w)])
             img = None
             if src:
                 # named after the sheet, never by position: a layout added mid-list used to shift every

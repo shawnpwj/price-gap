@@ -11,9 +11,9 @@ drawing where done, an OCR draft otherwise). This joins them to the drawings on 
 Input  layout-study/data/annotations/<dev>.json   layouts{code:{sqft,beds,baths,wc,study,class,sched,drawing}}
        layout-study/out/plans/<dir>/<code>.{jpg,png}  the PropNex sheets
 Output kya-maps-calculator/layout-gap/plans.json   {dev:{layouts:{code:{...rooms, img}}, sched:[[stack,lo,hi,code]]}}
-       kya-maps-calculator/layout-plans/<dev>/<n>.jpg  each drawing, at most 1600 px, JPEG — OFFLINE SITE ONLY
-       (the sheets are PropNex's, recorded "redistribution prohibited"; deploy-maps.mjs never sends this
-       folder to the client-facing live project, and git ignores it)
+       kya-maps-calculator/layout-plans/<dev>/<n>.jpg  each drawing, at most 1600 px, JPEG — BOTH SITES
+       (Shawn, 2026-10-25: live and offline both carry pictures and rooms; deploy-maps.mjs sends this
+       folder to both projects, and git ignores it)
 
 Run:  python3 price-gap/layout-gap/plans.py            every development with a schedule
       python3 price-gap/layout-gap/plans.py <dev> ...   just these (after a crawl batch)

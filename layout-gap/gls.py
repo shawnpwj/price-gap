@@ -17,7 +17,10 @@ Input  property-analyzer/data/gls-forward.json            the GLS sheet: land ps
 Output kya-maps-calculator/layout-gap/gls.json
 
 The launch sizes are post-harmonisation floor areas, compared quantum to quantum with this unit's sale or
-asking price — never put on a per-square-foot basis. ECs are left out of the private medians.
+asking price — never put on a per-square-foot basis. ECs are left out of the private medians and sized
+off recent EC launches instead, island-wide, under the key "EC" (too few EC launches to split by region).
+Shawn, 2026-10-25: "we should show EC GLS Sites for all, but also allow the agent to remove it if doesnt
+make sense" — EC sites ship beside the private ones, and the page lets the agent remove any site.
 
 Run:  python3 price-gap/layout-gap/gls.py
 """
@@ -49,7 +52,6 @@ stations = [s for s in J(PA, 'mrt-stations.json')['stations'] if s.get('status')
 sites = []
 for s in gls:
     if s.get('launched') or not s.get('projectedPsf') or s.get('lat') is None: continue
-    if s.get('type') == 'ec': continue                       # an EC is a different product; the page values private units
     p = proj.get(s['displayName']) or {}
     mrt = p.get('mrt')
     if mrt and mrt.get('distM') is not None:
@@ -71,7 +73,7 @@ for s in gls:
         developer=s.get('developer'), bidders=s.get('bidders'),
         proj=s['projectedPsf'], mrt=mrt))
 
-# recent launches' unit sizes, by region and PropNex category, private only
+# recent launches' unit sizes, by region and PropNex category; ECs pooled island-wide under "EC"
 raw = J(PA, 'launch-unit-mix-raw.json')['launches']
 gi = {}
 for s in gls:
@@ -81,9 +83,8 @@ ii = {norm(d['name']): d for d in J(SITE, 'layout-gap', 'index.json')['developme
 cats = {}
 for name, d in raw.items():
     g = gi.get(norm(name)) or gi.get(norm(d.get('appName')))
-    if g and g.get('type') == 'ec': continue
     dv = ii.get(norm(name)) or ii.get(norm(d.get('appName')))
-    region = (dv or {}).get('segment') or (g or {}).get('region')
+    region = 'EC' if g and g.get('type') == 'ec' else (dv or {}).get('segment') or (g or {}).get('region')
     if not region: continue
     for r in d['rows']:
         cat = re.sub(r'\s+', ' ', r['type']).strip().upper().replace('WITH STUDY, PENTHOUSE', 'PENTHOUSE, WITH STUDY')
@@ -121,7 +122,7 @@ for reg in pkgs:
 
 out = dict(generatedAt=datetime.date.today().isoformat(),
            note='Projected launch psf is the GLS sheet\'s low / mid / high (breakeven +10% / +20% / +30%); '
-                'sizes are recent private launches\' PropNex categories, post-harmonisation; packages are the '
+                'sizes are recent launches\' PropNex categories, post-harmonisation (private by region, ECs under "EC"); packages are the '
                 'same launches\' eye-read plans by room package.',
            sites=sites, sizes=cats, medians=medians, packages=pkgs, packageMedians=pkg_medians)
 json.dump(out, open(os.path.join(SITE, 'layout-gap', 'gls.json'), 'w'), separators=(',', ':'))

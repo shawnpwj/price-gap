@@ -14,6 +14,7 @@ Input  property-analyzer/data/gls-forward.json            the GLS sheet: land ps
        property-analyzer/data/mrt-stations.json            otherwise the nearest operational station
        property-analyzer/data/launch-unit-mix-raw.json     recent launches' PropNex categories, sizes, units
        kya-maps-calculator/layout-gap/index.json           each launch's region
+       price-gap/calibration/ec-pairs.json                 EC vs private launch pairs (the calibration study)
 Output kya-maps-calculator/layout-gap/gls.json
 
 The launch sizes are post-harmonisation floor areas, compared quantum to quantum with this unit's sale or
@@ -120,11 +121,20 @@ pkg_medians = {reg: {k: round(statistics.median(x['mid'] for x in v)) for k, v i
 for reg in pkgs:
     for k in pkgs[reg]: pkgs[reg][k].sort(key=lambda x: x['mid'])
 
+# EC -> private: what a private launch fetches over an EC launching beside it, matched pairs (same district,
+# +/-6 months, +/-15% area). Shawn, 2026-10-25: "when you're pricing an EC GLS towards a resale condo (be it
+# private condo or ex EC) you need to include the EC to private adjustment (you can take it from calibration
+# study". An ex-EC resale reads the same as a private resale in the same study, so one step serves both.
+# This lifts the 2026-09-10 "back pocket only" hold for this one use.
+ec = J(ROOT, 'price-gap', 'calibration', 'ec-pairs.json')
+ec_launch = dict(pct=round(ec['launch']['pct'], 2), pairs=ec['launch']['pairs'], projects=ec['launch']['projects'],
+                 resalePct=round(ec['resale']['pct'], 2), window=ec['meta']['window'])
+
 out = dict(generatedAt=datetime.date.today().isoformat(),
            note='Projected launch psf is the GLS sheet\'s low / mid / high (breakeven +10% / +20% / +30%); '
                 'sizes are recent launches\' PropNex categories, post-harmonisation (private by region, ECs under "EC"); packages are the '
                 'same launches\' eye-read plans by room package.',
-           sites=sites, sizes=cats, medians=medians, packages=pkgs, packageMedians=pkg_medians)
+           sites=sites, ecToPrivate=ec_launch, sizes=cats, medians=medians, packages=pkgs, packageMedians=pkg_medians)
 json.dump(out, open(os.path.join(SITE, 'layout-gap', 'gls.json'), 'w'), separators=(',', ':'))
 print(f"gls: {len(sites)} future sites; launch sizes for {', '.join(f'{r} {len(c)} categories' for r, c in cats.items())}")
 print('medians', {r: {c: m for c, m in v.items() if c in ('2-BEDROOM', '3-BEDROOM', '4-BEDROOM')} for r, v in medians.items()})

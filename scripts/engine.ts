@@ -848,6 +848,18 @@ export function adjust(K: Constants, S: any, pool: any[]) {
         `${why} — +${(K.harmonisationUplift * 100).toFixed(0)}%`,
         { kind: "pct", pct: K.harmonisationUplift, why });
     }
+    // THE OTHER DIRECTION (Shawn, 2026-10-27): a pre-rule SUBJECT against a post-rule comparable.
+    // The comparable's smaller harmonised area inflates its psf against this development's, so it
+    // comes DOWN by the exact inverse of the uplift (÷1.07, i.e. -6.5%), never a flat -7%. Both sides
+    // need a lease start, as the uplift does — a freehold has no clock to read either way.
+    const subjPre = S.tenure?.leaseStart != null && !subjPost;
+    if (subjPre && isPostRule(c)) {
+      const pct = 1 / (1 + K.harmonisationUplift) - 1;
+      const why = `the comparable is measured under the Jun-2023 harmonisation (lease start ${c.tenure.leaseStart}) and this development is not`
+        + (preOverride(S) ? " (its plans were filed before Jun-2023)" : "");
+      add("Harmonisation", pct * running, `${why} — ${(pct * 100).toFixed(1)}%`,
+        { kind: "pct", pct, why });
+    }
 
     // 5. Integrated.
     if (S.integrated !== c.integrated) {

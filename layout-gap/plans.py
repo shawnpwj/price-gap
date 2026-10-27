@@ -19,6 +19,7 @@ Run:  python3 price-gap/layout-gap/plans.py            every development already
       python3 price-gap/layout-gap/plans.py <dev> ...   these (adds a development once its rooms are read by eye)
 """
 import json, os, glob, sys, subprocess, re
+from collections import Counter
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 ANN = os.path.join(ROOT, 'layout-study', 'data', 'annotations')
@@ -78,19 +79,28 @@ def schedule(v):
 
 def export(only=None):
     out = json.load(open(OUT_JSON)) if (only and os.path.exists(OUT_JSON)) else {}
+    existing = set(out)
     missing = []
     for f in sorted(glob.glob(os.path.join(ANN, '*.json'))):
         dev = os.path.basename(f)[:-5]
         if dev.endswith('-tx-layout') or (only and dev not in only): continue
-        L = (json.load(open(f)).get('layouts') or {})
+        ann = json.load(open(f))
+        L = ann.get('layouts') or {}
         if not isinstance(L, dict) or not any(isinstance(v, dict) and schedule(v) for v in L.values()): continue
         sd = sheet_dir(dev); files = sorted(os.listdir(sd)) if sd else []
         layouts, sched, n = {}, [], 0
+        publishable = {code: v for code, v in L.items()
+                       if isinstance(v, dict) and schedule(v) and
+                       ((dev in existing and not ann.get('_publish_eye_only')) or
+                        v.get('class_read') or v.get('class_ruling') or v.get('rooms_read'))}
+        base_counts = Counter(code.split('\t')[0].strip() for code in publishable)
         os.makedirs(os.path.join(OUT_IMG, dev), exist_ok=True)
-        for code, v in L.items():
-            if not isinstance(v, dict) or not schedule(v): continue
+        for code, v in publishable.items():
             n += 1
-            name = code.split('\t')[0].strip()
+            # Several drawings can share a marketed type. Keep their sheet keys distinct so
+            # #07-13 and #09-02 do not silently receive each other's picture.
+            base = code.split('\t')[0].strip()
+            name = code if base_counts[base] > 1 else base
             src = find_sheet(files, code, v.get('drawing'),
                              [k.split('\t')[0].strip() for k, w in L.items() if isinstance(w, dict) and schedule(w)])
             img = None

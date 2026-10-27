@@ -16,7 +16,7 @@
 // written into the other: the constants are a parameter, so the whole 1,845-development
 // run IS the audit surface for the measured set rather than something that waits on it.
 
-import { promises as fs } from "fs";
+import { promises as fs, readFileSync } from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -109,6 +109,16 @@ export const LRT_LINES = new Set(["PE", "PW", "PTC", "SE", "SW", "STC", "BP"]);
 // The subject walks the SAME ladder as the workup, never past it — see WORKUP_WINDOW_LADDER.
 export const SUBJECT_WINDOW_LADDER = WORKUP_WINDOW_LADDER;
 export const HARMONISATION_FROM = 2023;   // lease starts from this year are post-rule
+// ...EXCEPT a development whose plans were filed before 1 Jun 2023 although its lease starts later —
+// en blocs above all, whose new lease is granted after the plans (Chuan Park: lease 2024, plans
+// pre-rule). Read off each one's floor plans into ../harmonisation-overrides.json (Shawn, 2026-10-27).
+export const PRE_HARMONISED: Set<string> = new Set(
+  JSON.parse(readFileSync(new URL("../harmonisation-overrides.json", import.meta.url), "utf8")).pre
+    .map((e: { name: string }) => e.name.toUpperCase()));
+export const preOverride = (d: any) => PRE_HARMONISED.has(String(d?.name ?? "").toUpperCase().trim());
+// Post-rule = measured under the harmonised area definition. One test, used for both sides.
+export const isPostRule = (d: any) =>
+  d?.tenure?.leaseStart != null && d.tenure.leaseStart >= HARMONISATION_FROM && !preOverride(d);
 export const BEDS = ["All", "1BR", "2BR", "3BR", "4BR+"];
 
 // Straight-line metres -> walking minutes, for the judgement set's walk-minute bands.
@@ -744,7 +754,7 @@ function leaseLeftOf(S: any, c: any): number | null {
 // on the raw base, so the order below is the order applied. Each step is emitted as its
 // own delta so the chart can stack them.
 export function adjust(K: Constants, S: any, pool: any[]) {
-  const subjPost = S.tenure?.leaseStart != null && S.tenure.leaseStart >= HARMONISATION_FROM;
+  const subjPost = isPostRule(S);
   const sBand = K.mrtBandOf(S.mrt.metres);
 
   return pool.map((c0) => {
@@ -829,11 +839,14 @@ export function adjust(K: Constants, S: any, pool: any[]) {
     // their PSF against a post-rule project. IDENTICAL in both constant sets — Shawn
     // dropped harmonisation from the calibration study on 2026-09-06, so no difference
     // between the two columns is ever coming from this line.
-    const compPre = c.tenure?.leaseStart != null && c.tenure.leaseStart < HARMONISATION_FROM;
+    const compPre = c.tenure?.leaseStart != null && !isPostRule(c);
     if (subjPost && compPre) {
+      const why = preOverride(c) && c.tenure.leaseStart >= HARMONISATION_FROM
+        ? `plans filed before Jun-2023 (lease start ${c.tenure.leaseStart}), so areas include the AC ledge`
+        : `lease start ${c.tenure.leaseStart} is pre-Jun-2023`;
       add("Harmonisation", K.harmonisationUplift * running,
-        `lease start ${c.tenure.leaseStart} predates the Jun-2023 GFA harmonisation — +${(K.harmonisationUplift * 100).toFixed(0)}%`,
-        { kind: "pct", pct: K.harmonisationUplift, why: `lease start ${c.tenure.leaseStart} is pre-Jun-2023` });
+        `${why} — +${(K.harmonisationUplift * 100).toFixed(0)}%`,
+        { kind: "pct", pct: K.harmonisationUplift, why });
     }
 
     // 5. Integrated.

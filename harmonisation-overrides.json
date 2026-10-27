@@ -1,0 +1,16 @@
+{
+  "_what": "Developments whose lease starts in 2023 or later but whose plans were filed BEFORE the 1 Jun 2023 GFA harmonisation, so their stated areas still include the AC ledge (pre-harmonised). The lease-start rule (engine.ts HARMONISATION_FROM) reads them as post-harmonised; this list overrides it. Read off each development's floor plans or official material, never inferred. Shawn, 2026-10-27, on Chuan Park.",
+  "_checkedNotListed": "Confirmed post-harmonised, so the date rule is right: NORWOOD GRAND, PARKTOWN RESIDENCE, THOMSON RESERVE (plans: AC ledge non-strata); SERRA RESIDENCES, NOVO PLACE (reviews); UNION SQUARE RESIDENCES (one unofficial source). No evidence found, left on the date rule: TMW MAXWELL, 8@BT, OTTO PLACE, POLLEN COLLECTION II.",
+  "pre": [
+    { "name": "CHUAN PARK", "evidence": "developer unit distribution sheet: development application filed before 1 Jun 2023; sizes include AC ledge and balcony", "url": "https://www.chuanpark.com.sg/wp-content/uploads/2024/10/chuan-park-floor-plan-singapore.pdf" },
+    { "name": "THE MYST", "evidence": "CDL brochure: area includes A/C ledge, balcony and strata void", "url": "https://www.cdlhomes.com.sg/themyst/assets/pdf/The%20Myst%20Simplified%20Brochure_Final.pdf" },
+    { "name": "J'DEN", "evidence": "floor plan e-brochure: area includes A/C ledge, balcony and strata void", "url": "https://jdencondo.sg/wp-content/uploads/2023/10/Jden-Condo-Floorplan-eBrochure.pdf" },
+    { "name": "THE LAKEGARDEN RESIDENCES", "evidence": "floor plan e-brochure: area includes A/C ledge, PES, balcony and strata void", "url": "https://lakegarden-residence.sg/wp-content/uploads/2023/07/The-Lakegarden-Residences-Floorplan-eBrochure.pdf" },
+    { "name": "THE COLLECTIVE AT ONE SOPHIA", "evidence": "project site: each stated size includes the A/C ledge; areas pre-harmonised", "url": "https://thecollectiveonesophia.com.sg/floorplan/" },
+    { "name": "THE ARDEN", "evidence": "two listing sites: stated areas include the A/C ledge (pre-harmonised basis)", "url": "https://arden-condo.sg/floorplan/" },
+    { "name": "SORA", "evidence": "review: 50 sqm 1BR+study includes a 3 sqm aircon ledge", "url": "https://www.homeanddecor.com.sg/property/condominium/sora-lakeside-review" },
+    { "name": "AUREA", "evidence": "review: pre-harmonisation project, AC ledges included", "url": "https://stackedhomes.com/aurea-condo-review/" },
+    { "name": "LYNDENWOODS", "evidence": "reviews: GFA harmonised No; stated sizes include AC ledges", "url": "https://stackedhomes.com/lyndenwoods-construction-science-park-first-in-40-years/" },
+    { "name": "HILLHAVEN", "evidence": "listing sites only: floor areas include A/C ledges (weakest evidence on this list)", "url": "https://esingaporeproperty.sg/property/hillhaven-condo/" }
+  ]
+}

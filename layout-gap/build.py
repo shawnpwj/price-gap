@@ -113,6 +113,9 @@ def _calibration():
         mrt=dict(nearM=mrt['near_m'], farM=mrt['far_m'], bands={b['key']: round(b['adj']) for b in mrt['bands']}),
         integrated=round(cut['pct']/100, 4),
         harmonisation=0.07, harmonisationFrom=2023,   # engine.ts: not measured, same in both sets
+        # Plans filed before Jun-2023 although the lease starts later (Chuan Park et al.) — the same
+        # list engine.ts reads, so both pages call a development pre/post-harmonised the same way.
+        preHarmonised=[e['name'] for e in json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'harmonisation-overrides.json')))['pre']],
         screens=_PGA_RAW['screens'])
 
 # ---------------------------------------------------------------- product classes (layout study)

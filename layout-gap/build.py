@@ -41,12 +41,56 @@ FRES_DIR = os.path.join(ROOT, 'launch-picker', 'stack-study', 'results')
 # as-at date = the day of the build (weekly REALIS refresh, 2026-10-10); pin a past cut with LAYOUT_GAP_ASAT=YYYY-MM-DD
 TODAY = (datetime.date.fromisoformat(os.environ['LAYOUT_GAP_ASAT']) if os.environ.get('LAYOUT_GAP_ASAT')
          else datetime.date.today())
-CUTOFF_DAYS = 550          # 1.5 years — older comps are never considered (Shawn 2026-09-21)
+CUTOFF_DAYS = 550          # 1.5 years — the window the page reads first (Shawn 2026-09-21)
 
 def ymd_int(s): return int(s[:4]) * 10000 + int(s[5:7]) * 100 + int(s[8:10])
 def days_ago(s):
     y,m,d = int(s[:4]),int(s[5:7]),int(s[8:10])
     return (TODAY - datetime.date(y,m,d)).days
+
+# ---------------------------------------------------------------- older sales, carried by a price index
+# Shawn, 2026-10-29: "if there are lack of transactions can you allow me to use previous years transactions
+# and adjust for time as well". Sales older than the window ride in each shard as `old`, each with its own
+# time factor to the as-at date; the page reaches for them only when the window holds fewer than three.
+# A flat 3% a year is right inside 18 months but under-adjusts an older sale by about 6%, so an older sale
+# is carried by a price index instead, the first tier with at least 3 sales at both ends:
+#   c<n>  this development's own sales of the same size class (n = 1..4, the cuts in bedclass)
+#   p     this development's sales of any size
+#   s<n>  the market segment's (OCR / RCR / CCR) sales of the same size class
+# The level at the sale is the median psf within 135 days either side of it; the level now is the median
+# psf of the last 270 days, carried from that window's median date to the as-at date at 3% a year.
+# Tested on repeat sales of the same unit 18 months or more apart, as-at = the second sale: median error
+# 4.4% at 3-5 years and 5.2% past 5, against 8.2% and 10.9% for flat 3%; bias -1.5% against -6%.
+TI_START_W, TI_END_W, TI_MIN = 135, 270, 3
+def bedclass(sqft): return 1 if sqft<560 else 2 if sqft<780 else 3 if sqft<1250 else 4
+def time_pools(db, segs):
+    """psf by date for every index key; ECs pooled apart from condos so neither moves the other's index."""
+    import bisect
+    pool=collections.defaultdict(list)
+    srcs=[('m','main.transactions')]+([('e','ec.transactions')] if os.path.exists(EC_DB) else [])
+    for tag,tbl in srcs:
+        for dv,sq,pr,cd in db.execute(f"select development_id,sqft,price,caveat_date from {tbl} "
+                                      "where sale_type in ('resale','sub_sale') and exclusion_flags='[]' and sqft>0"):
+            d=datetime.date.fromisoformat(cd[:10]).toordinal(); psf=pr/sq; b=bedclass(sq)
+            for k in (('c',dv,b),('p',dv),('s',tag,segs.get(dv),b)): pool[k].append((d,psf))
+    for v in pool.values(): v.sort()
+    return {k:([x[0] for x in v],[x[1] for x in v]) for k,v in pool.items()}, bisect
+_END_CACHE={}
+def time_factor(P, devid, ec, seg, sqft, cd):
+    """(factor to the as-at date, tier code) for one older sale, or (None, None) where no tier has the sales."""
+    pools,bisect=P; d0=datetime.date.fromisoformat(cd[:10]).toordinal(); asat=TODAY.toordinal(); b=bedclass(sqft)
+    for k,code in ((('c',devid,b),f'c{b}'),(('p',devid),'p'),(('s','e' if ec else 'm',seg,b),f's{b}')):
+        if k not in pools: continue
+        ds,ps=pools[k]
+        a=ps[bisect.bisect_left(ds,d0-TI_START_W):bisect.bisect_right(ds,d0+TI_START_W)]
+        if len(a)<TI_MIN: continue
+        if k not in _END_CACHE:
+            i,j=bisect.bisect_left(ds,asat-TI_END_W),bisect.bisect_right(ds,asat)
+            _END_CACHE[k]=(statistics.median(ps[i:j]),statistics.median(ds[i:j])) if j-i>=TI_MIN else None
+        e=_END_CACHE[k]
+        if not e: continue
+        return round(e[0]/statistics.median(a)*1.03**((asat-e[1])/365.25),4), code
+    return None, None
 
 def norm(s): return "".join(c for c in (s or "").lower() if c.isalnum())
 
@@ -317,6 +361,8 @@ def main(only=None):
     devs={r[0]:r for r in db.execute(
         "select development_id,canonical_name,lat,lng,district,region,segment,tenure_type,"
         "tenure_years,lease_commencement,top_year,unit_count,mrt_station,mrt_distance_m from all_dev")}
+    ec_ids={r[0] for r in db.execute("select development_id from ec.developments")} if os.path.exists(EC_DB) else set()
+    TP=time_pools(db,{k:v[6] for k,v in devs.items()})
     NAME2ID={}
     for _id,_r in devs.items():
         if _r[1]: NAME2ID[norm(_r[1])]=_id
@@ -329,6 +375,7 @@ def main(only=None):
             "select floor,stack,sqft,price,caveat_date,sale_type,block from all_tx "
             "where development_id=? and sale_type in ('resale','sub_sale') and exclusion_flags='[]'",(devid,)))
         recent=[r for r in rows if days_ago(r[4])<=CUTOFF_DAYS]
+        older=[r for r in rows if days_ago(r[4])>CUTOFF_DAYS]
         base_f, fprem, fstats = facing_premiums(devid)
         sf = stack_facing(devid)
         # floor rate
@@ -350,9 +397,9 @@ def main(only=None):
         index.append(dict(id=devid, name=name, region=region, district=dist, segment=seg,
                           tenure=ttype, tenureYears=tyrs, leaseFrom=lcom, top=top, units=units,
                           mrt=mrt, mrtM=mrtd, lat=lat, lng=lng,
-                          nRecent=len(recent), hasFacing=bool(fprem), floorSource=frate['source'],
+                          nRecent=len(recent), nOld=len(older), hasFacing=bool(fprem), floorSource=frate['source'],
                           hasDsi=bool(dsi), pg=dev_attrs(name)))
-        if not recent: continue
+        if not recent and not older: continue
         # nearby comparable devs: same planning area first at any distance, then other areas <=2 km
         if not (lat and lng):
             pv=PGA_BY_NAME.get(norm(name)) if name else None
@@ -373,6 +420,7 @@ def main(only=None):
         for fl,st,sq,pr,cd,sty,bl in recent:
             k=stkey(st)
             tx.append([fl, k, round(sq), int(pr), ymd_int(cd), 0 if sty=='resale' else 1, sf.get(k), blk(bl)])
+        old=older_tx(TP, devid, devid in ec_ids, seg, older, sf, stkey, blk)
         # every block each stack has ever sold in, any sale type, so a stack with no recent resale
         # still resolves to its block
         sb=collections.defaultdict(set)
@@ -390,7 +438,7 @@ def main(only=None):
                    # against data.json between builds (2026-09-29).
                    dsi=(dict(bedrooms=dsi.get('bedrooms'), defaultBedroom=dsi.get('defaultBedroom'),
                              unitSizes=dsi.get('unitSizes')) if dsi else None),
-                   layoutClasses=PERCLASS.get(devid), nearby=nearby, planningArea=parea, lat=lat, lng=lng, stackBlocks=stack_blocks or None, tx=tx)
+                   layoutClasses=PERCLASS.get(devid), nearby=nearby, planningArea=parea, lat=lat, lng=lng, stackBlocks=stack_blocks or None, tx=tx, old=old)
         json.dump(shard, open(os.path.join(DEVDIR, devid+'.json'),'w'), separators=(',',':'))
         n_shard+=1
     if only is not None:
@@ -438,6 +486,46 @@ def dual_key_sizes():
     json.dump({'source': 'RealSmart unit mix', 'devs': out}, open(os.path.join(OUT, 'dualkey.json'), 'w'), separators=(',', ':'))
     print(f"dual-key sizes for {len(out)} developments")
 
+def older_tx(TP, devid, ec, seg, older, sf, stkey, blk):
+    """Older sales in the shard's tx shape plus [time factor, index tier]; a sale no tier can carry is left out."""
+    out=[]
+    for fl,st,sq,pr,cd,sty,bl in older:
+        f,code=time_factor(TP, devid, ec, seg, sq, cd)
+        if f is None: continue
+        k=stkey(st)
+        out.append([fl, k, round(sq), int(pr), ymd_int(cd), 0 if sty=='resale' else 1, sf.get(k), (bl or '').split()[0] if bl else None, f, code])
+    return out
+
+def older_only():
+    """Add `old` to the shards on disk and nOld to the index, leaving every published figure as it is; then
+    write full shards for the developments that have older sales only (none had a shard, so nothing moves)."""
+    db=connect()
+    devs={r[0]:r for r in db.execute("select development_id,segment from all_dev")}
+    ec_ids={r[0] for r in db.execute("select development_id from ec.developments")} if os.path.exists(EC_DB) else set()
+    TP=time_pools(db,{k:v[1] for k,v in devs.items()})
+    p=os.path.join(OUT,'index.json'); idx=json.load(open(p))
+    TODAY_=datetime.date.fromisoformat(idx['generatedAt'])
+    def ago(s): return (TODAY_-datetime.date.fromisoformat(s[:10])).days
+    def stkey(st):
+        try: return str(int(st))
+        except (ValueError, TypeError): return str(st)
+    n=0; fresh=set()
+    for d in idx['developments']:
+        rows=[r for r in db.execute("select floor,stack,sqft,price,caveat_date,sale_type,block from all_tx "
+            "where development_id=? and sale_type in ('resale','sub_sale') and exclusion_flags='[]'",(d['id'],))]
+        older=[r for r in rows if ago(r[4])>CUTOFF_DAYS]
+        d['nOld']=len(older)
+        f=os.path.join(DEVDIR,d['id']+'.json')
+        if not os.path.exists(f):
+            if older: fresh.add(d['id'])
+            continue
+        sh=json.load(open(f)); sf=sh.get('stackFacing') or {}
+        sh['old']=older_tx(TP, d['id'], d['id'] in ec_ids, (devs.get(d['id']) or (None,None))[1], older, sf, stkey, None)
+        json.dump(sh, open(f,'w'), separators=(',',':')); n+=1
+    json.dump(idx, open(p,'w'), separators=(',',':'))
+    print(f"older sales added to {n} shards; {len(fresh)} developments with older sales only get a new shard")
+    if fresh: main(only=fresh)
+
 def nearby_only():
     """Rewrite only `nearby` / `planningArea` / `lat` / `lng` in the shards already on disk, leaving every
     figure as published. For a selection change that must not ride along with a full rebuild."""
@@ -459,6 +547,7 @@ if __name__=='__main__':
     import sys
     if '--nearby-only' in sys.argv: nearby_only()
     elif '--dual-key-only' in sys.argv: dual_key_sizes()
+    elif '--older-only' in sys.argv: older_only()
     elif '--ec-only' in sys.argv:
         # the EC developments alone, then every shard's neighbour list so they can be found
         ids={r[0] for r in sqlite3.connect(EC_DB).execute("select development_id from developments")}

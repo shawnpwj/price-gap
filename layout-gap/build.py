@@ -440,7 +440,8 @@ def main(only=None):
                    # against data.json between builds (2026-09-29).
                    dsi=(dict(bedrooms=dsi.get('bedrooms'), defaultBedroom=dsi.get('defaultBedroom'),
                              unitSizes=dsi.get('unitSizes')) if dsi else None),
-                   layoutClasses=PERCLASS.get(devid), nearby=nearby, planningArea=parea, lat=lat, lng=lng, stackBlocks=stack_blocks or None, tx=tx, old=old, nl=nl)
+                   layoutClasses=PERCLASS.get(devid), nearby=nearby, planningArea=parea, lat=lat, lng=lng, stackBlocks=stack_blocks or None, tx=tx, old=old, nl=nl,
+                   nlType=singmap_types(devid) if nl else None)
         json.dump(shard, open(os.path.join(DEVDIR, devid+'.json'),'w'), separators=(',',':'))
         n_shard+=1
     if only is not None:
@@ -506,6 +507,33 @@ def new_sales(db, devid):
     return [r for r in db.execute("select floor,stack,sqft,price,caveat_date,sale_type,block from all_tx "
             "where development_id=? and sale_type='new_sale' and exclusion_flags='[]'",(devid,)) if days_ago(r[4])<=CUTOFF_DAYS]
 
+# Shawn, 2026-10-29: "make sure we're using the right plan to compare". The developer's type per stack comes
+# from the Pi's Singmap reads (launch-picker/out/singmap-feed/<slug>/): the unsold list names type and plan code
+# per unit, the sales log names the type of every unit sold. {stack: [[type, plan code or null, sqft or null]]} --
+# a stack can hold two (a penthouse on top), and only the unsold list carries the plan code and size.
+SINGMAP = os.path.join(ROOT, 'launch-picker', 'out', 'singmap-feed')
+def singmap_types(devid):
+    d=os.path.join(SINGMAP, devid)
+    if not os.path.isdir(d): return None
+    out={}
+    def k(u):
+        try: return str(int(u.split('-')[1]))
+        except (IndexError, ValueError): return None
+    for f in [os.path.join(d,'latest.json')]+sorted(glob.glob(os.path.join(d,'history','*.json'))):
+        try: r=json.load(open(f))
+        except Exception: continue
+        for u in r.get('units') or []:
+            st=k(u.get('unit') or '')
+            if st and u.get('type'): out.setdefault(st,{})[(u['type'].strip(),u.get('plan'),u.get('sqft'))]=1
+        for t in r.get('transactions') or []:
+            st=k((t or {}).get('unit') or '') if isinstance(t,dict) else None
+            if st and t.get('type'): out.setdefault(st,{}).setdefault((t['type'].strip(),None,None),1)
+    res={}
+    for st,ts in out.items():
+        named={x[0] for x in ts if x[1]}
+        res[st]=sorted({x for x in ts if x[1] or x[0] not in named}, key=lambda x:(x[0],x[1] or '',x[2] or 0))
+    return res or None
+
 def older_only():
     """Add `old` to the shards on disk and nOld to the index, leaving every published figure as it is; then
     write full shards for the developments that have older sales only (none had a shard, so nothing moves)."""
@@ -534,6 +562,7 @@ def older_only():
             continue
         sh=json.load(open(f)); sf=sh.get('stackFacing') or {}
         sh['nl']=[[fl, stkey(st), round(sq), int(pr), ymd_int(cd), 2, sf.get(stkey(st)), (bl or '').split()[0] if bl else None] for fl,st,sq,pr,cd,sty,bl in nls]
+        sh['nlType']=singmap_types(d['id']) if nls else None
         sh['old']=older_tx(TP, d['id'], d['id'] in ec_ids, (devs.get(d['id']) or (None,None))[1], older, sf, stkey, None)
         json.dump(sh, open(f,'w'), separators=(',',':')); n+=1
     json.dump(idx, open(p,'w'), separators=(',',':'))

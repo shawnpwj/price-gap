@@ -376,6 +376,7 @@ def main(only=None):
             "where development_id=? and sale_type in ('resale','sub_sale') and exclusion_flags='[]'",(devid,)))
         recent=[r for r in rows if days_ago(r[4])<=CUTOFF_DAYS]
         older=[r for r in rows if days_ago(r[4])>CUTOFF_DAYS]
+        fresh_nl=new_sales(db, devid)
         base_f, fprem, fstats = facing_premiums(devid)
         sf = stack_facing(devid)
         # floor rate
@@ -397,9 +398,9 @@ def main(only=None):
         index.append(dict(id=devid, name=name, region=region, district=dist, segment=seg,
                           tenure=ttype, tenureYears=tyrs, leaseFrom=lcom, top=top, units=units,
                           mrt=mrt, mrtM=mrtd, lat=lat, lng=lng,
-                          nRecent=len(recent), nOld=len(older), hasFacing=bool(fprem), floorSource=frate['source'],
+                          nRecent=len(recent), nOld=len(older), nNew=len(fresh_nl), hasFacing=bool(fprem), floorSource=frate['source'],
                           hasDsi=bool(dsi), pg=dev_attrs(name)))
-        if not recent and not older: continue
+        if not recent and not older and not fresh_nl: continue
         # nearby comparable devs: same planning area first at any distance, then other areas <=2 km
         if not (lat and lng):
             pv=PGA_BY_NAME.get(norm(name)) if name else None
@@ -421,6 +422,7 @@ def main(only=None):
             k=stkey(st)
             tx.append([fl, k, round(sq), int(pr), ymd_int(cd), 0 if sty=='resale' else 1, sf.get(k), blk(bl)])
         old=older_tx(TP, devid, devid in ec_ids, seg, older, sf, stkey, blk)
+        nl=[[fl, stkey(st), round(sq), int(pr), ymd_int(cd), 2, sf.get(stkey(st)), blk(bl)] for fl,st,sq,pr,cd,sty,bl in fresh_nl]
         # every block each stack has ever sold in, any sale type, so a stack with no recent resale
         # still resolves to its block
         sb=collections.defaultdict(set)
@@ -438,7 +440,7 @@ def main(only=None):
                    # against data.json between builds (2026-09-29).
                    dsi=(dict(bedrooms=dsi.get('bedrooms'), defaultBedroom=dsi.get('defaultBedroom'),
                              unitSizes=dsi.get('unitSizes')) if dsi else None),
-                   layoutClasses=PERCLASS.get(devid), nearby=nearby, planningArea=parea, lat=lat, lng=lng, stackBlocks=stack_blocks or None, tx=tx, old=old)
+                   layoutClasses=PERCLASS.get(devid), nearby=nearby, planningArea=parea, lat=lat, lng=lng, stackBlocks=stack_blocks or None, tx=tx, old=old, nl=nl)
         json.dump(shard, open(os.path.join(DEVDIR, devid+'.json'),'w'), separators=(',',':'))
         n_shard+=1
     if only is not None:
@@ -496,6 +498,14 @@ def older_tx(TP, devid, ec, seg, older, sf, stkey, blk):
         out.append([fl, k, round(sq), int(pr), ymd_int(cd), 0 if sty=='resale' else 1, sf.get(k), (bl or '').split()[0] if bl else None, f, code])
     return out
 
+# Shawn, 2026-10-29, on Vela Bay (a 2025-lease launch beside Costa Del Sol, developer sales only): "include it as
+# part of inter price gap analysis. specifically call it out as new launch instead of resale transaction." The
+# developer's sales of the last 18 months ride in each shard as `nl` (saleType 2); the page counts them for a
+# nearby development with no resale of a similar size, labelled new launch.
+def new_sales(db, devid):
+    return [r for r in db.execute("select floor,stack,sqft,price,caveat_date,sale_type,block from all_tx "
+            "where development_id=? and sale_type='new_sale' and exclusion_flags='[]'",(devid,)) if days_ago(r[4])<=CUTOFF_DAYS]
+
 def older_only():
     """Add `old` to the shards on disk and nOld to the index, leaving every published figure as it is; then
     write full shards for the developments that have older sales only (none had a shard, so nothing moves)."""
@@ -515,15 +525,19 @@ def older_only():
             "where development_id=? and sale_type in ('resale','sub_sale') and exclusion_flags='[]'",(d['id'],))]
         older=[r for r in rows if ago(r[4])>CUTOFF_DAYS]
         d['nOld']=len(older)
+        nls=[r for r in db.execute("select floor,stack,sqft,price,caveat_date,sale_type,block from all_tx "
+            "where development_id=? and sale_type='new_sale' and exclusion_flags='[]'",(d['id'],)) if ago(r[4])<=CUTOFF_DAYS]
+        d['nNew']=len(nls)
         f=os.path.join(DEVDIR,d['id']+'.json')
         if not os.path.exists(f):
-            if older: fresh.add(d['id'])
+            if older or nls: fresh.add(d['id'])
             continue
         sh=json.load(open(f)); sf=sh.get('stackFacing') or {}
+        sh['nl']=[[fl, stkey(st), round(sq), int(pr), ymd_int(cd), 2, sf.get(stkey(st)), (bl or '').split()[0] if bl else None] for fl,st,sq,pr,cd,sty,bl in nls]
         sh['old']=older_tx(TP, d['id'], d['id'] in ec_ids, (devs.get(d['id']) or (None,None))[1], older, sf, stkey, None)
         json.dump(sh, open(f,'w'), separators=(',',':')); n+=1
     json.dump(idx, open(p,'w'), separators=(',',':'))
-    print(f"older sales added to {n} shards; {len(fresh)} developments with older sales only get a new shard")
+    print(f"older and new-launch sales added to {n} shards; {len(fresh)} developments with only those get a new shard")
     if fresh: main(only=fresh)
 
 def nearby_only():

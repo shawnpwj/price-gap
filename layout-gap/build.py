@@ -398,7 +398,7 @@ def main(only=None):
         index.append(dict(id=devid, name=name, region=region, district=dist, segment=seg,
                           tenure=ttype, tenureYears=tyrs, leaseFrom=lcom, top=top, units=units,
                           mrt=mrt, mrtM=mrtd, lat=lat, lng=lng,
-                          nRecent=len(recent), nOld=len(older), nNew=len(fresh_nl), hasFacing=bool(fprem), floorSource=frate['source'],
+                          nRecent=len(recent), nOld=len(older), nNew=len(fresh_nl), ec=devid in ec_ids, hasFacing=bool(fprem), floorSource=frate['source'],
                           hasDsi=bool(dsi), pg=dev_attrs(name)))
         if not recent and not older and not fresh_nl: continue
         # nearby comparable devs: same planning area first at any distance, then other areas <=2 km
@@ -556,6 +556,7 @@ def older_only():
         nls=[r for r in db.execute("select floor,stack,sqft,price,caveat_date,sale_type,block from all_tx "
             "where development_id=? and sale_type='new_sale' and exclusion_flags='[]'",(d['id'],)) if ago(r[4])<=CUTOFF_DAYS]
         d['nNew']=len(nls)
+        d['ec']=d['id'] in ec_ids
         f=os.path.join(DEVDIR,d['id']+'.json')
         if not os.path.exists(f):
             if older or nls: fresh.add(d['id'])
@@ -568,6 +569,15 @@ def older_only():
     json.dump(idx, open(p,'w'), separators=(',',':'))
     print(f"older and new-launch sales added to {n} shards; {len(fresh)} developments with only those get a new shard")
     if fresh: main(only=fresh)
+
+def ec_flag_only():
+    """Mark each index row `ec` (an executive condominium), leaving every figure as published. The page
+    applies the EC-to-private launch step where one side is an EC developer sale (2026-10-30)."""
+    ids={r[0] for r in sqlite3.connect(EC_DB).execute("select development_id from developments")} if os.path.exists(EC_DB) else set()
+    p=os.path.join(OUT,'index.json'); idx=json.load(open(p))
+    for d in idx['developments']: d['ec']=d['id'] in ids
+    json.dump(idx, open(p,'w'), separators=(',',':'))
+    print(f"{sum(d['ec'] for d in idx['developments'])} developments marked EC")
 
 def nearby_only():
     """Rewrite only `nearby` / `planningArea` / `lat` / `lng` in the shards already on disk, leaving every
@@ -591,6 +601,7 @@ if __name__=='__main__':
     if '--nearby-only' in sys.argv: nearby_only()
     elif '--dual-key-only' in sys.argv: dual_key_sizes()
     elif '--older-only' in sys.argv: older_only()
+    elif '--ec-flag-only' in sys.argv: ec_flag_only()
     elif '--ec-only' in sys.argv:
         # the EC developments alone, then every shard's neighbour list so they can be found
         ids={r[0] for r in sqlite3.connect(EC_DB).execute("select development_id from developments")}

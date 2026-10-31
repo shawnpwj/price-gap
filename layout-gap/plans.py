@@ -117,7 +117,7 @@ def export(only=None):
             layouts[name] = {
                 'sqft': round(v['sqft']) if v.get('sqft') else None,
                 'bed': v.get('beds'), 'bath': v.get('baths'),
-                'wc': 1 if v.get('wc') else 0, 'study': 1 if v.get('study') else 0,
+                'wc': int(v.get('wc') or 0), 'study': 1 if v.get('study') else 0,
                 'cls': v.get('class'), 'type': v.get('marketed_type'),
                 # rooms read by eye off the drawing, or still the OCR draft
                 'eye': bool(v.get('class_read') or v.get('class_ruling') or v.get('rooms_read')),

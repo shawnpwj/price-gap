@@ -66,6 +66,12 @@ def _money(v, sign=False):
     if v < 0: return '&minus;$' + s
     return ('+$' if sign else '$') + s
 
+def _pc(v, unit='%'):
+    """A share of price. Shawn, 2026-11-01: "Change it all the % only even in the calibration
+    page" -- the room lines were already %, this page was the last to print them in dollars."""
+    if v is None: return '&mdash;'
+    return ('&minus;' if v < 0 else '+') + f'{abs(v):.1f}{unit}'
+
 def _ci(lo, hi):
     if lo is None or hi is None: return '&mdash;'
     return _money(lo) + ' to ' + _money(hi)
@@ -252,7 +258,7 @@ def feature_summary_table():
     def split(g, suf):
         return '<br>'.join(f'{k}{suf} {v["median"]:.1f}%' for k, v in (g or {}).items()) or '&mdash;'
     r = ['<div class="scroll"><table class="fig look"><thead><tr><th>Feature</th>'
-         '<th class="num">measured</th><th class="num">typical $</th>'
+         '<th class="num">measured</th>'
          '<th class="num">could really be</th><th class="num">by region</th>'
          '<th class="num">by bedrooms</th><th class="num">developments</th>'
          '<th class="num">transactions</th></tr></thead><tbody>']
@@ -265,7 +271,6 @@ def feature_summary_table():
                                              NO_STACK.get(key, '')) if x)
         r.append(f'<tr><th>{name}' + (f'<span class="lsub">{note}</span>' if note else '') + '</th>'
                  f'<td class="num big">+{p[1]:.1f}%</td>'
-                 f'<td class="num">{_money(b["quantum"][1])}</td>'
                  f'<td class="num quiet">{rng}</td>'
                  f'<td class="num quiet">{split(b.get("by_region"), "")}</td>'
                  f'<td class="num quiet">{split(b.get("by_beds"), "BR")}</td>'
@@ -751,8 +756,8 @@ def dev_list(devs):
 
 def hero_block():
     """The answer, in the shape every other panel on this page uses: Engine constant -> Measured.
-    Layout has no engine constant, so the prior reads "none", as EC does. Percent leads, quantum
-    sits under it (leave-one-development-out: percent 19% error, $/sqft 26%)."""
+    Layout has no engine constant, so the prior reads "none", as EC does. Percent only (Shawn,
+    2026-11-01; leave-one-development-out: percent 19% error, $/sqft 26%)."""
     F = {o['feature']: o.get('feature_alone') for o in (FSUM or [])}
     cells = []
     for key, words in HERO:
@@ -761,7 +766,6 @@ def hero_block():
         cells.append(
             f'<div class="ans"><div class="n">+{b["pct"][1]:.1f}%</div>'
             f'<div class="w">{words}</div>'
-            f'<div class="g">{_money(b["quantum"][1])}</div>'
             f'<div class="m">{b.get("transactions", 0):,} transactions</div>'
             f'<div class="m">{dev_list(b["developments"])}</div>'
             + (f'<div class="m">{PROV}</div>' if b.get('provisional') else '') + '</div>')
@@ -773,7 +777,7 @@ def hero_block():
             '<div class="val was">none</div>'
             '<div class="sub">reference only</div></div>'
             '<div class="arrow">&rarr;</div>'
-            '<div class="vcell grow"><div class="lab">Measured &mdash; % of price, typical $ beneath</div>'
+            '<div class="vcell grow"><div class="lab">Measured &mdash; % of price</div>'
             '<div class="answers many">' + ''.join(cells) + '</div>'
             f'<p class="vline">{tx:,} transactions &middot; {len(devs)} developments</p>'
             '</div></div>'
@@ -807,6 +811,16 @@ def worked_examples(only=None, skip=0):
     sel = WEX[skip:skip + only] if only else WEX[skip:]
     out = []
     for w in sel:
+        # IN PERCENT (Shawn, 2026-11-01). The figure is the development's own reading in the
+        # feature library; each pair is its gap over the smaller layout's sale; the spread and
+        # the adjusted track are put on the same scale as the figure (its % per dollar).
+        _c = w['contrast'].replace('→', '->').replace(' ', '')
+        fig = next((r['pct'] for r in (FLIB or []) if r['dev'] == w['dev']
+                    and r['contrast'].replace(' ', '') == _c), None)
+        if fig is None:
+            _v = sorted(e['diff'] / e['a']['price'] * 100 for e in w['exact'])
+            fig = _v[len(_v) // 2]
+        k = fig / w['exact_med'] if w.get('exact_med') else 0
         rows = ''.join(
             '<tr>' +
             f'<td class="wc">{_cv(e["a"])[0]}<span class="lsub">{_cv(e["a"])[1]}</span></td>'
@@ -814,8 +828,8 @@ def worked_examples(only=None, skip=0):
             f'<td class="warr">&rarr;</td>'
             f'<td class="wc">{_cv(e["b"])[0]}<span class="lsub">{_cv(e["b"])[1]}</span></td>'
             f'<td class="num">{_cv(e["b"])[2]}</td>'
-            f'<td class="num wdiff">{_money(e["diff"])}</td>'
-            + (f'<td class="num woff">{_money(e["off"], sign=True)}</td>'
+            f'<td class="num wdiff">{_pc(e["diff"] / e["a"]["price"] * 100)}</td>'
+            + (f'<td class="num woff">{_pc(e["diff"] / e["a"]["price"] * 100 - fig, " pts")}</td>'
                if e.get('off') is not None else '<td class="num woff"></td>')
             + '</tr>'
             for e in w['exact'])
@@ -853,7 +867,7 @@ def worked_examples(only=None, skip=0):
                    f'{_cv(a["b"])[1]} &middot; <b>{_cv(a["b"])[2]}</b></p>'
                    f'<ol>{"".join(lines)}</ol>'
                    f'<p class="wres">adjusted base <b>{_money(a["adjusted_base"])}</b> '
-                   f'&rarr; difference <b>{_money(a["diff"])}</b></p></div>')
+                   f'&rarr; difference <b>{_pc(a["diff"] / a["adjusted_base"] * 100)}</b></p></div>')
         gap = w.get('gap')
         gcls = 'lok' if gap is not None and abs(gap) <= 5 else ('lwarn' if gap is not None and abs(gap) <= 10 else 'lbad')
         out.append(
@@ -861,7 +875,7 @@ def worked_examples(only=None, skip=0):
             f'<div class="whead"><div><h3 class="disp">{html.escape(w["why"])}</h3>'
             f'<p class="wsub">{html.escape(w["name"].title())} &middot; '
             f'{html.escape(w["contrast"])}</p></div>'
-            f'<div class="wfig">{_money(w["exact_med"])}<span>typical, {w["exact_n"]} matched pairs</span></div></div>'
+            f'<div class="wfig">{_pc(fig)}<span>typical, {w["exact_n"]} matched pairs</span></div></div>'
             f'<table class="wt"><thead><tr><th colspan="2">the smaller layout</th><th></th>'
             f'<th colspan="2">the larger layout</th><th class="num">difference</th>'
             f'<th class="num">off the figure</th></tr></thead>'
@@ -870,10 +884,10 @@ def worked_examples(only=None, skip=0):
             # 77 words repeated verbatim three times -- 231 of the face's words saying the
             # same thing, which is how a careful caveat turns into wallpaper.
             f'<p class="wnote">Middle half of all {w["exact_n"]}: '
-            f'{_money(w["exact_q1"])} to {_money(w["exact_q3"])}.</p>'
+            f'{_pc(w["exact_q1"] * k)} to {_pc(w["exact_q3"] * k)}.</p>'
             f'{adj}'
-            f'<div class="wfoot"><span>{w["exact_n"]} matched pairs <b>{_money(w["exact_med"])}</b></span>'
-            f'<span>{w["adj_n"]:,} adjusted pairs <b>{_money(w["adj_med"])}</b></span>'
+            f'<div class="wfoot"><span>{w["exact_n"]} matched pairs <b>{_pc(fig)}</b></span>'
+            f'<span>{w["adj_n"]:,} adjusted pairs <b>{_pc(w["adj_med"] * k)}</b></span>'
             f'<span class="{gcls}">they agree to {abs(gap):.1f}%</span></div>'
             f'</article>')
     return '<div class="wexs">' + ''.join(out) + '</div>'

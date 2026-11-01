@@ -10,7 +10,7 @@ here is computed except the closest-first ordering of the pair tables; every fig
 Shape follows the calibration page's standing layout (memory: calibration-page-evidence-layout):
 the transaction base on the hero, and every pair table tied back to its row's figure, closest first.
 """
-import csv, json, os, html, datetime
+import csv, json, os, sys, html, datetime
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUTD = os.path.abspath(os.path.join(HERE, '..', '..', 'layout-study', 'out', 'private-lift'))
@@ -41,6 +41,8 @@ def _load():
     return s, pairs
 
 S, PAIRS = _load()
+sys.path.insert(0, os.path.join(HERE, '..', '..', 'layout-study', 'src'))
+import common as _C   # the study's estimator, so the % here is the study's own point
 
 
 def _pct(v, sign=True):
@@ -91,6 +93,17 @@ def counts():
     return dict(tx=len(tx), devs=len(devs), lift_sales=len(lift), pairs=sum((x['adj'] or {}).get('pairs', 0) + (x['exact'] or {}).get('pairs', 0) for x in SHOWN))
 
 
+def _gap_pct(x):
+    """The raw price gap as a share of the no-lift sale (at the lift unit's floor), over the same
+    adjusted resale pairs and with the study's own estimator. Percent, never dollars (Shawn,
+    2026-11-01)."""
+    r = x['r']
+    v = [(float(p['b_price']) / float(p['a_price_adj']) - 1) * 100 for p in PAIRS
+         if p['development'] == r['development'] and p['base'] in r['base']
+         and p['pl'] in r['private_lift'] and p['bedrooms'] == '4BR+' and p['track'] == 'ADJUSTED']
+    return _C.point(v) if v else None
+
+
 def answer_table():
     """One row per reading: the floor-adjusted PSF gap, its $ on the lift unit, the raw price gap,
     what size alone would give, and the exact (same floor, same facing) figure beside it."""
@@ -108,7 +121,7 @@ def answer_table():
                  f'<th>{x["label"]}<span class="lsub">{seg}</span>{warn}</th>'
                  f'<td>{html.escape(ADDS.get(x["key"], ""))}<span class="lsub">{size}</span></td>'
                  f'<td class="num big">{_pct(a["psf_pct"]) if a else "&mdash;"}</td>'
-                 f'<td class="num quiet">{_money(a["price_gap"]) if a else "&mdash;"}</td>'
+                 f'<td class="num quiet">{_pct(_gap_pct(x)) if a else "&mdash;"}</td>'
                  f'<td class="num quiet">{_pct((a or e)["size_could_explain_pct"])}</td>'
                  f'<td class="num quiet">{(_pct(e["psf_pct"]) + " on " + str(e["pairs"])) if e else "none"}</td>'
                  f'<td class="num quiet">{a["pairs"] if a else 0} ({a["pl_sales"] if a else 0})</td>'
@@ -221,7 +234,6 @@ def table_row():
            '<span class="lsub">PSF, not % of price &middot; <a href="#plift">every pair</a></span>')
     return ('<tr><th>' + LABEL + sub + '</th>'
             f'<td class="num big">{_pct(m["pct"])}</td>'
-            '<td class="num"></td>'   # typical $: no PSF-gap-in-$ (Shawn, 2026-10-18: "doesnt seem to make sense")
             f'<td class="num quiet">{_pct(m["lo"])} to {_pct(m["hi"])}</td>'
             f'<td class="num quiet">{reg}</td>'
             f'<td class="num quiet">4BR+ {_pct(m["pct"])}</td>'

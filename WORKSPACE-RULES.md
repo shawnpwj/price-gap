@@ -81,6 +81,13 @@ This applies to every agent and every project in the facing / stack study
 Running the numbers first and showing him the categories afterwards is the failure this rule
 exists to stop — by then the figures are already anchored on categories he has not checked.
 
+**WHAT HE READS — only the calls you are not sure of.** Shawn, 2026-11-05: *"its too time consuming for
+me to read every table ... raise up to me the ones that you are not HIGH / FULL CONFIDENCE, and need me to
+double check? The obvious ones just assume you are right then."* Write the full table to the batch file
+as before, but put to him ONLY the stacks you are not fully sure of — each with the reason and your
+proposal. Group a question that recurs across developments into ONE ruling. Everything you are sure of
+counts as cleared once he has answered the flagged ones; say in one line which developments carry no flags.
+
 #### THE SHAPE OF THE TABLE — ONE ROW PER VIEW, STACKS COMBINED
 
 **Shawn, 2026-09-06, and this SUPERSEDES the one-row-per-stack instruction of 2026-09-01 and

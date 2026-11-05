@@ -270,7 +270,7 @@ def feature_summary_table():
         note = ' &middot; '.join(x for x in (PROV if b.get('provisional') else '',
                                              NO_STACK.get(key, '')) if x)
         r.append(f'<tr><th>{name}' + (f'<span class="lsub">{note}</span>' if note else '') + '</th>'
-                 f'<td class="num big">+{p[1]:.1f}%</td>'
+                 f'<td class="num big">{format(p[1], "+.1f").replace("-", "&minus;")}%</td>'
                  f'<td class="num quiet">{rng}</td>'
                  f'<td class="num quiet">{split(b.get("by_region"), "")}</td>'
                  f'<td class="num quiet">{split(b.get("by_beds"), "BR")}</td>'
@@ -764,7 +764,7 @@ def hero_block():
         b = F.get(key)
         if not b: continue
         cells.append(
-            f'<div class="ans"><div class="n">+{b["pct"][1]:.1f}%</div>'
+            f'<div class="ans"><div class="n">{format(b["pct"][1], "+.1f").replace("-", "&minus;")}%</div>'
             f'<div class="w">{words}</div>'
             f'<div class="m">{b.get("transactions", 0):,} transactions</div>'
             f'<div class="m">{dev_list(b["developments"])}</div>'

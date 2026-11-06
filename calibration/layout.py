@@ -768,7 +768,7 @@ def hero_block():
     for key, words in HERO:
         b = F.get(key)
         if not b: continue
-        # THE EXTRA BEDROOM IS A RANGE BY SIZE STEP (Shawn, 2026-11-06): the cell gives the lowest and highest
+        # THE EXTRA BEDROOM, 2BR BATHROOM AND 2BR STUDY ARE A RANGE BY SIZE STEP (Shawn, 2026-11-06): the cell gives the lowest and highest
         # band, and the table under the hero gives the band a unit falls in.
         bd = [x['pct'] for x in (BANDS.get(key) or {}).get('bands', []) if x.get('pct') is not None]
         fig = (f'+{min(bd):.0f}&ndash;{max(bd):.0f}%' if bd else
@@ -800,10 +800,11 @@ def hero_block():
 
 
 def band_block():
-    """THE EXTRA BEDROOM, BY HOW MUCH BIGGER THE UNIT IS (Shawn, 2026-11-06). Nothing is adjusted for
+    """THE EXTRA BEDROOM, BY HOW MUCH BIGGER THE UNIT IS (Shawn, 2026-11-06; the 2BR bathroom and 2BR study
+    joined the same day, src/bedroom_bands.py ROWS). Nothing is adjusted for
     area: each same-floor, same-facing pair is filed in the band of its own size step."""
     if not BANDS: return ''
-    out = ['<section><div class="sechead"><h2 class="disp">Extra bedroom, by how much bigger the unit is</h2></div>',
+    out = ['<section><div class="sechead"><h2 class="disp">Extra bedroom, bathroom and study, by how much bigger the unit is</h2></div>',
            '<p class="lede">The bigger the step, the more the buyer pays. Read the row for the unit you are pricing.</p>']
     for key, v in BANDS.items():
         h = [f'<div class="scroll"><table class="fig look"><thead><tr><th>{v["name"]}, unit bigger by</th>'

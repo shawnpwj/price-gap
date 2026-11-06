@@ -50,6 +50,7 @@ XPOOL  = _load('out/crossings-pooled.json', [])
 PARC   = _load('out/parc-esta-contrasts.json', [])
 PGATE  = _load('out/parc-esta-gate.json', [])
 FSUM   = _load('out/feature-summary.json', [])
+BANDS  = _load('out/bedroom-bands.json', {}) or {}     # the extra bedroom by size step (Shawn, 2026-11-06)
 FLIB   = _load('out/feature-library.json', [])          # every feature reading, both routes
 WEX    = _load('out/worked-examples.json', [])          # three examples, with the real caveats
 TRIAGE = _load('out/same-band-triage.json', [])         # what each candidate pair turned out to be
@@ -719,6 +720,8 @@ HERO = [
         # as the bathroom was on 2026-09-28. feature_rows writes them as '<feature> · <n>BR'.
         ('one more bedroom (same package) · 2BR', 'Extra bedroom, 2BR &rarr; 3BR'),
         ('one more bedroom (same package) · 3BR', 'Extra bedroom, 3BR &rarr; 4BR'),
+        # Shawn, 2026-11-06 (call e): Caspian's 4BR adds a powder room as well as the bedroom.
+        ('one more bedroom + powder room · 3BR', 'Extra bedroom + powder room, 3BR &rarr; 4BR'),
         # split by bedroom count 2026-11-06 (audit): the pooled keys mixed 2BR, 3BR and 4BR readings
         ('study -> bedroom · 2BR', 'Study made a bedroom, 2BR &rarr; 3BR'),
         ('study -> bedroom · 3BR', 'Study made a bedroom, 3BR &rarr; 4BR'),
@@ -765,8 +768,13 @@ def hero_block():
     for key, words in HERO:
         b = F.get(key)
         if not b: continue
+        # THE EXTRA BEDROOM IS A RANGE BY SIZE STEP (Shawn, 2026-11-06): the cell gives the lowest and highest
+        # band, and the table under the hero gives the band a unit falls in.
+        bd = [x['pct'] for x in (BANDS.get(key) or {}).get('bands', []) if x.get('pct') is not None]
+        fig = (f'+{min(bd):.0f}&ndash;{max(bd):.0f}%' if bd else
+               f'{format(b["pct"][1], "+.1f").replace("-", "&minus;")}%')
         cells.append(
-            f'<div class="ans"><div class="n">{format(b["pct"][1], "+.1f").replace("-", "&minus;")}%</div>'
+            f'<div class="ans"><div class="n">{fig}</div>'
             f'<div class="w">{words}</div>'
             f'<div class="m">{b.get("transactions", 0):,} transactions</div>'
             f'<div class="m">{dev_list(b["developments"])}</div>'
@@ -789,6 +797,34 @@ def hero_block():
             'their sales are moved to one floor and facing with measured figures, and nothing '
             'has tested them.</p>'
             '</div>')
+
+
+def band_block():
+    """THE EXTRA BEDROOM, BY HOW MUCH BIGGER THE UNIT IS (Shawn, 2026-11-06). Nothing is adjusted for
+    area: each same-floor, same-facing pair is filed in the band of its own size step."""
+    if not BANDS: return ''
+    out = ['<section><div class="sechead"><h2 class="disp">Extra bedroom, by how much bigger the unit is</h2></div>',
+           '<p class="lede">The bigger the step, the more the buyer pays. Read the row for the unit you are pricing.</p>']
+    for key, v in BANDS.items():
+        h = [f'<div class="scroll"><table class="fig look"><thead><tr><th>{v["name"]}, unit bigger by</th>'
+             '<th class="num">premium</th><th class="num">gap</th><th class="num">developments</th>'
+             '<th class="num">transactions</th></tr></thead><tbody>']
+        for b in v['bands']:
+            rng = f'{b["lo"]}&ndash;{b["hi"]}%' if b['hi'] and b['lo'] else (f'under {b["hi"]}%' if b['hi'] else f'{b["lo"]}% or more')
+            if b.get('pct') is None:
+                h.append(f'<tr><td>{rng}</td><td class="num" colspan="2">too few</td><td class="num">{b["developments"]}</td>'
+                         f'<td class="num">{b["transactions"]:,}</td></tr>')
+                continue
+            names = ', '.join(f'{DEVNAME.get(x["dev"], x["dev"].replace("-", " ").title())} '
+                              f'{format(x["pct"], "+.0f").replace("-", "&minus;")}%' for x in b['readings'])
+            h.append(f'<tr><td>{rng}<details class="devs" style="display:block;margin-top:2px"><summary>by development</summary><span>{names}</span></details></td>'
+                     f'<td class="num">{format(b["pct"], "+.1f").replace("-", "&minus;")}%</td>'
+                     f'<td class="num">${b["quantum"]:,}</td><td class="num">{b["developments"]}</td>'
+                     f'<td class="num">{b["transactions"]:,}</td></tr>')
+        h.append('</tbody></table></div>')
+        out.append(''.join(h))
+    out.append('</section>')
+    return ''.join(out)
 
 
 def _cv(c):

@@ -2450,6 +2450,7 @@ LAYOUT_TRI   = LAYOUT.triage_table()
 LAYOUT_WEX   = LAYOUT.worked_examples(only=1)   # one on the face
 LAYOUT_WEX2  = LAYOUT.worked_examples(skip=1)   # the other two, behind a door
 LAYOUT_HERO  = LAYOUT.hero_block()
+LAYOUT_BANDS = LAYOUT.band_block()          # the extra bedroom by size step (Shawn, 2026-11-06)
 # PRIVATE LIFT, 4BR+ sits among the feature tiles and rows (Shawn, 2026-10-18); its own #plift panel
 # stays as the detail behind it.
 _PLT, _PLR = PLIFT.tile(), PLIFT.table_row()
@@ -3033,6 +3034,8 @@ at resale.</p>
   <a href="#summary">Back to the constants</a> &middot; <a href="#plift">Private lift, 4BR+</a></p>
 
 {LAYOUT_HERO}
+
+{LAYOUT_BANDS}
 
 <section>
   <div class="sechead"><h2 class="disp">The measurement</h2></div>

@@ -719,10 +719,12 @@ HERO = [
         # as the bathroom was on 2026-09-28. feature_rows writes them as '<feature> · <n>BR'.
         ('one more bedroom (same package) · 2BR', 'Extra bedroom, 2BR &rarr; 3BR'),
         ('one more bedroom (same package) · 3BR', 'Extra bedroom, 3BR &rarr; 4BR'),
-        ('study -> bedroom', 'Study made a bedroom'),
+        # split by bedroom count 2026-11-06 (audit): the pooled keys mixed 2BR, 3BR and 4BR readings
+        ('study -> bedroom · 2BR', 'Study made a bedroom, 2BR &rarr; 3BR'),
+        ('study -> bedroom · 3BR', 'Study made a bedroom, 3BR &rarr; 4BR'),
         # Shawn, 2026-09-28: the bathroom is two rows -- every 2BR reading is 2BR1B -> 2BR2B, and a
         # third bathroom on a 4BR is a different room at a different price.
-        ('Extra bathroom', 'Extra bathroom, 2BR'),
+        ('Extra bathroom · 2BR', 'Extra bathroom, 2BR'),
         ('Extra bathroom (4BR)', 'Extra bathroom, 4BR'),
         ('Study · 2BR', 'Study, 2BR'),
         ('Study · 3BR', 'Study, 3BR'),
@@ -941,7 +943,7 @@ def facts():
         if not b: continue
         if n == 'WC':          f['rung_svc'] = b
         if n == 'WC + yard':   f['rung_yard'] = b
-        if n == 'Extra bathroom': f['bath_row'] = b
+        if n == 'Extra bathroom · 2BR': f['bath_row'] = b   # the 2BR split, not the pooled key (audit 2026-11-06)
     # bathroom spread
     bath = [r for r in (FLIB or []) if r['feature'].strip() == '+1 bathroom']
     bp = [r for r in bath if r['test'] is not None and abs(r['test']) <= 10]

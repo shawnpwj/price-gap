@@ -1082,3 +1082,141 @@ export function runOne(data: Data, K: Constants, S: any, bed: string, screened: 
     },
   };
 }
+
+// ── GLS-sheet overrides, shared by the batch and the single-project CLI ─────────
+// Moved out of price-gap-all.ts on 2026-11-07: the CLI never ran it, so a subject with no
+// caveats of its own (Thomson Reserve, Amberwood at Holland) was worked up with no lease,
+// no vintage term, and read NOT ASSESSABLE. Mutates data.overrides; returns the GLS-only
+// sites as subject nodes.
+export function applyGlsOverrides(data: Data): any[] {
+  // ── Sites that exist ONLY in the GLS pipeline ──────────────────────────────
+  // Shawn, 2026-09-09: "why is thomson reserve not having ANY form of comparable? all
+  // development should have even if there is no transaction for the specific development
+  // yet (not launch yet)." He is right, and the cause was narrow: the batch iterates
+  // dsi-index, and an un-launched site is not in it. THOMSON RESERVE (the Thomson View
+  // en-bloc, 1,240 units, launching 2026) lives only in gls-forward.json.
+  //
+  // Only TWO sites are genuinely in this class. Six other unmatched GLS names — Continuum,
+  // The Botany, Parktown Residences, Upperhouse, RiverGreen, Rivelle — are just the sheet's
+  // short forms of developments that ARE in dsi-index and already have workups under their
+  // real names, so they are matched here rather than duplicated.
+  //
+  // The subject price is the sheet's PROJECTED psf, at Shawn's call. Note this is NOT what
+  // the New Launches table shows: that cell prefers breakeven x margin, which puts Thomson
+  // Reserve at $2,753 (2,202 x 1.25) against the sheet's projected $2,532. Left alone here —
+  // the discrepancy is real and is his to rule on, not something to quietly reconcile.
+  const dsiNames = new Set(data.dsi.map((p) => p.project.toUpperCase().trim()));
+  // The same canonical form the calculator's New Launches table uses to match a sheet name
+  // to a scored development: drop a leading "The", drop a trailing " at <location>" or
+  // " @ <x>", fold Residences/Residence together, then strip punctuation. Without the last
+  // two, "Parktown Residences" and "Rivelle" read as brand-new sites when PARKTOWN RESIDENCE
+  // and RIVELLE TAMPINES are already in dsi-index with workups of their own.
+  const canon = (n: string) => n.toUpperCase().trim()
+    .replace(/^THE\s+/, "")
+    .replace(/\s+(?:AT|@)\s+.*$/, "")
+    .replace(/RESIDENCES\b/, "RESIDENCE")
+    .replace(/[^A-Z0-9]/g, "");
+  const dsiByCanon = new Map<string, string>();
+  for (const p of data.dsi) {
+    const full = p.project.toUpperCase().trim();
+    for (const k of new Set([canon(p.project), canon(full.replace(/\s+(?:AT|@)\s+.*$/, ""))])) {
+      if (!dsiByCanon.has(k)) dsiByCanon.set(k, full);
+    }
+  }
+  // A sheet name that is a PREFIX of exactly one dsi name is that development —
+  // "Rivelle" -> RIVELLE TAMPINES, "Upperhouse" -> UPPERHOUSE AT ORCHARD BOULEVARD.
+  const prefixMatch = (c: string) => {
+    const hits = [...dsiByCanon.keys()].filter((k) => k.startsWith(c) && c.length >= 6);
+    return hits.length === 1 ? dsiByCanon.get(hits[0]) : null;
+  };
+  // A 99-year lease on a fresh site commences at award; the sheet's award date is the only
+  // record of it for a project that has never transacted.
+  const awardYearOf = (site: any) =>
+    Number(String(site.awardDate || "").match(/\b(20\d{2})\b/)?.[1])
+    || (Number(site.launchYear) ? Number(site.launchYear) - 1 : null);
+
+  // ── The integrated / mixed-use flag ───────────────────────────────────────
+  // Shawn, 2026-09-10: "for example Pinery Residences, why are you not adding the
+  // integrated premium?" Because the flag was never set. `integrated` read only from
+  // pricegap-overrides.json, which carries one hand-written entry for GRAND DUNMAN and no
+  // integrated flag at all — so across 1,831 developments the term fired ZERO times. The
+  // measured +6.7% has never once reached a number.
+  //
+  // The signal was already in the pipeline: the GLS sheet's zoning column types a parcel
+  // "Mixed Development" or "Resi with 1st Storey Commercial", and sync-gls-forward carries
+  // that through as type "mixed". PINERY RESIDENCES is one of the three.
+  //
+  // NOTE this only reaches developments the GLS sheet knows about. An integrated project
+  // already standing — Watertown, Bedok Residences, Lentor Modern and the rest — has no
+  // flag in any dataset here, so it stays false until the list is given. Raised with Shawn.
+  for (const [gname, site] of data.gls) {
+    if (site.type !== "mixed") continue;
+    const target = dsiNames.has(gname) ? gname
+      : dsiByCanon.get(canon(gname)) ?? prefixMatch(canon(gname)) ?? gname;
+    data.overrides[target] = { ...(data.overrides[target] || {}), integrated: true };
+    process.stderr.write(`  ~ ${target}: integrated (mixed-use zoning on the GLS sheet)\n`);
+  }
+
+  // ── Subjects in dsi-index that have NO tenure of their own ────────────────
+  // pricegap-base derives tenure from CAVEATS, so a development that has never transacted
+  // has none — and without a tenure or a TOP the vintage term cannot run at all. Every
+  // comparable then passes through completely unadjusted and the gap is nonsense: LUCERNE
+  // GRAND read -55.3% against 2002-2010 leases that were never restated, and the lease-gap
+  // screen could not fire either because it needs the subject's own lease start.
+  // Where the GLS sheet knows the award date, that is the missing lease start. Found while
+  // tracing the sheet's margin change, 2026-09-09.
+  for (const [gname, site] of data.gls) {
+    const target = dsiNames.has(gname) ? gname
+      : dsiByCanon.get(canon(gname)) ?? prefixMatch(canon(gname));
+    if (!target) continue;
+    if (data.base[target]?.tenure?.type || data.overrides[target]?.tenure) continue;
+    const y = awardYearOf(site);
+    if (!y) continue;
+    data.overrides[target] = {
+      ...(data.overrides[target] || {}),
+      tenure: { raw: `99 yrs lease commencing from ${y}`, type: "LH", years: 99, leaseStart: y },
+      // The GLS sheet holds a tender estimate (One Chuan Grove: 1,055); the
+      // hand-verified unit count of record (1,056) must win here too. This is
+      // written into an override, which factsFor reads before data.units.
+      units: data.overrides[target]?.units ?? data.units[target]?.units ?? site.units ?? undefined,
+      _tenureFromGls: true, _awardEstimated: !String(site.awardDate || "").match(/\b20\d{2}\b/),
+    };
+    process.stderr.write(`  ~ ${target}: no tenure of its own, taking lease start ${y} from the GLS award date\n`);
+  }
+
+  const glsOnly: any[] = [];
+  for (const [gname, site] of data.gls) {
+    if (dsiNames.has(gname) || !site.lat || !site.lng) continue;
+    // A name the sheet writes differently is not a missing development.
+    const c = canon(gname);
+    if (dsiByCanon.has(c) || prefixMatch(c)) continue;
+    if (!(site.projectedPsf?.avg)) continue;
+    // A 99-year lease on a fresh site commences at award. Where the sheet carries no award
+    // date, launch year minus one is the working estimate and is flagged as one — it moves
+    // the vintage term by a single year, which is $43 psf at the measured rate.
+    const awardYear = awardYearOf(site);
+    // AN EXPLICIT TENURE BEATS THE INFERRED ONE (2026-09-13). "99 years from award" is a sound
+    // default for GOVERNMENT land and wrong for everything else, and the sheet now carries
+    // collective-sale rows — The Serra Residences is FREEHOLD on land bought en bloc in 2010, so
+    // the default booked it as a 16-year-old leasehold and put ~$677 psf of vintage adjustment
+    // on every comparable in the wrong direction. The second override block above already
+    // deferred to a hand-set tenure; this one overwrote it unconditionally, which is why an
+    // override alone could not rescue such a site. gls-forward has no tenure field of its own
+    // (the sheet has no tenure column), so pricegap-overrides.json is the only place to say it.
+    const ovTenure = data.overrides[gname]?.tenure;
+    if (!awardYear && !ovTenure) continue;
+    data.overrides[gname] = {
+      ...(data.overrides[gname] || {}),
+      tenure: ovTenure
+        ?? { raw: `99 yrs lease commencing from ${awardYear}`, type: "LH", years: 99, leaseStart: awardYear },
+      units: data.overrides[gname]?.units ?? data.units[gname]?.units ?? site.units ?? null,
+      top: data.overrides[gname]?.top,
+      _glsOnly: true,
+      _awardEstimated: !ovTenure && !String(site.awardDate || "").match(/\b20\d{2}\b/),
+    };
+    glsOnly.push({ project: gname, street: site.siteName || site.location || "", district: "",
+                   region: site.region || "", lat: site.lat, lng: site.lng, _gls: true });
+  }
+  if (glsOnly.length) process.stderr.write(`  + ${glsOnly.length} GLS-only site(s): ${glsOnly.map((g) => g.project).join(", ")}\n`);
+  return glsOnly;
+}

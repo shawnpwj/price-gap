@@ -11,7 +11,7 @@
 // figures for comparison only. See engine.ts and calibration/README.md.
 
 import { promises as fs } from "fs";
-import { D, loadData, loadMeasured, factsFor, screen, runOne, JUDGEMENT, PSF_WINDOW_MONTHS } from "./engine.ts";
+import { D, loadData, loadMeasured, factsFor, screen, runOne, applyGlsOverrides, JUDGEMENT, PSF_WINDOW_MONTHS } from "./engine.ts";
 
 async function main() {
   const argv = process.argv.slice(2);
@@ -31,8 +31,12 @@ async function main() {
   const data = await loadData();
   const K = setName === "measured" ? await loadMeasured() : JUDGEMENT;
 
-  const node = data.byName.get(subjectName);
-  if (!node) throw new Error(`Subject "${subjectName}" not found in dsi-index`);
+  // Same GLS-sheet overrides as the batch: lease start from the award date for a subject
+  // with no caveats yet, the integrated flag, and sites that exist only on the GLS sheet.
+  const glsOnly = applyGlsOverrides(data);
+  const node = data.byName.get(subjectName)
+    ?? glsOnly.find((g) => g.project.toUpperCase().trim() === subjectName);
+  if (!node) throw new Error(`Subject "${subjectName}" not found in dsi-index or the GLS sheet`);
   const S = factsFor(data, subjectName, node, wantBed);
   if (!S.psf) throw new Error(`No PSF data for subject ${subjectName} in the last ${PSF_WINDOW_MONTHS} months`);
 

@@ -144,16 +144,19 @@ def _calibration():
     # band's premium is pinned at the average lease left of the pairs it was measured on (tenure-pairs.py's
     # MIXED rows, re-read 2026-10-22: 90+ at 91.0, 75-89 at 84.3, 60-74 at 68.5) and the page draws a straight
     # line between them, holding the end figures flat beyond. tenure-pairs.json does not carry these yet.
+    # Shawn, 2026-11-07: read at the lease the leasehold would have AT THE FREEHOLD'S TOP — gradient_aged,
+    # which carries its own `at`. The as-it-stands gradient (and these hand-set points) is the fallback.
     AT={90: 91.0, 75: 84.3, 60: 68.5}
-    grad=sorted([dict(minLeft=g['min_left'], pct=g['pct'], label=g['label'], at=AT.get(g['min_left']))
-                 for g in ten['slices']['gradient']
+    aged='gradient_aged' in ten['slices']
+    grad=sorted([dict(minLeft=g['min_left'], pct=g['pct'], label=g['label'], at=g.get('at') if aged else AT.get(g['min_left']))
+                 for g in ten['slices']['gradient_aged' if aged else 'gradient']
                  if not g.get('thin') and isinstance(g.get('pct'),(int,float)) and isinstance(g.get('min_left'),(int,float))],
                 key=lambda g:-g['minLeft'])
     cut=next((c for c in integ['cuts'] if c.get('headline')), integ['cuts'][-1])
     return dict(
         lease=dict(bound=lease['bound'], pre=lease['pre'], post=lease['post']),
         ageFH=dict(bound=age['bound'], pre=age['pre'], post=age['post']),
-        tenure=dict(headline=ten['headline']['percent']['p'], grad=grad),
+        tenure=dict(headline=ten['headline']['percent']['p'], grad=grad, aged=aged),
         mrt=dict(nearM=mrt['near_m'], farM=mrt['far_m'], bands={b['key']: round(b['adj']) for b in mrt['bands']}),
         integrated=round(cut['pct']/100, 4),
         harmonisation=0.07, harmonisationFrom=2023,   # engine.ts: not measured, same in both sets

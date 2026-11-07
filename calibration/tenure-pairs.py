@@ -474,9 +474,14 @@ def slice_fit(rows, tag, keyfn, order=None, key=None, ci=False):
             print(f'  {str(k):22s} {row["cells"]:>4d} cells {row["pairs"]:>4d} pairs   '
                   f'{row["pct"]:+7.2%}   ${row["dol"]:+8,.0f}')
         out.append(row)
-    if key == 'gradient':
+    if key in ('gradient', 'gradient_aged'):
         floors = dict(LEASE_STEPS)
-        for x in out: x['min_left'] = floors.get(x['label'])
+        for x in out:
+            x['min_left'] = floors.get(x['label'])
+            sel = g.get(x['label'], [])
+            # where the band sits on the lease-left axis it is keyed on — the page interpolates
+            # between these, so they are carried rather than restated by hand (2026-11-07)
+            x['at'] = round(st.mean(lease_left_key(r, key) for r in sel), 1) if sel else None
     if key: SLICES[key] = out
     return g
 
@@ -484,13 +489,31 @@ print('\n(each slice shows the percentage form and the dollar form side by side)
 # The gradient bands. The FLOOR of each is carried into the JSON so the page's calculator
 # reads the steps off the measurement instead of restating them.
 LEASE_STEPS = [('90+ yrs left', 90), ('75-89 left', 75), ('60-74 left', 60), ('under 60 left', 0)]
-def lease_band(r):
+def lease_left_key(r, key):
+    """'gradient' reads the leasehold's lease as it stands. 'gradient_aged' reads it AFTER the
+    vintage step has moved the leasehold onto the freehold's TOP: a leasehold completed in the
+    freehold's year would have `left + dv` years left (dv = top_fh - top_lh, negative when the
+    freehold is older).
+    Shawn, 2026-11-07, on Skyline (FH, TOP 2015) against the Telok Blangah GLS (TOP 2031): "if i
+    convert Skyline from Freehold to Leasehold, i have to put it in the '75-89 years of lease left'
+    category". The vintage step prices the lease run-off between the two TOPs; reading the premium
+    at the newer lease's own 98 years then credits the freehold as if no lease had run off. Re-cut
+    on these pairs: keyed this way the premium widens steadily as the lease shortens; keyed on the
+    lease as it stands it does not (75-89 above 60-74)."""
     L = r['left']
     if L is None: return None
+    return L + r['dv'] if key == 'gradient_aged' else L
+def lease_band(r, key='gradient'):
+    L = lease_left_key(r, key)
+    if L is None: return None
     return next(nm for nm, lo in LEASE_STEPS if L >= lo)
-slice_fit(MIXED, 'THE GRADIENT — premium by the leasehold side\'s REMAINING LEASE', lease_band,
+slice_fit(MIXED, 'THE GRADIENT (as it stands) — premium by the leasehold side\'s REMAINING LEASE', lease_band,
           order=['90+ yrs left', '75-89 left', '60-74 left', 'under 60 left', None],
           key='gradient', ci=True)
+slice_fit(MIXED, 'THE GRADIENT (aged) — by the lease the leasehold would have at the freehold\'s TOP — THE ONE THE ENGINE USES',
+          lambda r: lease_band(r, 'gradient_aged'),
+          order=['90+ yrs left', '75-89 left', '60-74 left', 'under 60 left', None],
+          key='gradient_aged', ci=True)
 qs = sorted(r['psf_lh'] for r in MIXED)
 t1, t2 = qs[len(qs)//3], qs[2*len(qs)//3]
 slice_fit(MIXED, 'SCALE TEST — does the % or the $ hold steady across price levels?',

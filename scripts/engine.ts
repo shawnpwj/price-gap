@@ -262,9 +262,15 @@ export async function loadMeasured(): Promise<Constants> {
   // figure at all — under-60-left has 4 pairs. Those are dropped, not filled in, and a
   // shorter lease than the last measured band CLAMPS to it rather than extrapolating
   // the widening past where anything was observed.
-  const grad = (tenure.slices.gradient as any[])
+  // Shawn, 2026-11-07: the premium is read at the lease the leasehold would have AT THE FREEHOLD'S
+  // TOP ("if i convert Skyline from Freehold to Leasehold, i have to put it in the 75-89 years of
+  // lease left category"). gradient_aged is keyed that way and carries its own `at`; the older
+  // as-it-stands gradient is the fallback for a JSON that predates it.
+  const aged = Array.isArray(tenure.slices.gradient_aged);
+  const grad = ((aged ? tenure.slices.gradient_aged : tenure.slices.gradient) as any[])
     .filter((g) => !g.thin && typeof g.pct === "number" && typeof g.min_left === "number")
-    .map((g) => ({ minLeft: g.min_left as number, pct: g.pct as number, label: g.label as string }))
+    .map((g) => ({ minLeft: g.min_left as number, pct: g.pct as number, label: g.label as string,
+                   at: (aged ? g.at : TENURE_AT[g.min_left]) as number | undefined }))
     .sort((a, b) => b.minLeft - a.minLeft);
   const headline = tenure.headline.percent.p as number;
   // MRT: bands on the study's own 400 m / 800 m cuts, with its own fitted magnitudes.
@@ -311,7 +317,7 @@ export async function loadMeasured(): Promise<Constants> {
     // same clamp as before, never extrapolated. The Layout Price Gap page does the same.
     tenurePremium: (leaseLeft) => {
       if (leaseLeft == null) return headline;
-      const G = grad.filter((g) => TENURE_AT[g.minLeft] != null).map((g) => ({ at: TENURE_AT[g.minLeft], pct: g.pct }));
+      const G = grad.filter((g) => g.at != null).map((g) => ({ at: g.at as number, pct: g.pct }));
       if (G.length < 2) {
         for (const g of grad) if (leaseLeft >= g.minLeft) return g.pct;
         return grad[grad.length - 1].pct;
@@ -324,7 +330,7 @@ export async function loadMeasured(): Promise<Constants> {
       }
       return headline;
     },
-    tenureLabel: `+${(grad[0].pct * 100).toFixed(0)}% at ${TENURE_AT[grad[0].minLeft] ?? grad[0].minLeft} years left, rising in a straight line to +${(grad[grad.length - 1].pct * 100).toFixed(0)}% at ${TENURE_AT[grad[grad.length - 1].minLeft] ?? grad[grad.length - 1].minLeft} as the lease shortens`,
+    tenureLabel: `+${(grad[0].pct * 100).toFixed(0)}% at ${grad[0].at ?? grad[0].minLeft} years left, rising in a straight line to +${(grad[grad.length - 1].pct * 100).toFixed(0)}% at ${grad[grad.length - 1].at ?? grad[grad.length - 1].minLeft} as the lease shortens — lease left read as the leasehold would stand at the freehold's TOP`,
     mrtBandOf: (m) => (m < nearM ? "near" : m <= farM ? "mid" : "far"),
     mrtBandCutLabel: `straight-line metres — under ${nearM} / ${nearM}–${farM} / over ${farM}`,
     mrtBandPsf,
@@ -743,10 +749,19 @@ export function screen(data: Data, S: any, bed: string, precomputed?: ReturnType
 // Remaining lease of the LEASEHOLD side of a mixed pair — the input to the measured
 // tenure gradient. The freehold premium is not one number: it widens as the lease
 // shortens, because at the far end of a lease the freehold gap IS the lease gap.
+// The lease the leasehold side would have left had it completed in the FREEHOLD's TOP year —
+// the key the tenure gradient is measured on (gradient_aged, Shawn 2026-11-07). A new leasehold
+// set against an older freehold reads shorter than its own lease, because the vintage step has
+// already priced the run-off between the two TOPs. Without both TOPs it falls back to the lease
+// as it stands.
 function leaseLeftOf(S: any, c: any): number | null {
-  const lh = S.tenure?.type === "LH" ? S.tenure : c.tenure?.type === "LH" ? c.tenure : null;
+  const sLH = S.tenure?.type === "LH", lhD = sLH ? S : c.tenure?.type === "LH" ? c : null;
+  const lh = lhD?.tenure;
   if (!lh?.leaseStart || !lh.years) return null;
-  return lh.leaseStart + lh.years - new Date().getFullYear();
+  const left = lh.leaseStart + lh.years - new Date().getFullYear();
+  const fhD = lhD === S ? c : S;
+  const dv = lhD?.top?.year && fhD?.top?.year && fhD.tenure?.type === "FH" ? fhD.top.year - lhD.top.year : 0;
+  return left + dv;
 }
 
 // ── The adjustment stack ─────────────────────────────────────────────────────
@@ -814,7 +829,7 @@ export function adjust(K: Constants, S: any, pool: any[]) {
       const left = leaseLeftOf(S, c);
       const p = K.tenurePremium(left);
       const target = c.tenure.type === "FH" ? running / (1 + p) : running * (1 + p);
-      const leftNote = left != null && K.key === "measured" ? `, ${left} yrs of lease left` : "";
+      const leftNote = left != null && K.key === "measured" ? `, ${left} yrs of lease left at the freehold's TOP` : "";
       // LABELLED "Freehold", not "Tenure" (Shawn, 2026-09-10). The step only ever exists
       // because one side of the pair is freehold, and "Tenure +$324" left the reader to
       // work out which way it ran; "Freehold" names the thing being priced.

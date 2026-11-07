@@ -1233,7 +1233,7 @@ JS = """
         (fwd?'\u2212':'+')+(st[1]*100).toFixed(0)+'%</b></div>'+
       '<div class="crow big"><span>'+(fwd?'As leasehold':'As freehold')+'</span><b>$'+
         Math.round(out).toLocaleString()+' psf</b></div>'+
-      '<p class="chint">Lease left, as a leasehold completed in the freehold\'s year: '+TB[4]+' \u2212 ('+
+      '<p class="chint">Lease left, as a leasehold completed in the freehold&rsquo;s year: '+TB[4]+' \u2212 ('+
       TB[5]+' \u2212 '+tf+') \u2212 '+TB[3]+' years of building = '+lf+'.</p>';
   }
   ['tfP','tfT','tlT'].forEach(function(id){

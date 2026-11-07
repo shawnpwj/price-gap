@@ -275,6 +275,9 @@ def island_facing():
                     lo=round(v['low'],2) if v.get('low') is not None else None,
                     hi=round(v['high'],2) if v.get('high') is not None else None,
                     name=v.get('label') or names.get(k,k))
+        # by floor band where the study publishes one (MRT facing, Shawn 2026-11-07)
+        if v.get('bands'):
+            out[k]['bands']={b:round(x['market'],2) for b,x in v['bands'].items()}
     return out
 
 # ---------------------------------------------------------------- DSI (data.json), by name

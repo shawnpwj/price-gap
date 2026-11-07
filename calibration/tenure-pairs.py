@@ -456,14 +456,14 @@ print(f'\n── SCALE — dollars vs percent, PAIRED over {SCALE_T["folds"]} id
       f'dollars win {SCALE_T["wins"]}/{SCALE_T["folds"]} folds · t = {SCALE_T["t"]:.1f}')
 
 SLICES = {}
-def slice_fit(rows, tag, keyfn, order=None, key=None, ci=False):
+def slice_fit(rows, tag, keyfn, order=None, key=None, ci=False, min_cells=8):
     print(f'\n── {tag} ' + '─'*40)
     g = collections.defaultdict(list)
     for r in rows: g[keyfn(r)].append(r)
     out = []
     for k in (order or sorted(g, key=lambda x: (x is None, x))):
         sel = g.get(k, [])
-        row = dict(label=str(k), **describe(sel), thin=len(sel) < 8)
+        row = dict(label=str(k), **describe(sel), thin=len(sel) < min_cells)
         if row['thin']:
             print(f'  {str(k):22s} {len(sel):>4d} cells   — too thin')
         else:
@@ -502,7 +502,12 @@ def lease_left_key(r, key):
     lease as it stands it does not (75-89 above 60-74)."""
     L = r['left']
     if L is None: return None
-    return L + r['dv'] if key == 'gradient_aged' else L
+    if key != 'gradient_aged': return L
+    # Shawn, 2026-11-07: "if the GLS is completed in 2015 ... developer would have bought it" years
+    # before -> lease start = the freehold's TOP less the measured build time (BUILD_YEARS, median 4),
+    # then the leasehold's own term from there. NOT the leasehold's own left shifted by the TOP gap:
+    # that carries the leasehold's own award-to-TOP gap (6 years at a GLS) into the key.
+    return (r['top_fh'] - CONSTRUCTION_YEARS) + (r['yrs_lh'] or LEASE_TERM) - NOW
 def lease_band(r, key='gradient'):
     L = lease_left_key(r, key)
     if L is None: return None
@@ -513,7 +518,10 @@ slice_fit(MIXED, 'THE GRADIENT (as it stands) — premium by the leasehold side\
 slice_fit(MIXED, 'THE GRADIENT (aged) — by the lease the leasehold would have at the freehold\'s TOP — THE ONE THE ENGINE USES',
           lambda r: lease_band(r, 'gradient_aged'),
           order=['90+ yrs left', '75-89 left', '60-74 left', 'under 60 left', None],
-          key='gradient_aged', ci=True)
+          key='gradient_aged', ci=True,
+          # Shawn, 2026-11-07: "we should definitely still show something in 90+yrs left" — 90+ rests on
+          # 7 cells / 6 pairs (freeholds TOP 2021+), one under the study's 8; shown and used at 7.
+          min_cells=7)
 qs = sorted(r['psf_lh'] for r in MIXED)
 t1, t2 = qs[len(qs)//3], qs[2*len(qs)//3]
 slice_fit(MIXED, 'SCALE TEST — does the % or the $ hold steady across price levels?',

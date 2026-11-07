@@ -1203,7 +1203,9 @@ JS = """
   // completion year, so the field only restated an answer the calculator already had. It is
   // worked out here and shown in the result instead. Term, less the years since TOP, less the
   // years it took to build.
-  function left(){var t=n('tlT'); if(!t) return null;
+  // Shawn, 2026-11-07: read at the FREEHOLD's completion year — the lease a leasehold finished that
+  // year would have left — because the age term already prices the run-off between the two TOPs.
+  function left(){var t=n('tfT'); if(!t) return null;
     return Math.max(1, Math.min(TB[4], TB[4]-(TB[5]-t)-TB[3]));}
   function dirs(){
     el('tdF').className = fwd?'on':''; el('tdL').className = fwd?'':'on';
@@ -1231,8 +1233,8 @@ JS = """
         (fwd?'\u2212':'+')+(st[1]*100).toFixed(0)+'%</b></div>'+
       '<div class="crow big"><span>'+(fwd?'As leasehold':'As freehold')+'</span><b>$'+
         Math.round(out).toLocaleString()+' psf</b></div>'+
-      '<p class="chint">Lease left worked out from the completion year: '+TB[4]+' \u2212 ('+
-      TB[5]+' \u2212 '+tl+') \u2212 '+TB[3]+' years of building = '+lf+'.</p>';
+      '<p class="chint">Lease left, as a leasehold completed in the freehold\'s year: '+TB[4]+' \u2212 ('+
+      TB[5]+' \u2212 '+tf+') \u2212 '+TB[3]+' years of building = '+lf+'.</p>';
   }
   ['tfP','tfT','tlT'].forEach(function(id){
     var e=el(id); if(e) e.addEventListener('input',go);});
@@ -1415,6 +1417,15 @@ def _tx(rows, a_name, a_bed, a_n, b_name, b_bed, b_n):
 MROWS = M['rows'] if M else []
 GROWS = [r for r in (G['rows'] if G else []) if 'n_i' in r]
 TROWS = T['mixed'] if T else []
+# Shawn, 2026-11-07: the premium is read at the lease a leasehold COMPLETED IN THE FREEHOLD'S TOP YEAR
+# would have — its lease starting the measured build time before that TOP. gradient_aged is fitted on
+# that key; the as-it-stands `gradient` is kept in the JSON for the record only.
+T_AGED = bool(T and 'gradient_aged' in T['slices'])
+T_NOW = int(T['window'][1][:4]) if T else 2026
+def ten_left(r):
+    if not T_AGED: return r.get('left')
+    if r.get('left') is None: return None
+    return (r['top_fh'] - T['construction_years']) + (r.get('yrs_lh') or 99) - T_NOW
 
 MTX, MSIDES = _tx(MROWS, 'closer', 'bed', 'n_close', 'further', 'bed', 'n_far') if MROWS else (0, 0)
 GTX, GSIDES = _tx(GROWS, 'a', 'bed', 'n_i', 'b', 'bed', 'n_n') if GROWS else (0, 0)
@@ -1437,7 +1448,7 @@ def ten_slice_tx(g, nxt):
     """Transactions behind one lease-left step: pairs whose leasehold side has that much left."""
     lo = g.get('min_left') or 0
     hi = (nxt.get('min_left') if nxt else None) or 9999
-    rs = [r for r in TROWS if r.get('left') is not None and lo <= r['left'] < max(hi, lo + 1)]
+    rs = [r for r in TROWS if ten_left(r) is not None and lo <= ten_left(r) < max(hi, lo + 1)]
     return _tx(rs, 'fh', 'bed', 'n_fh', 'lh', 'bed', 'n_lh')[0] if rs else 0
 
 def mrt_band_tx(key):
@@ -1460,7 +1471,7 @@ ENG_CIRCUITY = float(__import__('re').search(r'const CIRCUITY = ([\d.]+)',
 MBAND = {b['key']: b['adj'] for b in (M['bands'] if M else [])}
 MBLAB = {'near|mid': 'under 5 vs 5&ndash;10 min', 'mid|far': '5&ndash;10 vs over 10 min',
          'near|far': 'under 5 vs over 10 min'}
-TSTEP = [g for g in (T['slices']['gradient'] if T else []) if not g.get('thin') and g.get('pct')]
+TSTEP = [g for g in (T['slices']['gradient_aged' if T_AGED else 'gradient'] if T else []) if not g.get('thin') and g.get('pct')]
 # The cut the engine adopts — selected by the study's own `headline` flag, not by position.
 # engine.ts selects the same way; see integrated-pairs.py HEADLINE_CUT.
 INT_HEAD = (next((c for c in G['cuts'] if c.get('headline')), G['cuts'][-1]) if G else None)
@@ -1578,7 +1589,7 @@ def ten_pairtable():
     leasehold side falls in, not against the headline."""
     prem = lambda r: 100 * (r['psf_fh'] / r['psf_lh'] - 1)
     def exp(r):
-        g = ten_step_of(r.get('left'))
+        g = ten_step_of(ten_left(r))
         return (g['pct'] * 100 if g else None), (g['label'] if g else '&mdash;')
     def off(r):
         e, _ = exp(r)
@@ -1595,7 +1606,7 @@ def ten_pairtable():
                  f'<td>{_nm(r["lh"])} <i class="age">{r["top_lh"]}</i></td>'
                  f'<td class="quiet">{r["bed"]}</td>'
                  f'<td class="num big">{prem(r):+.1f}%</td>'
-                 f'<td class="num quiet">{r["left"]:,.0f} yrs</td>'
+                 f'<td class="num quiet">{ten_left(r):,.0f} yrs</td>'
                  f'<td class="quiet">{lab}</td>'
                  f'<td class="num quiet">{"&mdash;" if e is None else f"+{e:.0f}%"}</td>'
                  f'<td class="num quiet">{"&mdash;" if e is None else f"{prem(r)-e:+.0f}%"}</td>'
@@ -2021,7 +2032,7 @@ TMIX = (T or {}).get('mixed', [])
 TBASE = st.median([r['psf_lh'] for r in TMIX]) if TMIX else 0
 TOLDER = sum(1 for r in TMIX if r['dv'] < 0)
 TADJ = st.median([abs(r['band'] * r['dv']) for r in TMIX]) if TMIX else 0
-TG   = (T or {}).get('slices', {}).get('gradient', [])
+TG   = (T or {}).get('slices', {}).get('gradient_aged' if T_AGED else 'gradient', [])
 TGL  = [g for g in TG if not g.get('thin')]
 THD  = (T or {}).get('headline', {}).get('dollars', {})
 THP  = (T or {}).get('headline', {}).get('percent', {})
@@ -2844,8 +2855,9 @@ down.</p>
       <p>Price that at the <b>measured lease rate</b>: each year of the gap at its own band,
       ${LPW1:,.0f} before {LPWB} and ${LPW2:,.0f} from {LPWB}.</p></div>
     <div class="step"><span class="sn">3</span>
-      <p>Then take off the <b>freehold percentage for the lease the leasehold side has
-      left</b>, from the table below.</p></div>
+      <p>Then take off the <b>freehold percentage for the lease a leasehold completed in the
+      freehold's year would have left</b> &mdash; its lease starting {T['build']['median'] if T else 4} years
+      before that TOP &mdash; from the table below.</p></div>
   </div>
 
   <div class="calc">

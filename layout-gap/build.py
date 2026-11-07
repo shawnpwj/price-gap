@@ -156,7 +156,7 @@ def _calibration():
     return dict(
         lease=dict(bound=lease['bound'], pre=lease['pre'], post=lease['post']),
         ageFH=dict(bound=age['bound'], pre=age['pre'], post=age['post']),
-        tenure=dict(headline=ten['headline']['percent']['p'], grad=grad, aged=aged),
+        tenure=dict(headline=ten['headline']['percent']['p'], grad=grad, aged=aged, buildYears=ten.get('construction_years', 4)),
         mrt=dict(nearM=mrt['near_m'], farM=mrt['far_m'], bands={b['key']: round(b['adj']) for b in mrt['bands']}),
         integrated=round(cut['pct']/100, 4),
         harmonisation=0.07, harmonisationFrom=2023,   # engine.ts: not measured, same in both sets

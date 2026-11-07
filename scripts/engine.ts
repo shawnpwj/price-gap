@@ -237,6 +237,9 @@ export const loadConstants = () => loadMeasured();
 // MIXED rows, re-read 2026-10-22), keyed by the band's floor. tenure-pairs.json does not carry
 // it yet; layout-gap/build.py holds the same three numbers.
 const TENURE_AT: Record<number, number> = { 90: 91.0, 75: 84.3, 60: 68.5 };
+// Measured build time, lease start to TOP (tenure-pairs.json construction_years) — sets the lease a
+// leasehold completed in the freehold's TOP year would have started. Read at load time.
+let TENURE_BUILD_YEARS = 4;
 
 export async function loadMeasured(): Promise<Constants> {
   const C = (f: string) => path.join(ROOT, "calibration", f);
@@ -267,6 +270,7 @@ export async function loadMeasured(): Promise<Constants> {
   // lease left category"). gradient_aged is keyed that way and carries its own `at`; the older
   // as-it-stands gradient is the fallback for a JSON that predates it.
   const aged = Array.isArray(tenure.slices.gradient_aged);
+  if (typeof tenure.construction_years === "number") TENURE_BUILD_YEARS = tenure.construction_years;
   const grad = ((aged ? tenure.slices.gradient_aged : tenure.slices.gradient) as any[])
     .filter((g) => !g.thin && typeof g.pct === "number" && typeof g.min_left === "number")
     .map((g) => ({ minLeft: g.min_left as number, pct: g.pct as number, label: g.label as string,
@@ -750,18 +754,19 @@ export function screen(data: Data, S: any, bed: string, precomputed?: ReturnType
 // tenure gradient. The freehold premium is not one number: it widens as the lease
 // shortens, because at the far end of a lease the freehold gap IS the lease gap.
 // The lease the leasehold side would have left had it completed in the FREEHOLD's TOP year —
-// the key the tenure gradient is measured on (gradient_aged, Shawn 2026-11-07). A new leasehold
-// set against an older freehold reads shorter than its own lease, because the vintage step has
-// already priced the run-off between the two TOPs. Without both TOPs it falls back to the lease
-// as it stands.
+// the key the tenure gradient is measured on (gradient_aged, Shawn 2026-11-07): its lease would
+// have started TENURE_BUILD_YEARS before that TOP, and run its own term from there. A new
+// leasehold set against an older freehold reads shorter than its own lease, because the vintage
+// step has already priced the run-off between the two TOPs. Without the freehold's TOP it falls
+// back to the lease as it stands.
 function leaseLeftOf(S: any, c: any): number | null {
   const sLH = S.tenure?.type === "LH", lhD = sLH ? S : c.tenure?.type === "LH" ? c : null;
   const lh = lhD?.tenure;
   if (!lh?.leaseStart || !lh.years) return null;
-  const left = lh.leaseStart + lh.years - new Date().getFullYear();
   const fhD = lhD === S ? c : S;
-  const dv = lhD?.top?.year && fhD?.top?.year && fhD.tenure?.type === "FH" ? fhD.top.year - lhD.top.year : 0;
-  return left + dv;
+  const now = new Date().getFullYear();
+  if (fhD?.tenure?.type === "FH" && fhD.top?.year) return fhD.top.year - TENURE_BUILD_YEARS + lh.years - now;
+  return lh.leaseStart + lh.years - now;
 }
 
 // ── The adjustment stack ─────────────────────────────────────────────────────

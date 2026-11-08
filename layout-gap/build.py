@@ -48,7 +48,10 @@ def days_ago(s):
     y,m,d = int(s[:4]),int(s[5:7]),int(s[8:10])
     return (TODAY - datetime.date(y,m,d)).days
 
-# ---------------------------------------------------------------- older sales, carried by a price index
+# ---------------------------------------------------------------- older sales
+# WITHDRAWN 2026-11-08 — Shawn: "even if its > 18 months window we should just use 3% a year. Dont mix in price
+# index at all situations." Older sales are timed at 3% a year on the page; the index below is NOT used
+# (older_tx no longer calls time_factor). Kept only as the record of what was tried.
 # Shawn, 2026-10-29: "if there are lack of transactions can you allow me to use previous years transactions
 # and adjust for time as well". Sales older than the window ride in each shard as `old`, each with its own
 # time factor to the as-at date; the page reaches for them only when the window holds fewer than three.
@@ -496,11 +499,14 @@ def dual_key_sizes():
     print(f"dual-key sizes for {len(out)} developments")
 
 def older_tx(TP, devid, ec, seg, older, sf, stkey, blk):
-    """Older sales in the shard's tx shape plus [time factor, index tier]; a sale no tier can carry is left out."""
+    """Older sales in the shard's tx shape plus [time factor, 'flat'].
+    Shawn, 2026-11-08: "even if its > 18 months window we should just use 3% a year. Dont mix in price index
+    at all situations." The page times every sale, older ones included, at 3% a year; the factor here is that
+    same flat 3% for reference only, and no older sale is dropped for want of an index tier. time_factor is
+    kept above for the record but no longer used."""
     out=[]
     for fl,st,sq,pr,cd,sty,bl in older:
-        f,code=time_factor(TP, devid, ec, seg, sq, cd)
-        if f is None: continue
+        f,code=round(1+0.03*days_ago(cd)/365.25,4),'flat'
         k=stkey(st)
         out.append([fl, k, round(sq), int(pr), ymd_int(cd), 0 if sty=='resale' else 1, sf.get(k), (bl or '').split()[0] if bl else None, f, code])
     return out

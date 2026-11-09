@@ -483,6 +483,9 @@ def main(only=None):
 # studio with its own foyer, bath and kitchen). RealSmart labels some "TRIO (Dual Key)", some plain "TRIO".
 import re as _re
 DK_RE = _re.compile(r'dual[\s-]?key|\bDK\b|\bTRIO\b|multi[\s-]?gen', _re.I)
+# RealSmart dual-key bands the floor plans overrule (Shawn, 2026-11-09: "if there is only 1 main door without
+# any split it doesnt warrant a dual key"). Rivertrees C2/C2p draw one front door and no studio: normal 3BR.
+NOT_DUAL_KEY = {'rivertrees-residences': [(1119, 1302, 3)]}
 def dual_key_sizes():
     rs = json.load(open(os.path.join(ROOT, 'property-analyzer', 'data', 'project-unitmix-realsmart.json')))['projects']
     idx = json.load(open(os.path.join(OUT, 'index.json')))
@@ -495,6 +498,11 @@ def dual_key_sizes():
         rng = lambda t: [int(t['minSqft']), int(t['maxSqft']), int(t.get('br') or 0)]
         out[dev] = {'dk': [rng(t) for t in types if DK_RE.search(t['label'])],
                     'other': [rng(t) for t in types if not DK_RE.search(t['label'])]}
+        cleared = [r for r in out[dev]['dk'] if tuple(r) in NOT_DUAL_KEY.get(dev, [])]
+        if cleared:
+            out[dev]['dk'] = [r for r in out[dev]['dk'] if r not in cleared]
+            out[dev]['other'] += cleared
+            if not out[dev]['dk']: del out[dev]
     json.dump({'source': 'RealSmart unit mix', 'devs': out}, open(os.path.join(OUT, 'dualkey.json'), 'w'), separators=(',', ':'))
     print(f"dual-key sizes for {len(out)} developments")
 

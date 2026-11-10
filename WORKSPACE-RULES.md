@@ -198,6 +198,10 @@ holistic framework to go by. And it should be the same for ALL scripts and futur
 * **Every KYA Data topic** (`kya-data/`, kya-data.pages.dev) ends on `KC.mapsSlide(...)`; the site
   refuses to load a topic that does not. Slides are client ready: short lines, nothing addressed to
   Shawn, no script on the page. Questions for Shawn go in chat, never on a page.
+* **Price Gap, always.** A psf difference between two developments is never shown on its own: show it
+  AS PAID, then AFTER the Price Gap adjustment (the engine's `adjust()` in
+  `price-gap/scripts/engine.ts`, measured constants) and the over/undervalued verdict that follows.
+  Shawn, 2026-11-10: *"whatever i show should 'abide' by the rule of always doing Price Gap."*
 
 ### One place for each workstream's state — Claude and Codex alike
 

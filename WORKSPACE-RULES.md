@@ -185,6 +185,20 @@ is in one table in METHOD.md so no agent re-invents one. **A deviation is record
 `data/annotations/<project>.json` under `method_deviations`, with the reason — an unrecorded
 deviation makes the figure unusable.**
 
+### COMPULSORY: every myth-busting script and deck closes on MAPS
+
+**Shawn, 2026-11-10: *"every myth i break then should ALWAYS link to MAPS and why MAPS is the key and
+holistic framework to go by. And it should be the same for ALL scripts and future scripts."***
+
+* **Every video script** (TikTok or otherwise) that breaks a myth ends, before the CTA, on the KYA
+  MAPS Framework: which pillars — **Macro** (current demand vs supply), **Area** (future demand vs
+  supply), **Price Gap** (entry), **Site** (exit) — answer the question the myth gets wrong, and that
+  one figure never decides a buy. Show the link on screen:
+  https://kya-private-advisory-offline.pages.dev/#maps
+* **Every KYA Data topic** (`kya-data/`, kya-data.pages.dev) ends on `KC.mapsSlide(...)`; the site
+  refuses to load a topic that does not. Slides are client ready: short lines, nothing addressed to
+  Shawn, no script on the page. Questions for Shawn go in chat, never on a page.
+
 ### One place for each workstream's state — Claude and Codex alike
 
 **Shawn, 2026-10-22: *"consolidate and clean up the messages / memory such that we dont have
